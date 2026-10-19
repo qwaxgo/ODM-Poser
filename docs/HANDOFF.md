@@ -16,9 +16,10 @@ nothing third-party: keep it that way.
   packs, names of those packs or their files, fonts, icons or code copied from elsewhere. Props
   and shapes are hand-made primitives. If you borrow an *idea* from another project, write the
   code yourself and do not copy text.
-- **No built-in poses for now** (the owner removed the original 11 too). Only "reset to
-  standing". Poses come from the user's own files in `user_presets/` (git-ignored). The public
-  repo must not reveal what the owner keeps there: describe the feature generically.
+- **Built-in poses**: only the 11 written by hand as joint turns (`PRESETS` in index.html:
+  nothing traced from pictures). Other poses come from the user's own files in
+  `user_presets/` (git-ignored). The public repo must not reveal what the owner keeps there:
+  describe the feature generically.
 - **Standalone**: it must work with ComfyUI alone (no other custom node pack) and as a plain
   HTML page opened from disk.
 - The owner commits and pushes. Do not commit unless asked; finish a batch with ready-to-paste
@@ -36,6 +37,7 @@ web/js/symbolic_pose_editor.js   node widget: button, modal iframe, postMessage 
 web/editor/index.html            the editor (single file, plain JS, Canvas 2D)
 web/editor/pose_props.js         window.PROP_CATS / window.PROPS: the props as primitives
 web/editor/pose_scene.js         floor / walls / ceiling, holding, mounting, grabbing, wire
+web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 user_presets/                    the user's preset files (README.md only is tracked)
 docs/HANDOFF.md                  this file
 ```
@@ -74,6 +76,15 @@ docs/HANDOFF.md                  this file
   `mount` seats the pelvis and puts hands / feet), `grab` (`grab` = the lines a hand or foot
   takes hold of).
 
+## Language (web/editor/i18n.js)
+
+The page is written in Japanese. `i18n.js` translates every text node, placeholder and title
+(and what the editor adds later, through a MutationObserver) with a table (`T`), joint names
+(`JOINT`) and rules for the messages built at run time (`RULES`, e.g. "<joint>を固定しました。"),
+and patches `CanvasRenderingContext2D.fillText` for canvas labels. Prop names come from
+`PROPS[key].en`; "ja / en" option texts show the English part. When you add Japanese UI text,
+add its English to `T` (or a rule) -- the check below lists what is left untranslated.
+
 ## Checking changes
 
 - JS syntax: `python -c "import esprima, re; [esprima.parseScript(m) for m in re.findall(r'<script>(.*?)</script>', open('web/editor/index.html', encoding='utf-8').read(), re.S)]"`
@@ -89,9 +100,13 @@ docs/HANDOFF.md                  this file
 
 ## Open items
 
-- The UI is Japanese only; an English UI (language toggle) is wanted before publishing.
+- English UI done (2026-10-19). To find untranslated text: open the editor headless with
+  `?lang=en`, step through the modes, joints and props, and list text nodes that still hold
+  Japanese (only the "日本語" switch and the search example should remain).
 - Real mouse use in ComfyUI (the modal, wheel, drag) has been checked by automation only.
 - Prop shapes and grip positions are estimates; the owner will report the ones that look off.
 - The owner's private project keeps its own copy of the editor (it embeds it elsewhere).
-  Changes made there are copied here with a sync script that lives in that project; keep the
-  two compatible (same state format, same message names) or note the difference here.
+  Changes made there are copied here with a sync script that lives in that project (it
+  rewrites index.html, pose_props.js and pose_scene.js; i18n.js, the node and the docs are this
+  repo's own). Keep the two compatible (same state format, same message names) or note the
+  difference here.

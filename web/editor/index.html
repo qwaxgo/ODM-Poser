@@ -83,10 +83,10 @@ input[type=checkbox]{accent-color:var(--accent)}
 
 <aside>
   <section>
-    <h2>ポーズ</h2>
-    <select id="preset" hidden></select>
+    <h2>プリセット</h2>
+    <select id="preset"></select>
     <div class="btns" style="margin-top:6px">
-      <button id="applyPreset">立ち姿勢に戻す</button>
+      <button id="applyPreset">読み込む</button>
       <button id="mirror">左右反転</button>
       <button id="undo">元に戻す</button>
     </div>
@@ -962,6 +962,16 @@ function showSelected(){
 // [joint, axis, degrees]: the joint's own bone and everything after it turn about its parent.
 const PRESETS = {
   "立ち（標準）": [],
+  "Aポーズ": [["r_elbow","z",-35],["l_elbow","z",35]],
+  "Tポーズ": [["r_elbow","z",-90],["l_elbow","z",90]],
+  "コントラポスト": [["l_knee","x",-12],["l_ankle","x",22],["r_elbow","z",-8],["l_elbow","x",-15],["l_wrist","x",-60],["chest","z",-4]],
+  "歩く": [["r_knee","x",-25],["r_ankle","x",15],["l_knee","x",20],["l_ankle","x",25],["r_elbow","x",20],["l_elbow","x",-22],["l_wrist","x",-30]],
+  "走る": [["r_knee","x",-55],["r_ankle","x",70],["l_knee","x",35],["l_ankle","x",60],["r_elbow","x",45],["r_wrist","x",-90],["l_elbow","x",-50],["l_wrist","x",-80],["chest","x",-10]],
+  "椅子に座る": [["r_knee","x",-90],["r_ankle","x",90],["l_knee","x",-90],["l_ankle","x",90],["r_wrist","x",-60],["l_wrist","x",-60]],
+  "しゃがむ": [["r_knee","x",-120],["r_ankle","x",145],["l_knee","x",-120],["l_ankle","x",145],["chest","x",-25],["r_wrist","x",-70],["l_wrist","x",-70]],
+  "ジャンプ（バンザイ）": [["r_elbow","z",-160],["l_elbow","z",160],["r_knee","x",-30],["r_ankle","x",55],["l_knee","x",-30],["l_ankle","x",55]],
+  "ファイティングポーズ": [["r_knee","z",-12],["l_knee","z",12],["l_knee","x",-15],["r_elbow","x",-45],["r_wrist","x",-110],["l_elbow","x",-60],["l_wrist","x",-115]],
+  "腰に手": [["r_elbow","z",-35],["r_wrist","z",95],["l_elbow","z",35],["l_wrist","z",-95]],
 };
 const AXES = {x: [1,0,0], y: [0,1,0], z: [0,0,1]};
 function applyPreset(name){
@@ -1227,5 +1237,7 @@ syncUI(); draw();
 </script>
 <!-- floor / walls / ceiling, holding and placing things, wires (uses the editor's state above) -->
 <script src="pose_scene.js"></script>
+<!-- Japanese / English -->
+<script src="i18n.js"></script>
 </body>
 </html>

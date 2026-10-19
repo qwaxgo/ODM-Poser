@@ -69,6 +69,17 @@ bars, ladders).
 `{"key", "hand" | "base" + "yaw", "off": [x, y, z], "rot": [x, y, z], "scale"}` (cm, degrees).
 The shapes are listed in `web/editor/pose_props.js`.
 
+## Language
+
+The editor follows the browser's language (Japanese or English); the button at the top right
+switches it and the choice is remembered. `?lang=en` or `?lang=ja` in the address forces one.
+
+## Built-in poses
+
+Eleven simple poses written as joint turns (standing, A-pose, T-pose, contrapposto, walking,
+running, sitting on a chair, squatting, jump, fighting stance, hands on hips). Loading one keeps
+the figure's body.
+
 ## User presets
 
 Put your own preset files in `user_presets/` (format in `user_presets/README.md`). They show
@@ -97,5 +108,7 @@ JSON としてワークフローに渡せます。
 - **小物・環境**：約130種の小物を簡単な形で（武器・銃・弓・盾・杖・楽器・文房具・食器・食べ物・花・日用品・
   コントローラー・スポーツ用具・椅子・机・乗り物・蔓や枝や鉄棒など）。床・壁・天井と接地、面に手足を着ける、
   つかまる、ぶら下がる、ワイヤーで吊る。
+- **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
+- **組み込みポーズ**：11種（立ち・Aポーズ・Tポーズ・コントラポスト・歩く・走る・椅子に座る・しゃがむ・ジャンプ・ファイティングポーズ・腰に手）。関節の角度で作ったもので、体格はそのまま。
 - **ユーザープリセット**：`user_presets/` に自分のプリセット（JSON）を置くと一覧に出ます（git には入りません）。
 - **ライセンス**：MIT（c）2026 qwaxgo。
