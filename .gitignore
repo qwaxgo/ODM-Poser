@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+# your own preset files stay on your machine
+user_presets/*
+!user_presets/README.md

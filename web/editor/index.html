@@ -1,0 +1,1231 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Symbolic Pose Editor</title>
+<style>
+:root{
+  --bg:#f5f5f2; --panel:#fff; --ink:#1c1c1a; --sub:#6c6c66; --line:#dededa;
+  --field:#fbfbf9; --accent:#2f6f4f; --accent-ink:#fff; --code:#f0f0ec; --warn:#b4531f;
+  --stage:#ffffff; --figure:#1c1c1a; --sel:#d24a1f; --far:#8a8a84;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#1a1a19; --panel:#242423; --ink:#ececea; --sub:#a0a09a; --line:#383835;
+        --field:#1e1e1d; --accent:#4e9a74; --accent-ink:#10231a; --code:#2e2e2b; --warn:#e0864f;
+        --stage:#2b2b29; --figure:#ececea; --sel:#ff8a5c; --far:#7a7a74;}
+}
+:root[data-theme="dark"]{--bg:#1a1a19; --panel:#242423; --ink:#ececea; --sub:#a0a09a; --line:#383835;
+        --field:#1e1e1d; --accent:#4e9a74; --accent-ink:#10231a; --code:#2e2e2b; --warn:#e0864f;
+        --stage:#2b2b29; --figure:#ececea; --sel:#ff8a5c; --far:#7a7a74;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font:14px/1.6 "Yu Gothic UI","Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+header{padding:12px 16px 4px;max-width:1240px;margin:auto}
+h1{font-size:17px;margin:0}
+header p{margin:0;color:var(--sub);font-size:12px}
+main{max-width:1240px;margin:auto;padding:8px 16px 32px;
+     display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+@media (max-width:900px){main{grid-template-columns:1fr}}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+section>h2{font-size:13.5px;margin:0 0 8px}
+.views{display:grid;grid-template-columns:1fr 34%;gap:10px}
+.view{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.view canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
+.view .tag{position:absolute;left:8px;top:6px;font-size:11px;color:var(--sub);pointer-events:none}
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.modes button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+label{display:block;font-size:12px;color:var(--sub);margin:6px 0 2px}
+select,input[type=number]{width:100%;background:var(--field);color:var(--ink);border:1px solid var(--line);
+  border-radius:6px;padding:5px 7px;font:inherit;font-size:13px}
+.row{display:flex;align-items:center;gap:8px}
+.row input[type=range]{flex:1;accent-color:var(--accent)}
+.num{width:68px!important;flex:none;padding:3px 5px!important;text-align:right}
+.unit{font-size:11.5px;color:var(--sub);min-width:20px}
+.val{min-width:46px;text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:var(--sub)}
+button{border:1px solid var(--line);background:var(--field);color:var(--ink);
+       border-radius:7px;padding:6px 10px;font:inherit;font-size:12.5px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.hint{font-size:11.5px;color:var(--sub);margin-top:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+#status{font-size:12px;min-height:1.3em;margin-top:6px}
+.only{display:none}
+body.mode-pose .only.pose, body.mode-body .only.body, body.mode-persp .only.persp{display:block}
+input[type=checkbox]{accent-color:var(--accent)}
+</style>
+</head>
+<body class="mode-pose">
+<header>
+  <h1>Symbolic Pose Editor <span style="font-weight:400;font-size:13px">記号ポーズエディタ</span></h1>
+  <p>線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。</p>
+</header>
+<main>
+<div>
+  <section>
+    <div class="modes" id="modes">
+      <button data-mode="pose" class="on">ポーズ（骨の長さを保つ）</button>
+      <button data-mode="body">体格（長さ・太さを変える）</button>
+      <button data-mode="persp">パース（カメラとレンズ）</button>
+      <label style="margin:0 0 0 auto;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink)">
+        <input type="checkbox" id="limits" checked> 人間の関節の限界</label>
+    </div>
+    <div class="views">
+      <div class="view"><span class="tag">正面（カメラ）</span><canvas id="front"></canvas></div>
+      <div class="view"><span class="tag">横から（奥行き）</span><canvas id="side"></canvas></div>
+    </div>
+    <div class="hint">身長 <span id="heightP">-</span>　<span id="pinInfo"></span></div>
+    <div class="hint only pose">丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す。</div>
+    <div class="hint only body">丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。</div>
+    <div class="hint only persp">ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。</div>
+  </section>
+</div>
+
+<aside>
+  <section>
+    <h2>ポーズ</h2>
+    <select id="preset" hidden></select>
+    <div class="btns" style="margin-top:6px">
+      <button id="applyPreset">立ち姿勢に戻す</button>
+      <button id="mirror">左右反転</button>
+      <button id="undo">元に戻す</button>
+    </div>
+    <div id="tcBox" style="display:none">
+      <label style="margin-top:10px">ユーザープリセット（<span id="tcCount">0</span>）</label>
+      <select id="tcGroup"></select>
+      <input type="text" id="tcSearch" placeholder="検索：日本語でも英語でも（例：キック / kick、座る / sit）" style="margin-top:6px;width:100%;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:inherit;font-size:13px">
+      <select id="tcList" size="9" style="margin-top:6px"></select>
+      <div class="btns" style="margin-top:6px"><button id="tcApply">このポーズにする</button><button id="tcRandom">ランダム</button></div>
+      <div class="hint">骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。</div>
+    </div>
+  </section>
+
+  <section class="only body">
+    <h2>体格</h2>
+    <div class="btns"><button id="sexF">女性の体格</button><button id="sexM">男性の体格</button></div>
+    <div class="hint">ポーズはそのままで、骨の長さ・肩幅・腰幅・ウエストを入れ替えます（女性 158cm／男性 171cm）。</div>
+    <label>身長（立ったとき）</label>
+    <div class="row"><input type="number" class="num" id="heightN" step="0.5" min="40" max="260"><span class="unit">cm</span>
+      <span class="val" id="headsV" style="flex:1">-</span></div>
+    <label><input type="checkbox" id="sym" checked> 左右対称</label>
+    <label>全体の大きさ</label>
+    <div class="row"><input type="range" id="scaleAll" min="60" max="140" value="100"><input type="number" class="num" id="scaleAllV"><span class="unit">%</span></div>
+    <label>頭の大きさ</label>
+    <div class="row"><input type="range" id="scaleHead" min="50" max="250" value="100"><input type="number" class="num" id="scaleHeadV"><span class="unit">%</span></div>
+    <label>太さ（丸の大きさ）</label>
+    <div class="row"><input type="range" id="scaleThick" min="50" max="200" value="100"><input type="number" class="num" id="scaleThickV"><span class="unit">%</span></div>
+  </section>
+
+  <section class="only pose body">
+    <h2>選んだ関節：<span id="selName">（丸をクリック）</span></h2>
+    <label id="pinRow" style="display:none"><input type="checkbox" id="pin"> この関節を固定する（ピン。Alt＋クリックでも）</label>
+    <div id="handRow" style="display:none"><label>この腕の手の形</label><select id="handSel"></select></div>
+    <div id="jointCtl"></div>
+    <div class="hint" id="selHint">ドラッグした結果がここの数値になります。数値やバーで動かすこともできます。</div>
+  </section>
+
+  <section class="only persp">
+    <h2>カメラ</h2>
+    <label>レンズ（mm、小さいほど広角）</label>
+    <div class="row"><input type="range" id="lens" min="14" max="200" value="50"><input type="number" class="num" id="lensV"><span class="unit">mm</span></div>
+    <label>向き（左右）</label>
+    <div class="row"><input type="range" id="yaw" min="-180" max="180" value="0"><input type="number" class="num" id="yawV"><span class="unit">°</span></div>
+    <label>高さ（俯瞰＋／あおり−）</label>
+    <div class="row"><input type="range" id="pitch" min="-80" max="80" value="0"><input type="number" class="num" id="pitchV"><span class="unit">°</span></div>
+    <label>傾き</label>
+    <div class="row"><input type="range" id="roll" min="-45" max="45" value="0"><input type="number" class="num" id="rollV"><span class="unit">°</span></div>
+    <button id="camReset" style="margin-top:6px">カメラを戻す</button>
+  </section>
+
+  <section>
+    <h2>書き出し</h2>
+    <div class="grid2">
+      <div><label>幅</label><input type="number" id="W" value="1080" min="256" max="4096"></div>
+      <div><label>高さ</label><input type="number" id="H" value="1920" min="256" max="4096"></div>
+    </div>
+    <div class="btns" style="margin-top:8px">
+      <button id="saveAtari">アタリ画像</button>
+      <button id="saveOpenpose">OpenPose 画像</button>
+      <button id="saveJson">ポーズ保存</button>
+      <button id="loadJson">ポーズ読込</button>
+      <input type="file" id="file" accept=".json,application/json" hidden>
+    </div>
+    <div class="btns" id="nodeBtns" style="margin-top:8px;display:none">
+      <button class="primary" id="confirm">確定して閉じる / Confirm</button>
+      <button id="cancel">閉じる / Cancel</button>
+    </div>
+    <div class="hint">OpenPose 画像は ControlNet（OpenPose）に、アタリ画像は下描きのレイヤーに使えます。</div>
+    <div id="status"></div>
+  </section>
+</aside>
+</main>
+
+<script src="pose_props.js"></script>
+<!-- your own preset files (user_presets/*.json), served by the node; missing = none -->
+<script src="../user_presets.js"></script>
+<script>
+"use strict";
+// ---- the figure: joints in world space (cm, y up, the figure faces +z) -------------------
+// The figure's own right is screen left when it faces the camera (x < 0).
+const J = ["pelvis","waist","chest","neck","head","r_shoulder","r_elbow","r_wrist","l_shoulder",
+           "l_elbow","l_wrist","r_hip","r_knee","r_ankle","r_toe","l_hip","l_knee","l_ankle","l_toe"];
+const J_JA = {pelvis:"腰（全体）", waist:"ウエスト", chest:"胸", neck:"首", head:"頭", r_shoulder:"右肩",
+  r_elbow:"右肘", r_wrist:"右手首", l_shoulder:"左肩", l_elbow:"左肘", l_wrist:"左手首", r_hip:"右股",
+  r_knee:"右膝", r_ankle:"右足首", r_toe:"右つま先", l_hip:"左股", l_knee:"左膝", l_ankle:"左足首", l_toe:"左つま先"};
+const IX = Object.fromEntries(J.map((n, i) => [n, i]));
+const PARENT = [-1, 0, 1, 2, 3, 2, 5, 6, 2, 8, 9, 0, 11, 12, 13, 0, 15, 16, 17];
+const MIRROR = J.map(n => IX[n.startsWith("r_") ? "l_" + n.slice(2) : n.startsWith("l_") ? "r_" + n.slice(2) : n]);
+const REST = [
+  [0, 95, 0], [0, 111, 0], [0, 130, 0], [0, 145, 0], [0, 158, 0],
+  [-18, 142, 0], [-21, 114, 0], [-23, 88, 0], [18, 142, 0], [21, 114, 0], [23, 88, 0],
+  [-10, 92, 0], [-11, 50, 0], [-12, 9, 0], [-12, 2, 13], [10, 92, 0], [11, 50, 0], [12, 9, 0], [12, 2, 13]];
+// the waist's "radius" is half the waist's width (the torso is drawn as two trapezoids:
+// shoulders -> waist and waist -> the thigh roots); pelvis, waist and chest show small handles
+const REST_R = [3, 12, 3, 4, 11, 4.5, 4, 5, 4.5, 4, 5, 6, 4.5, 4, 3, 6, 4.5, 4, 3];
+const HANDLE = new Set([0, 1, 2]);
+const handleR = i => HANDLE.has(i) ? 3.2 : S.R[i];
+const KIDS = J.map((_, i) => J.map((__, k) => k).filter(k => PARENT[k] === i));
+function subtree(i){ const out = [i]; for (let k = 0; k < out.length; k++) out.push(...KIDS[out[k]]); return out; }
+
+// hand shapes (curl per finger: thumb, index, middle, ring, pinky; 0 straight, 1 closed)
+const HANDS = {
+  relaxed:[.25,.3,.35,.4,.45], open:[0,0,0,0,0], fist:[.75,1,1,1,1], peace:[.9,0,0,1,1],
+  point:[.7,0,1,1,1], thumbs_up:[0,1,1,1,1], ok:[.55,.6,0,0,0], gun:[.15,0,1,1,1],
+  rock:[.9,0,1,1,0], grip:[.6,.75,.8,.8,.8], claw:[.5,.7,.7,.7,.7],
+  pinch:[.55,.6,.9,.95,.95], cup:[.35,.45,.5,.55,.6], trigger:[.6,.25,1,1,1]};
+const HAND_JA = {relaxed:"自然", open:"パー", fist:"グー", peace:"ピース", point:"指差し",
+  thumbs_up:"サムズアップ", ok:"OK", gun:"指鉄砲", rock:"ロック", grip:"握り込む", claw:"かぎ爪",
+  pinch:"つまむ（ペン）", cup:"包む（カップ・ボール）", trigger:"引き金"};
+
+// ---- state -------------------------------------------------------------------------------
+let S = fresh();
+function fresh(){
+  return {P: REST.map(p => p.slice()), R: REST_R.slice(), hands: {r: "relaxed", l: "relaxed"},
+          head: {yaw: 0, pitch: 0}, cam: {lens: 50, yaw: 0, pitch: 0, roll: 0, zoom: 1},
+          body: {yaw: 0, pitch: 0, roll: 0}, twist: REST.map(() => 0),
+          pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
+          wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
+          center: [0, 90, 0]};
+}
+const history = [];
+function remember(){ history.push(JSON.stringify(S)); if (history.length > 80) history.shift(); }
+function undo(){ if (history.length){ S = JSON.parse(history.pop()); syncUI(); draw(); } }
+
+// ---- small vector helpers ----------------------------------------------------------------
+const sub = (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+const add = (a, b) => [a[0]+b[0], a[1]+b[1], a[2]+b[2]];
+const mul = (a, s) => [a[0]*s, a[1]*s, a[2]*s];
+const dot = (a, b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const len = a => Math.hypot(a[0], a[1], a[2]);
+const norm = a => { const l = len(a) || 1; return [a[0]/l, a[1]/l, a[2]/l]; };
+function rotAxis(v, axis, ang){            // Rodrigues
+  const k = norm(axis), c = Math.cos(ang), s = Math.sin(ang);
+  return add(add(mul(v, c), mul(cross(k, v), s)), mul(k, dot(k, v) * (1 - c)));
+}
+function rotBetween(v, a, b){              // rotate v by the rotation taking a to b
+  const na = norm(a), nb = norm(b), ax = cross(na, nb), s = len(ax), c = dot(na, nb);
+  if (s < 1e-9) return c > 0 ? v.slice() : rotAxis(v, Math.abs(na[0]) < .9 ? cross(na, [1,0,0]) : cross(na, [0,1,0]), Math.PI);
+  return rotAxis(v, ax, Math.atan2(s, c));
+}
+const deg = d => d * Math.PI / 180;
+
+// ---- camera: world -> camera space -> screen ------------------------------------------------
+// camera space: x right, y up, z toward the viewer; the camera sits at z = D looking down -z.
+function camRot(v){
+  const c = S.cam;
+  let p = rotAxis(v, [0, 1, 0], deg(-c.yaw));
+  p = rotAxis(p, [1, 0, 0], deg(c.pitch));
+  return rotAxis(p, [0, 0, 1], deg(c.roll));
+}
+function camRotInv(v){
+  const c = S.cam;
+  let p = rotAxis(v, [0, 0, 1], deg(-c.roll));
+  p = rotAxis(p, [1, 0, 0], deg(-c.pitch));
+  return rotAxis(p, [0, 1, 0], deg(c.yaw));
+}
+function lensF(W, H){ return S.cam.lens / 36 * Math.max(W, H); }
+function camDist(W, H){ return lensF(W, H) * 190 / (0.86 * H) / S.cam.zoom; }   // 190 cm fills 86 % of the height
+function toCam(p){ return camRot(sub(p, S.center)); }
+function project(p, W, H){
+  const q = toCam(p), f = lensF(W, H), D = camDist(W, H), d = Math.max(D - q[2], 1);
+  return {x: W/2 + f*q[0]/d, y: H/2 - f*q[1]/d, s: f/d, z: q[2]};
+}
+
+// the head's frame, for the face direction and the OpenPose nose / eyes / ears
+function headFrame(){
+  const P = S.P, up = norm(sub(P[IX.head], P[IX.neck]));
+  const across = norm(sub(P[IX.l_shoulder], P[IX.r_shoulder]));     // toward the figure's left
+  let fwd = norm(cross(across, up));
+  fwd = sub(fwd, mul(up, dot(fwd, up)));
+  // where the face looks: the neck's and the head's twist (左右を向く in the joint panel);
+  // nodding and tilting are the head bone's own 前後 / 左右
+  fwd = rotAxis(norm(fwd), up, deg((S.twist[IX.neck] || 0) + (S.twist[IX.head] || 0)));
+  const side = norm(cross(up, fwd));                                    // the figure's left
+  const up2 = norm(cross(fwd, side));
+  return {fwd, side, up: up2, r: S.R[IX.head]};
+}
+function facePoints(){
+  const h = headFrame(), c = S.P[IX.head], r = h.r;
+  const at = (f, s, u) => add(add(add(c, mul(h.fwd, f*r)), mul(h.side, s*r)), mul(h.up, u*r));
+  return {nose: at(0.95, 0, -0.2), r_eye: at(0.8, -0.35, 0.15), l_eye: at(0.8, 0.35, 0.15),
+          r_ear: at(0, -1.0, 0), l_ear: at(0, 1.0, 0)};
+}
+
+// ---- drawing: the アタリ (lines and circles) ----------------------------------------------
+const BONES = PARENT.map((p, i) => [p, i]).filter(([p]) => p >= 0);
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function drawAtari(ctx, W, H, opts = {}){
+  const P = S.P.map(p => project(p, W, H));
+  const ink = opts.ink || cssVar("--figure"), far = opts.far || cssVar("--far");
+  const lw = Math.max(1.5, W / 540);
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  // far things first: bones and circles sorted by depth, farther drawn lighter in the editor
+  const items = [];
+  const tp = torsoParts();
+  for (const poly of tp.blocks){
+    const pp = poly.map(q => project(q, W, H));
+    items.push({z: pp.reduce((m, q) => m + q.z, 0) / pp.length - 0.5, kind: "poly", pp});
+  }
+  const wl = tp.waistLine.map(q => project(q, W, H));
+  items.push({z: wl[1].z - 0.4, kind: "line", pp: wl});
+  BONES.forEach(([a, b]) => { if (!TORSO_BONES.has(b)) items.push({z: (P[a].z + P[b].z)/2, kind: "bone", a, b}); });
+  J.forEach((_, i) => items.push({z: P[i].z + 0.01, kind: "joint", i}));
+  items.sort((u, v) => u.z - v.z);
+  // what lies well behind the body's middle (10 cm and more) is drawn lighter
+  const zs = P.map(p => p.z).sort((a, b) => a - b), zmid = zs[Math.floor(zs.length / 2)];
+  const shade = z => opts.flat || z > zmid - 10 ? ink : far;
+  for (const it of items){
+    if (it.kind === "line"){
+      ctx.strokeStyle = shade(it.z); ctx.lineWidth = lw * 1.6;
+      ctx.beginPath(); it.pp.forEach((q, k) => k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke();
+      continue;
+    }
+    if (it.kind === "poly"){
+      ctx.beginPath(); it.pp.forEach((q, k) => k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.closePath();
+      if (!opts.flat){ ctx.fillStyle = opts.bg || cssVar("--stage"); ctx.globalAlpha = 0.55; ctx.fill(); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = shade(it.z); ctx.lineWidth = lw * 1.6; ctx.stroke();
+      continue;
+    }
+    if (it.kind === "bone"){
+      ctx.strokeStyle = shade(it.z); ctx.lineWidth = lw * 1.4;
+      ctx.beginPath(); ctx.moveTo(P[it.a].x, P[it.a].y); ctx.lineTo(P[it.b].x, P[it.b].y); ctx.stroke();
+    } else {
+      const i = it.i, p = P[i], r = handleR(i) * p.s;
+      if (HANDLE.has(i) && opts.export) continue;           // handles are for the editor only
+      ctx.strokeStyle = HANDLE.has(i) ? far : shade(it.z); ctx.lineWidth = lw * (i === IX.head ? 1.6 : 1.1);
+      if (!opts.flat){ ctx.fillStyle = opts.bg || cssVar("--stage"); ctx.globalAlpha = 0.55;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.fill(); ctx.globalAlpha = 1; }
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.stroke();
+      if (opts.sel === i){ ctx.strokeStyle = cssVar("--sel"); ctx.lineWidth = lw * 2;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r + 3*lw, 0, 2*Math.PI); ctx.stroke(); }
+    }
+  }
+  // the face's centre lines (where the head looks), like a Loomis cross
+  const h = headFrame(), c = S.P[IX.head], r = h.r;
+  ctx.strokeStyle = ink; ctx.lineWidth = lw;
+  const arc = (fn) => { ctx.beginPath(); for (let k = 0; k <= 24; k++){
+      const t = -Math.PI/2 + Math.PI * k/24, q = project(fn(t), W, H);
+      k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); } ctx.stroke(); };
+  arc(t => add(c, add(mul(h.fwd, r*Math.cos(t)), mul(h.up, r*Math.sin(t)))));        // vertical
+  arc(t => add(c, add(mul(h.fwd, r*Math.cos(t)), mul(h.side, r*Math.sin(t)))));      // eye line
+  // pinned joints: a small filled square (editor only)
+  if (!opts.export) for (const k of Object.keys(S.pins || {})){
+    const q = P[+k]; ctx.fillStyle = cssVar("--sel"); ctx.fillRect(q.x - 3*lw, q.y - 3*lw, 6*lw, 6*lw);
+  }
+  // the scene: floor, walls, things held and placed (pose_scene.js)
+  if (typeof drawScene === "function") drawScene(ctx, W, H, opts, project, ink, far, lw);
+  // hands: a small fan of the fingers
+  for (const side of ["r", "l"]){
+    const pts = handPoints(side, W, H);
+    ctx.strokeStyle = ink; ctx.lineWidth = lw * 0.9;
+    HAND_EDGES.forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]); ctx.stroke(); });
+  }
+}
+
+// the torso as a mannequin draws it: the chest block (shoulder line -> under the ribs) and the
+// pelvis block (its top -> the thigh roots, crotch level) are two separate trapezoids; the
+// waist between them is a line through the waist joint, where the body bends
+const TORSO_BONES = new Set([IX.waist, IX.chest, IX.r_shoulder, IX.l_shoulder, IX.r_hip, IX.l_hip]);
+const GAP = 0.45;                       // how far toward the waist each block stops (0..1)
+function torsoParts(){
+  const P = S.P, R = S.R, w = P[IX.waist];
+  const acrossChest = norm(sub(P[IX.l_shoulder], P[IX.r_shoulder]));
+  const acrossHips = norm(sub(P[IX.l_hip], P[IX.r_hip]));
+  const ribs = add(w, mul(sub(P[IX.chest], w), GAP));         // under the chest block
+  const pelvisTop = add(w, mul(sub(P[IX.pelvis], w), GAP));   // top of the pelvis block
+  const half = R[IX.waist];
+  const hipOut = side => { const h = P[IX[side + "_hip"]];
+    return add(h, mul(acrossHips, (side === "l" ? 1 : -1) * R[IX[side + "_hip"]] * 0.9)); };
+  const chestBlock = [P[IX.r_shoulder], P[IX.l_shoulder],
+                      add(ribs, mul(acrossChest, half)), add(ribs, mul(acrossChest, -half))];
+  const pelvisBlock = [add(pelvisTop, mul(acrossHips, -half * 1.05)), add(pelvisTop, mul(acrossHips, half * 1.05)),
+                       hipOut("l"), hipOut("r")];
+  return {blocks: [chestBlock, pelvisBlock], waistLine: [ribs, w, pelvisTop]};
+}
+function torso(){ return torsoParts().blocks; }
+
+// ---- hands: 21 OpenPose points from the hand shape, along the forearm -------------------------
+const HAND_EDGES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],
+                    [0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20]];
+function handPoints(side, W, H){
+  const P = S.P, el = P[IX[side + "_elbow"]], wr = P[IX[side + "_wrist"]];
+  const a = project(el, W, H), b = project(wr, W, H);
+  let dx = b.x - a.x, dy = b.y - a.y; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
+  const size = 17 * b.s;                                  // hand length, cm on screen
+  const mir = side === "r" ? 1 : -1;                      // the thumb is on the body's front side
+  // the forearm's twist (前腕のひねり) turns the palm: the hand narrows as it turns edge-on and
+  // the thumb crosses to the other side past 90 degrees
+  const tw = Math.cos(deg(S.twist[IX[side + "_wrist"]] || 0));
+  const px = -dy * mir * tw, py = dx * mir * tw;          // across the palm, toward the thumb
+  const curl = HANDS[S.hands[side]] || HANDS.relaxed;
+  const base = [[0.20, 0.12], [0.16, 0.45], [0.05, 0.47], [-0.06, 0.45], [-0.16, 0.41]];   // finger roots
+  const dirs = [[0.75, 0.66], [0.10, 1], [0.0, 1], [-0.08, 1], [-0.18, 1]];
+  const segs = [[0.17, 0.14, 0.12], [0.22, 0.14, 0.11], [0.24, 0.16, 0.11], [0.22, 0.15, 0.11], [0.17, 0.12, 0.10]];
+  const pt = (u, v) => [b.x + (dx*v + px*u) * size, b.y + (dy*v + py*u) * size];
+  const out = [pt(0, 0)];
+  for (let f = 0; f < 5; f++){
+    let [u, v] = base[f], [du, dv] = dirs[f]; const n = Math.hypot(du, dv); du /= n; dv /= n;
+    out.push(pt(u, v));
+    const c = curl[f];
+    let bend = 0;
+    for (let s = 0; s < 3; s++){
+      // a finger curling toward the palm, seen from the front: each joint bends it a little
+      // more, so its segments get shorter and then come back down over the palm
+      bend += c * 1.25;
+      const k = segs[f][s] * Math.cos(Math.min(bend, Math.PI));
+      u += du * k; v += dv * k;
+      out.push(pt(u, v));
+    }
+  }
+  return out;
+}
+
+// ---- OpenPose picture -----------------------------------------------------------------------
+const OP_COLORS = [[255,0,0],[255,85,0],[255,170,0],[255,255,0],[170,255,0],[85,255,0],[0,255,0],
+  [0,255,85],[0,255,170],[0,255,255],[0,170,255],[0,85,255],[0,0,255],[85,0,255],[170,0,255],
+  [255,0,255],[255,0,170],[255,0,85]];
+const OP_LIMBS = [[1,2],[1,5],[2,3],[3,4],[5,6],[6,7],[1,8],[8,9],[9,10],[1,11],[11,12],[12,13],
+                  [1,0],[0,14],[14,16],[0,15],[15,17]];
+function openposePoints(W, H){
+  const f = facePoints(), P = S.P;
+  const neck = P[IX.neck];
+  const order = [f.nose, neck, P[IX.r_shoulder], P[IX.r_elbow], P[IX.r_wrist], P[IX.l_shoulder],
+                 P[IX.l_elbow], P[IX.l_wrist], P[IX.r_hip], P[IX.r_knee], P[IX.r_ankle],
+                 P[IX.l_hip], P[IX.l_knee], P[IX.l_ankle], f.r_eye, f.l_eye, f.r_ear, f.l_ear];
+  return order.map(p => project(p, W, H));
+}
+function drawOpenpose(ctx, W, H){
+  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+  const K = openposePoints(W, H), sw = Math.max(2, Math.round(4 * Math.max(W, H) / 1024));
+  OP_LIMBS.forEach(([a, b], i) => {
+    const pa = K[a], pb = K[b], mx = (pa.x + pb.x)/2, my = (pa.y + pb.y)/2;
+    const l = Math.hypot(pa.x - pb.x, pa.y - pb.y), ang = Math.atan2(pa.y - pb.y, pa.x - pb.x);
+    ctx.fillStyle = `rgba(${OP_COLORS[i].join(",")},0.6)`;
+    ctx.beginPath(); ctx.ellipse(mx, my, l/2, sw, ang, 0, 2*Math.PI); ctx.fill();
+  });
+  K.forEach((p, i) => { ctx.fillStyle = `rgb(${OP_COLORS[i].join(",")})`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, sw, 0, 2*Math.PI); ctx.fill(); });
+  for (const side of ["r", "l"]){
+    const pts = handPoints(side, W, H), hw = Math.max(1, sw * 0.5);
+    HAND_EDGES.forEach(([a, b], i) => {
+      const hsv = i / HAND_EDGES.length, c = hsvToRgb(hsv, 1, 1);
+      ctx.strokeStyle = `rgb(${c.join(",")})`; ctx.lineWidth = hw * 2; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]); ctx.stroke();
+    });
+    pts.forEach(p => { ctx.fillStyle = "rgb(0,0,255)"; ctx.beginPath(); ctx.arc(p[0], p[1], hw * 1.4, 0, 2*Math.PI); ctx.fill(); });
+  }
+}
+function hsvToRgb(h, s, v){
+  const i = Math.floor(h * 6), f = h * 6 - i, p = v*(1-s), q = v*(1-f*s), t = v*(1-(1-f)*s);
+  const [r, g, b] = [[v,t,p],[q,v,p],[p,v,t],[p,q,v],[t,p,v],[v,p,q]][i % 6];
+  return [r, g, b].map(x => Math.round(x * 255));
+}
+
+// ---- the two views ------------------------------------------------------------------------
+const front = document.getElementById("front"), side = document.getElementById("side");
+let sel = -1, mode = "pose";
+function exportSize(){ return [Math.max(256, +$("W").value || 1080), Math.max(256, +$("H").value || 1920)]; }
+function fitCanvas(cv, aspect){
+  const w = cv.parentElement.clientWidth, dpr = window.devicePixelRatio || 1;
+  const h = Math.round(w / aspect);
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  cv.style.height = h + "px";
+}
+function sideProject(p, W, H){                // orthographic, from the camera's right: depth across
+  const q = toCam(p), k = 0.86 * H / 190;
+  return {x: W/2 - q[2] * k, y: H/2 - q[1] * k, s: k};
+}
+function draw(){
+  const [EW, EH] = exportSize();
+  fitCanvas(front, EW / EH); fitCanvas(side, EW / EH);
+  let ctx = front.getContext("2d"), W = front.width, H = front.height;
+  ctx.fillStyle = cssVar("--stage"); ctx.fillRect(0, 0, W, H);
+  drawAtari(ctx, W, H, {sel});
+  // side view
+  ctx = side.getContext("2d"); W = side.width; H = side.height;
+  ctx.fillStyle = cssVar("--stage"); ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = cssVar("--line"); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
+  ctx.fillStyle = cssVar("--sub"); ctx.font = `${Math.round(11 * (devicePixelRatio || 1))}px sans-serif`;
+  ctx.fillText("← カメラ側", 6, H - 8);
+  const P = S.P.map(p => sideProject(p, W, H));
+  ctx.strokeStyle = cssVar("--figure"); ctx.lineWidth = Math.max(1.2, W / 260);
+  BONES.forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(P[a].x, P[a].y); ctx.lineTo(P[b].x, P[b].y); ctx.stroke(); });
+  const tps = torsoParts();
+  for (const poly of tps.blocks){ ctx.beginPath(); poly.map(q => sideProject(q, W, H)).forEach((q, k) =>
+      k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.closePath(); ctx.stroke(); }
+  ctx.beginPath(); tps.waistLine.map(q => sideProject(q, W, H)).forEach((q, k) =>
+    k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke();
+  P.forEach((p, i) => { ctx.strokeStyle = i === sel ? cssVar("--sel") : cssVar("--figure");
+    ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2, handleR(i) * p.s), 0, 2*Math.PI); ctx.stroke(); });
+  if (typeof drawScene === "function") drawScene(ctx, W, H, {side: true}, sideProject, cssVar("--figure"), cssVar("--far"), Math.max(1, W / 360));
+  const hgt = standingHeight();
+  $("headsV").textContent = (hgt / (2 * S.R[IX.head])).toFixed(1) + " 頭身";
+  if (document.activeElement !== $("heightN")) $("heightN").value = hgt.toFixed(1);
+  $("heightP").textContent = `${hgt.toFixed(1)} cm（${(hgt / (2 * S.R[IX.head])).toFixed(1)} 頭身）`;
+  showSelected();
+}
+// standing height from the bone lengths (whatever the pose): crown to the floor
+const bl = (a, b) => len(sub(S.P[IX[a]], S.P[IX[b]]));
+function standingHeight(){
+  const upper = S.R[IX.head] + bl("head", "neck") + bl("neck", "chest") + bl("chest", "waist") + bl("waist", "pelvis");
+  const leg = s => bl(s + "_hip", "pelvis") * 0.29 + bl(s + "_knee", s + "_hip") + bl(s + "_ankle", s + "_knee")
+    + bl(s + "_toe", s + "_ankle") * 0.55;
+  return upper + (leg("r") + leg("l")) / 2;
+}
+function headsCount(){ return standingHeight() / (2 * S.R[IX.head]); }
+
+// ---- picking and dragging ------------------------------------------------------------------
+function evPos(cv, e){ const r = cv.getBoundingClientRect(), k = cv.width / r.width;
+  return [(e.clientX - r.left) * k, (e.clientY - r.top) * k]; }
+function pick(cv, x, y){
+  const W = cv.width, H = cv.height, isSide = cv === side;
+  let best = -1, bd = 1e9;
+  S.P.forEach((p, i) => {
+    const q = isSide ? sideProject(p, W, H) : project(p, W, H);
+    const d = Math.hypot(q.x - x, q.y - y) - Math.max(8, handleR(i) * q.s);
+    if (d < bd){ bd = d; best = i; }
+  });
+  return bd < 14 * (devicePixelRatio || 1) ? best : -1;
+}
+function rotateSubtree(i, newPos){            // turn the bone parent->i so i lands on newPos
+  const p = S.P[PARENT[i]], a = sub(S.P[i], p), b = sub(newPos, p);
+  for (const k of subtree(i)) S.P[k] = add(p, rotBetween(sub(S.P[k], p), a, b));
+}
+function moveSubtree(i, delta){ for (const k of subtree(i)) S.P[k] = add(S.P[k], delta); }
+
+// pose mode, front view: keep the bone's length, solve the depth along the view ray
+function dragPose(i, x, y, W, H){
+  if (i === IX.pelvis){                       // the whole figure, in the picture plane
+    const q = project(S.P[i], W, H), dW = camRotInv([(x - q.x) / q.s, -(y - q.y) / q.s, 0]);
+    S.P = S.P.map(p => add(p, dW)); return;
+  }
+  const par = PARENT[i], L = len(sub(S.P[i], S.P[par]));
+  const f = lensF(W, H), D = camDist(W, H);
+  const pc = toCam(S.P[par]), ic = toCam(S.P[i]);
+  const dir = norm([(x - W/2) / f, -(y - H/2) / f, -1]), O = [0, 0, D];
+  const op = sub(O, pc), bq = dot(dir, op), cq = dot(op, op) - L*L, disc = bq*bq - cq;
+  let target;
+  if (disc >= 0){
+    const t1 = -bq - Math.sqrt(disc), t2 = -bq + Math.sqrt(disc);
+    const c1 = add(O, mul(dir, t1)), c2 = add(O, mul(dir, t2));
+    // keep the side (toward the camera or away) the bone was on
+    const was = ic[2] - pc[2];
+    target = Math.abs((c1[2] - pc[2]) - was) <= Math.abs((c2[2] - pc[2]) - was) ? c1 : c2;
+  } else {                                    // out of reach: the bone points at the mouse
+    const t = -bq, close = add(O, mul(dir, t));
+    target = add(pc, mul(norm(sub(close, pc)), L));
+  }
+  rotateSubtree(i, add(camRotInv(target), S.center));
+}
+// wrists and ankles: the whole limb reaches (two-bone IK), the elbow / knee bends the way it
+// already bends; the hand stays at its depth from the camera
+const IK_END = {r_wrist: 1, l_wrist: 1, r_ankle: 1, l_ankle: 1};
+function dragIK(i, x, y, W, H){
+  const mid = PARENT[i], root = PARENT[mid];
+  const f = lensF(W, H), D = camDist(W, H);
+  const ec = toCam(S.P[i]), dir = norm([(x - W/2) / f, -(y - H/2) / f, -1]);
+  const t = (ec[2] - D) / dir[2], T = add([0, 0, D], mul(dir, t));          // same depth
+  const rc = toCam(S.P[root]), mc = toCam(S.P[mid]);
+  const L1 = len(sub(mc, rc)), L2 = len(sub(ec, mc));
+  let toT = sub(T, rc); let c = len(toT);
+  c = Math.max(Math.abs(L1 - L2) + 1e-3, Math.min(L1 + L2 - 1e-3, c));
+  const dT = norm(toT);
+  let pole = sub(mc, rc); pole = sub(pole, mul(dT, dot(pole, dT)));
+  if (len(pole) < 0.15 * L1){
+    // a straight limb has no bend to keep: knees bend forward, elbows backward
+    const across = norm(sub(S.P[IX.l_shoulder], S.P[IX.r_shoulder]));
+    const fwd = camRot(norm(cross(across, [0, 1, 0])));
+    pole = mul(fwd, J[i].endsWith("ankle") ? 1 : -1);
+    pole = sub(pole, mul(dT, dot(pole, dT)));
+    if (len(pole) < 1e-6) pole = cross(dT, [0, 0, 1]);
+  }
+  const pn = norm(pole);
+  const cosA = Math.max(-1, Math.min(1, (L1*L1 + c*c - L2*L2) / (2 * L1 * c)));
+  const elbow = add(rc, add(mul(dT, L1 * cosA), mul(pn, L1 * Math.sqrt(1 - cosA*cosA))));
+  rotateSubtree(mid, add(camRotInv(elbow), S.center));
+  const end = add(rc, mul(dT, c));
+  rotateSubtree(i, add(camRotInv(end), S.center));
+}
+// side view: depth and height of the camera space, the bone's length kept
+function dragSide(i, x, y, W, H){
+  if (i === IX.pelvis) return;
+  const par = PARENT[i], L = len(sub(S.P[i], S.P[par]));
+  const k = 0.86 * H / 190, pc = toCam(S.P[par]), ic = toCam(S.P[i]);
+  const want = [ic[0], (H/2 - y) / k, (W/2 - x) / k];
+  const v = norm(sub(want, pc));
+  rotateSubtree(i, add(camRotInv(add(pc, mul(v, L))), S.center));
+}
+// body mode: stretch the bone parent->i toward the mouse (the rest of the limb comes along)
+function dragBody(i, x, y, W, H){
+  if (i === IX.pelvis) return;
+  const par = PARENT[i], a = project(S.P[par], W, H), b = project(S.P[i], W, H);
+  const sl = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  const along = ((x - a.x) * (b.x - a.x) + (y - a.y) * (b.y - a.y)) / sl;
+  const ratio = Math.max(0.2, Math.min(4, along / sl));
+  const apply = j => { const pj = PARENT[j], v = sub(S.P[j], S.P[pj]);
+    moveSubtree(j, mul(v, ratio - 1)); };
+  apply(i);
+  if ($("sym").checked && MIRROR[i] !== i) apply(MIRROR[i]);
+}
+let drag = null;
+function down(cv, e){
+  const [x, y] = evPos(cv, e);
+  if (e.altKey){ const i = pick(cv, x, y); if (i >= 0){ remember(); sel = i; togglePin(i); draw(); } return; }
+  if (mode === "persp" && cv === front){ drag = {cam: true, x, y, yaw: S.cam.yaw, pitch: S.cam.pitch}; remember(); return; }
+  sel = pick(cv, x, y); draw();
+  if (sel >= 0){ remember(); drag = {cv, i: sel, single: e.shiftKey}; cv.setPointerCapture(e.pointerId); }
+}
+function move(cv, e){
+  if (!drag) return;
+  const [x, y] = evPos(cv, e), W = cv.width, H = cv.height;
+  if (drag.cam){
+    S.cam.yaw = Math.max(-180, Math.min(180, drag.yaw + (x - drag.x) * 180 / W));
+    S.cam.pitch = Math.max(-80, Math.min(80, drag.pitch + (y - drag.y) * 120 / H));
+    syncUI();
+  } else if (cv === side){ if (mode !== "body"){ dragSide(drag.i, x, y, W, H); afterEdit(drag.i); } }
+  else if (mode === "pose"){
+    const i = drag.i, pinnedKid = KIDS[i].some(k => S.pins && S.pins[k]);
+    if (i === IX.pelvis && S.pins && S.pins[i]) { /* pinned: the whole figure does not move */ }
+    else if (pinnedKid && !drag.single && dragMidPinned(i, x, y, W, H)) { /* the hand / foot stays */ }
+    else if (IK_END[J[i]] && !drag.single) dragIK(i, x, y, W, H);
+    else dragPose(i, x, y, W, H);
+    afterEdit(i);
+  }
+  else if (mode === "body") dragBody(drag.i, x, y, W, H);
+  draw();
+}
+function up(){ drag = null; }
+for (const cv of [front, side]){
+  cv.addEventListener("pointerdown", e => down(cv, e));
+  cv.addEventListener("pointermove", e => move(cv, e));
+  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+}
+front.addEventListener("dblclick", e => {        // flip the bone toward / away from the camera
+  if (mode !== "pose") return;
+  const [x, y] = evPos(front, e), i = pick(front, x, y);
+  if (i <= 0) return;
+  remember();
+  const par = PARENT[i], pc = toCam(S.P[par]), ic = toCam(S.P[i]);
+  const flipped = [ic[0], ic[1], pc[2] - (ic[2] - pc[2])];
+  rotateSubtree(i, add(camRotInv(flipped), S.center)); afterEdit(i); draw();
+});
+front.addEventListener("wheel", e => {
+  e.preventDefault();
+  const [x, y] = evPos(front, e), step = e.deltaY < 0 ? 1 : -1;
+  if (mode === "persp"){ S.cam.lens = Math.max(14, Math.min(200, S.cam.lens * (step > 0 ? 1.1 : 1/1.1))); syncUI(); }
+  else if (mode === "body"){ const i = pick(front, x, y);
+    if (i >= 0){ remember(); const k = step > 0 ? 1.08 : 1/1.08; S.R[i] *= k;
+      if ($("sym").checked && MIRROR[i] !== i) S.R[MIRROR[i]] *= k; } }
+  else S.cam.zoom = Math.max(0.3, Math.min(4, S.cam.zoom * (step > 0 ? 1.1 : 1/1.1)));
+  draw();
+}, {passive: false});
+document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "z"){ e.preventDefault(); undo(); } });
+
+// ---- body mode sliders: whole-body scale, head, thickness (relative to the slider's last value)
+let lastScale = {all: 100, head: 100, thick: 100};
+function scaleAbout(k){
+  const c = S.P[IX.pelvis]; S.P = S.P.map(p => add(c, mul(sub(p, c), k))); S.R = S.R.map(r => r * k);
+}
+function scaleHead(k){
+  const n = S.P[IX.neck], v = sub(S.P[IX.head], n);
+  S.P[IX.head] = add(n, mul(v, k)); S.R[IX.head] *= k;
+}
+
+// ---- body by sex: bone lengths (cm, from the parent) and widths; the pose's directions kept
+const SEX_BODY = {
+  female: {height: 158, head: 10.8, waistR: 11, hipR: 7,
+           len: {waist: 13, chest: 18, neck: 13, head: 11, r_shoulder: 17.5, r_elbow: 26, r_wrist: 22,
+                 r_hip: 10.5, r_knee: 41, r_ankle: 39, r_toe: 13}},
+  male:   {height: 171, head: 11.25, waistR: 13.5, hipR: 6,
+           len: {waist: 14, chest: 20, neck: 14, head: 11.5, r_shoulder: 21, r_elbow: 29, r_wrist: 25,
+                 r_hip: 9.5, r_knee: 45, r_ankle: 42, r_toe: 14.5}},
+};
+function setLengths(lengths){                 // keep every bone's direction, change its length
+  const old = S.P.map(p => p.slice()), out = S.P.map(p => p.slice());
+  for (const i of subtree(0).slice(1)){
+    const p = PARENT[i], name = J[i].startsWith("l_") ? "r_" + J[i].slice(2) : J[i];
+    const L = name in lengths ? lengths[name] : len(sub(old[i], old[p]));
+    out[i] = add(out[p], mul(norm(sub(old[i], old[p])), L));
+  }
+  S.P = out;
+}
+function applySex(sex){
+  const b = SEX_BODY[sex];
+  setLengths(b.len);
+  S.R[IX.head] = b.head; S.R[IX.waist] = b.waistR; S.R[IX.r_hip] = S.R[IX.l_hip] = b.hipR;
+  scaleAbout(b.height / standingHeight());
+}
+// The body's own frame: the whole figure's turn (S.body), so a bone's angles stay the same
+// when the whole figure is turned. Bone angles are measured from the bone's rest direction:
+// 前後 toward the figure's front, 左右 outward (for the middle of the body: toward its left).
+function bodyRot(v, inv){
+  const b = S.body, steps = [[[0, 0, 1], b.roll], [[1, 0, 0], b.pitch], [[0, 1, 0], b.yaw]];
+  if (inv){ steps.reverse(); for (const st of steps) v = rotAxis(v, st[0], -deg(st[1])); return v; }
+  for (const st of steps) v = rotAxis(v, st[0], deg(st[1]));
+  return v;
+}
+function restFrame(i){
+  const e1 = norm(sub(REST[i], REST[PARENT[i]]));
+  const ref = Math.abs(e1[2]) < 0.9 ? [0, 0, 1] : [0, 1, 0];
+  const ef = norm(sub(ref, mul(e1, dot(ref, e1))));
+  let es = cross(e1, ef);
+  if (J[i].startsWith("l_")) es = mul(es, -1);       // + = outward on both sides
+  return [e1, ef, es];
+}
+function boneAngles(i){
+  const v = norm(bodyRot(sub(S.P[i], S.P[PARENT[i]]), true));
+  const [e1, ef, es] = restFrame(i), a = dot(v, e1), b = dot(v, ef), c = dot(v, es);
+  return {fwd: Math.atan2(b, a) * 180 / Math.PI,
+          side: Math.atan2(c, Math.hypot(a, b)) * 180 / Math.PI};
+}
+function setBoneAngles(i, fwd, side){
+  const [e1, ef, es] = restFrame(i), L = len(sub(S.P[i], S.P[PARENT[i]]));
+  const f = deg(fwd), sd = deg(side);
+  const vb = add(mul(add(mul(e1, Math.cos(f)), mul(ef, Math.sin(f))), Math.cos(sd)), mul(es, Math.sin(sd)));
+  rotateSubtree(i, add(S.P[PARENT[i]], mul(bodyRot(vb), L)));
+}
+function setTwist(i, v){
+  v = clampTwist(i, v);
+  const p = PARENT[i], axis = sub(S.P[i], S.P[p]), d = deg(v - (S.twist[i] || 0));
+  for (const k of subtree(i)) S.P[k] = add(S.P[p], rotAxis(sub(S.P[k], S.P[p]), axis, d));
+  S.twist[i] = v;
+}
+function setBodyTurn(key, v){
+  const c = S.P[IX.pelvis], old = S.P.map(q => bodyRot(sub(q, c), true));
+  S.body[key] = v;
+  S.P = old.map(q => add(c, bodyRot(q)));
+}
+// [id, label, min, max, step, unit, kind: bone | any | root]
+const JOINT_CTL = [
+  ["jFwd", "前後（＋前へ）", -180, 180, 1, "°", "bone"],
+  ["jSide", "左右（＋外へ、胴・首・頭は人物の左へ）", -90, 90, 1, "°", "bone"],
+  ["jTwist", "ねじり（骨を軸に先を回す）", -180, 180, 1, "°", "bone"],
+  ["jLen", "骨の長さ", 1, 120, 0.5, "cm", "bone"],
+  ["jRad", "丸の大きさ（半径）", 0.5, 40, 0.5, "cm", "any"],
+  ["pX", "位置：左右（＋人物の左）", -300, 300, 1, "cm", "root"],
+  ["pY", "位置：上下", -100, 300, 1, "cm", "root"],
+  ["pZ", "位置：前後（＋前）", -300, 300, 1, "cm", "root"],
+  ["bYaw", "体の向き", -180, 180, 1, "°", "root"],
+  ["bPitch", "体の前後の傾き（＋前へ）", -90, 90, 1, "°", "root"],
+  ["bRoll", "体の左右の傾き", -90, 90, 1, "°", "root"],
+];
+// what the three angles mean at each joint (all joints turn about three axes: 前後, 左右, ねじり)
+const AXIS_NAMES = {
+  head: ["うなずく（＋下を向く）", "首をかしげる（＋人物の左へ）", "左右を向く（＋人物の左を向く）"],
+  neck: ["首の前後（＋前へ）", "首の左右の傾き", "首のひねり（顔も回る）"],
+  chest: ["胸の前屈・後屈（＋前へ）", "胸の横への傾き", "胸のひねり"],
+  waist: ["腰の前屈・後屈（＋前へ）", "腰の横への傾き", "腰のひねり"],
+  r_shoulder: ["肩を前へ・後ろへ", "肩をすくめる・下げる", "肩のひねり"],
+  r_elbow: ["腕を前・上へ上げる（＋前へ）", "腕を横へ上げる（＋外へ）", "腕のひねり（内・外へ回す）"],
+  r_wrist: ["肘の曲げ（前腕の前後）", "前腕の左右", "前腕のひねり（手のひらの向き）"],
+  r_hip: ["股の位置（前後）", "股の位置（左右）", "骨盤のひねり"],
+  r_knee: ["脚を前・後ろへ（＋前へ）", "脚を横へ開く（＋外へ）", "脚のひねり（つま先の向き）"],
+  r_ankle: ["膝の曲げ（すねの前後）", "すねの左右", "すねのひねり"],
+  r_toe: ["足首の上下（つま先）", "足首の左右", "足のひねり"],
+};
+function axisNames(i){
+  const n = J[i].startsWith("l_") ? "r_" + J[i].slice(2) : J[i];
+  return AXIS_NAMES[n] || ["前後（＋前へ）", "左右（＋外へ）", "ねじり（骨を軸に先を回す）"];
+}
+function jointValue(id){
+  const i = sel;
+  if (id === "jFwd") return boneAngles(i).fwd;
+  if (id === "jSide") return boneAngles(i).side;
+  if (id === "jTwist") return S.twist[i] || 0;
+  if (id === "jLen") return len(sub(S.P[i], S.P[PARENT[i]]));
+  if (id === "jRad") return S.R[i];
+  if (id === "pX") return S.P[IX.pelvis][0];
+  if (id === "pY") return S.P[IX.pelvis][1];
+  if (id === "pZ") return S.P[IX.pelvis][2];
+  return S.body[{bYaw: "yaw", bPitch: "pitch", bRoll: "roll"}[id]];
+}
+function setJointValue(id, v){
+  const i = sel, sym = $("sym").checked && MIRROR[i] !== i;
+  const both = fn => { fn(i); if (sym) fn(MIRROR[i]); };
+  if (id === "jFwd" || id === "jSide"){
+    const a = boneAngles(i), fwd = id === "jFwd" ? v : a.fwd, side = id === "jSide" ? v : a.side;
+    setBoneAngles(i, fwd, side);
+  } else if (id === "jTwist") setTwist(i, v);
+  else if (id === "jLen") both(j => { const d = sub(S.P[j], S.P[PARENT[j]]); moveSubtree(j, mul(norm(d), v - len(d))); });
+  else if (id === "jRad") both(j => { S.R[j] = v; });
+  else if (id[0] === "p"){ const k = {pX: 0, pY: 1, pZ: 2}[id], d = [0, 0, 0];
+    d[k] = v - S.P[IX.pelvis][k]; S.P = S.P.map(q => add(q, d)); }
+  else setBodyTurn({bYaw: "yaw", bPitch: "pitch", bRoll: "roll"}[id], v);
+}
+// ---- human joint limits (degrees) ---------------------------------------------------------------
+// Ball joints: the bone's 前後 / 左右 in the body's frame (see boneAngles). Hinges (elbow, knee):
+// the bend from the upper bone, one way only. Ankle: the angle between the shin and the foot.
+const BALL = {
+  waist: {fwd: [-30, 45], side: [-30, 30]},       // the lower back: bend forward / back, sideways
+  chest: {fwd: [-25, 40], side: [-25, 25]},
+  neck: {fwd: [-15, 25], side: [-15, 15]},
+  head: {fwd: [-60, 70], side: [-45, 45]},
+  r_shoulder: {fwd: [-20, 20], side: [-15, 30]},  // the shoulder girdle: shrug, forward / back
+  r_elbow: {fwd: [-70, 180], side: [-40, 90]},    // the upper arm at the shoulder
+  r_hip: {fwd: [-10, 10], side: [-10, 10]},       // the pelvis' own width: barely moves
+  r_knee: {fwd: [-40, 125], side: [-30, 50]},     // the thigh at the hip
+};
+const HINGE = {r_wrist: {max: 150, way: 1, tol: 0.35}, r_ankle: {max: 150, way: -1, tol: 0.2}};   // elbow: not far backward; knee: not forward
+const FOOT = {r_toe: [70, 140]};                   // angle between the shin and the foot
+const TWIST = {r_elbow: 90, r_wrist: 80, r_knee: 45, r_ankle: 30, waist: 40, chest: 40, neck: 50, head: 80};
+const limitsOn = () => $("limits").checked;
+const sideName = n => n.startsWith("l_") ? "r_" + n.slice(2) : n;
+const clampV = (v, [a, b]) => Math.max(a, Math.min(b, v));
+function bodyFront(){ return bodyRot([0, 0, 1]); }
+function enforceLimits(){
+  if (!limitsOn()) return;
+  for (const i of subtree(0).slice(1)){
+    const name = sideName(J[i]), p = PARENT[i];
+    if (BALL[name]){
+      // measured from the parent bone (the chest leaning back does not count as the neck's
+      // bend): the parent's swing from standing is taken out first
+      const lim = BALL[name], pp = PARENT[p];
+      let v = bodyRot(sub(S.P[i], S.P[p]), true);
+      const L = len(v);
+      let pc = null, pr = null;
+      if (pp >= 0){ pc = bodyRot(sub(S.P[p], S.P[pp]), true); pr = sub(REST[p], REST[pp]); v = rotBetween(v, pc, pr); }
+      const [e1, ef, es] = restFrame(i), d = norm(v);
+      const a = dot(d, e1), b = dot(d, ef), c = dot(d, es);
+      const fwd = Math.atan2(b, a) * 180 / Math.PI, side = Math.atan2(c, Math.hypot(a, b)) * 180 / Math.PI;
+      const f = clampV(fwd, lim.fwd), sd = clampV(side, lim.side);
+      if (Math.abs(f - fwd) > 1e-6 || Math.abs(sd - side) > 1e-6){
+        const fr = deg(f), sr = deg(sd);
+        let vb = add(mul(add(mul(e1, Math.cos(fr)), mul(ef, Math.sin(fr))), Math.cos(sr)), mul(es, Math.sin(sr)));
+        if (pp >= 0) vb = rotBetween(vb, pr, pc);
+        rotateSubtree(i, add(S.P[p], mul(bodyRot(norm(vb)), L)));
+      }
+    } else if (HINGE[name]){
+      // the bend is at most `max` degrees, and not the wrong way: an elbow does not fold
+      // backward, a knee not forward. Sideways is allowed (the upper bone's own twist, which
+      // the figure does not track, decides that: a hand on the hip bends the elbow inward).
+      const g = PARENT[p], up = norm(sub(S.P[p], S.P[g])), v = sub(S.P[i], S.P[p]), L = len(v);
+      // the upper bone's own front: the body's front, turned the way the upper bone turned
+      // from standing (a thigh raised forward has its front facing up)
+      const upRest = bodyRot(norm(sub(REST[p], REST[g])));
+      let front = rotBetween(bodyFront(), upRest, up);
+      front = sub(front, mul(up, dot(front, up)));
+      if (len(front) < 1e-3) front = sub(bodyRot([0, 1, 0]), mul(up, dot(bodyRot([0, 1, 0]), up)));
+      front = mul(norm(front), HINGE[name].way);
+      const d = norm(v), along = dot(d, up);
+      let w = sub(d, mul(up, along));
+      const wl = len(w);
+      let bend = Math.atan2(wl, along) * 180 / Math.PI;
+      let dir = wl > 1e-6 ? mul(w, 1 / wl) : front;
+      const tol = HINGE[name].tol;
+      if (dot(dir, front) < -tol && bend > 5){
+        // turn the bend's direction back to the edge of what is allowed
+        const side = norm(sub(dir, mul(front, dot(dir, front))));
+        const c = -tol, sn = Math.sqrt(1 - c * c);
+        dir = len(side) > 1e-6 ? add(mul(front, c), mul(side, sn)) : front;
+      }
+      bend = Math.max(0, Math.min(HINGE[name].max, bend));
+      const nd = add(mul(up, Math.cos(deg(bend))), mul(dir, Math.sin(deg(bend))));
+      if (len(sub(nd, d)) > 1e-4) rotateSubtree(i, add(S.P[p], mul(nd, L)));
+    } else if (FOOT[name]){
+      const shin = norm(sub(S.P[p], S.P[PARENT[p]])), v = sub(S.P[i], S.P[p]), L = len(v), d = norm(v);
+      const ang = Math.acos(Math.max(-1, Math.min(1, dot(mul(shin, -1), d)))) * 180 / Math.PI;
+      const want = clampV(ang, FOOT[name]);
+      if (Math.abs(want - ang) > 1e-3){
+        let axis = cross(mul(shin, -1), d); if (len(axis) < 1e-6) axis = cross(shin, bodyFront());
+        const nd = rotAxis(mul(shin, -1), axis, deg(want));
+        rotateSubtree(i, add(S.P[p], mul(norm(nd), L)));
+      }
+    }
+  }
+}
+// pins: a pinned wrist / ankle stays where it was pinned (two-bone IK from the shoulder / hip);
+// a pinned elbow / knee keeps the upper bone's end; the pinned pelvis does not move
+function solveIK(i, target){
+  const mid = PARENT[i], root = PARENT[mid];
+  const r = S.P[root], m = S.P[mid], e = S.P[i];
+  const L1 = len(sub(m, r)), L2 = len(sub(e, m));
+  let c = len(sub(target, r));
+  c = Math.max(Math.abs(L1 - L2) + 1e-3, Math.min(L1 + L2 - 1e-3, c));
+  const dT = norm(sub(target, r));
+  let pole = sub(sub(m, r), mul(dT, dot(sub(m, r), dT)));
+  if (len(pole) < 0.15 * L1){
+    pole = mul(bodyFront(), J[i].endsWith("ankle") ? 1 : -1);
+    pole = sub(pole, mul(dT, dot(pole, dT)));
+    if (len(pole) < 1e-6) pole = cross(dT, [0, 0, 1]);
+  }
+  const pn = norm(pole);
+  const cosA = Math.max(-1, Math.min(1, (L1*L1 + c*c - L2*L2) / (2 * L1 * c)));
+  rotateSubtree(mid, add(r, add(mul(dT, L1 * cosA), mul(pn, L1 * Math.sqrt(1 - cosA*cosA)))));
+  rotateSubtree(i, add(r, mul(dT, c)));
+}
+const PINNABLE = new Set(["pelvis", "r_wrist", "l_wrist", "r_ankle", "l_ankle", "r_elbow", "l_elbow", "r_knee", "l_knee"]);
+function holdPins(except){
+  for (const [k, pos] of Object.entries(S.pins || {})){
+    const i = +k; if (i === except) continue;
+    if (len(sub(S.P[i], pos)) < 1e-3) continue;
+    if (i === IX.pelvis){ const d = sub(pos, S.P[i]); S.P = S.P.map(q => add(q, d)); continue; }
+    if (IK_END[J[i]]) solveIK(i, pos);
+    else rotateSubtree(i, add(S.P[PARENT[i]], mul(norm(sub(pos, S.P[PARENT[i]])), len(sub(S.P[i], S.P[PARENT[i]])))));
+  }
+}
+function afterEdit(moved){
+  enforceLimits();
+  if (typeof sceneAfterEdit === "function") sceneAfterEdit(moved);
+  holdPins(moved);
+  if (moved !== undefined && S.pins && S.pins[moved]) S.pins[moved] = S.P[moved].slice();
+}
+function togglePin(i){
+  if (!PINNABLE.has(J[i])) { say("固定できるのは腰・肘・手首・膝・足首です。", true); return; }
+  S.pins = S.pins || {};
+  if (S.pins[i]) delete S.pins[i]; else S.pins[i] = S.P[i].slice();
+  say(S.pins[i] ? `${J_JA[J[i]]}を固定しました。` : `${J_JA[J[i]]}の固定を外しました。`);
+}
+// dragging an elbow / knee whose hand / foot is pinned: the joint slides on the circle where
+// both bones still reach (the hand / foot stays)
+function dragMidPinned(i, x, y, W, H){
+  const end = KIDS[i].find(k => S.pins && S.pins[k]), root = PARENT[i];
+  const r = S.P[root], e = S.pins[end], L1 = len(sub(S.P[i], r)), L2 = len(sub(S.P[end], S.P[i]));
+  const d = len(sub(e, r)); if (d < 1e-3 || d > L1 + L2) return false;
+  const u = norm(sub(e, r)), a = (L1*L1 - L2*L2 + d*d) / (2*d), h = Math.sqrt(Math.max(0, L1*L1 - a*a));
+  const c = add(r, mul(u, a));
+  const f = lensF(W, H), D = camDist(W, H), mc = toCam(S.P[i]);
+  const dir = norm([(x - W/2) / f, -(y - H/2) / f, -1]), t = (mc[2] - D) / dir[2];
+  const T = add(camRotInv(add([0, 0, D], mul(dir, t))), S.center);
+  let v = sub(T, c); v = sub(v, mul(u, dot(v, u)));
+  if (len(v) < 1e-6) return false;
+  rotateSubtree(i, add(c, mul(norm(v), h)));
+  rotateSubtree(end, e);
+  return true;
+}
+
+function clampTwist(i, v){
+  const t = TWIST[sideName(J[i])];
+  return limitsOn() && t ? Math.max(-t, Math.min(t, v)) : v;
+}
+
+function buildJointPanel(){
+  $("jointCtl").innerHTML = JOINT_CTL.map(([id, label, mn, mx, st, unit, kind]) => `
+    <div data-kind="${kind}" id="${id}Row"><label>${label}</label>
+      <div class="row"><input type="range" id="${id}" min="${mn}" max="${mx}" step="${st}">
+        <input type="number" class="num" id="${id}N" step="${st}"><span class="unit">${unit}</span></div></div>`).join("");
+  for (const [id] of JOINT_CTL){
+    const r = $(id), n = $(id + "N");
+    r.addEventListener("pointerdown", remember);
+    r.addEventListener("input", () => { if (sel < 0) return; setJointValue(id, +r.value); afterEdit(sel); draw(); });
+    n.addEventListener("change", () => { const v = +n.value; if (sel < 0 || !isFinite(v)) return;
+      remember(); setJointValue(id, v); afterEdit(sel); draw(); });
+  }
+}
+function showSelected(){
+  const ok = sel >= 0, root = sel === IX.pelvis;
+  $("selName").textContent = ok ? J_JA[J[sel]] : "（丸をクリック）";
+  // the three axes named for this joint
+  if (ok && !root){ const nm = axisNames(sel);
+    [["jFwd", 0], ["jSide", 1], ["jTwist", 2]].forEach(([id, k]) => { $(id + "Row").querySelector("label").textContent = nm[k]; }); }
+  // pin and hand shape
+  $("pinRow").style.display = ok && PINNABLE.has(J[sel]) ? "" : "none";
+  $("pin").checked = !!(ok && S.pins && S.pins[sel]);
+  const arm = ok && /_(shoulder|elbow|wrist)$/.test(J[sel]) ? J[sel][0] : null;
+  $("handRow").style.display = arm ? "" : "none";
+  if (arm){ $("handRow").querySelector("label").textContent = (arm === "r" ? "右手" : "左手") + "の形";
+    if (document.activeElement !== $("handSel")) $("handSel").value = S.hands[arm]; }
+  const np = Object.keys(S.pins || {}).length;
+  $("pinInfo").textContent = np ? `固定中の関節：${Object.keys(S.pins).map(k => J_JA[J[+k]]).join("・")}` : "";
+  for (const [id, , mn, mx, , , kind] of JOINT_CTL){
+    const show = ok && (kind === "any" || (kind === "root") === root);
+    $(id + "Row").style.display = show ? "" : "none";
+    if (!show) continue;
+    const v = jointValue(id), r = $(id), n = $(id + "N");
+    const busy = document.activeElement === r || document.activeElement === n;
+    if (!busy){ r.value = v; n.value = Math.round(v * 10) / 10; }
+  }
+}
+
+// ---- presets: bends of the standing figure ----------------------------------------------------
+// [joint, axis, degrees]: the joint's own bone and everything after it turn about its parent.
+const PRESETS = {
+  "立ち（標準）": [],
+};
+const AXES = {x: [1,0,0], y: [0,1,0], z: [0,0,1]};
+function applyPreset(name){
+  S.P = REST.map(p => p.slice()); S.body = {yaw: 0, pitch: 0, roll: 0}; S.twist = REST.map(() => 0);
+  for (const [joint, ax, d] of PRESETS[name]){
+    const i = IX[joint], par = PARENT[i], p = S.P[par];
+    for (const k of subtree(i)) S.P[k] = add(p, rotAxis(sub(S.P[k], p), AXES[ax], deg(d)));
+  }
+  // stand on the ground: the lowest point back at the floor
+  const low = Math.min(...S.P.map(p => p[1]));
+  if (low > 0) S.P = S.P.map(p => [p[0], p[1] - low + 2, p[2]]);
+}
+
+// ---- UI wiring ---------------------------------------------------------------------------
+const $ = id => document.getElementById(id);
+const UNITS = {scaleAll: 1, scaleHead: 1, scaleThick: 1, lens: 1, yaw: 1, pitch: 1, roll: 1};
+const TC = Array.isArray(window.USER_POSE_PRESETS) ? window.USER_POSE_PRESETS : [];
+$("preset").innerHTML = Object.keys(PRESETS).map(n => `<option>${n}</option>`).join("");
+// user presets: possibly thousands, so a group, a search and a list
+const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+if (TC.length){
+  $("tcBox").style.display = ""; $("tcCount").textContent = TC.length;
+  const groups = [...new Set(TC.map(t => t.group))].sort();
+  $("tcGroup").innerHTML = `<option value="">すべての分類</option>` + groups.map(g =>
+    `<option value="${esc(g)}">${esc(g)}（${TC.filter(t => t.group === g).length}）</option>`).join("");
+}
+// Search in Japanese or English: preset names may mix languages and spellings
+// sitting ...), so each word of the query is looked up in a small two-language word list and
+// matches any of the forms (ひらがな = カタカナ, 全角 = 半角, 大文字 = 小文字 are folded too).
+const WORDS = [
+  ["座る 座り すわる suwari sit sitting seat seated", "座"], ["立つ 立ち たつ tachi stand standing", "立"],
+  ["寝る 寝ころび 寝転び 寝そべる ねる sleep sleeping lie lying laying reclining", "寝"],
+  ["走る 走り はしる run running dash ダッシュ", "走"], ["歩く 歩き walk walking", "歩"],
+  ["ジャンプ 跳ぶ jump jumping leap", "跳"], ["構え かまえ kamae stance ready standby スタンバイ guard", "構"],
+  ["抜刀 ばっとう battou battō draw iai 居合", "抜"], ["袈裟斬り けさぎり kesa kesagiri diagonal slash", "袈裟"],
+  ["逆袈裟斬り 逆袈裟 gyakukesa gyakukes reverse upward diagonal slash", "逆袈裟"],
+  ["突き つき tsuki thrust stab lunge", "突"], ["横薙ぎ 横なぎ yokonagi horizontal sweep slash", "横薙"],
+  ["斬り上げ 切り上げ kiriage upward upslash", "上げ"], ["斬り下ろし 切り下ろし kiriorosh downward downslash", "下ろし"],
+  ["日本刀 刀 かたな katana", "刀"], ["剣 けん ソード ロングソード sword longsword", "剣"],
+  ["銃 じゅう ガン ハンドガン ピストル gun handgun pistol firearm shooting shoot", "銃"],
+  ["膝射 ニーリング ニーリングポジション kneeling kneel knee knees", "膝"],
+  ["伏射 プローン プローンポジション prone lying-prone", "伏"],
+  ["キック 蹴り 蹴る kick kicking", "蹴"], ["パンチ 殴る 拳 punch fist fists boxing", "パンチ"],
+  ["手 ハンド hand hands gesture hyoujou", "手"], ["顔 表情 ひょうじょう face expression facial hyoujou", "顔"],
+  ["スーツ すーつ suit suits business", "スーツ"], ["アクション action", "アクション"],
+  ["戦う バトル 戦闘 battle fight fighting combat", "戦"], ["女性 女 女の子 少女 female woman girl", "女"],
+  ["男性 男 男の子 少年 male man boy", "男"], ["正面 front frontal", "正面"], ["背面 後ろ 背中 back rear behind", "背面"],
+  ["右 みぎ right", "右"], ["左 ひだり left", "左"], ["奥 深い far back deep", "奥"],
+  ["アオリ あおり 煽り 見上げ low-angle lowangle below worm", "アオリ"],
+  ["フカン 俯瞰 ふかん high-angle highangle above bird", "フカン"],
+  ["クローズアップ アップ close closeup close-up", "アップ"], ["水平 eyelevel level", "水平"],
+  ["かわいい 可愛い カワイイ kawaii cute pretty", "かわいい"], ["かっこいい カッコイイ kakkoii cool", "かっこいい"],
+  ["セクシー sexy", "セクシー"], ["マッチョ macho muscle muscular", "マッチョ"], ["ヒーロー hero", "ヒーロー"],
+  ["コミカル comical funny", "コミカル"], ["クール petitcool cool", "クール"], ["悪役 ヴィラン villain", "悪役"],
+  ["椅子 いす イス chair", "椅子"], ["ソファ ソファー couch sofa", "ソファ"], ["音楽 楽器 music instrument", "音楽"],
+  ["スポーツ sports sport", "スポーツ"], ["振り返る 振り向き turn turning looking-back", "振り"],
+  ["日常 life everyday daily", "日常"], ["魔法 magic", "魔法"], ["忍者 ninja", "忍者"], ["侍 samurai", "侍"],
+  ["片手 onehand one-hand single-hand", "片手"], ["両手 twohand two-hand both-hands", "両手"],
+  ["溜め ため charge tame windup", "溜"], ["インパクト impact hit", "インパクト"], ["武器 weapon weapons", "武器"],
+  ["盾 たて shield", "盾"], ["杖 つえ staff", "杖"], ["弓 ゆみ bow archery", "弓"], ["槍 やり spear lance", "槍"],
+  ["グリップ grip", "グリップ"], ["クランプ clamp", "クランプ"], ["体勢 姿勢 pose posture", "ポーズ"],
+  ["ポーズ pose poses", "ポーズ"], ["アニメ anime", "アニメ"], ["衣装 ファッション fashion clothing clothes", "ファッション"],
+  ["背負う バックパック backpack", "背負"], ["ダンス 踊る dance dancing", "踊"], ["飛ぶ 落ちる fly flying fall falling", "飛"],
+  ["チビ ちび chibi deformed", "チビ"], ["小道具 props prop", "小道具"], ["武術 martial", "武術"],
+];
+const foldText = t => t.normalize("NFKC").toLowerCase().replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+const WORD_FORMS = WORDS.map(([forms]) => forms.split(/\s+/).map(foldText));
+const STOP = new Set(["angle", "view", "shot", "up", "of", "the", "and", "a", "in"]);   // not searched for
+function alternatives(token){
+  const cjk = /[^\u0000-\u007f]/.test(token);
+  const exact = WORD_FORMS.filter(forms => forms.includes(token));
+  // an exact word wins ("stand" is not "standby"); otherwise a prefix either way
+  // ("sit" -> sitting, "sitting" -> sit; "female" must not pull in "male")
+  const pool = exact.length ? exact : WORD_FORMS.filter(forms => (token.length >= 2 || cjk) &&
+    forms.some(f => f.startsWith(token) || (f.length >= 3 && token.startsWith(f))));
+  const alts = new Set([token]);
+  pool.forEach(forms => forms.forEach(f => alts.add(f)));
+  return [...alts];
+}
+function tcFilter(){
+  const g = $("tcGroup").value, q = foldText($("tcSearch").value.trim());
+  const tokens = q ? q.split(/\s+/).filter(w => w && !STOP.has(w)).map(alternatives) : [];
+  const hits = [];
+  TC.forEach((t, i) => {
+    if (g && t.group !== g) return;
+    if (tokens.length){
+      const hay = t.hay || (t.hay = foldText(t.group + " " + t.name));
+      if (!tokens.every(alts => alts.some(a => hay.includes(a)))) return;
+    }
+    hits.push(i);
+  });
+  $("tcList").innerHTML = hits.slice(0, 500).map(i => `<option value="${i}">${esc(t2label(TC[i]))}</option>`).join("")
+    + (hits.length > 500 ? `<option disabled>…ほか ${hits.length - 500} 件（絞り込んでください）</option>` : "");
+}
+const t2label = t => $("tcGroup").value ? t.name : `${t.group}｜${t.name}`;
+function tcApply(i){
+  if (!(i >= 0)) return;
+  remember(); applyUserPreset(TC[i]); draw(); say(`読み込みました：${TC[i].name}`);
+}
+$("tcGroup").addEventListener("change", tcFilter);
+$("tcSearch").addEventListener("input", tcFilter);
+$("tcApply").addEventListener("click", () => tcApply(+$("tcList").value));
+$("tcList").addEventListener("dblclick", () => tcApply(+$("tcList").value));
+$("tcRandom").addEventListener("click", () => {
+  const opts = [...$("tcList").options].filter(o => !o.disabled);
+  if (!opts.length) return;
+  const o = opts[Math.floor(Math.random() * opts.length)]; $("tcList").value = o.value; tcApply(+o.value);
+});
+if (TC.length) tcFilter();
+// a pose read from a picture: only its bones' directions; the body (lengths, sizes) stays
+function applyUserPreset(t){
+  const cur = S.P.map(p => p.slice()), out = S.P.map(p => p.slice()), Q = t.P;
+  for (const i of subtree(0).slice(1)){
+    const p = PARENT[i], L = len(sub(cur[i], cur[p]));
+    out[i] = add(out[p], mul(norm(sub(Q[i], Q[p])), L));
+  }
+  S.P = out; S.body = {yaw: 0, pitch: 0, roll: 0}; S.twist = REST.map(() => 0); S.pins = {};
+  if (typeof sceneAfterEdit === "function") sceneAfterEdit();
+}
+function syncUI(){
+  for (const [id, v] of [["lens", Math.round(S.cam.lens)], ["yaw", Math.round(S.cam.yaw)],
+      ["pitch", Math.round(S.cam.pitch)], ["roll", Math.round(S.cam.roll)]]){
+    $(id).value = v; if (document.activeElement !== $(id + "V")) $(id + "V").value = v;
+  }
+}
+document.querySelectorAll("#modes button").forEach(b => b.addEventListener("click", () => {
+  mode = b.dataset.mode; document.body.className = "mode-" + mode;
+  document.querySelectorAll("#modes button").forEach(x => x.classList.toggle("on", x === b)); draw();
+}));
+$("applyPreset").addEventListener("click", () => {
+  const v = $("preset").value;
+  remember(); applyPreset(v); S.pins = {};
+  if (typeof sceneAfterEdit === "function") sceneAfterEdit();
+  S.R = REST_R.slice(); lastScale = {all: 100, head: 100, thick: 100};
+  for (const id of ["scaleAll", "scaleHead", "scaleThick"]){ $(id).value = 100; $(id + "V").value = 100; }
+  draw();
+});
+$("mirror").addEventListener("click", () => {
+  remember();
+  const P = S.P.map(p => [-p[0], p[1], p[2]]);
+  S.P = J.map((_, i) => P[MIRROR[i]]); S.R = J.map((_, i) => S.R[MIRROR[i]]);
+  S.hands = {r: S.hands.l, l: S.hands.r};
+  S.pins = Object.fromEntries(Object.entries(S.pins || {}).map(([k, q]) => [MIRROR[+k], [-q[0], q[1], q[2]]]));
+  S.body = {yaw: -S.body.yaw, pitch: S.body.pitch, roll: -S.body.roll};
+  S.twist = J.map((_, i) => -(S.twist[MIRROR[i]] || 0));
+  (S.items || []).forEach(it => { if (it.hand) it.hand = it.hand === "r" ? "l" : "r";
+    if (it.base) it.base = [-it.base[0], it.base[1], it.base[2]]; if (it.yaw) it.yaw = -it.yaw; });
+  if (S.wire && S.wire.anchor) S.wire.anchor = [-S.wire.anchor[0], S.wire.anchor[1], S.wire.anchor[2]];
+  syncUI(); draw();
+});
+$("undo").addEventListener("click", undo);
+for (const [id, set] of [["lens", v => S.cam.lens = v], ["yaw", v => S.cam.yaw = v], ["pitch", v => S.cam.pitch = v],
+    ["roll", v => S.cam.roll = v]]){
+  $(id).addEventListener("input", e => { set(+e.target.value); syncUI(); draw(); });
+}
+$("camReset").addEventListener("click", () => { remember(); S.cam = fresh().cam; syncUI(); draw(); });
+for (const [id, key, fn] of [["scaleAll", "all", scaleAbout], ["scaleHead", "head", scaleHead],
+    ["scaleThick", "thick", k => { S.R = S.R.map(r => r * k); }]]){
+  $(id).addEventListener("pointerdown", remember);
+  $(id).addEventListener("input", e => {
+    const v = +e.target.value; fn(v / lastScale[key]); lastScale[key] = v;
+    if (document.activeElement !== $(id + "V")) $(id + "V").value = v; draw();
+  });
+}
+// a number typed next to a slider moves the slider (beyond its ends too, for the scales)
+for (const id of Object.keys(UNITS)){
+  $(id + "V").addEventListener("change", e => {
+    const v = +e.target.value; if (!isFinite(v)) return;
+    remember(); const r = $(id);
+    if (id.startsWith("scale")){ r.min = Math.min(+r.min, v); r.max = Math.max(+r.max, v); }
+    r.value = v; r.dispatchEvent(new Event("input"));
+  });
+}
+$("heightN").addEventListener("change", e => {
+  const v = +e.target.value; if (!(v > 20)) return;
+  remember(); scaleAbout(v / standingHeight()); draw();
+});
+buildJointPanel();
+$("handSel").innerHTML = Object.keys(HANDS).map(k => `<option value="${k}">${HAND_JA[k]}（${k}）</option>`).join("");
+$("handSel").addEventListener("change", e => { if (sel < 0) return; remember(); S.hands[J[sel][0]] = e.target.value; draw(); });
+$("pin").addEventListener("change", () => { if (sel < 0) return; remember(); togglePin(sel); draw(); });
+$("sexF").addEventListener("click", () => { remember(); applySex("female"); draw(); say("女性の体格にしました。"); });
+$("sexM").addEventListener("click", () => { remember(); applySex("male"); draw(); say("男性の体格にしました。"); });
+for (const id of ["W", "H"]) $(id).addEventListener("change", draw);
+window.addEventListener("resize", draw);
+
+// ---- files ------------------------------------------------------------------------------
+function render(kind){
+  const [W, H] = exportSize(), cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  if (kind === "openpose") drawOpenpose(ctx, W, H);
+  else { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+    drawAtari(ctx, W, H, {ink: "#1a1a1a", far: "#8a8a8a", bg: "#ffffff", export: true}); }
+  return cv.toDataURL("image/png");
+}
+function download(url, name){ const a = document.createElement("a"); a.href = url; a.download = name; a.click(); }
+const stamp = () => new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14);
+$("saveAtari").addEventListener("click", () => { download(render("atari"), `atari_${stamp()}.png`); say("アタリ画像を保存しました。"); });
+$("saveOpenpose").addEventListener("click", () => { download(render("openpose"), `openpose_${stamp()}.png`); say("OpenPose 画像を保存しました。"); });
+$("saveJson").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify({version: 3, ...S}, null, 1)], {type: "application/json"});
+  download(URL.createObjectURL(blob), `pose_${stamp()}.json`); say("ポーズを保存しました。");
+});
+$("loadJson").addEventListener("click", () => $("file").click());
+$("file").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const d = JSON.parse(await f.text());
+    migrate(d);
+    if (!Array.isArray(d.P) || d.P.length !== J.length) throw new Error("形式が違います");
+    remember(); S = Object.assign(fresh(), d); syncUI(); draw(); say("ポーズを読み込みました。");
+  } catch (err) { say("読み込めませんでした：" + err.message, true); }
+  e.target.value = "";
+});
+function migrate(d){                  // version 1 had no waist joint (18 joints)
+  if (Array.isArray(d.P) && d.P.length === 18){
+    d.P.splice(1, 0, mul(add(d.P[0], d.P[1]), 0.5));
+    if (Array.isArray(d.R)) d.R.splice(1, 0, 12);
+    if (Array.isArray(d.twist)) d.twist.splice(1, 0, 0);
+  }
+  // version 2 kept the face's turn apart (head.yaw); now it is the head joint's twist
+  if (d.head && d.head.yaw){ d.twist = d.twist || REST.map(() => 0); d.twist[4] = (d.twist[4] || 0) + d.head.yaw; d.head.yaw = 0; }
+}
+function say(msg, warn){ $("status").textContent = msg; $("status").style.color = warn ? "var(--warn)" : ""; }
+
+// ---- inside ComfyUI: the node's modal (?node_id=...) gets the result on "confirm" ---------------
+const qs0 = new URLSearchParams(location.search);
+const nodeId = qs0.get("node_id");
+function sceneOnly(){ return {items: S.items || [], env: S.env || {}, wire: S.wire || {}}; }
+if (nodeId !== null && window.parent !== window){
+  $("nodeBtns").style.display = "";
+  $("confirm").addEventListener("click", () => {
+    const [W, H] = exportSize();
+    window.parent.postMessage({type: "symbolic-pose-confirmed", node_id: nodeId,
+      pose_json: JSON.stringify({version: 3, ...S}), scene_json: JSON.stringify(sceneOnly()),
+      openpose: render("openpose"), atari: render("atari"), width: W, height: H}, location.origin);
+  });
+  $("cancel").addEventListener("click", () =>
+    window.parent.postMessage({type: "symbolic-pose-cancelled", node_id: nodeId}, location.origin));
+  // the node hands back what was confirmed last time, so the editor opens on it
+  window.addEventListener("message", e => {
+    const d = e.data || {};
+    if (e.origin !== location.origin || d.type !== "symbolic-pose-load") return;
+    try { const p = JSON.parse(d.pose_json || "null");
+      if (p && p.P){ migrate(p); if (p.P.length === J.length){ S = Object.assign(fresh(), p); syncUI(); draw(); } }
+      if (d.width) $("W").value = d.width; if (d.height) $("H").value = d.height; draw();
+    } catch (err) {}
+  });
+  window.parent.postMessage({type: "symbolic-pose-ready", node_id: nodeId}, location.origin);
+}
+const qs = new URLSearchParams(location.search);
+if (qs.get("w")) $("W").value = qs.get("w");
+if (qs.get("h")) $("H").value = qs.get("h");
+
+// remember the last pose in this browser only (a convenience; files are the real save)
+const KEY = "symbolic-pose-editor-v1";
+try { const l = localStorage.getItem(KEY + "-limits"); if (l !== null) $("limits").checked = l === "1"; } catch (e) {}
+$("limits").addEventListener("change", e => { try { localStorage.setItem(KEY + "-limits", e.target.checked ? "1" : "0"); } catch (err) {}
+  say(e.target.checked ? "関節の限界を有効にしました（これからの操作に効きます）。" : "関節の限界を無効にしました。"); });
+window.addEventListener("beforeunload", () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} });
+try { const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d && d.P){ migrate(d); if (d.P.length === J.length) S = Object.assign(fresh(), d); } } catch (e) {}
+for (const id of ["scaleAll", "scaleHead", "scaleThick"]) $(id + "V").value = 100;
+syncUI(); draw();
+</script>
+<!-- floor / walls / ceiling, holding and placing things, wires (uses the editor's state above) -->
+<script src="pose_scene.js"></script>
+</body>
+</html>
