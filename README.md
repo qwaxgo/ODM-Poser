@@ -17,7 +17,8 @@ OpenPose picture, a line-and-circle rough ("atari"), and JSON.
 | `width`, `height` | INT | The export size set in the editor |
 
 Open `web/editor/index.html` in a browser (files are
-saved with the export buttons).
+saved with the export buttons). Your own presets are loaded with
+"ファイルから読込 / Load from files" in the user presets box.
 
 ## Editing
 
@@ -83,7 +84,7 @@ MIT, (c) 2026 qwaxgo. All shapes and code are original to this project.
 線と丸の全身アタリを疑似3Dで動かす、ポーズエディタです。OpenPose 画像・アタリ画像・
 JSON として書き出せます。
 
-- **単体でも動きます**：`web/editor/index.html` をブラウザで開く（書き出しボタンでファイルに保存）。
+- **単体でも動きます**：`web/editor/index.html` をブラウザで開く（書き出しボタンでファイルに保存、ユーザープリセットは「ファイルから読込」で選ぶ）。
 - **操作**：丸をドラッグ（骨の長さは保たれる）。手首・足首は腕・脚ごと（Shift でその骨だけ）。ダブルクリックで
   手前と奥を入れ替え。横図で奥行き。すべての関節を3軸（前後・左右・ねじり。頭はうなずく・かしげる・左右を向く）で
   回せます。関節の固定（ピン、Alt＋クリック）、腕の欄で手の形、体格モード、パースモード、人間の関節の限界。
