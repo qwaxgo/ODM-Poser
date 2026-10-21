@@ -90,13 +90,14 @@ input[type=checkbox]{accent-color:var(--accent)}
       <button id="mirror">左右反転</button>
       <button id="undo">元に戻す</button>
     </div>
-    <div id="tcBox" style="display:none">
+    <div id="tcBox">
       <label style="margin-top:10px">ユーザープリセット（<span id="tcCount">0</span>）</label>
+      <div class="btns" style="margin-top:6px"><button id="tcLoadFile">ファイルから読込</button><input type="file" id="tcFile" accept=".json,application/json" multiple hidden></div>
       <select id="tcGroup"></select>
       <input type="text" id="tcSearch" placeholder="検索：日本語でも英語でも（例：キック / kick、座る / sit）" style="margin-top:6px;width:100%;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:inherit;font-size:13px">
       <select id="tcList" size="9" style="margin-top:6px"></select>
       <div class="btns" style="margin-top:6px"><button id="tcApply">このポーズにする</button><button id="tcRandom">ランダム</button></div>
-      <div class="hint">骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。</div>
+      <div class="hint">骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。ファイルから読むと、一覧は選んだファイルの内容に置き換わります（user_presets/*.json と同じ形式）。</div>
     </div>
   </section>
 
@@ -992,11 +993,13 @@ const TC = Array.isArray(window.USER_POSE_PRESETS) ? window.USER_POSE_PRESETS : 
 $("preset").innerHTML = Object.keys(PRESETS).map(n => `<option>${n}</option>`).join("");
 // user presets: possibly thousands, so a group, a search and a list
 const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-if (TC.length){
-  $("tcBox").style.display = ""; $("tcCount").textContent = TC.length;
+function setUserPresets(list){
+  TC.splice(0, TC.length, ...list);
+  $("tcCount").textContent = TC.length;
   const groups = [...new Set(TC.map(t => t.group))].sort();
   $("tcGroup").innerHTML = `<option value="">すべての分類</option>` + groups.map(g =>
     `<option value="${esc(g)}">${esc(g)}（${TC.filter(t => t.group === g).length}）</option>`).join("");
+  tcFilter();
 }
 // Search in Japanese or English: preset names may mix languages and spellings
 // sitting ...), so each word of the query is looked up in a small two-language word list and
@@ -1080,7 +1083,22 @@ $("tcRandom").addEventListener("click", () => {
   if (!opts.length) return;
   const o = opts[Math.floor(Math.random() * opts.length)]; $("tcList").value = o.value; tcApply(+o.value);
 });
-if (TC.length) tcFilter();
+setUserPresets(TC);
+// opened without ComfyUI there is no served list: the user picks their preset files instead
+$("tcLoadFile").addEventListener("click", () => $("tcFile").click());
+$("tcFile").addEventListener("change", async e => {
+  const files = [...e.target.files];
+  e.target.value = "";
+  const list = [];
+  for (const f of files){
+    let items;
+    try { const data = JSON.parse(await f.text()); items = data && data.presets ? data.presets : data; }
+    catch (err) { say(`読めないファイル：${f.name}`, true); return; }
+    for (const p of Array.isArray(items) ? items : [])
+      if (p && Array.isArray(p.P)) list.push({group: String(p.group || f.name.replace(/\.json$/i, "")), name: String(p.name || ""), P: p.P});
+  }
+  setUserPresets(list); say(`ユーザープリセットを ${list.length} 件読み込みました。`);
+});
 // a pose read from a picture: only its bones' directions; the body (lengths, sizes) stays
 function applyUserPreset(t){
   const cur = S.P.map(p => p.slice()), out = S.P.map(p => p.slice()), Q = t.P;

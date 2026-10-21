@@ -31,7 +31,8 @@ and opens on it next time.
 | `width`, `height` | INT | The export size set in the editor |
 
 The editor also works without ComfyUI: open `web/editor/index.html` in a browser (files are
-saved with the export buttons instead).
+saved with the export buttons instead). Without ComfyUI, your own presets are loaded with
+"ファイルから読込 / Load from files" in the user presets box.
 
 ## Editing
 
@@ -84,7 +85,8 @@ the figure's body.
 
 Put your own preset files in `user_presets/` (format in `user_presets/README.md`). They show
 up in the editor under "ユーザープリセット / User presets" with a group filter and a
-Japanese / English search. That folder is not committed.
+Japanese / English search. That folder is not committed. Opened without ComfyUI, the page
+cannot see that folder: pick the same JSON files with "ファイルから読込 / Load from files".
 
 ## License
 
@@ -101,7 +103,7 @@ JSON としてワークフローに渡せます。
 - **ノード**：**Symbolic Pose Editor**（分類 `SymbolicPose`）を置き、「Open Symbolic Pose Editor」でエディタを
   開き、ポーズを作って「確定して閉じる」。出力は `pose_json`・`scene_json`・`openpose`・`atari`・`width`・`height`。
   確定した内容はワークフローに保存され、次に開くとその続きから編集できます。
-- **単体でも動きます**：`web/editor/index.html` をブラウザで開く（書き出しボタンでファイルに保存）。
+- **単体でも動きます**：`web/editor/index.html` をブラウザで開く（書き出しボタンでファイルに保存、ユーザープリセットは「ファイルから読込」で選ぶ）。
 - **操作**：丸をドラッグ（骨の長さは保たれる）。手首・足首は腕・脚ごと（Shift でその骨だけ）。ダブルクリックで
   手前と奥を入れ替え。横図で奥行き。すべての関節を3軸（前後・左右・ねじり。頭はうなずく・かしげる・左右を向く）で
   回せます。関節の固定（ピン、Alt＋クリック）、腕の欄で手の形、体格モード、パースモード、人間の関節の限界。

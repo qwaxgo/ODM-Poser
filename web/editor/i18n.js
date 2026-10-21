@@ -27,8 +27,9 @@
     "歩く": "Walking", "走る": "Running", "椅子に座る": "Sitting on a chair", "しゃがむ": "Squatting",
     "ジャンプ（バンザイ）": "Jump (arms up)", "ファイティングポーズ": "Fighting stance", "腰に手": "Hands on hips",
     "ユーザープリセット（": "User presets (", "）": ")", "このポーズにする": "Use this pose", "ランダム": "Random",
-    "骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。":
-      "Only the bones' directions are taken; the body stays as it is. Double-click a row to load it too.",
+    "骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。ファイルから読むと、一覧は選んだファイルの内容に置き換わります（user_presets/*.json と同じ形式）。":
+      "Only the bones' directions are taken; the body stays as it is. Double-click a row to load it too. Loading from files replaces the list with the chosen files' contents (same format as user_presets/*.json).",
+    "ファイルから読込": "Load from files",
     "すべての分類": "All groups",
     "検索：日本語でも英語でも（例：キック / kick、座る / sit）": "Search in Japanese or English (e.g. kick / キック, sit / 座る)",
     // body
@@ -141,6 +142,8 @@
     [/^…ほか (\d+) 件（絞り込んでください）$/, m => `… ${m[1]} more (narrow the search)`],
     [/^読み込みました：(.+)$/, m => `Loaded: ${m[1]}`],
     [/^読み込めませんでした：(.*)$/, m => `Could not load: ${T[m[1]] || m[1]}`],
+    [/^読めないファイル：(.*)$/, m => `Could not read: ${m[1]}`],
+    [/^ユーザープリセットを (\d+) 件読み込みました。$/, m => `Loaded ${m[1]} user presets.`],
     [/^(.+)を先にオンにしてください。$/, m => `Turn on ${SURFACE[m[1]] || m[1]} first.`],
     [/^(.+)を(床|壁|天井)に着けて固定しました。$/, m => `Put the ${joint(m[1])} on ${SURFACE[m[2]]} and pinned it.`],
     [/^(.+)でつかまって固定しました。別の手足も選んで「つかまる」を押せます。$/,
