@@ -139,6 +139,30 @@ input[type=checkbox]{accent-color:var(--accent)}
   </section>
 
   <section>
+    <h2>パース定規</h2>
+    <label style="margin-top:0"><input type="checkbox" id="rulerOn"> パース定規を表示</label>
+    <div id="rulerCtl" style="display:none">
+      <label>透視の種類</label>
+      <select id="rulerN"><option value="1">1点透視</option><option value="2">2点透視</option><option value="3">3点透視</option></select>
+      <div id="rulerYawRow"><label>定規の向き（カメラに対して）</label>
+        <div class="row"><input type="range" id="rulerYaw" min="-89" max="89" value="30"><input type="number" class="num" id="rulerYawV"><span class="unit">°</span></div></div>
+      <label>線の数</label>
+      <div class="row"><input type="range" id="rulerLines" min="6" max="60" value="20"><span class="val" id="rulerLinesV"></span></div>
+      <label><input type="checkbox" id="cubeOn" checked> 立方体のガイド</label>
+      <div id="cubeCtl" class="grid2">
+        <div><label>一辺</label><div class="row"><input type="number" id="cubeSize" min="1" step="5"><span class="unit">cm</span></div></div>
+        <div><label>左右</label><div class="row"><input type="number" id="cubeX" step="5"><span class="unit">cm</span></div></div>
+        <div><label>上下</label><div class="row"><input type="number" id="cubeY" step="5"><span class="unit">cm</span></div></div>
+        <div><label>前後</label><div class="row"><input type="number" id="cubeZ" step="5"><span class="unit">cm</span></div></div>
+      </div>
+      <div class="btns" style="margin-top:8px"><button id="saveRuler">定規の画像</button></div>
+      <div class="hint" id="rulerHint"></div>
+      <div class="hint" id="rulerWarn" style="color:var(--warn);display:none"></div>
+      <div class="hint">消失点はカメラ（パース）から決まるので、人物と同じパースになります。アイレベルはカメラの高さで動きます。定規はアタリ画像には入りません（「定規の画像」で透明な PNG を保存）。</div>
+    </div>
+  </section>
+
+  <section>
     <h2>書き出し</h2>
     <div class="grid2">
       <div><label>幅</label><input type="number" id="W" value="1080" min="256" max="4096"></div>
@@ -206,7 +230,8 @@ function fresh(){
           body: {yaw: 0, pitch: 0, roll: 0}, twist: REST.map(() => 0),
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
-          center: [0, 90, 0]};
+          center: [0, 90, 0],
+          ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, size: 100, off: [0, 0, 0]}};
 }
 const history = [];
 function remember(){ history.push(JSON.stringify(S)); if (history.length > 80) history.shift(); }
@@ -1255,6 +1280,8 @@ syncUI(); draw();
 </script>
 <!-- floor / walls / ceiling, holding and placing things, wires (uses the editor's state above) -->
 <script src="pose_scene.js"></script>
+<!-- the perspective ruler and the cube guide (uses the editor's camera) -->
+<script src="pose_ruler.js"></script>
 <!-- Japanese / English -->
 <script src="i18n.js"></script>
 </body>

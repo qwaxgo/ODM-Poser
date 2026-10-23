@@ -49,6 +49,9 @@ saved with the export buttons instead). Without ComfyUI, your own presets are lo
   male builds, left-right symmetry.
 - **Perspective mode**: camera direction, height, roll, and lens (wide angle = strong
   perspective).
+- **Perspective ruler**: 1-, 2- or 3-point guide lines, the eye level and a cube guide (size and
+  position in cm). The vanishing points come from the camera, so the ruler has the figure's
+  perspective. Editor only; "Ruler picture" saves it as a transparent PNG.
 - **Human joint limits** (on by default) keep knees, elbows, neck and so on in a human range.
 
 ## Props and scene
@@ -110,6 +113,7 @@ JSON としてワークフローに渡せます。
 - **小物・環境**：約130種の小物を簡単な形で（武器・銃・弓・盾・杖・楽器・文房具・食器・食べ物・花・日用品・
   コントローラー・スポーツ用具・椅子・机・乗り物・蔓や枝や鉄棒など）。床・壁・天井と接地、面に手足を着ける、
   つかまる、ぶら下がる、ワイヤーで吊る。
+- **パース定規**：1点・2点・3点透視の線、アイレベル、立方体のガイド（一辺と位置を cm で）。消失点はカメラから決まるので人物と同じパースになります。エディタ上だけの表示で、「定規の画像」で透明な PNG を保存できます。
 - **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
 - **組み込みポーズ**：11種（立ち・Aポーズ・Tポーズ・コントラポスト・歩く・走る・椅子に座る・しゃがむ・ジャンプ・ファイティングポーズ・腰に手）。関節の角度で作ったもので、体格はそのまま。
 - **ユーザープリセット**：`user_presets/` に自分のプリセット（JSON）を置くと一覧に出ます（git には入りません）。
