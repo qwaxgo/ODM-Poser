@@ -94,6 +94,20 @@
     // camera and export
     "カメラ": "Camera", "レンズ（mm、小さいほど広角）": "Lens (mm, smaller = wider)", "向き（左右）": "Direction (left / right)",
     "高さ（俯瞰＋／あおり−）": "Height (+ from above / − from below)", "傾き": "Roll", "カメラを戻す": "Reset camera",
+    // perspective ruler (pose_ruler.js)
+    "パース定規": "Perspective ruler", "パース定規を表示": "Show the perspective ruler", "透視の種類": "Perspective",
+    "1点透視": "1-point", "2点透視": "2-point", "3点透視": "3-point", "定規の向き（カメラに対して）": "Ruler turn (from the camera)",
+    "線の数": "Lines", "立方体のガイド": "Cube guide", "一辺": "Size", "左右": "Left / right", "上下": "Up / down", "前後": "Front / back",
+    "定規の画像": "Ruler picture", "アイレベル": "Eye level", "パース定規の画像を保存しました。": "Ruler picture saved.",
+    "奥行きの線がアイレベル上の1点に集まります（カメラの正面に向けた定規）。":
+      "Depth lines meet at one point on the eye level (the ruler faces the camera).",
+    "左右と奥行きの線がアイレベル上の2点に集まります。": "Left-right and depth lines meet at two points on the eye level.",
+    "縦の線も3つ目の点に集まります（カメラの高さが0°のときは平行）。":
+      "Verticals meet at a third point too (parallel when the camera height is 0°).",
+    "カメラが俯瞰・あおりなので、縦の線は実際にはわずかに集まります（人物と立方体はそのとおりに描かれます）。厳密な1点・2点透視にするには、カメラの高さを0°にします。":
+      "The camera looks down or up, so verticals really meet a little (the figure and the cube are drawn that way). For a strict 1- or 2-point picture, set the camera height to 0°.",
+    "消失点はカメラ（パース）から決まるので、人物と同じパースになります。アイレベルはカメラの高さで動きます。定規はアタリ画像には入りません（「定規の画像」で透明な PNG を保存）。":
+      "The vanishing points come from the camera, so the ruler has the figure's perspective. The eye level follows the camera height. The ruler is not in the rough picture (\"Ruler picture\" saves a transparent PNG).",
     "書き出し": "Export", "幅": "Width", "高さ": "Height", "アタリ画像": "Rough picture", "OpenPose 画像": "OpenPose picture",
     "ポーズ保存": "Save pose", "ポーズ読込": "Load pose", "確定して閉じる / Confirm": "Confirm", "閉じる / Cancel": "Cancel",
     "OpenPose 画像は ControlNet（OpenPose）に、アタリ画像は下描きのレイヤーに使えます。":
