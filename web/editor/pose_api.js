@@ -5,9 +5,8 @@
 // hooks into drawing, editing and the mouse. See docs/MODDING.md.
 //
 // Mods are loaded from mods/*.js and mods/<folder>/*.js (a repository of mods cloned into mods/).
-// Opened from disk the list is web/mods.js
-// (written by tools/make_mods_list.py). The MOD panel can also run a file for this session only.
-// ?nomods in the address starts without mods.
+// Opened from disk the list is web/mods.js (written by tools/make_mods_list.py).
+// The MOD panel can also run a file for this session only. ?nomods in the address starts without mods.
 // A mod's own data lives in S.mods[id]: saved with the pose, undone with Ctrl+Z.
 (() => {
 const API_VERSION = "1.1.0", API_MAJOR = 1;
@@ -335,7 +334,7 @@ function runScript(src, file){
 }
 async function loadMods(){
   const list = Array.isArray(window.SYMBOLIC_POSE_MODS) ? window.SYMBOLIC_POSE_MODS : [];
-  if (!list.length || new URLSearchParams(location.search).has("nomods")) return;
+  if (new URLSearchParams(location.search).has("nomods") || !list.length) return;
   const base = location.protocol === "file:" ? "../../mods/" : "../mods/";
   loading = true;
   for (const name of list) if (/^([\w.-]+\/)?[\w.-]+\.js$/.test(name))
