@@ -31,23 +31,33 @@ nothing third-party: keep it that way.
 ```
 __init__.py          node mappings, WEB_DIRECTORY = web/js, imports routes
 nodes.py             SymbolicPoseEditor node: hidden values -> outputs
-routes.py            /symbolic_pose/editor/{index.html,pose_props.js,pose_scene.js}
+routes.py            /symbolic_pose/editor/<file>   the editor's files
                      /symbolic_pose/user_presets.js  (user_presets/*.json -> window.USER_POSE_PRESETS)
+                     /symbolic_pose/mods.js, /symbolic_pose/mods/<path>  built-in mods, then mods/
 web/js/symbolic_pose_editor.js   node widget: button, modal iframe, postMessage hand-over
-web/editor/index.html            the editor (single file, plain JS, Canvas 2D)
-web/editor/pose_props.js         window.PROP_CATS / window.PROPS: the props as primitives
-web/editor/pose_scene.js         floor / walls / ceiling, holding, mounting, grabbing, wire
+web/editor/index.html            the editor core (plain JS, Canvas 2D; no ComfyUI in it)
+web/editor/pose_props*.js        window.PROP_CATS / window.PROPS: the props as primitives
+web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carrying, mounting, grabbing, wire
+web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
+web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
+builtin_mods/comfyui.js          the ComfyUI hand-off, a mod the node serves first (tracked)
+mods/                            the user's mods and cloned mod repositories (README.md only is tracked)
 user_presets/                    the user's preset files (README.md only is tracked)
-docs/HANDOFF.md                  this file
+tools/make_mods_list.py          web/mods.js for opening the editor from disk with mods
+docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API
 ```
 
 ## How the node and the editor talk
 
+The editor's side is the built-in mod `builtin_mods/comfyui.js` (MOD API: `api.io`, `api.ui`,
+`api.presets`). The node lists it first in `/symbolic_pose/mods.js`; opened from disk the editor
+never loads it, so the core runs without ComfyUI. It also loads the user presets from the node.
+
 1. The widget opens `/symbolic_pose/editor/index.html?node_id=<id>` in an iframe modal.
-2. The editor posts `{type: "symbolic-pose-ready", node_id}`; the widget answers
+2. The mod posts `{type: "symbolic-pose-ready", node_id}`; the widget answers
    `{type: "symbolic-pose-load", pose_json}` with what the node holds (so it reopens on it).
-3. "確定して閉じる / Confirm" posts `{type: "symbolic-pose-confirmed", node_id, pose_json,
+3. "確定して閉じる / Confirm" (the mod's section at the top of the side bar) posts `{type: "symbolic-pose-confirmed", node_id, pose_json,
    scene_json, openpose, atari, width, height}` (pictures as PNG data URLs). The widget stores
    them in the node's hidden widgets `pose_json`, `scene_json`, `openpose_image`,
    `atari_image` (serialized with the workflow) and closes the modal. Cancel posts

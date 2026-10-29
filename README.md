@@ -114,6 +114,8 @@ hooks without changing the editor: put `*.js` files in `mods/`, or clone a repos
 Inside ComfyUI they load when the editor opens; opened from disk, run `python tools/make_mods_list.py`
 first. The API: [docs/MODDING.md](docs/MODDING.md) (日本語: [docs/MODDING-JA.md](docs/MODDING-JA.md)).
 Mods run with the editor's rights: install only mods you trust; `?nomods` starts without them.
+The ComfyUI hand-off itself is a built-in mod (`builtin_mods/comfyui.js`) that only the node loads,
+so the editor core has no ComfyUI code in it.
 
 ## License
 
@@ -146,5 +148,5 @@ JSON としてワークフローに渡せます。
 - **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
 - **組み込みポーズ**：11種（立ち・Aポーズ・Tポーズ・コントラポスト・歩く・走る・椅子に座る・しゃがむ・ジャンプ・ファイティングポーズ・腰に手）。関節の角度で作ったもので、体格はそのまま。
 - **ユーザープリセット**：`user_presets/` に自分のプリセット（JSON）を置くと一覧に出ます（git には入りません）。
-- **MOD**：`mods/` に `*.js` を置くと、小物・物体・オーラ・手の形・ポーズ・翻訳・自分の欄・描画やマウスのフックを追加できます（MOD のリポジトリを `mods/` に clone しても可。説明：`docs/MODDING-JA.md`）。ComfyUI なしで開くときは `python tools/make_mods_list.py` を先に実行。信頼できる MOD だけを入れてください（`?nomods` で MOD なし）。
+- **MOD**：`mods/` に `*.js` を置くと、小物・物体・オーラ・手の形・ポーズ・翻訳・自分の欄・描画やマウスのフックを追加できます（MOD のリポジトリを `mods/` に clone しても可。説明：`docs/MODDING-JA.md`）。ComfyUI なしで開くときは `python tools/make_mods_list.py` を先に実行。信頼できる MOD だけを入れてください（`?nomods` で MOD なし）。ComfyUI とのやりとり自体も組み込み MOD（`builtin_mods/comfyui.js`）で、ノードからだけ読み込まれます。
 - **ライセンス**：MIT（c）2026 qwaxgo。

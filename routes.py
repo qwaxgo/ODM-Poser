@@ -2,7 +2,8 @@
 
     /symbolic_pose/editor/            the editor (web/editor/index.html and its scripts)
     /symbolic_pose/user_presets.js    window.USER_POSE_PRESETS from user_presets/*.json
-    /symbolic_pose/mods.js            window.SYMBOLIC_POSE_MODS, mods/*.js and mods/<folder>/*.js
+    /symbolic_pose/mods.js            window.SYMBOLIC_POSE_MODS: the built-in mods (builtin_mods/*.js,
+                                      as "_builtin/<name>"), then mods/*.js and mods/<folder>/*.js
     /symbolic_pose/mods/{path}        one mod file (docs/MODDING.md)
 """
 
@@ -16,6 +17,7 @@ HERE = Path(__file__).resolve().parent
 EDITOR = HERE / "web" / "editor"
 USER_PRESETS = HERE / "user_presets"
 MODS = HERE / "mods"
+BUILTIN_MODS = HERE / "builtin_mods"         # shipped with the node: the ComfyUI hand-off
 MOD_PART = re.compile(r"^[\w.-]+$")
 
 
@@ -50,6 +52,12 @@ def mod_files():
     return sorted(out)
 
 
+def served_mods():
+    """What the editor inside ComfyUI loads: the built-in mods first, then the user's."""
+    builtin = sorted(f.name for f in BUILTIN_MODS.glob("*.js") if MOD_PART.match(f.name)) if BUILTIN_MODS.is_dir() else []
+    return ["_builtin/" + n for n in builtin] + mod_files()
+
+
 try:
     from aiohttp import web
     from server import PromptServer
@@ -72,15 +80,16 @@ try:
 
     @routes.get("/symbolic_pose/mods.js")
     async def _mods_list(request):
-        body = "window.SYMBOLIC_POSE_MODS = " + json.dumps(mod_files()) + ";\n"
+        body = "window.SYMBOLIC_POSE_MODS = " + json.dumps(served_mods()) + ";\n"
         return web.Response(text=body, content_type="application/javascript")
 
     @routes.get("/symbolic_pose/mods/{path:.+}")
     async def _mod_file(request):
         path = request.match_info["path"]
-        if path not in mod_files():               # only the listed files, nothing else under mods/
+        if path not in served_mods():             # only the listed files, nothing else
             raise web.HTTPNotFound()
-        return web.Response(text=(MODS / path).read_text(encoding="utf-8"), content_type="application/javascript")
+        file = BUILTIN_MODS / path[len("_builtin/"):] if path.startswith("_builtin/") else MODS / path
+        return web.Response(text=file.read_text(encoding="utf-8"), content_type="application/javascript")
 
     @routes.get("/symbolic_pose/editor/{name}")
     async def _editor_file(request):

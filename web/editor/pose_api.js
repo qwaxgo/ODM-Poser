@@ -4,12 +4,14 @@
 // aura kinds and parts, hand shapes, built-in poses, user presets, translations, panels, and
 // hooks into drawing, editing and the mouse. See docs/MODDING.md.
 //
-// Mods are loaded from mods/*.js and mods/<folder>/*.js (a repository of mods cloned into mods/): inside ComfyUI the list comes from /symbolic_pose/mods.js,
-// opened from disk from web/mods.js (written by tools/make_mods_list.py). The MOD panel can
-// also run a file for this session only. ?nomods in the address starts without mods.
+// Mods are loaded from mods/*.js and mods/<folder>/*.js (a repository of mods cloned into mods/).
+// Inside ComfyUI the list comes from /symbolic_pose/mods.js, with the built-in mods first
+// (builtin_mods/, as "_builtin/...": the node's hand-off); opened from disk it is web/mods.js
+// (written by tools/make_mods_list.py). The MOD panel can also run a file for this session only.
+// ?nomods in the address starts without mods (the built-in ones still load).
 // A mod's own data lives in S.mods[id]: saved with the pose, undone with Ctrl+Z.
 (() => {
-const API_VERSION = "1.0.0", API_MAJOR = 1;
+const API_VERSION = "1.1.0", API_MAJOR = 1;
 const mods = [];                              // {id, name, version, file, status: "ok" | "error", error}
 const hooks = {drawBehind: [], draw: [], drawSide: [], afterEdit: [], sync: [], mode: []};
 let currentFile = "";
@@ -210,20 +212,35 @@ function makeApi(mod){
         setUserPresets(TC.concat(list.filter(p => p && Array.isArray(p.P) && p.P.length === J.length)
           .map(p => ({group: String(p.group || mod.name), name: String(p.name || ""), P: p.P})))); },
     },
+    // files: the exported pictures and the pose, as the 書き出し buttons make them
+    io: {
+      render: kind => render(kind === "openpose" ? "openpose" : "atari"),   // a PNG data URL at the export size
+      exportSize: () => exportSize(),
+      setExportSize(W, H){ if (+W > 0) $("W").value = Math.round(+W); if (+H > 0) $("H").value = Math.round(+H); draw(); },
+      poseJSON: () => JSON.stringify({version: 3, ...S}),
+      sceneJSON: () => JSON.stringify(sceneOnly()),
+      loadPose(p){                           // a pose (object or JSON text) as saved; false when it is not one
+        if (typeof p === "string") p = JSON.parse(p);
+        if (!p || !Array.isArray(p.P)) return false;
+        migrate(p);
+        if (p.P.length !== J.length) return false;
+        S = Object.assign(fresh(), p); syncUI(); draw(); return true;
+      },
+    },
     i18n: {
       add: table => i18n() && i18n().add(table),              // {"日本語": "English", ...}
       addRule: (re, fn) => i18n() && i18n().addRule(re, guarded(mod, "i18n rule", fn)),
       lang: () => (i18n() ? i18n().lang : "ja"),
     },
     ui: {
-      // a section in the side panel; html is yours (ids: prefix them with the mod id)
-      addSection({title, html = "", titleEn}){
+      // a section in the side panel (at: "top" puts it first); html is yours (ids: prefix them with the mod id)
+      addSection({title, html = "", titleEn, at}){
         const sec = document.createElement("section");
         sec.dataset.mod = mod.id;
         sec.innerHTML = `<h2></h2>${html}`;
         sec.querySelector("h2").textContent = title || mod.name;
         tr(title, titleEn);
-        $("modBox").closest("section").before(sec);
+        if (at === "top") document.querySelector("aside").prepend(sec); else $("modBox").closest("section").before(sec);
         return sec;
       },
       $: id => document.getElementById(id),
@@ -319,10 +336,11 @@ function runScript(src, file){
 }
 async function loadMods(){
   const list = Array.isArray(window.SYMBOLIC_POSE_MODS) ? window.SYMBOLIC_POSE_MODS : [];
-  if (new URLSearchParams(location.search).has("nomods") || !list.length) return;
+  const builtinOnly = new URLSearchParams(location.search).has("nomods");
+  if (!list.length) return;
   const base = location.protocol === "file:" ? "../../mods/" : "../mods/";
   loading = true;
-  for (const name of list) if (/^([\w.-]+\/)?[\w.-]+\.js$/.test(name))
+  for (const name of list) if (/^([\w.-]+\/)?[\w.-]+\.js$/.test(name) && (!builtinOnly || name.startsWith("_builtin/")))
     await runScript(base + name.split("/").map(encodeURIComponent).join("/"), name);
   loading = false;
   refreshPanels();

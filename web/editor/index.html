@@ -182,10 +182,6 @@ input[type=checkbox]{accent-color:var(--accent)}
       <button id="loadJson">ポーズ読込</button>
       <input type="file" id="file" accept=".json,application/json" hidden>
     </div>
-    <div class="btns" id="nodeBtns" style="margin-top:8px;display:none">
-      <button class="primary" id="confirm">確定して閉じる / Confirm</button>
-      <button id="cancel">閉じる / Cancel</button>
-    </div>
     <div class="hint">OpenPose 画像は ControlNet（OpenPose）に、アタリ画像は下描きのレイヤーに使えます。</div>
     <div id="status"></div>
   </section>
@@ -195,8 +191,6 @@ input[type=checkbox]{accent-color:var(--accent)}
 <script src="pose_props.js"></script>
 <!-- effects, simple solids, bags, and things worn on the head, body and feet -->
 <script src="pose_props_more.js"></script>
-<!-- your own preset files (user_presets/*.json), served by the node; missing = none -->
-<script src="../user_presets.js"></script>
 <script>
 "use strict";
 // ---- the figure: joints in world space (cm, y up, the figure faces +z) -------------------
@@ -1047,7 +1041,7 @@ function applyPreset(name){
 // ---- UI wiring ---------------------------------------------------------------------------
 const $ = id => document.getElementById(id);
 const UNITS = {scaleAll: 1, scaleHead: 1, scaleThick: 1, lens: 1, yaw: 1, pitch: 1, roll: 1};
-const TC = Array.isArray(window.USER_POSE_PRESETS) ? window.USER_POSE_PRESETS : [];
+const TC = [];                        // user presets: from files (the button below) or a mod (the ComfyUI one)
 $("preset").innerHTML = Object.keys(PRESETS).map(n => `<option>${n}</option>`).join("");
 // user presets: possibly thousands, so a group, a search and a list
 const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
@@ -1273,31 +1267,10 @@ function migrate(d){                  // version 1 had no waist joint (18 joints
 }
 function say(msg, warn){ $("status").textContent = msg; $("status").style.color = warn ? "var(--warn)" : ""; }
 
-// ---- inside ComfyUI: the node's modal (?node_id=...) gets the result on "confirm" ---------------
-const qs0 = new URLSearchParams(location.search);
-const nodeId = qs0.get("node_id");
+// the scene alone (things, floor and walls, wire, solids), for what reads the pose downstream.
+// Inside ComfyUI the node's hand-off (confirm / cancel, the pose it had) is the built-in mod
+// builtin_mods/comfyui.js, loaded by pose_api.js; the editor itself does not depend on ComfyUI.
 function sceneOnly(){ return {items: S.items || [], env: S.env || {}, wire: S.wire || {}, solids: S.solids || []}; }
-if (nodeId !== null && window.parent !== window){
-  $("nodeBtns").style.display = "";
-  $("confirm").addEventListener("click", () => {
-    const [W, H] = exportSize();
-    window.parent.postMessage({type: "symbolic-pose-confirmed", node_id: nodeId,
-      pose_json: JSON.stringify({version: 3, ...S}), scene_json: JSON.stringify(sceneOnly()),
-      openpose: render("openpose"), atari: render("atari"), width: W, height: H}, location.origin);
-  });
-  $("cancel").addEventListener("click", () =>
-    window.parent.postMessage({type: "symbolic-pose-cancelled", node_id: nodeId}, location.origin));
-  // the node hands back what was confirmed last time, so the editor opens on it
-  window.addEventListener("message", e => {
-    const d = e.data || {};
-    if (e.origin !== location.origin || d.type !== "symbolic-pose-load") return;
-    try { const p = JSON.parse(d.pose_json || "null");
-      if (p && p.P){ migrate(p); if (p.P.length === J.length){ S = Object.assign(fresh(), p); syncUI(); draw(); } }
-      if (d.width) $("W").value = d.width; if (d.height) $("H").value = d.height; draw();
-    } catch (err) {}
-  });
-  window.parent.postMessage({type: "symbolic-pose-ready", node_id: nodeId}, location.origin);
-}
 const qs = new URLSearchParams(location.search);
 if (qs.get("w")) $("W").value = qs.get("w");
 if (qs.get("h")) $("H").value = qs.get("h");
