@@ -3,7 +3,7 @@ __pycache__/
 # your own preset files stay on your machine
 user_presets/*
 !user_presets/README.md
-# your own mods stay on your machine (examples/mods/ has an example); the list for opening from disk
+# your own mods and mod repositories cloned into mods/ stay out; the list for opening from disk
 mods/*
 !mods/README.md
 web/mods.js

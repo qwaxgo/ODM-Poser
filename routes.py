@@ -2,8 +2,8 @@
 
     /symbolic_pose/editor/            the editor (web/editor/index.html and its scripts)
     /symbolic_pose/user_presets.js    window.USER_POSE_PRESETS from user_presets/*.json
-    /symbolic_pose/mods.js            window.SYMBOLIC_POSE_MODS, the names of mods/*.js
-    /symbolic_pose/mods/{name}        one mod file (docs/MODDING.md)
+    /symbolic_pose/mods.js            window.SYMBOLIC_POSE_MODS, mods/*.js and mods/<folder>/*.js
+    /symbolic_pose/mods/{path}        one mod file (docs/MODDING.md)
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ HERE = Path(__file__).resolve().parent
 EDITOR = HERE / "web" / "editor"
 USER_PRESETS = HERE / "user_presets"
 MODS = HERE / "mods"
-MOD_NAME = re.compile(r"^[\w.-]+\.js$")
+MOD_PART = re.compile(r"^[\w.-]+$")
 
 
 def user_presets():
@@ -38,10 +38,16 @@ def user_presets():
 
 
 def mod_files():
-    """The mods to load, in name order (mods/*.js; a name starting with "_" is left out)."""
+    """The mods to load, in path order: mods/*.js, and mods/<folder>/*.js for a repository of mods
+    cloned into mods/. A file or folder whose name starts with "_" or "." is left out."""
     if not MODS.is_dir():
         return []
-    return sorted(f.name for f in MODS.glob("*.js") if MOD_NAME.match(f.name) and not f.name.startswith("_"))
+    out = []
+    for f in MODS.rglob("*.js"):
+        parts = f.relative_to(MODS).parts
+        if len(parts) <= 2 and all(MOD_PART.match(p) and not p.startswith(("_", ".")) for p in parts):
+            out.append("/".join(parts))
+    return sorted(out)
 
 
 try:
@@ -69,12 +75,12 @@ try:
         body = "window.SYMBOLIC_POSE_MODS = " + json.dumps(mod_files()) + ";\n"
         return web.Response(text=body, content_type="application/javascript")
 
-    @routes.get("/symbolic_pose/mods/{name}")
+    @routes.get("/symbolic_pose/mods/{path:.+}")
     async def _mod_file(request):
-        name = request.match_info["name"]
-        if name not in mod_files():
+        path = request.match_info["path"]
+        if path not in mod_files():               # only the listed files, nothing else under mods/
             raise web.HTTPNotFound()
-        return web.Response(text=(MODS / name).read_text(encoding="utf-8"), content_type="application/javascript")
+        return web.Response(text=(MODS / path).read_text(encoding="utf-8"), content_type="application/javascript")
 
     @routes.get("/symbolic_pose/editor/{name}")
     async def _editor_file(request):

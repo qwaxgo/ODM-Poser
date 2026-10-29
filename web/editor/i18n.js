@@ -118,8 +118,8 @@
     "気（炎のように立ちのぼる）": "Ki (rising like flames)", "オーラ（なめらかな光）": "Aura (smooth glow)", "プラズマ（電撃）": "Plasma (lightning)",
     // the MOD panel (pose_api.js)
     "読み込んだ MOD はありません。": "No mods loaded.", "MODファイルを読み込む（今回だけ）": "Load mod files (this session only)",
-    "mods フォルダの *.js を起動時に読み込みます（ComfyUI なしで開くときは tools/make_mods_list.py で一覧を作ります）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。":
-      "The mods/*.js files are loaded at start (opened without ComfyUI, run tools/make_mods_list.py to list them). A mod is a program that can do anything inside the editor: install only mods you trust. Add ?nomods to the address to start without mods.",
+    "mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ComfyUI なしで開くときは tools/make_mods_list.py で一覧を作ります）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。":
+      "The *.js files in mods/ (and its folders) are loaded at start (opened without ComfyUI, run tools/make_mods_list.py to list them). A mod is a program that can do anything inside the editor: install only mods you trust. Add ?nomods to the address to start without mods.",
     // camera and export
     "カメラ": "Camera", "レンズ（mm、小さいほど広角）": "Lens (mm, smaller = wider)", "向き（左右）": "Direction (left / right)",
     "高さ（俯瞰＋／あおり−）": "Height (+ from above / − from below)", "傾き": "Roll", "カメラを戻す": "Reset camera",

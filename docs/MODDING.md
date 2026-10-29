@@ -18,7 +18,8 @@ API version: **1.0.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
 
 ## Quick start
 
-1. Copy `examples/mods/hello_mod.js` into the `mods/` folder.
+1. Save the file under *A mod file* below as `mods/mymod.js` (or clone a repository of mods into
+   `mods/`, see the end of this page).
 2. Inside ComfyUI: open (or reload) the editor. Opened from disk (`web/editor/index.html`):
    run `python tools/make_mods_list.py` first, then reload.
 3. The **MOD** panel at the bottom of the side bar lists every mod: ✓ loaded, ✗ with the error.
@@ -26,8 +27,9 @@ API version: **1.0.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
 The **MOD** panel also has *Load mod files (this session only)*: it runs the chosen `.js` files
 now, without copying them anywhere. That is the quickest way to try a mod while writing it.
 
-Files in `mods/` load in name order. A name starting with `_` is skipped (a way to switch a mod off).
-`mods/` is git-ignored, so your mods stay on your machine.
+`mods/*.js` and `mods/<folder>/*.js` load in path order. A file or folder whose name starts with
+`_` or `.` is skipped (a way to switch a mod off). `mods/` is git-ignored, so your mods stay on
+your machine.
 
 ## A mod file
 
@@ -244,9 +246,16 @@ The canvas state (`ctx`) is saved and restored around each drawing hook.
 - Only what this page describes is the API. The editor's other functions and globals can change
   between versions.
 
-## Example
+## A repository of mods
 
-[`examples/mods/hello_mod.js`](../examples/mods/hello_mod.js) adds a category with a wand, a halo
-and horns, an eight-sided pillar, an aura kind of dashed rings with an aura part for the feet, a
-hand shape, a waving pose, English words, and a panel with a plumb line from the head drawn by a
-`draw` hook (also in the export when ticked), its setting kept in `api.data()`.
+Mods can live in their own git repository: clone it into `mods/`, and every `*.js` at its top level
+loads (deeper folders are not read, so a repository can keep notes, assets and tests there).
+
+```
+cd ComfyUI/custom_nodes/ComfyUI-SymbolicPoseEditor/mods
+git clone <your mods repository>
+```
+
+Update it with `git pull` in that folder, then reload the editor (opened from disk: run
+`tools/make_mods_list.py` again when files were added or removed). Because `mods/` is git-ignored,
+the cloned repository does not mix with the editor's own.
