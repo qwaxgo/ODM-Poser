@@ -10,7 +10,7 @@ A mod is a JavaScript file that the editor loads at start. Through the **MOD API
 - English words for its Japanese labels (and the other way round)
 - panels in the side bar, and hooks into drawing, editing, undo / load, the mode and the mouse
 
-API version: **1.0.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
+API version: **1.1.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
 
 > **Safety.** A mod is a program that runs inside the editor page with the same rights as the
 > editor itself. Install only mods you trust. Add `?nomods` to the editor's address to start
@@ -190,6 +190,16 @@ Fields of `S` a mod may read (and change inside `api.edit`): `P` (19 joints, [x,
 | `api.poses.apply(name)` | put the figure in that pose |
 | `api.presets.add(list)` | user presets `{group, name, P}` (P: 19 joints in cm; only the bones' directions are used) |
 
+### Files (API 1.1)
+
+| call | does |
+|------|------|
+| `api.io.render("atari" \| "openpose")` | the exported picture as a PNG data URL, at the export size |
+| `api.io.exportSize()`, `api.io.setExportSize(W, H)` | the export size in pixels |
+| `api.io.poseJSON()` | the pose as saved (`version: 3` and the whole state, with `S.mods`) |
+| `api.io.sceneJSON()` | the scene alone: things, floor and walls, wire, solids |
+| `api.io.loadPose(pose)` | load a pose (object or JSON text); returns false when it is not one |
+
 **Aura kinds.** `draw(ctx, info)` is called once per outline, with the canvas already set to the
 aura's colour. `info.points` walks the outline at an even step: `{x, y, nx, ny}` (pixels, outward
 normal). `info.size` is the aura's size in pixels, `info.lineWidth` a line width for this canvas,
@@ -215,8 +225,8 @@ Most `add` calls take an `en` field (props, solids, auras, hands, poses) and reg
 
 ### Panels
 
-`api.ui.addSection({title, titleEn?, html})` adds a section to the side bar (above the MOD panel) and
-returns it. Write the labels in Japanese and add their English with `api.i18n.add`, or write them in
+`api.ui.addSection({title, titleEn?, html, at?})` adds a section to the side bar (above the MOD panel;
+`at: "top"` puts it first, API 1.1) and returns it. Write the labels in Japanese and add their English with `api.i18n.add`, or write them in
 English only. Prefix your element ids with your mod's id. `api.ui.$(id)` is `document.getElementById`.
 
 ### Events
@@ -241,7 +251,8 @@ The canvas state (`ctx`) is saved and restored around each drawing hook.
 - Your data in `api.data()` and the props, solids and auras you added are saved in the pose JSON
   Opened without your mod, they stay in the file; props and
   aura kinds the editor does not know are skipped when drawing, unknown solid kinds draw as boxes.
-- The API follows semantic versioning: 1.x adds things and keeps what is here working. A mod with
+- The API follows semantic versioning: 1.x adds things and keeps what is here working (1.1 added
+  `api.io` and `addSection({at})`). A mod with
   `api: 2` does not load in an editor with API 1.
 - Only what this page describes is the API. The editor's other functions and globals can change
   between versions.

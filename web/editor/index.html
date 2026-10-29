@@ -1041,7 +1041,7 @@ function applyPreset(name){
 // ---- UI wiring ---------------------------------------------------------------------------
 const $ = id => document.getElementById(id);
 const UNITS = {scaleAll: 1, scaleHead: 1, scaleThick: 1, lens: 1, yaw: 1, pitch: 1, roll: 1};
-const TC = Array.isArray(window.USER_POSE_PRESETS) ? window.USER_POSE_PRESETS : [];
+const TC = [];                        // user presets: from files (the button below) or a mod
 $("preset").innerHTML = Object.keys(PRESETS).map(n => `<option>${n}</option>`).join("");
 // user presets: possibly thousands, so a group, a search and a list
 const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
@@ -1267,7 +1267,7 @@ function migrate(d){                  // version 1 had no waist joint (18 joints
 }
 function say(msg, warn){ $("status").textContent = msg; $("status").style.color = warn ? "var(--warn)" : ""; }
 
-const qs0 = new URLSearchParams(location.search);
+// the scene alone (things, floor and walls, wire, solids), for what reads the pose downstream.
 function sceneOnly(){ return {items: S.items || [], env: S.env || {}, wire: S.wire || {}, solids: S.solids || []}; }
 const qs = new URLSearchParams(location.search);
 if (qs.get("w")) $("W").value = qs.get("w");
