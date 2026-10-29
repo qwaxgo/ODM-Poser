@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+# your own mods stay on your machine (examples/mods/ has an example); the list for opening from disk
+mods/*
+!mods/README.md
+web/mods.js
