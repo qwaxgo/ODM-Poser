@@ -141,7 +141,7 @@ function drawSolids(ctx, W, H, opts, proj, lw, toViewer){
   list.forEach((o, k) => {
     const m = solidMesh(o), P = m.V.map(p => proj(p, W, H));
     const seen = m.faces.map(f => dot(f.n, toViewer(m.V[f.v[0]])) > 0);
-    const color = opts.export ? "#8a8a8a" : k === soSel && mode === "place" ? cssVar("--sel") : cssVar("--accent");
+    const color = !opts.export && k === soSel && mode === "place" ? cssVar("--sel") : o.color || (opts.export ? "#8a8a8a" : cssVar("--accent"));
     for (const hidden of [true, false]){
       if (hidden && opts.export) continue;
       ctx.strokeStyle = color; ctx.lineWidth = hidden ? Math.max(1, lw * 0.5) : lw * 0.9;
@@ -259,6 +259,8 @@ function buildSolidPanel(){
     <div class="btns" style="margin-top:6px"><button id="soDel">外す</button><button id="soDup">複製</button></div>
     <div id="soCtl" class="grid2" style="margin-top:6px">${SOLID_CTL.map(([id, label]) =>
       `<div id="${id}Box"><label>${label}</label><div class="row"><input type="number" id="${id}" step="${id === "soSides" ? 1 : 5}"><span class="unit">${unit(id)}</span></div></div>`).join("")}</div>
+    <div class="row" id="soColorRow" style="margin-top:6px"><label style="margin:0;flex:1"><input type="checkbox" id="soColorOn"> 線の色を変える</label>
+      <input type="color" id="soColor" value="#e0605a" style="width:52px;height:24px;padding:0;border:none;background:none"></div>
     <div class="btns" style="margin-top:8px"><button id="soTouch">選んだ関節を着ける</button><button id="soStand">この上に立つ</button></div>
     <div class="hint">配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、ホイールで向き）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。</div>`;
   const scene = $("scCat").closest("section");
@@ -281,6 +283,10 @@ function buildSolidPanel(){
       afterEdit(); syncSolids(); draw();
     });
   }
+  const setColor = () => { const o = S.solids && S.solids[soSel]; if (!o) return; remember();
+    o.color = $("soColorOn").checked ? $("soColor").value : undefined; draw(); };
+  $("soColorOn").addEventListener("change", setColor);
+  $("soColor").addEventListener("input", () => { $("soColorOn").checked = true; setColor(); });
   $("soTouch").addEventListener("click", touchSolid);
   $("soStand").addEventListener("click", standOnSolid);
 }
@@ -290,8 +296,9 @@ function syncSolids(){
   $("soList").innerHTML = list.map((o, k) => `<option value="${k}">${k + 1}. ${solidKind(o).ja}</option>`).join("");
   if (soSel >= 0) $("soList").value = String(soSel);
   const o = list[soSel];
-  $("soCtl").style.display = o ? "" : "none";
+  $("soCtl").style.display = $("soColorRow").style.display = o ? "" : "none";
   if (!o) return;
+  $("soColorOn").checked = !!o.color; if (o.color) $("soColor").value = o.color;
   const sh = solidKind(o).shape;
   $("soSidesBox").style.display = sh === "prism" || sh === "pyr" ? "" : "none";
   const vals = {soW: o.size[0], soH: o.size[1], soD: o.size[2], soSides: o.sides || solidKind(o).sides || 4,

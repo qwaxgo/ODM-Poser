@@ -5,7 +5,9 @@
 // sceneAfterEdit() after every edit (before the pins are held).
 //
 // S.items: {key, hand: "r" | "l" (held), base: [x, y, z], yaw (world / grab: where it was put),
-//           off: [x, y, z] cm, rot: [x, y, z] degrees, scale: 1}
+//           off: [x, y, z] cm, rot: [x, y, z] degrees, scale: 1, where: "back" | "world" (carried on
+//           the back / put down instead of held or worn), grounded (stays on the floor / a top),
+//           color (its line colour), bayonet (on a rifle), dims (sizes of a simple solid)}
 // S.env:   floor, floorY, ground ("off" | "nopen" | "stick"), wall, wallZ, wallX, wallYaw, ceiling,
 //          ceilingY, show (draw floor / wall in the exported atari too)
 // S.wire:  {on, joint, anchor: [x, y, z], length}
@@ -13,8 +15,8 @@ const PROPS_ = window.PROPS || {}, CATS_ = window.PROP_CATS || [];
 
 // ---- frames ------------------------------------------------------------------------------------
 function rotY(v, a){ const c = Math.cos(a), s = Math.sin(a); return [c*v[0] + s*v[2], v[1], -s*v[0] + c*v[2]]; }
-function itemLocal(it, p){                    // the item's own size and turn, before its frame
-  let q = mul(p, it.scale || 1);
+function itemLocal(it, p, k = 1){             // the item's own size and turn, before its frame
+  let q = mul(p, (it.scale || 1) * k);
   const r = it.rot || [0, 0, 0];
   q = rotAxis(q, [0, 0, 1], deg(r[2])); q = rotAxis(q, [1, 0, 0], deg(r[0])); q = rotAxis(q, [0, 1, 0], deg(r[1]));
   return add(q, it.off || [0, 0, 0]);
@@ -35,16 +37,88 @@ function chestFrame(){
   let y = sub(P[IX.neck], P[IX.waist]); y = norm(sub(y, mul(x, dot(y, x))));
   return {o: P[IX.chest], x, y, z: cross(x, y)};
 }
-function worldFrame(it){
+function waistFrame(){
+  const P = S.P, x = norm(sub(P[IX.l_hip], P[IX.r_hip]));
+  let y = sub(P[IX.waist], P[IX.pelvis]); y = norm(sub(y, mul(x, dot(y, x))));
+  return {o: P[IX.pelvis], x, y, z: cross(x, y)};
+}
+// a foot: origin the ankle, z toward the toe along the sole, y up from the sole, x outward
+const SOLE_TILT = Math.atan2(7, 13);          // the rest foot: the toe is 7 cm below the ankle, 13 cm ahead
+function footFrame(side){
+  const a = S.P[IX[side + "_ankle"]], z0 = norm(sub(S.P[IX[side + "_toe"]], a));
+  let y0 = sub(S.P[IX[side + "_knee"]], a); y0 = sub(y0, mul(z0, dot(y0, z0)));
+  y0 = len(y0) > 1e-6 ? norm(y0) : [0, 1, 0];
+  const c = Math.cos(SOLE_TILT), s = Math.sin(SOLE_TILT);
+  const z = add(mul(z0, c), mul(y0, s)), y = sub(mul(y0, c), mul(z0, s));
+  return {o: a, x: mul(cross(y, z), side === "r" ? -1 : 1), y, z};
+}
+// things worn: the head in units of its radius, the chest / back, the waist, the feet, the hands
+function wearFrame(at){
+  if (at === "head"){ const h = headFrame(); return {o: S.P[IX.head], x: h.side, y: h.up, z: h.fwd, k: h.r}; }
+  if (at === "waist") return waistFrame();
+  if (at === "r_foot" || at === "l_foot") return footFrame(at[0]);
+  if (at === "r_hand" || at === "l_hand") return handFrame(at[0]);
+  return chestFrame();
+}
+function worldFrame(it, k = 1, dx = 0){
   const a = deg(it.yaw || 0);
-  return {o: it.base || [0, 0, 0], x: rotY([1, 0, 0], a), y: [0, 1, 0], z: rotY([0, 0, 1], a)};
+  return {o: add(it.base || [0, 0, 0], rotY([dx, 0, 0], a)), x: rotY([1, 0, 0], a), y: [0, 1, 0], z: rotY([0, 0, 1], a), k};
 }
-function frameOf(it){
+const itemDims = it => { const d = PROPS_[it.key] || {}; return (d.dims || []).map(([, v], i) => (it.dims && +it.dims[i]) || v); };
+function partsOf(it){                         // the shapes, with a simple solid's sizes and a bayonet
+  const def = PROPS_[it.key] || {}, parts = def.make ? def.make(itemDims(it)) : def.parts || [];
+  if (!(it.bayonet && def.bayonet)) return parts;
+  const [x, y, z] = def.bayonet;
+  return [...parts, {t: [x, y, z - 3, 0, 0, 1, 1.6, 0.4]}, {b: [x, y - 1.2, z + 12, 0.5, 2.6, 24]},
+          {k: [x, y - 1.2, z + 24, x, y - 1.2, z + 31, 1.3]}];
+}
+// every place an item is drawn: [{f: frame, parts}] (a pair of skates is two)
+function partSets(it){
   const def = PROPS_[it.key] || {};
-  return def.place === "hand" ? handFrame(it.hand || "r") : def.place === "body" ? chestFrame() : worldFrame(it);
+  const sets = (def.sets || [[def.at, partsOf(it)]]).flatMap(([at, parts]) =>
+    at === "feet" ? [["r_foot", parts], ["l_foot", parts]] : at === "hands" ? [["r_hand", parts], ["l_hand", parts]] : [[at, parts]]);
+  if (it.where === "world"){
+    const k = def.at === "head" ? S.R[IX.head] : 1;
+    return sets.map(([, parts], i) => ({f: worldFrame(it, k, (i - (sets.length - 1) / 2) * 30), parts}));
+  }
+  if (it.where === "back") return [{f: backFrame(it), parts: sets[0][1]}];
+  if (def.place === "wear") return sets.map(([at, parts]) => ({f: wearFrame(at), parts}));
+  const f = def.place === "hand" ? handFrame(it.hand || "r") : def.place === "body" ? chestFrame() : worldFrame(it);
+  return [{f, parts: sets[0][1]}];
 }
+function frameOf(it){ return partSets(it)[0].f; }
 const inFrame = (f, p) => add(f.o, add(add(mul(f.x, p[0]), mul(f.y, p[1])), mul(f.z, p[2])));
-function itemToWorld(it, p, f){ return inFrame(f || frameOf(it), itemLocal(it, p)); }
+function itemToWorld(it, p, f){ f = f || frameOf(it); return inFrame(f, itemLocal(it, p, f.k || 1)); }
+// a few points (with a radius) of a shape in its own axes, for its extent
+function shapePoints(sh){
+  if (sh.c) return [[sh.c.slice(0, 3), sh.c[6]], [sh.c.slice(3, 6), sh.c[6]]];
+  if (sh.b){ const [cx, cy, cz, sx, sy, sz] = sh.b; return [[[cx - sx/2, cy - sy/2, cz - sz/2], 0], [[cx + sx/2, cy + sy/2, cz + sz/2], 0]]; }
+  if (sh.s) return [[sh.s.slice(0, 3), sh.s[3]]];
+  if (sh.d || sh.h) return [[(sh.d || sh.h).slice(0, 3), (sh.d || sh.h)[6]]];
+  if (sh.k) return [[sh.k.slice(0, 3), sh.k[6]], [sh.k.slice(3, 6), 0]];
+  if (sh.t) return [[sh.t.slice(0, 3), sh.t[6] + sh.t[7]]];
+  if (sh.l) return sh.l.map(q => [q, 0]);
+  return [];
+}
+function localExtent(parts){
+  const lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
+  for (const sh of parts) for (const [q, r] of shapePoints(sh))
+    for (let i = 0; i < 3; i++){ lo[i] = Math.min(lo[i], q[i] - r); hi[i] = Math.max(hi[i], q[i] + r); }
+  return {lo, hi};
+}
+// carried on the back: the long side slants from the right hip up to the left shoulder, flat on the back
+function backFrame(it){
+  const def = PROPS_[it.key] || {}, cf = chestFrame(), out = mul(cf.z, -1);
+  const slant = v => rotAxis(v, out, deg(-28));
+  if (def.place === "body") return {o: add(cf.o, mul(out, 26)), x: slant(mul(cf.x, -1)), y: slant(cf.y), z: out};
+  const {lo, hi} = localExtent(partsOf(it)), sc = it.scale || 1;
+  const ext = [0, 1, 2].map(i => hi[i] - lo[i]), mid = [0, 1, 2].map(i => (hi[i] + lo[i]) / 2 * sc);
+  const d = slant(cf.y), x = out;
+  let y, z;
+  if (ext[1] >= ext[2]){ y = d; z = cross(x, y); } else { z = d; y = cross(z, x); }
+  const centre = add(cf.o, add(mul(out, 13 + ext[0] * sc / 2), mul(cf.y, -4)));
+  return {o: sub(centre, add(add(mul(x, mid[0]), mul(y, mid[1])), mul(z, mid[2]))), x, y, z};
+}
 const dirToWorld = (f, it, v) => { const a = itemToWorld(it, [0, 0, 0], f), b = itemToWorld(it, v, f); return sub(b, a); };
 
 // ---- drawing -----------------------------------------------------------------------------------
@@ -56,7 +130,7 @@ function circle3(c, n, r, k = 24){            // points of a circle about the no
   return out;
 }
 function drawShape(ctx, sh, it, f, P, lw){
-  const W2 = q => itemToWorld(it, q, f), k = it.scale || 1;
+  const W2 = q => itemToWorld(it, q, f), k = (it.scale || 1) * (f.k || 1);
   const line = pts => { ctx.beginPath(); pts.forEach((q, i) => { const s = P(q); i ? ctx.lineTo(s.x, s.y) : ctx.moveTo(s.x, s.y); }); ctx.stroke(); };
   if (sh.c){
     const [x1, y1, z1, x2, y2, z2, r0] = sh.c, a = W2([x1, y1, z1]), b = W2([x2, y2, z2]), r = r0 * k;
@@ -90,7 +164,33 @@ function drawShape(ctx, sh, it, f, P, lw){
   } else if (sh.t){
     const [cx, cy, cz, nx, ny, nz, R, r] = sh.t, c = W2([cx, cy, cz]), n = dirToWorld(f, it, [nx, ny, nz]);
     ctx.save(); ctx.lineWidth = Math.max(lw, 2 * r * k * P(c).s * 0.8); line(circle3(c, n, R * k)); ctx.restore();
+  } else if (sh.h){                           // a dome: its rim and two arcs over the top
+    const [cx, cy, cz, nx, ny, nz, r0] = sh.h, c = W2([cx, cy, cz]), n = norm(dirToWorld(f, it, [nx, ny, nz])), r = r0 * k;
+    line(circle3(c, n, r));
+    const u = norm(cross(n, Math.abs(n[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0])), v = cross(n, u);
+    for (const w of [u, v]) line([...Array(17)].map((_, i) => { const t = Math.PI * i / 16;
+      return add(c, add(mul(w, r * Math.cos(t)), mul(n, r * Math.sin(t)))); }));
+  } else if (sh.l) line(sh.l.map(W2));
+}
+// points of an item in the world (for putting it on the floor and for grabbing it with the mouse)
+function worldSamples(it){
+  const out = [];
+  for (const {f, parts} of partSets(it)){
+    const k = (it.scale || 1) * (f.k || 1), W2 = q => itemToWorld(it, q, f);
+    for (const sh of parts){
+      if (sh.c){ const a = W2(sh.c.slice(0, 3)), b = W2(sh.c.slice(3, 6)), ax = sub(b, a), r = sh.c[6] * k;
+        out.push(...circle3(a, ax, r, 8), ...circle3(b, ax, r, 8)); }
+      else if (sh.b){ const [cx, cy, cz, sx, sy, sz] = sh.b;
+        for (const i of [-1, 1]) for (const j of [-1, 1]) for (const l of [-1, 1]) out.push(W2([cx + i*sx/2, cy + j*sy/2, cz + l*sz/2])); }
+      else if (sh.s){ const c = W2(sh.s.slice(0, 3)), r = sh.s[3] * k;
+        for (const d of [[0, -r, 0], [0, r, 0], [r, 0, 0], [-r, 0, 0], [0, 0, r], [0, 0, -r]]) out.push(add(c, d)); }
+      else if (sh.d || sh.h || sh.t){ const a = sh.d || sh.h || sh.t, c = W2(a.slice(0, 3)), n = dirToWorld(f, it, a.slice(3, 6));
+        const r = (sh.t ? a[6] + a[7] : a[6]) * k; out.push(...circle3(c, n, r, 12)); if (sh.h) out.push(add(c, mul(norm(n), r))); }
+      else if (sh.k){ const b = W2(sh.k.slice(0, 3)), ap = W2(sh.k.slice(3, 6)); out.push(...circle3(b, sub(ap, b), sh.k[6] * k, 12), ap); }
+      else if (sh.l) out.push(...sh.l.map(W2));
+    }
   }
+  return out;
 }
 function envLines(){                          // floor / wall / ceiling as 3D line segments
   const E = S.env || {}, c = S.P[IX.pelvis], out = [];
@@ -115,7 +215,8 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
   const P = q => proj(q, W, H), E = S.env || {};
   ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
   if (!opts.export || E.show){
-    ctx.strokeStyle = opts.export ? "#b0b0b0" : far; ctx.lineWidth = Math.max(1, lw * 0.6);
+    const envCol = S.colors && S.colors.env;
+    ctx.strokeStyle = envCol || (opts.export ? "#b0b0b0" : far); ctx.lineWidth = Math.max(1, lw * 0.6);
     ctx.globalAlpha = opts.export ? 1 : 0.55;
     for (const [a, b] of envLines()){ const p = P(a), q = P(b); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
     ctx.globalAlpha = 1;
@@ -124,17 +225,21 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
   const w = S.wire;
   if (w && w.on && w.anchor){
     const a = P(w.anchor), b = P(S.P[IX[w.joint] !== undefined ? IX[w.joint] : IX.chest]);
-    ctx.strokeStyle = ink; ctx.lineWidth = lw; ctx.setLineDash([lw * 4, lw * 3]);
+    ctx.strokeStyle = (S.colors && S.colors.wire) || ink; ctx.lineWidth = lw; ctx.setLineDash([lw * 4, lw * 3]);
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.setLineDash([]);
     ctx.beginPath(); ctx.arc(a.x, a.y, lw * 3, 0, 2 * Math.PI); ctx.stroke();
   }
-  // the things
+  // the things: their own colour (or an effect's), glowing effects drawn twice
   (S.items || []).forEach((it, n) => {
     const def = PROPS_[it.key]; if (!def) return;
-    const f = frameOf(it);
-    ctx.strokeStyle = opts.export ? ink : (n === scSel ? cssVar("--sel") : cssVar("--accent"));
-    ctx.lineWidth = lw * (opts.side ? 0.9 : 1.1);
-    for (const sh of def.parts) drawShape(ctx, sh, it, f, P, lw);
+    const col = it.color || def.color, sets = partSets(it);
+    const stroke = opts.export ? col || ink : n === scSel ? cssVar("--sel") : col || cssVar("--accent");
+    for (const glow of def.glow ? [true, false] : [false]){
+      ctx.strokeStyle = stroke; ctx.globalAlpha = glow ? 0.22 : 1;
+      ctx.lineWidth = lw * (opts.side ? 0.9 : 1.1) * (glow ? 5 : 1);
+      for (const {f, parts} of sets) for (const sh of parts) drawShape(ctx, sh, it, f, P, lw * (glow ? 5 : 1));
+    }
+    ctx.globalAlpha = 1;
   });
   ctx.restore();
 }
@@ -168,7 +273,7 @@ function reachWith(i, target, pull){          // IK; when out of reach, optional
 }
 function followItems(moved){
   for (const it of S.items || []){
-    const def = PROPS_[it.key]; if (!def) continue;
+    const def = PROPS_[it.key]; if (!def || it.where) continue;
     if (def.place === "hand" && def.grip2 && it.both !== false){
       const other = it.hand === "r" ? "l" : "r", wi = IX[other + "_wrist"];
       if (S.pins && S.pins[wi]) continue;
@@ -253,14 +358,14 @@ function toSurface(which){
 
 // ---- grab the nearest thing (vine, branch, bar, ladder, chair back, handlebar ...) ----------------
 function nearestOn(it, q){
-  const def = PROPS_[it.key], f = frameOf(it); let best = null, bd = 1e9;
-  for (const sh of def.grab ? def.grab.map(([a, b]) => ({c: [...a, ...b, 0]})) : def.parts){
+  const def = PROPS_[it.key]; let best = null, bd = 1e9;
+  for (const {f, parts} of partSets(it)) for (const sh of def.grab ? def.grab.map(([a, b]) => ({c: [...a, ...b, 0]})) : parts){
     let p = null;
     if (sh.c){ const a = itemToWorld(it, sh.c.slice(0, 3), f), b = itemToWorld(it, sh.c.slice(3, 6), f), ab = sub(b, a);
       const t = Math.max(0, Math.min(1, dot(sub(q, a), ab) / (dot(ab, ab) || 1))); p = add(a, mul(ab, t)); }
     else if (sh.s) p = itemToWorld(it, sh.s.slice(0, 3), f);
     else if (sh.b){ const [cx, cy, cz, sx, sy, sz] = sh.b;   // the nearest point on the box, in its own frame
-      const o = itemToWorld(it, [cx, cy, cz], f), k = it.scale || 1;
+      const o = itemToWorld(it, [cx, cy, cz], f), k = (it.scale || 1) * (f.k || 1);
       const ax = [dirToWorld(f, it, [1, 0, 0]), dirToWorld(f, it, [0, 1, 0]), dirToWorld(f, it, [0, 0, 1])].map(norm);
       const hs = [sx, sy, sz].map(v => v * k / 2);
       p = o; ax.forEach((u, m) => { p = add(p, mul(u, Math.max(-hs[m], Math.min(hs[m], dot(sub(q, o), u))))); }); }
@@ -271,7 +376,8 @@ function nearestOn(it, q){
 function grab(){
   let i = sel;
   if (i < 0 || !/_(wrist|ankle)$/.test(J[i])) i = IX.r_wrist;
-  const things = (S.items || []).map((it, n) => [it, n]).filter(([it]) => PROPS_[it.key] && PROPS_[it.key].place !== "hand");
+  const things = (S.items || []).map((it, n) => [it, n]).filter(([it]) => PROPS_[it.key] &&
+    (it.where === "world" || !["hand", "wear", "body"].includes(PROPS_[it.key].place)));
   if (!things.length) { say("つかまる物（蔓・枝・鉄棒など）を先に置いてください。", true); return; }
   let best = null, bd = 1e9;
   const from = S.P[PARENT[PARENT[i]]];
@@ -315,6 +421,75 @@ function setWire(){
   }
 }
 
+// ---- the hands an item takes: held -> its grip (both hands when two-handed), worn / mounted -> its hands
+function handsOf(it){
+  const def = PROPS_[it.key] || {}, out = {};
+  if (it.where) return out;
+  if (def.place === "hand"){
+    out[it.hand === "l" ? "l" : "r"] = def.pose || "grip";
+    if (def.grip2 && it.both !== false) out[it.hand === "l" ? "r" : "l"] = def.pose2 || def.pose || "grip";
+  } else if (def.place === "body" || def.place === "wear"){
+    Object.assign(out, def.hands || {});
+    if (def.mount) for (const s of ["r", "l"]) if (def.mount[s + "_wrist"] && !out[s]) out[s] = def.pose || "grip";
+  }
+  return out;
+}
+const holdHands = it => Object.assign(S.hands, handsOf(it));
+function freeHands(it){ for (const [s, h] of Object.entries(handsOf(it))) if (S.hands[s] === h) S.hands[s] = "relaxed"; }
+
+// ---- put down, carry on the back, hold again ----------------------------------------------------
+const movable = it => { const d = PROPS_[it.key] || {}; return it.where === "world" || d.place === "world" || d.place === "grab"; };
+function groundItem(it){                      // onto the floor or the top of a solid under it
+  const pts = worldSamples(it); if (!pts.length || !it.base) return;
+  const low = Math.min(...pts.map(q => q[1])), sup = supportUnder(it.base, low);
+  if (isFinite(sup)) it.base = add(it.base, [0, sup - low, 0]);
+}
+function putDown(it){
+  const def = PROPS_[it.key] || {}, at = itemToWorld(it, [0, 0, 0]);
+  freeHands(it);
+  it.where = "world"; it.base = at.slice(); it.yaw = facingYaw(); it.grounded = true;
+  if (def.place === "hand"){                  // lie flat: a long grip along the floor
+    const {lo, hi} = localExtent(partsOf(it));
+    it.rot = hi[1] - lo[1] > hi[2] - lo[2] ? [0, 0, 90] : [0, 0, 0];
+  }
+  groundItem(it);
+}
+function carryOnBack(it){ freeHands(it); it.where = "back"; it.rot = [0, 0, 0]; }
+function holdAgain(it){
+  it.where = undefined; it.rot = [0, 0, 0]; it.grounded = false;
+  const def = PROPS_[it.key] || {};
+  if (def.place === "hand")                   // one thing per hand
+    S.items = S.items.filter(o => o === it || !(PROPS_[o.key] && PROPS_[o.key].place === "hand" && !o.where && o.hand === it.hand));
+  holdHands(it);
+}
+// 配置 mode: drag what lies in the scene (Shift: up and down), the wheel turns it
+function itemUnder(x, y){
+  const W = front.width, H = front.height, reach = 14 * (devicePixelRatio || 1);
+  let best = null, bd = reach;
+  (S.items || []).forEach((it, n) => { if (!movable(it)) return;
+    for (const q of worldSamples(it)){ const s = project(q, W, H), d = Math.hypot(s.x - x, s.y - y);
+      if (d < bd){ bd = d; best = {n, p: q}; } } });
+  return best;
+}
+DOWN_HOOKS.push((cv, x, y) => {
+  if (mode !== "place" || cv !== front || pick(cv, x, y) >= 0) return null;
+  const u = itemUnder(x, y); if (!u) return null;
+  scSel = u.n; fillItemList();
+  const it = S.items[u.n];
+  return dragFrom(u.p, cv.width, cv.height, d => {
+    it.base = add(it.base, d);
+    if (d[1]) it.grounded = false; else if (it.grounded) groundItem(it);
+    afterEdit(); showItem(); });
+});
+WHEEL_HOOKS.push((x, y, step, e) => {
+  if (mode !== "place") return false;
+  const u = itemUnder(x, y); if (!u) return false;
+  remember(); scSel = u.n; const it = S.items[u.n];
+  it.yaw = ((it.yaw || 0) + step * (e.shiftKey ? 15 : 5) + 540) % 360 - 180;
+  if (it.grounded) groundItem(it);
+  afterEdit(); fillItemList(); return true;
+});
+
 // ---- adding things -----------------------------------------------------------------------------
 function facingYaw(){ const f = bodyFront(); return Math.atan2(f[0], f[2]) * 180 / Math.PI; }
 function addItem(key, hand){
@@ -323,13 +498,14 @@ function addItem(key, hand){
   const it = {key, off: [0, 0, 0], rot: [0, 0, 0], scale: 1};
   if (def.place === "hand"){
     it.hand = hand === "l" ? "l" : "r";
-    // one thing per hand: a new one replaces what that hand held
-    S.items = (S.items || []).filter(o => !(PROPS_[o.key] && PROPS_[o.key].place === "hand" && o.hand === it.hand));
-    S.hands[it.hand] = def.pose || "grip";
-    if (def.grip2) S.hands[it.hand === "r" ? "l" : "r"] = def.pose2 || def.pose || "grip";
+    // one thing per hand: a new one replaces what that hand held (things on the back or put down stay)
+    S.items = (S.items || []).filter(o => !(PROPS_[o.key] && PROPS_[o.key].place === "hand" && !o.where && o.hand === it.hand));
+    holdHands(it);
   } else if (def.place === "body"){
-    S.items = (S.items || []).filter(o => !(PROPS_[o.key] && PROPS_[o.key].place === "body"));
-    if (def.hands) Object.assign(S.hands, def.hands);
+    S.items = (S.items || []).filter(o => !(PROPS_[o.key] && PROPS_[o.key].place === "body" && !o.where));
+    holdHands(it);
+  } else if (def.place === "wear"){
+    holdHands(it);
   } else {
     const c = S.P[IX.pelvis], fy = +(S.env && S.env.floorY) || 0;
     it.yaw = facingYaw();
@@ -342,6 +518,7 @@ function addItem(key, hand){
   if (def.place === "world" && def.mount) mountOn(it, true);
   afterEdit(); fillItemList(); draw();
   const where = def.place === "hand" ? (it.hand === "r" ? "右手に持たせました" : "左手に持たせました")
+    : def.place === "wear" ? "身に着けました"
     : def.place === "grab" ? "置きました。手首か足首を選んで「つかまる」" : "置きました";
   say(`${def.ja}（${def.en}）を${where}。`);
 }
@@ -362,7 +539,7 @@ function mountOn(it, quiet){                  // seat the pelvis, put the hands 
   }
   if (m.pelvis) S.pins[IX.pelvis] = S.P[IX.pelvis].slice();
   if (def.hands) Object.assign(S.hands, def.hands);
-  else if (def.pose) for (const s of ["r", "l"]) if (m[s + "_wrist"]) S.hands[s] = def.pose;
+  else for (const s of ["r", "l"]) if (m[s + "_wrist"]) S.hands[s] = def.pose || "grip";
   if (!quiet){ afterEdit(); draw(); say(`${def.ja}に体を合わせて、合わせた関節を固定しました。`); }
 }
 
@@ -384,6 +561,15 @@ function buildScenePanel(){
     <select id="scList" size="4"></select>
     <div class="btns" style="margin-top:6px"><button id="scDel">外す</button><button id="scMount">体を合わせる</button>
       <button id="scFlip">逆手にする</button><label style="display:inline;margin:0 0 0 4px"><input type="checkbox" id="scBoth" checked> 両手持ち</label></div>
+    <div id="scItemMore">
+      <div class="btns" style="margin-top:6px"><button id="scBack">背負う</button><button id="scWorld">床・物体に置く</button>
+        <button id="scHold">手に持つ・身に着ける</button><button id="scGround2">接地させる</button></div>
+      <label id="scBayRow"><input type="checkbox" id="scBay"> 銃剣を付ける</label>
+      <div id="scDims" class="grid2"></div>
+      <div class="row" style="margin-top:6px"><label style="margin:0;flex:1"><input type="checkbox" id="scColorOn"> 線の色を変える</label>
+        <input type="color" id="scColor" value="#e0605a" style="width:52px;height:26px;padding:0;border:none;background:none"></div>
+      <div class="hint">置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。</div>
+    </div>
     <div id="scItemCtl">${ITEM_CTL.map(rng).join("")}</div>
     <h2 style="margin-top:14px">床・壁・天井</h2>
     <div class="grid2">
@@ -420,10 +606,11 @@ function buildScenePanel(){
     const d = PROPS_[$("scKey").value]; if (!d) { $("scNote").textContent = ""; return; }
     const how = d.place === "hand" ? (d.grip2 ? "両手で持つ" : "片手で持つ") + "（手の形：" + (HAND_JA[d.pose] || d.pose) + "）"
       : d.place === "body" ? "体の前に構える（両手は自動で合わせる）" : d.place === "grab" ? "置いてから、手足でつかまる"
+      : d.place === "wear" ? "身に着ける（" + ({head: "頭", chest: "胸・肩", back: "背中", waist: "腰", feet: "両足"}[d.at] || "両足と両手") + "）"
       : d.mount && Object.keys(d.mount).length ? "置くと体を合わせる（座る・乗る・手を置く）" : "床に置く";
     $("scNote").textContent = how + (d.note ? "。" + d.note : "");
     $("scAddL").style.display = d.place === "hand" ? "" : "none";
-    $("scAddR").textContent = d.place === "hand" ? "右手に持つ" : "置く";
+    $("scAddR").textContent = d.place === "hand" ? "右手に持つ" : d.place === "wear" ? "身に着ける" : "置く";
   };
   $("scCat").addEventListener("change", fillKeys);
   $("scKey").addEventListener("change", showNote);
@@ -431,13 +618,26 @@ function buildScenePanel(){
   $("scAddL").addEventListener("click", () => addItem($("scKey").value, "l"));
   $("scList").addEventListener("change", () => { scSel = +$("scList").value; showItem(); draw(); });
   $("scDel").addEventListener("click", () => { if (scSel < 0 || !S.items[scSel]) return; remember();
+    freeHands(S.items[scSel]);
     const it = S.items.splice(scSel, 1)[0], d = PROPS_[it.key];
     if (d && d.mount) for (const jn of Object.keys(d.mount)) if (S.pins) delete S.pins[IX[jn]];
     scSel = Math.min(scSel, S.items.length - 1); fillItemList(); draw(); });
   $("scMount").addEventListener("click", () => { const it = S.items[scSel]; if (it) mountOn(it); });
   $("scFlip").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
     it.rot[0] = ((it.rot[0] + 360) % 360) - 180; afterEdit(); showItem(); draw(); });
-  $("scBoth").addEventListener("change", e => { const it = S.items[scSel]; if (!it) return; it.both = e.target.checked; afterEdit(); draw(); });
+  $("scBoth").addEventListener("change", e => { const it = S.items[scSel]; if (!it) return;
+    freeHands(it); it.both = e.target.checked; holdHands(it); afterEdit(); draw(); });
+  const onItem = (id, fn, msg) => $(id).addEventListener("click", () => { const it = S.items[scSel]; if (!it) return;
+    remember(); fn(it); afterEdit(); fillItemList(); draw(); if (msg) say(msg); });
+  onItem("scBack", carryOnBack, "背負いました。");
+  onItem("scWorld", putDown, "床・物体の上に置きました。配置モードでドラッグして動かせます。");
+  onItem("scHold", holdAgain, "持たせました（手の形も合わせました）。");
+  onItem("scGround2", it => { it.grounded = true; groundItem(it); }, "接地させました。");
+  $("scBay").addEventListener("change", e => { const it = S.items[scSel]; if (!it) return; remember(); it.bayonet = e.target.checked; draw(); });
+  const setColor = () => { const it = S.items[scSel]; if (!it) return; remember();
+    it.color = $("scColorOn").checked ? $("scColor").value : undefined; draw(); };
+  $("scColorOn").addEventListener("change", setColor);
+  $("scColor").addEventListener("input", () => { $("scColorOn").checked = true; setColor(); });
   const setters = {scSize: (it, v) => it.scale = v / 100, scRx: (it, v) => it.rot[0] = v, scRy: (it, v) => it.rot[1] = v,
     scRz: (it, v) => it.rot[2] = v, scOx: (it, v) => it.off[0] = v, scOy: (it, v) => it.off[1] = v, scOz: (it, v) => it.off[2] = v};
   for (const [id] of ITEM_CTL){
@@ -470,7 +670,8 @@ function buildScenePanel(){
 function fillItemList(){
   const items = S.items || [];
   $("scList").innerHTML = items.map((it, n) => { const d = PROPS_[it.key] || {};
-    const where = d.place === "hand" ? (it.hand === "r" ? "右手" : "左手") : d.place === "body" ? "構える" : "置く";
+    const where = it.where === "back" ? "背中" : it.where === "world" ? "置く" : d.place === "hand" ? (it.hand === "r" ? "右手" : "左手")
+      : d.place === "body" ? "構える" : d.place === "wear" ? "身に着ける" : "置く";
     return `<option value="${n}">${d.ja || it.key}（${where}）</option>`; }).join("");
   if (scSel >= items.length) scSel = items.length - 1;
   if (scSel >= 0) $("scList").value = String(scSel);
@@ -479,6 +680,21 @@ function fillItemList(){
 function showItem(){
   const it = (S.items || [])[scSel], d = it && PROPS_[it.key];
   $("scItemCtl").style.display = it ? "" : "none";
+  $("scItemMore").style.display = it ? "" : "none";
+  if (it){
+    const carryable = d && (d.place === "hand" || d.place === "body");
+    $("scBack").style.display = carryable && it.where !== "back" ? "" : "none";
+    $("scWorld").style.display = d && it.where !== "world" && d.place !== "world" && d.place !== "grab" ? "" : "none";
+    $("scHold").style.display = it.where ? "" : "none";
+    $("scGround2").style.display = movable(it) ? "" : "none";
+    $("scBayRow").style.display = d && d.bayonet ? "" : "none"; $("scBay").checked = !!it.bayonet;
+    $("scColorOn").checked = !!it.color; if (it.color || (d && d.color)) $("scColor").value = it.color || d.color;
+    const dims = (d && d.dims) || [], vals = itemDims(it);
+    $("scDims").innerHTML = dims.map(([label], i) => `<div><label>${label}</label><div class="row"><input type="number" class="num" data-dim="${i}" min="1" step="1" value="${vals[i]}"><span class="unit">cm</span></div></div>`).join("");
+    $("scDims").querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
+      const v = +inp.value; if (!(v > 0)) return; remember();
+      it.dims = itemDims(it); it.dims[+inp.dataset.dim] = v; if (it.grounded) groundItem(it); afterEdit(); draw(); }));
+  }
   $("scMount").style.display = d && d.mount && d.place !== "hand" ? "" : "none";
   $("scFlip").style.display = d && d.place === "hand" ? "" : "none";
   $("scBoth").parentNode.style.display = d && d.grip2 ? "inline" : "none";
