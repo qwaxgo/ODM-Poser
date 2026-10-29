@@ -2,16 +2,21 @@
 
     /symbolic_pose/editor/            the editor (web/editor/index.html and its scripts)
     /symbolic_pose/user_presets.js    window.USER_POSE_PRESETS from user_presets/*.json
+    /symbolic_pose/mods.js            window.SYMBOLIC_POSE_MODS, the names of mods/*.js
+    /symbolic_pose/mods/{name}        one mod file (docs/MODDING.md)
 """
 
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 EDITOR = HERE / "web" / "editor"
 USER_PRESETS = HERE / "user_presets"
+MODS = HERE / "mods"
+MOD_NAME = re.compile(r"^[\w.-]+\.js$")
 
 
 def user_presets():
@@ -32,6 +37,13 @@ def user_presets():
     return out
 
 
+def mod_files():
+    """The mods to load, in name order (mods/*.js; a name starting with "_" is left out)."""
+    if not MODS.is_dir():
+        return []
+    return sorted(f.name for f in MODS.glob("*.js") if MOD_NAME.match(f.name) and not f.name.startswith("_"))
+
+
 try:
     from aiohttp import web
     from server import PromptServer
@@ -50,7 +62,19 @@ try:
                                                                   if request.query_string else ""))
 
     EDITOR_FILES = ("index.html", "pose_props.js", "pose_props_more.js", "pose_scene.js", "pose_solids.js",
-                    "pose_style.js", "pose_ruler.js", "i18n.js")
+                    "pose_style.js", "pose_ruler.js", "i18n.js", "pose_api.js")
+
+    @routes.get("/symbolic_pose/mods.js")
+    async def _mods_list(request):
+        body = "window.SYMBOLIC_POSE_MODS = " + json.dumps(mod_files()) + ";\n"
+        return web.Response(text=body, content_type="application/javascript")
+
+    @routes.get("/symbolic_pose/mods/{name}")
+    async def _mod_file(request):
+        name = request.match_info["name"]
+        if name not in mod_files():
+            raise web.HTTPNotFound()
+        return web.Response(text=(MODS / name).read_text(encoding="utf-8"), content_type="application/javascript")
 
     @routes.get("/symbolic_pose/editor/{name}")
     async def _editor_file(request):

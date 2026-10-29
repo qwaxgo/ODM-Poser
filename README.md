@@ -107,6 +107,14 @@ up in the editor under "ユーザープリセット / User presets" with a group
 Japanese / English search. That folder is not committed. Opened without ComfyUI, the page
 cannot see that folder: pick the same JSON files with "ファイルから読込 / Load from files".
 
+## Mods
+
+Mods add props, solid kinds, auras, hand shapes, poses, translations, panels and drawing / mouse
+hooks without changing the editor: put `*.js` files in `mods/` (an example: `examples/mods/hello_mod.js`).
+Inside ComfyUI they load when the editor opens; opened from disk, run `python tools/make_mods_list.py`
+first. The API: [docs/MODDING.md](docs/MODDING.md) (日本語: [docs/MODDING-JA.md](docs/MODDING-JA.md)).
+Mods run with the editor's rights: install only mods you trust; `?nomods` starts without them.
+
 ## License
 
 MIT, (c) 2026 qwaxgo. All shapes and code are original to this project.
@@ -138,4 +146,5 @@ JSON としてワークフローに渡せます。
 - **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
 - **組み込みポーズ**：11種（立ち・Aポーズ・Tポーズ・コントラポスト・歩く・走る・椅子に座る・しゃがむ・ジャンプ・ファイティングポーズ・腰に手）。関節の角度で作ったもので、体格はそのまま。
 - **ユーザープリセット**：`user_presets/` に自分のプリセット（JSON）を置くと一覧に出ます（git には入りません）。
+- **MOD**：`mods/` に `*.js` を置くと、小物・物体・オーラ・手の形・ポーズ・翻訳・自分の欄・描画やマウスのフックを追加できます（例：`examples/mods/hello_mod.js`、説明：`docs/MODDING-JA.md`）。ComfyUI なしで開くときは `python tools/make_mods_list.py` を先に実行。信頼できる MOD だけを入れてください（`?nomods` で MOD なし）。
 - **ライセンス**：MIT（c）2026 qwaxgo。

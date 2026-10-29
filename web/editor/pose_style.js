@@ -61,13 +61,20 @@ function seeded(n){ let s = 1234567 + n * 7919; return () => { s = (s * 16807) %
 
 function drawAura(ctx, a, idx, W, H, front){
   const kind = AURA_KINDS[a.kind] ? a.kind : "flame", col = a.color || AURA_KINDS[kind][1];
-  if ((kind === "plasma") !== front) return;
+  const extra = AURA_KINDS[kind][2] || {};    // a mod's kind: {front, draw, margin} (pose_api.js)
+  if ((kind === "plasma" || !!extra.front) !== front) return;
   const chains = (AURA_PARTS[a.part] || AURA_PARTS.body)[1], lw = Math.max(1.2, W / 600);
   const sPx = project(S.P[IX.chest], W, H).s, size = (+a.size || 14) * sPx;
   chains.forEach((chain, ci) => {
-    const hull = auraHull(chain, kind === "plasma" ? (+a.size || 14) * 0.4 : (+a.size || 14) * 0.6, W, H);
+    const margin = extra.draw ? extra.margin : kind === "plasma" ? 0.4 : 0.6;
+    const hull = auraHull(chain, (+a.size || 14) * margin, W, H);
     if (hull.length < 3) return;
     const rnd = seeded(idx * 31 + ci), pts = resample(hull, kind === "flame" ? 56 : 72);
+    if (extra.draw){
+      ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineJoin = "round"; ctx.lineCap = "round";
+      extra.draw(ctx, {points: pts, hull, size, color: col, lineWidth: lw, random: rnd, W, H});
+      ctx.restore(); return;
+    }
     ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineJoin = "round"; ctx.lineCap = "round";
     if (kind === "flame"){
       // tongues: long where the outline faces up, leaning upward; two layers

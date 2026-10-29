@@ -116,6 +116,10 @@
     "全身": "Whole body", "上半身": "Upper body", "両腕": "Both arms", "両手（拳）": "Both hands (fists)", "右手（拳）": "Right hand (fist)",
     "左手（拳）": "Left hand (fist)", "両脚": "Both legs",
     "気（炎のように立ちのぼる）": "Ki (rising like flames)", "オーラ（なめらかな光）": "Aura (smooth glow)", "プラズマ（電撃）": "Plasma (lightning)",
+    // the MOD panel (pose_api.js)
+    "読み込んだ MOD はありません。": "No mods loaded.", "MODファイルを読み込む（今回だけ）": "Load mod files (this session only)",
+    "mods フォルダの *.js を起動時に読み込みます（ComfyUI なしで開くときは tools/make_mods_list.py で一覧を作ります）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。":
+      "The mods/*.js files are loaded at start (opened without ComfyUI, run tools/make_mods_list.py to list them). A mod is a program that can do anything inside the editor: install only mods you trust. Add ?nomods to the address to start without mods.",
     // camera and export
     "カメラ": "Camera", "レンズ（mm、小さいほど広角）": "Lens (mm, smaller = wider)", "向き（左右）": "Direction (left / right)",
     "高さ（俯瞰＋／あおり−）": "Height (+ from above / − from below)", "傾き": "Roll", "カメラを戻す": "Reset camera",
@@ -309,4 +313,11 @@
   label();
   document.documentElement.lang = lang;
   if (lang === "en") { walk(document.body); if (typeof draw === "function") draw(); }
+  // for mods (pose_api.js): more words and rules; what is on the page is translated again
+  window.SymbolicPoseI18n = {
+    get lang(){ return lang; },
+    add(table){ Object.assign(T, table); if (lang === "en"){ walk(document.body); if (typeof draw === "function") draw(); } },
+    addRule(re, fn){ RULES.unshift([re, fn]); if (lang === "en") walk(document.body); },
+    tr: s => (lang === "en" ? tr(s) || s : s),
+  };
 })();
