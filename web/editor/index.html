@@ -193,6 +193,8 @@ input[type=checkbox]{accent-color:var(--accent)}
 </main>
 
 <script src="pose_props.js"></script>
+<!-- effects, simple solids, bags, and things worn on the head, body and feet -->
+<script src="pose_props_more.js"></script>
 <!-- your own preset files (user_presets/*.json), served by the node; missing = none -->
 <script src="../user_presets.js"></script>
 <script>
@@ -237,7 +239,7 @@ function fresh(){
           body: {yaw: 0, pitch: 0, roll: 0}, twist: REST.map(() => 0),
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
-          center: [0, 90, 0], solids: [],
+          center: [0, 90, 0], solids: [], auras: [], colors: {parts: {}},
           ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, box: [60, 60, 60], pos: [70, 0, 0]}};
 }
 const history = [];
@@ -308,6 +310,12 @@ function facePoints(){
 // ---- drawing: the アタリ (lines and circles) ----------------------------------------------
 const BONES = PARENT.map((p, i) => [p, i]).filter(([p]) => p >= 0);
 function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+// the body's parts for line colours: a bone takes its child joint's part
+const PART_OF = {pelvis: "torso", waist: "torso", chest: "torso", r_shoulder: "torso", l_shoulder: "torso",
+  r_hip: "torso", l_hip: "torso", neck: "head", head: "head", r_elbow: "r_arm", r_wrist: "r_arm",
+  l_elbow: "l_arm", l_wrist: "l_arm", r_knee: "r_leg", r_ankle: "r_leg", r_toe: "r_leg",
+  l_knee: "l_leg", l_ankle: "l_leg", l_toe: "l_leg"};
+const partColor = g => (S.colors && S.colors.parts && S.colors.parts[g]) || "";
 function drawAtari(ctx, W, H, opts = {}){
   const P = S.P.map(p => project(p, W, H));
   const ink = opts.ink || cssVar("--figure"), far = opts.far || cssVar("--far");
@@ -327,36 +335,40 @@ function drawAtari(ctx, W, H, opts = {}){
   items.sort((u, v) => u.z - v.z);
   // what lies well behind the body's middle (10 cm and more) is drawn lighter
   const zs = P.map(p => p.z).sort((a, b) => a - b), zmid = zs[Math.floor(zs.length / 2)];
-  const shade = z => opts.flat || z > zmid - 10 ? ink : far;
+  // a part's own line colour (S.colors.parts, pose_style.js) is kept behind the body, only fainter
+  const isFar = z => !(opts.flat || z > zmid - 10);
+  const shade = (z, g) => { const c = partColor(g);
+    ctx.globalAlpha = c && isFar(z) ? 0.55 : 1; return c || (isFar(z) ? far : ink); };
   for (const it of items){
     if (it.kind === "line"){
-      ctx.strokeStyle = shade(it.z); ctx.lineWidth = lw * 1.6;
+      ctx.strokeStyle = shade(it.z, "torso"); ctx.lineWidth = lw * 1.6;
       ctx.beginPath(); it.pp.forEach((q, k) => k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke();
       continue;
     }
     if (it.kind === "poly"){
       ctx.beginPath(); it.pp.forEach((q, k) => k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.closePath();
       if (!opts.flat){ ctx.fillStyle = opts.bg || cssVar("--stage"); ctx.globalAlpha = 0.55; ctx.fill(); ctx.globalAlpha = 1; }
-      ctx.strokeStyle = shade(it.z); ctx.lineWidth = lw * 1.6; ctx.stroke();
+      ctx.strokeStyle = shade(it.z, "torso"); ctx.lineWidth = lw * 1.6; ctx.stroke();
       continue;
     }
     if (it.kind === "bone"){
-      ctx.strokeStyle = shade(it.z); ctx.lineWidth = lw * 1.4;
+      ctx.strokeStyle = shade(it.z, PART_OF[J[it.b]]); ctx.lineWidth = lw * 1.4;
       ctx.beginPath(); ctx.moveTo(P[it.a].x, P[it.a].y); ctx.lineTo(P[it.b].x, P[it.b].y); ctx.stroke();
     } else {
       const i = it.i, p = P[i], r = handleR(i) * p.s;
       if (HANDLE.has(i) && opts.export) continue;           // handles are for the editor only
-      ctx.strokeStyle = HANDLE.has(i) ? far : shade(it.z); ctx.lineWidth = lw * (i === IX.head ? 1.6 : 1.1);
+      ctx.strokeStyle = HANDLE.has(i) ? far : shade(it.z, PART_OF[J[i]]); ctx.lineWidth = lw * (i === IX.head ? 1.6 : 1.1);
       if (!opts.flat){ ctx.fillStyle = opts.bg || cssVar("--stage"); ctx.globalAlpha = 0.55;
         ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.fill(); ctx.globalAlpha = 1; }
       ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.stroke();
       if (opts.sel === i){ ctx.strokeStyle = cssVar("--sel"); ctx.lineWidth = lw * 2;
         ctx.beginPath(); ctx.arc(p.x, p.y, r + 3*lw, 0, 2*Math.PI); ctx.stroke(); }
     }
+    ctx.globalAlpha = 1;
   }
   // the face's centre lines (where the head looks), like a Loomis cross
   const h = headFrame(), c = S.P[IX.head], r = h.r;
-  ctx.strokeStyle = ink; ctx.lineWidth = lw;
+  ctx.strokeStyle = partColor("head") || ink; ctx.lineWidth = lw;
   const arc = (fn) => { ctx.beginPath(); for (let k = 0; k <= 24; k++){
       const t = -Math.PI/2 + Math.PI * k/24, q = project(fn(t), W, H);
       k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); } ctx.stroke(); };
@@ -371,7 +383,7 @@ function drawAtari(ctx, W, H, opts = {}){
   // hands: a small fan of the fingers
   for (const side of ["r", "l"]){
     const pts = handPoints(side, W, H);
-    ctx.strokeStyle = ink; ctx.lineWidth = lw * 0.9;
+    ctx.strokeStyle = partColor(side + "_hand") || ink; ctx.lineWidth = lw * 0.9;
     HAND_EDGES.forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]); ctx.stroke(); });
   }
 }
@@ -1304,6 +1316,8 @@ syncUI(); draw();
 <script src="pose_scene.js"></script>
 <!-- boxes, prisms, cylinders, pyramids, cones and poles to stand on and touch -->
 <script src="pose_solids.js"></script>
+<!-- line colours and auras -->
+<script src="pose_style.js"></script>
 <!-- the perspective ruler and the box guide (uses the editor's camera) -->
 <script src="pose_ruler.js"></script>
 <!-- Japanese / English -->

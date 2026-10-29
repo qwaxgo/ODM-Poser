@@ -59,14 +59,24 @@ saved with the export buttons instead). Without ComfyUI, your own presets are lo
 
 ## Props and scene
 
-About 130 things as simple shapes (cylinders, boxes, spheres, discs, cones, rings): one- and
-two-handed weapons, polearms, guns, bow and shield, staff and grimoire, instruments and mic,
+About 250 things as simple shapes (cylinders, boxes, spheres, discs, cones, rings, domes,
+outlines): one- and two-handed weapons (huge slab sword, huge lance, gun lance, great axe ...),
+polearms, guns (sniper rifle, shotgun, minigun, arm cannon, large crossbow guns; a bayonet on
+rifles), grenades and dynamite, bow and shields, staff and grimoire, instruments and mic,
 stationery and books, tableware, food and drinks, fruit and vegetables, flowers, daily items,
-laptop and controllers, lab glassware, sports gear and a ball of any size, chairs and desks,
-skateboard / unicycle / bicycle / motorbike, and things to grab (vines, branches, trees, poles,
-bars, ladders).
+laptop and controllers, lab glassware, sports gear, chairs and desks, rides (skateboard, kick
+scooter, scooter, moped, bicycle, motorbike, snowboard, surfboard ...), things to grab, effects
+(energy ball, beam, hand blade, spinning saw disc, plasma ...), simple solids of any size in cm,
+bags and baskets, and things worn on the head (hats, helmets, animal ears, glasses, goggles,
+headphones ...), the torso, the waist, the back (backpack, cases) and the feet (skates, skis).
 
-- Held things follow the wrist; two-handed things bring the other hand to the grip.
+- Held things follow the wrist; two-handed things bring the other hand to the grip. Holding,
+  wearing or mounting a thing sets the hand shapes it needs; letting go gives them back.
+- Any held thing can be carried on the back, and any thing put down on the floor or an object
+  (grounded); in the Place mode it is dragged (Shift: up and down) and turned with the wheel.
+- Line colours per body part (head, torso, each arm, hand and leg), per thing and per object,
+  for the floor / walls and the wire; they are kept in the exported rough too.
+- Auras on the whole body or some parts: rising ki flames, a smooth glow, or crackling plasma.
 - Chairs and rides seat the figure and put hands and feet on handles and pedals.
 - Floor, wall and ceiling; grounding (free / no sinking into the floor / always on the floor);
   put the selected hand or foot on a surface; grab the nearest thing; hang from it.
@@ -116,9 +126,12 @@ JSON としてワークフローに渡せます。
 - **操作**：丸をドラッグ（骨の長さは保たれる）。手首・足首は腕・脚ごと（Shift でその骨だけ）。ダブルクリックで
   手前と奥を入れ替え。横図で奥行き。すべての関節を3軸（前後・左右・ねじり。頭はうなずく・かしげる・左右を向く）で
   回せます。関節の固定（ピン、Alt＋クリック）、腕の欄で手の形、体格モード、パースモード、人間の関節の限界。
-- **小物・環境**：約130種の小物を簡単な形で（武器・銃・弓・盾・杖・楽器・文房具・食器・食べ物・花・日用品・
-  コントローラー・スポーツ用具・椅子・机・乗り物・蔓や枝や鉄棒など）。床・壁・天井と接地、面に手足を着ける、
-  つかまる、ぶら下がる、ワイヤーで吊る。
+- **小物・環境**：約250種の小物を簡単な形で（武器・銃・弓・盾・杖・楽器・文房具・食器・食べ物・花・日用品・
+  コントローラー・スポーツ用具・椅子・机・乗り物・蔓や枝や鉄棒、エフェクト、大きさ自由の立体図形、手提げ・バッグ・かご、
+  頭・胴体・腰・背中・脚に身に着ける物など）。床・壁・天井と接地、面に手足を着ける、つかまる、ぶら下がる、ワイヤーで吊る。
+- **持つ・背負う・置く**：持たせると手の形が自動で握りに変わり、外すと戻ります。手に持つ物は背負え、どの小物も床や物体の上に置けます（接地）。置いた物は配置モードでドラッグ。ライフル類には銃剣を付けられます。
+- **線の色**：頭・胴体・腕・手・脚ごと、小物・物体ごと、床と壁、ワイヤーの色を変えられます（書き出すアタリにも反映）。
+- **オーラ**：全身や部位に、立ちのぼる気（炎）・なめらかな光・プラズマ（電撃）をまとえます。
 - **パース定規**：1点・2点・3点透視の線、アイレベル、直方体のガイド（幅・高さ・奥行きと位置を cm で）。消失点はカメラから決まるので人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードではカメラはそのままで消失点をつかむと定規が回ります。エディタ上だけの表示で、「定規の画像」で透明な PNG を保存できます。
 - **カメラの傾き**：パースモードで Shift＋ドラッグ（または「傾き」）で水平でなくできます（±90°）。
 - **物体**：直方体（箱・床・壁・建物・段差）、角柱、円柱、角錐、円錐、支柱を cm の大きさで置けます。配置モードでドラッグして動かし（Shift で上下、ホイールで向き）、接地をオンにすると上に立ちます（40cm までの段は乗り上げ）。選んだ関節を面に着けて固定する、上に立たせる、もできます。

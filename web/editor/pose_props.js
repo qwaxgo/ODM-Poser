@@ -2,7 +2,8 @@
 //
 // Shapes (cm): c cylinder [x1,y1,z1, x2,y2,z2, r]   b box [cx,cy,cz, sx,sy,sz]   s sphere [cx,cy,cz, r]
 //              d disc [cx,cy,cz, nx,ny,nz, r]       k cone [bx,by,bz, ax,ay,az, r] (base centre, apex, base radius)
-//              t ring [cx,cy,cz, nx,ny,nz, R, r]
+//              t ring [cx,cy,cz, nx,ny,nz, R, r]   h dome [cx,cy,cz, nx,ny,nz, r] (half sphere toward n)
+//              l line through points [[x,y,z], ...] (an outline, a lightning bolt)
 // place "hand": held. Origin = the middle of the fist; +y = along the grip toward the thumb (a sword's
 //   blade, a mic's head); +z = the way the forearm points (a gun's barrel); +x = across.
 //   pose = the hand shape; grip2 = where the other hand holds (two-handed); pose2 = its shape.
@@ -11,7 +12,12 @@
 // place "world": stands on the floor. Origin = on the floor; +y up; +z = the way the figure faces
 //   when using it. mount = where the body goes when "合わせる" is pressed (pelvis, wrists, ankles).
 // place "grab": something to hang on / climb: grab = the lines a hand or foot takes hold of.
-// scalable: the size slider is meant for it (a ball).
+// place "wear": worn on the body (pose_props_more.js): at = "head" (units of the head's radius;
+//   x = the figure's left, y = up, z = where the face looks), "chest" / "back" (chest frame, cm),
+//   "waist" (pelvis frame, cm), "feet" (each foot: origin = the ankle, z = toward the toe, y = up,
+//   x = outward); sets = [[frame, parts], ...] for things on more than one place (skis and poles).
+// scalable: the size slider is meant for it (a ball). bayonet: the muzzle, where a bayonet goes.
+// glow, color: drawn glowing in that colour (effects). dims + make(dims): the size is set in cm.
 // Names are Japanese and English; cat is a category key of PROP_CATS.
 (() => {
 window.PROP_CATS = [
@@ -48,9 +54,23 @@ window.PROPS = {
     parts: [handle(-6, 6, 1.4), T(0, 4, 2, 1, 0, 0, 6, 0.5), C(0, 7, 0, 0, 100, 0, 0.5)]},
   whip: {ja: "鞭", en: "Whip", cat: "onehand", place: "hand", pose: "grip",
     parts: [handle(-6, 12, 1.4), C(0, 12, 0, 0, 40, 20, 0.6), C(0, 40, 20, 0, 30, 70, 0.4)]},
+  big_longsword: {ja: "長剣（片手・大型）", en: "Long sword (one hand, large)", cat: "onehand", place: "hand", pose: "grip",
+    parts: [handle(-10, 9, 1.9), SP(0, -11.5, 0, 2.4), B(0, 11, 0, 4, 4, 24), B(0, 74, 0, 2, 122, 11), K(0, 135, 0, 0, 146, 0, 4)]},
+  big_lance: {ja: "大型ランス（片手）", en: "Huge lance (one hand)", cat: "onehand", place: "hand", pose: "grip",
+    note: "前腕の向きに突き出す（大盾と組み合わせる）",
+    parts: [C(0, 0, -45, 0, 0, 8, 5), D(0, 0, 9, 0, 0, 1, 19), K(0, 0, 10, 0, 0, 210, 15), T(0, 0, 60, 0, 0, 1, 12, 1)]},
+  gunlance: {ja: "銃槍（ガンランス・片手）", en: "Gun lance (one hand)", cat: "onehand", place: "hand", pose: "trigger",
+    note: "前腕の向きに突き出す、銃身のある槍",
+    parts: [C(0, 0, -40, 0, 0, 8, 5), D(0, 0, 9, 0, 0, 1, 17), C(0, 0, 10, 0, 0, 165, 7), B(0, -11, 40, 9, 12, 34),
+            K(0, 0, 165, 0, 0, 205, 10), T(0, 0, 165, 0, 0, 1, 7.5, 1.2), C(0, 9, 30, 0, 9, 120, 2)]},
   // ---- two-handed weapons
   greatsword: {ja: "両手剣", en: "Greatsword", cat: "twohand", place: "hand", pose: "grip", grip2: [0, -15, 0], pose2: "grip",
     parts: [handle(-24, 7, 1.9), B(0, 9, 0, 3.5, 3, 30), B(0, 78, 0, 1.2, 135, 7)]},
+  huge_sword: {ja: "大剣（巨大な鉄塊）", en: "Huge slab sword", cat: "twohand", place: "hand", pose: "grip", grip2: [0, -18, 0], pose2: "grip",
+    note: "身の丈ほどの、幅広く厚い刃",
+    parts: [handle(-30, 8, 2.4), SP(0, -32, 0, 3), B(0, 11, 0, 5, 6, 30), B(0, 100, 0, 4, 172, 30), K(0, 186, 0, 0, 200, 8, 15)]},
+  big_axe: {ja: "大斧（変形する大型の斧）", en: "Huge axe (transforming)", cat: "twohand", place: "hand", pose: "grip", grip2: [0, -45, 0], pose2: "grip",
+    parts: [handle(-75, 85, 2.8), B(0, 72, 18, 5, 62, 40), B(0, 80, -9, 5, 26, 12), B(0, 72, 0, 7, 70, 10), K(0, 107, 0, 0, 122, 0, 4)]},
   greataxe: {ja: "両手斧", en: "Great axe", cat: "twohand", place: "hand", pose: "grip", grip2: [0, -40, 0], pose2: "grip",
     parts: [handle(-60, 70, 2.2), B(0, 60, 10, 2, 30, 26)]},
   warhammer: {ja: "両手鎚・ウォーハンマー", en: "War hammer", cat: "twohand", place: "hand", pose: "grip", grip2: [0, -40, 0], pose2: "grip",
@@ -71,10 +91,36 @@ window.PROPS = {
     parts: [C(0, -6, -1, 0, 3, 0.5, 1.6), B(0, 5.5, 6, 2.8, 3.5, 19), B(0, 1, 2, 1, 2.5, 3)]},
   revolver: {ja: "リボルバー", en: "Revolver", cat: "gun", place: "hand", pose: "trigger",
     parts: [C(0, -6, -1, 0, 3, 0.5, 1.7), C(0, 5, 2, 0, 5, 8, 2.2), C(0, 6, 8, 0, 6, 22, 0.9)]},
-  rifle: {ja: "ライフル", en: "Rifle", cat: "gun", place: "hand", pose: "trigger", grip2: [0, 3, 28], pose2: "cup",
+  rifle: {ja: "ライフル", en: "Rifle", cat: "gun", place: "hand", pose: "trigger", grip2: [0, 3, 28], pose2: "cup", bayonet: [0, 6, 80],
     parts: [C(0, -6, -1, 0, 3, 0.5, 1.6), B(0, 3, -24, 4, 9, 30), B(0, 5, 22, 4, 6, 50), C(0, 6, 47, 0, 6, 80, 1), B(0, 11, 12, 2.5, 3, 18)]},
   bazooka: {ja: "バズーカ", en: "Bazooka", cat: "gun", place: "hand", pose: "trigger", grip2: [0, -2, 30], pose2: "grip",
     parts: [C(0, -6, 0, 0, 2, 0, 1.6), C(0, 12, -55, 0, 12, 75, 6), B(0, 4, 30, 2, 8, 3)]},
+  sniper: {ja: "スナイパーライフル", en: "Sniper rifle", cat: "gun", place: "hand", pose: "trigger", grip2: [0, 3, 32], pose2: "cup", bayonet: [0, 6, 112],
+    parts: [C(0, -6, -1, 0, 3, 0.5, 1.6), B(0, 2, -28, 4, 10, 36), B(0, 5, 20, 4, 6, 46), C(0, 6, 43, 0, 6, 112, 1.1),
+            C(0, 12.5, 0, 0, 12.5, 32, 2.2), D(0, 12.5, 33, 0, 0, 1, 2.8), C(0, 9, 8, 0, 11, 8, 0.6), C(0, 9, 24, 0, 11, 24, 0.6),
+            C(-1, 4, 74, -7, -14, 80, 0.6), C(1, 4, 74, 7, -14, 80, 0.6)]},
+  shotgun: {ja: "ショットガン", en: "Shotgun", cat: "gun", place: "hand", pose: "trigger", grip2: [0, 3, 46], pose2: "grip", bayonet: [0, 7, 75],
+    parts: [C(0, -6, -1, 0, 3, 0.5, 1.6), B(0, 2, -24, 4, 9, 28), B(0, 5, 14, 4, 6, 30), C(0, 7, 29, 0, 7, 75, 1.4),
+            C(0, 4, 29, 0, 4, 68, 1.1), C(0, 4, 40, 0, 4, 53, 2.2)]},
+  minigun: {ja: "ミニガン（回転式の機関銃）", en: "Minigun", cat: "gun", place: "hand", pose: "trigger", grip2: [0, 20, 8], pose2: "grip",
+    note: "腰だめに両手で持ち、左手は上の取っ手",
+    parts: [C(0, -6, -1, 0, 3, 0.5, 1.6), C(0, 8, -14, 0, 8, 22, 9), C(0, 20, 0, 0, 20, 16, 1.5), C(0, 17, 0, 0, 20, 0, 1.2),
+            C(0, 17, 16, 0, 20, 16, 1.2), B(12, 2, -6, 12, 18, 20), D(0, 8, 60, 0, 0, 1, 6), D(0, 8, 105, 0, 0, 1, 6),
+            ...[0, 1, 2, 3, 4, 5].map(k => { const a = k * Math.PI / 3, x = 4 * Math.cos(a), y = 8 + 4 * Math.sin(a);
+              return C(x, y, 22, x, y, 110, 1); })]},
+  arm_cannon: {ja: "アームキャノン（腕にはめる砲）", en: "Arm cannon", cat: "gun", place: "hand", pose: "fist",
+    note: "前腕にはめる筒形の砲（手は中で握る）",
+    parts: [C(0, 0, -28, 0, 0, 10, 7.5), T(0, 0, -28, 0, 0, 1, 7.5, 0.9), C(0, 0, 10, 0, 0, 20, 6), T(0, 0, 20, 0, 0, 1, 6, 1),
+            D(0, 0, 20, 0, 0, 1, 3.5), B(0, 7.5, -10, 3, 3, 16)]},
+  light_crossgun: {ja: "大型の弩（取り回し重視）", en: "Large crossbow gun (light)", cat: "gun", place: "hand", pose: "trigger", grip2: [0, 3, 28], pose2: "cup",
+    parts: [C(0, -6, -1, 0, 3, 0.5, 1.8), B(0, 2, -20, 5, 9, 24), B(0, 5, 14, 6, 8, 40), C(0, 7, 34, 0, 7, 64, 1.8),
+            C(0, 8, 52, -27, 8, 42, 1.3), C(0, 8, 52, 27, 8, 42, 1.3), C(-27, 8, 42, 0, 8, 30, 0.3), C(27, 8, 42, 0, 8, 30, 0.3),
+            C(0, 12, 4, 0, 12, 22, 1.8)]},
+  heavy_crossgun: {ja: "大型の弩（重火力）", en: "Large crossbow gun (heavy)", cat: "gun", place: "hand", pose: "trigger", grip2: [0, 3, 34], pose2: "grip",
+    note: "腰だめか、伏せて撃つ大きさ",
+    parts: [C(0, -6, -1, 0, 3, 0.5, 2), B(0, 2, -26, 7, 13, 30), B(0, 7, 18, 10, 13, 58), C(0, 10, 47, 0, 10, 100, 3.4),
+            T(0, 10, 100, 0, 0, 1, 3.4, 1), B(0, 10, 62, 22, 18, 3), C(0, 11, 74, -42, 11, 56, 2.2), C(0, 11, 74, 42, 11, 56, 2.2),
+            C(-42, 11, 56, 0, 11, 36, 0.4), C(42, 11, 56, 0, 11, 36, 0.4), C(0, 20, 0, 0, 20, 26, 2.6), C(0, 2, 70, 0, -16, 78, 1)]},
   // ---- throwing and claws
   throwknife: {ja: "投げナイフ", en: "Throwing knife", cat: "throw", place: "hand", pose: "pinch",
     parts: [B(0, 0, 3, 0.4, 2, 14)]},
@@ -86,6 +132,14 @@ window.PROPS = {
     parts: [D(0, 0, 10, 0, 1, 0, 13)]},
   claws: {ja: "鉤爪", en: "Claws", cat: "throw", place: "hand", pose: "fist",
     parts: [B(-2.5, 0, 22, 0.4, 1.4, 26), B(0, 0, 23, 0.4, 1.4, 28), B(2.5, 0, 22, 0.4, 1.4, 26), B(0, 0, 6, 7, 3, 4)]},
+  big_claws: {ja: "大鉤爪（腕を覆う大型の爪）", en: "Huge claws (gauntlet)", cat: "throw", place: "hand", pose: "fist",
+    parts: [C(0, 0, -26, 0, 0, 4, 6.5), B(0, 0, 4, 9, 13, 7), ...[-5, 0, 5].map(y => B(0, y, 42, 4, 1.2, 72)),
+            ...[-5, 0, 5].map(y => K(0, y, 78, 0, y * 1.4, 96, 2.2))]},
+  grenade: {ja: "手榴弾", en: "Hand grenade", cat: "throw", place: "hand", pose: "grip",
+    parts: [SP(0, 0, 3, 4.2), C(0, 4, 3, 0, 7, 3, 1.3), C(0, 6, 4.5, 0, 0, 7.5, 0.5), T(2.2, 7, 3, 0, 0, 1, 1.6, 0.3)]},
+  dynamite: {ja: "ダイナマイト", en: "Dynamite", cat: "throw", place: "hand", pose: "grip",
+    parts: [C(-1.8, -9, 0, -1.8, 9, 0, 1.6), C(1.8, -9, 0, 1.8, 9, 0, 1.6), C(0, -9, 3, 0, 9, 3, 1.6),
+            T(0, -4, 1, 0, 1, 0, 4, 0.4), T(0, 4, 1, 0, 1, 0, 4, 0.4), {l: [[0, 9, 1], [1, 12, 2], [-0.5, 15, 3], [1.5, 18, 2]]}]},
   kunai: {ja: "クナイ", en: "Kunai", cat: "throw", place: "hand", pose: "grip",
     parts: [handle(-5, 5, 1), T(0, -7, 0, 1, 0, 0, 2, 0.4), K(0, 5, 0, 0, 18, 0, 2)]},
   // ---- shields and gloves
@@ -93,6 +147,8 @@ window.PROPS = {
     parts: [D(-6, 0, 4, 1, 0, 0, 32)]},
   shield_kite: {ja: "盾（大）", en: "Kite shield", cat: "guard", place: "hand", pose: "grip",
     parts: [B(-6, 0, 4, 2, 70, 45)]},
+  great_shield: {ja: "大盾（身を隠す大型の盾）", en: "Great shield", cat: "guard", place: "hand", pose: "grip",
+    parts: [B(-9, 8, 4, 5, 140, 80), B(-12, 8, 4, 1, 120, 64), B(-12, 60, 4, 1, 4, 64)]},
   boxing_glove: {ja: "ボクシンググローブ", en: "Boxing glove", cat: "guard", place: "hand", pose: "fist",
     parts: [SP(0, 0, 6, 9), C(0, 0, -6, 0, 0, 1, 6)]},
   baseball_glove: {ja: "野球グローブ", en: "Baseball glove", cat: "guard", place: "hand", pose: "open",
@@ -242,6 +298,9 @@ window.PROPS = {
     parts: [handle(-4, 6, 0.8), K(0, 22, 0, 0, 6, 0, 14)]},
   key: {ja: "鍵", en: "Key", cat: "daily", place: "hand", pose: "pinch",
     parts: [T(0, 0, 3, 1, 0, 0, 1.6, 0.3), B(0, 0, 8, 0.3, 0.8, 5)]},
+  button_switch: {ja: "ボタンスイッチ（起爆スイッチ）", en: "Push-button switch", cat: "daily", place: "hand", pose: "grip",
+    note: "親指でボタンを押す",
+    parts: [B(0, 0, 4, 5, 10, 5), C(0, 5, 4, 0, 7.5, 4, 1.6), C(1.5, -5, 4, 1.5, -12, 6, 0.4)]},
   glasses: {ja: "眼鏡・サングラス", en: "Glasses", cat: "daily", place: "hand", pose: "pinch",
     parts: [T(0, 2, 4, 0, 0, 1, 2.4, 0.3), T(0, 2, 10, 0, 0, 1, 2.4, 0.3)]},
   letter: {ja: "手紙・カード", en: "Letter / card", cat: "daily", place: "hand", pose: "pinch",
@@ -324,6 +383,29 @@ window.PROPS = {
     parts: [D(0, 32, -70, 1, 0, 0, 32), D(0, 32, 70, 1, 0, 0, 32), B(0, 62, 0, 32, 34, 110), B(0, 82, -30, 30, 8, 50),
             C(0, 70, 60, 0, 100, 50, 2), C(-34, 102, 48, 34, 102, 48, 1.6), B(0, 90, 38, 30, 20, 20)],
     mount: {pelvis: [0, 92, -30], r_ankle: [-22, 36, -8], l_ankle: [22, 36, -8], r_wrist: [-32, 103, 46], l_wrist: [32, 103, 46]}},
+  kick_scooter: {ja: "キックスクーター", en: "Kick scooter", cat: "vehicle", place: "world",
+    parts: [B(0, 8, 0, 14, 3, 60), D(0, 6, -30, 1, 0, 0, 6), D(0, 6, 30, 1, 0, 0, 6), C(0, 9, 30, 0, 96, 24, 1.6),
+            C(-22, 96, 24, 22, 96, 24, 1.4)],
+    mount: {r_ankle: [-5, 17, 6], l_ankle: [6, 17, -14], r_wrist: [-20, 97, 24], l_wrist: [20, 97, 24]}},
+  scooter: {ja: "スクーター", en: "Motor scooter", cat: "vehicle", place: "world",
+    parts: [D(0, 24, -55, 1, 0, 0, 24), D(0, 24, 58, 1, 0, 0, 22), B(0, 42, -32, 34, 36, 56), B(0, 22, 10, 30, 6, 44),
+            B(0, 55, 44, 36, 62, 10), B(0, 64, -30, 30, 8, 56), C(0, 70, 50, 0, 95, 47, 2.2), C(-33, 96, 46, 33, 96, 46, 1.6)],
+    mount: {pelvis: [0, 76, -30], r_ankle: [-12, 33, 14], l_ankle: [12, 33, 14], r_wrist: [-31, 97, 45], l_wrist: [31, 97, 45]}},
+  moped: {ja: "原付（小型バイク）", en: "Moped", cat: "vehicle", place: "world",
+    parts: [D(0, 30, -58, 1, 0, 0, 30), D(0, 30, 58, 1, 0, 0, 30), C(0, 30, -58, 0, 60, -10, 2), C(0, 60, -10, 0, 30, 58, 2),
+            B(0, 45, -10, 26, 28, 40), B(0, 76, -22, 26, 8, 52), B(0, 50, 38, 34, 44, 8), C(0, 60, 54, 0, 98, 46, 2),
+            C(-30, 99, 45, 30, 99, 45, 1.6), B(0, 100, 50, 16, 10, 12)],
+    mount: {pelvis: [0, 88, -22], r_ankle: [-16, 32, 6], l_ankle: [16, 32, 6], r_wrist: [-28, 100, 44], l_wrist: [28, 100, 44]}},
+  snowboard: {ja: "スノーボード", en: "Snowboard", cat: "vehicle", place: "world", note: "板は体の左右方向（横乗り）",
+    parts: [{l: [...Array(41)].map((_, i) => { const t = 2 * Math.PI * i / 40, c = Math.cos(t), s = Math.sin(t);
+              return [Math.sign(c) * 76 * Math.pow(Math.abs(c), 0.35), 2 + 6 * Math.pow(Math.abs(c), 12), 15 * Math.sign(s) * Math.pow(Math.abs(s), 0.6)]; })},
+            B(-25, 6, 0, 10, 6, 22), B(25, 6, 0, 10, 6, 22)],
+    mount: {r_ankle: [-25, 13, 0], l_ankle: [25, 13, 0]}},
+  surfboard: {ja: "サーフボード", en: "Surfboard", cat: "vehicle", place: "world", note: "板は体の左右方向（横乗り）",
+    parts: [{l: [...Array(41)].map((_, i) => { const t = 2 * Math.PI * i / 40, c = Math.cos(t), s = Math.sin(t);
+              return [c > 0 ? 120 * c : 100 * c, 5 + (c > 0.9 ? 6 * (c - 0.9) * 10 : 0), 27 * s * (c > 0 ? Math.pow(1 - c, 0.45) : Math.pow(1 + c * 0.6, 0.5))]; })},
+            {l: [[-100, 5, 0], [120, 8, 0]]}, B(-85, -2, 0, 12, 10, 1)],
+    mount: {r_ankle: [-35, 14, 0], l_ankle: [25, 14, 0]}},
   // ---- things to grab: vines, trees, bars, ropes, ladders
   vine: {ja: "蔓・ロープ（縦）", en: "Vine / rope", cat: "grab", place: "grab", grab: [[[0, 0, 15], [0, 320, 15]]],
     parts: [C(0, 0, 15, 0, 320, 15, 1.4)]},

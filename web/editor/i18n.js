@@ -89,6 +89,33 @@
     "胸に構える。右手で弦、左手でネック": "held at the chest: right hand on the strings, left on the neck",
     "左肩にあご当て。右手で弓": "chin rest on the left shoulder; the right hand holds the bow",
     "口元から右へ": "from the mouth to the right",
+    // things worn, carried, put down; effects and auras (pose_scene.js, pose_style.js)
+    "背負う": "Carry on the back", "床・物体に置く": "Put down (floor / object)", "手に持つ・身に着ける": "Hold / wear again",
+    "接地させる": "Ground it", "銃剣を付ける": "Fix a bayonet", "線の色を変える": "Own line colour", "身に着ける": "Wear",
+    "置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。":
+      "Things put down can be dragged in the Place mode (Shift+drag: up and down, wheel: turn).",
+    "背負いました。": "Carried on the back.", "床・物体の上に置きました。配置モードでドラッグして動かせます。":
+      "Put down on the floor / an object. Drag it in the Place mode.", "持たせました（手の形も合わせました）。": "Held again (the hand shape follows).",
+    "接地させました。": "Grounded.", "直径": "Diameter", "長さ": "Length", "底の直径": "Base diameter", "底の一辺": "Base side",
+    "外径": "Outer diameter", "太さ": "Thickness",
+    "前腕の向きに突き出す（大盾と組み合わせる）": "thrust along the forearm (pair it with a great shield)",
+    "前腕の向きに突き出す、銃身のある槍": "a lance with a gun barrel, thrust along the forearm",
+    "身の丈ほどの、幅広く厚い刃": "a wide, thick blade as tall as a person",
+    "腰だめに両手で持ち、左手は上の取っ手": "held at the hip with both hands, the left on the top handle",
+    "前腕にはめる筒形の砲（手は中で握る）": "a cannon worn over the forearm (the hand grips inside)",
+    "腰だめか、伏せて撃つ大きさ": "big enough to fire from the hip or lying down", "親指でボタンを押す": "the thumb presses the button",
+    "指先の向きに伸びる光の刃": "a blade of light along the fingers", "伸ばした取っ手を持つ": "held by the pulled-out handle",
+    "両手で左右の縁を持つ": "both hands hold the rims", "両足に板、両手にストック": "skis on both feet, poles in both hands",
+    "線の色": "Line colours", "胴体": "Torso", "右腕": "Right arm", "左腕": "Left arm", "右脚": "Right leg", "左脚": "Left leg",
+    "床・壁・天井": "Floor, walls, ceiling", "ワイヤー": "Wire", "すべて既定の色に戻す": "Reset all colours",
+    "チェックした部位だけ色が変わります（書き出すアタリ画像にも）。小物と物体の色は、それぞれの欄で変えます。":
+      "Only the ticked parts change colour (in the exported rough too). Props and objects have their own colour in their panels.",
+    "オーラ・気をまとう": "Auras", "部位": "Part", "色": "Colour", "まとう": "Put on", "まとっているオーラ": "Auras worn",
+    "選んだオーラは、上の欄（部位・種類・大きさ・色）を変えると変わります。炎と光は人物の後ろに、プラズマは前に描きます。":
+      "Changing the fields above (part, kind, size, colour) changes the selected aura. Flames and glow are drawn behind the figure, plasma in front.",
+    "全身": "Whole body", "上半身": "Upper body", "両腕": "Both arms", "両手（拳）": "Both hands (fists)", "右手（拳）": "Right hand (fist)",
+    "左手（拳）": "Left hand (fist)", "両脚": "Both legs",
+    "気（炎のように立ちのぼる）": "Ki (rising like flames)", "オーラ（なめらかな光）": "Aura (smooth glow)", "プラズマ（電撃）": "Plasma (lightning)",
     // camera and export
     "カメラ": "Camera", "レンズ（mm、小さいほど広角）": "Lens (mm, smaller = wider)", "向き（左右）": "Direction (left / right)",
     "高さ（俯瞰＋／あおり−）": "Height (+ from above / − from below)", "傾き": "Roll", "カメラを戻す": "Reset camera",
@@ -192,10 +219,16 @@
     [/^.+（(.+)）を置きました。$/, m => `Placed the ${m[1]}.`],
     [/^(.+)に体を合わせて、合わせた関節を固定しました。$/, m => `Fitted the body to the ${propEn(m[1]) || m[1]} and pinned the fitted joints.`],
     [/^ワイヤーで(.+)を吊りました。$/, m => `Hanging the ${joint((m[1] || "").replace(/（.*$/, ""))} from the wire.`],
-    [/^(.+)（(右手|左手|置く|構える)）$/, m => {                                          // the scene list
+    [/^(.+)（(右手|左手|置く|構える|背中|身に着ける)）$/, m => {                          // the scene list
       const en = propEn(m[1]); if (!en) return null;
-      return `${en} (${{"右手": "right hand", "左手": "left hand", "置く": "placed", "構える": "held"}[m[2]]})`; }],
-    [/^(片手|両手)で持つ（手の形：(.+)）(?:。(.+))?$/, m =>
+      return `${en} (${{"右手": "right hand", "左手": "left hand", "置く": "placed", "構える": "held", "背中": "on the back",
+        "身に着ける": "worn"}[m[2]]})`; }],
+    [/^.+（(.+)）を身に着けました。$/, m => `Put on the ${m[1]}.`],
+    [/^身に着ける（(.+)）(?:。(.+))?$/, m => `Worn (${{"頭": "head", "胸・肩": "chest / shoulder", "背中": "back", "腰": "waist",
+      "両足": "both feet", "両足と両手": "feet and hands"}[m[1]] || m[1]})` + (m[2] ? ". " + (T[m[2]] || m[2]) : "")],
+    [/^(.+?)に(.+)をまといました。$/, m => `Put on ${(T[m[2]] || m[2])}: ${(T[m[1]] || joint(m[1]))}.`],
+    [/^(\d+)\. (.+)：(.+)$/, m => `${m[1]}. ${T[m[2]] || joint(m[2])}: ${T[m[3]] || m[3]}`],
+    [/^(片手|両手)で持つ（手の形：(.+?)）(?:。(.+))?$/, m =>
       `Held in ${m[1] === "片手" ? "one hand" : "both hands"} (hand shape: ${HAND_JA[m[2]] || m[2]})` + (m[3] ? ". " + (T[m[3]] || m[3]) : "")],
     [/^(.+?)。(.+)$/, m => (T[m[1]] && T[m[2]] !== undefined) ? T[m[1]] + ". " + T[m[2]] : null],
   ];

@@ -49,10 +49,13 @@ try:
         raise web.HTTPFound("/symbolic_pose/editor/index.html" + (f"?{request.query_string}"
                                                                   if request.query_string else ""))
 
+    EDITOR_FILES = ("index.html", "pose_props.js", "pose_props_more.js", "pose_scene.js", "pose_solids.js",
+                    "pose_style.js", "pose_ruler.js", "i18n.js")
+
     @routes.get("/symbolic_pose/editor/{name}")
     async def _editor_file(request):
         name = request.match_info["name"]
-        if name not in ("index.html", "pose_props.js", "pose_scene.js", "pose_solids.js", "pose_ruler.js", "i18n.js"):
+        if name not in EDITOR_FILES:
             raise web.HTTPNotFound()
         kind = "text/html" if name.endswith(".html") else "application/javascript"
         return web.Response(text=(EDITOR / name).read_text(encoding="utf-8"), content_type=kind)
