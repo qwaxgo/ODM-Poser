@@ -19,8 +19,6 @@
       "Drag a circle: move the joint (bone lengths are kept; pulling it in tilts the bone toward or away from you). A wrist or ankle brings its whole arm or leg (Shift+drag: that bone only). Double-click: flip the bone toward / away from the camera. Alt+click: pin the joint (a pinned hand or foot stays when the rest moves). The hip circle moves the whole figure. Drag in the side view: move depth directly. Wheel: zoom. Ctrl+Z: undo.",
     "丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。":
       "Drag a circle: lengthen / shorten that bone (what follows moves with it). Wheel over a circle: make it (the thickness) bigger / smaller. With symmetry on, the other side changes too.",
-    "ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。":
-      "Drag: orbit the camera (sideways = direction, up and down = height). Wheel: lens (the wider, the stronger the perspective). The figure keeps its size on screen.",
     // presets
     "プリセット": "Presets", "読み込む": "Load", "左右反転": "Mirror", "元に戻す": "Undo",
     "立ち（標準）": "Standing", "Aポーズ": "A-pose", "Tポーズ": "T-pose", "コントラポスト": "Contrapposto",
@@ -73,7 +71,7 @@
     "ずらす（上下）": "Shift (up / down)", "ずらす（前後）": "Shift (forward / back)",
     "床・壁・天井": "Floor, wall, ceiling", "床": "Floor", "天井": "Ceiling", "壁": "Wall", "壁（奥行き）": "Wall (depth)",
     "壁の向き": "Wall direction", "接地": "Grounding", "しない（宙に浮ける）": "Off (can float)",
-    "床にめり込まない": "No sinking into the floor", "いつも床に着ける（一番低い所）": "Always on the floor (lowest point)",
+    // (grounding options: see the solids block)
     "書き出すアタリにも床・壁を描く": "Draw floor and walls in the exported rough",
     "床に着ける": "Put on the floor", "壁に着ける": "Put on the wall", "天井に着ける": "Put on the ceiling",
     "近くの物につかまる": "Grab the nearest thing", "ぶら下がる": "Hang", "人物を画面の中心に": "Center the figure",
@@ -96,18 +94,38 @@
     "高さ（俯瞰＋／あおり−）": "Height (+ from above / − from below)", "傾き": "Roll", "カメラを戻す": "Reset camera",
     // perspective ruler (pose_ruler.js)
     "パース定規": "Perspective ruler", "パース定規を表示": "Show the perspective ruler", "透視の種類": "Perspective",
-    "1点透視": "1-point", "2点透視": "2-point", "3点透視": "3-point", "定規の向き（カメラに対して）": "Ruler turn (from the camera)",
-    "線の数": "Lines", "立方体のガイド": "Cube guide", "一辺": "Size", "左右": "Left / right", "上下": "Up / down", "前後": "Front / back",
+    "1点透視": "1-point", "2点透視": "2-point", "3点透視": "3-point", "定規の向き": "Ruler turn",
+    "線の数": "Lines", "直方体のガイド（向きは定規と同じ）": "Box guide (turned with the ruler)",
+    "位置（左右）": "Position (left / right)", "位置（上下）": "Position (up / down)", "位置（前後）": "Position (front / back)",
+    "奥行き": "Depth", "立方体にする（幅にそろえる）": "Make it a cube (all sides = width)",
     "定規の画像": "Ruler picture", "アイレベル": "Eye level", "パース定規の画像を保存しました。": "Ruler picture saved.",
     "奥行きの線がアイレベル上の1点に集まります（カメラの正面に向けた定規）。":
       "Depth lines meet at one point on the eye level (the ruler faces the camera).",
     "左右と奥行きの線がアイレベル上の2点に集まります。": "Left-right and depth lines meet at two points on the eye level.",
     "縦の線も3つ目の点に集まります（カメラの高さが0°のときは平行）。":
       "Verticals meet at a third point too (parallel when the camera height is 0°).",
-    "カメラが俯瞰・あおりなので、縦の線は実際にはわずかに集まります（人物と立方体はそのとおりに描かれます）。厳密な1点・2点透視にするには、カメラの高さを0°にします。":
-      "The camera looks down or up, so verticals really meet a little (the figure and the cube are drawn that way). For a strict 1- or 2-point picture, set the camera height to 0°.",
-    "消失点はカメラ（パース）から決まるので、人物と同じパースになります。アイレベルはカメラの高さで動きます。定規はアタリ画像には入りません（「定規の画像」で透明な PNG を保存）。":
-      "The vanishing points come from the camera, so the ruler has the figure's perspective. The eye level follows the camera height. The ruler is not in the rough picture (\"Ruler picture\" saves a transparent PNG).",
+    "カメラが俯瞰・あおりなので、縦の線は実際にはわずかに集まります（人物と直方体はそのとおりに描かれます）。厳密な1点・2点透視にするには、カメラの高さを0°にします。":
+      "The camera looks down or up, so verticals really meet a little (the figure and the box are drawn that way). For a strict 1- or 2-point picture, set the camera height to 0°.",
+    "消失点はカメラ（パース）から決まるので、人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードで消失点をつかむとカメラはそのままで定規が回ります。直方体のガイドは配置モードでドラッグして動かせます。定規はアタリ画像には入りません（「定規の画像」で透明な PNG を保存）。":
+      "The vanishing points come from the camera, so the ruler has the figure's perspective. In the Perspective mode, grabbing a vanishing point or the eye level moves the camera; in the Place mode, grabbing a vanishing point turns the ruler and the camera stays. Drag the box guide in the Place mode. The ruler is not in the rough picture (\"Ruler picture\" saves a transparent PNG).",
+    "縦の消失点はカメラの高さで決まります。パースモードでつかむとカメラが動きます。":
+      "The vertical vanishing point follows the camera height. Grab it in the Perspective mode to move the camera.",
+    "1点透視の消失点は、パースモードでつかむとカメラが動きます。": "Grab the 1-point vanishing point in the Perspective mode to move the camera.",
+    // place mode, solids (pose_solids.js)
+    "配置（定規・物体）": "Place (ruler, objects)",
+    "ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。Shift＋ドラッグ：カメラを傾ける（水平でなくする）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。パース定規の消失点やアイレベルをつかむと、そこに合うようにカメラが動きます。":
+      "Drag: orbit the camera (sideways = direction, up and down = height). Shift+drag: tilt the camera (off level). Wheel: lens (the wider, the stronger the perspective). The figure keeps its size on screen. Grabbing a vanishing point or the eye level of the ruler moves the camera to match.",
+    "カメラは動きません。消失点をドラッグ：定規の向きを変える。直方体のガイドや物体をドラッグ：床の上で動かす（Shift＋ドラッグで上下）。その上でホイール：向きを回す。丸をクリック：関節を選ぶ（「物体に着ける」用）。":
+      "The camera stays. Drag a vanishing point: turn the ruler. Drag the box guide or an object: move it over the floor (Shift+drag: up and down). Wheel over it: turn it. Click a circle: select the joint (for \"put the joint on it\").",
+    "物体（床・壁・建物・柱など）": "Objects (floors, walls, buildings, poles ...)",
+    "直方体（箱・台）": "Box (crate, stand)", "床（板）": "Floor slab", "壁（板）": "Wall slab", "建物": "Building", "段差": "Step",
+    "角柱": "Prism", "円柱": "Cylinder", "角錐": "Pyramid", "円錐": "Cone", "支柱": "Pole", "直方体": "Box",
+    "置いた物体": "Objects in the scene", "複製": "Duplicate", "角の数": "Sides", "向き": "Turn",
+    "選んだ関節を着ける": "Put the selected joint on it", "この上に立つ": "Stand on it",
+    "配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、ホイールで向き）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。":
+      "In the Place mode, drag an object to move it over the floor (Shift+drag: up and down, wheel: turn). With grounding on, the figure stands on objects too (it steps up to 40 cm). \"Put the selected joint on it\" puts the joint on a face of the selected object (or the nearest one) and pins it. Objects are in the exported rough when \"Draw floor and walls in the exported rough\" is on.",
+    "物体を先に置いてください。": "Place an object first.", "物体を一覧かドラッグで選んでください。": "Select an object in the list or by dragging it.",
+    "床・物体の上にめり込まない": "No sinking into the floor or objects", "いつも床・物体の上に着ける（一番低い所）": "Always on the floor or an object (lowest point)",
     "書き出し": "Export", "幅": "Width", "高さ": "Height", "アタリ画像": "Rough picture", "OpenPose 画像": "OpenPose picture",
     "ポーズ保存": "Save pose", "ポーズ読込": "Load pose", "確定して閉じる / Confirm": "Confirm", "閉じる / Cancel": "Cancel",
     "OpenPose 画像は ControlNet（OpenPose）に、アタリ画像は下描きのレイヤーに使えます。":
@@ -146,6 +164,12 @@
   };
   const joint = s => JOINT[s] || s;
   const RULES = [
+    // objects (pose_solids.js); before the general rules below
+    [/^(.+)を置きました。配置モードでドラッグして動かせます。$/, m => `Placed: ${T[m[1]] || m[1]}. Drag it in the Place mode.`],
+    [/^(.+)の上に立たせました（関節の固定は外しました）。$/, m => `Stood the figure on the ${(T[m[1]] || m[1]).toLowerCase()} (pins removed).`],
+    [/^(.+)を(床|壁|天井)に着けて固定しました。$/, m => `Put the ${joint(m[1])} on ${SURFACE[m[2]]} and pinned it.`],
+    [/^(.+)を(.+)に着けて固定しました。$/, m => `Put the ${joint(m[1])} on the ${(T[m[2]] || m[2]).toLowerCase()} and pinned it.`],
+    [/^(\d+)\. (.+)$/, m => T[m[2]] ? `${m[1]}. ${T[m[2]]}` : null],
     [/^(.+) \/ ([^぀-鿿]+)$/, m => jp.test(m[1]) ? m[2] : null],               // "ダガー / Dagger"
     [/^([\d.]+) cm（([\d.]+) 頭身）$/, m => `${m[1]} cm (${m[2]} heads)`],
     [/^([\d.]+) 頭身$/, m => `${m[1]} heads`],

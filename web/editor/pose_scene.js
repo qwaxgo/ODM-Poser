@@ -194,10 +194,25 @@ function sceneAfterEdit(moved){
     if (len(d) > w.length) moveAll(sub(add(w.anchor, mul(norm(d), w.length)), S.P[ji]));
   }
   const E = S.env;
-  if (E.floor && E.ground && E.ground !== "off" && !(w && w.on)){
-    const low = lowest(), fy = +E.floorY || 0;
-    if (E.ground === "stick" || low < fy) moveAll([0, fy - low, 0]);
+  if (E.ground && E.ground !== "off" && !(w && w.on)){
+    const lift = groundLift(E.ground === "stick");
+    if (lift) moveAll([0, lift, 0]);
   }
+}
+// grounding on the floor and on the tops of solids (pose_solids.js): a joint stands on the highest
+// floor / top under it that is at most STEP_UP above its lowest point (higher ones are walls to it)
+const STEP_UP = 40;
+function supportUnder(p, bottom){
+  const E = S.env || {};
+  let s = E.floor ? +E.floorY || 0 : -Infinity;
+  if (typeof solidTopsAt === "function") for (const t of solidTopsAt(p)) if (t <= bottom + STEP_UP) s = Math.max(s, t);
+  return s;
+}
+function groundLift(stick){                   // how far to move the figure up (+) or down (-)
+  let gap = Infinity;
+  J.forEach((n, i) => { const b = S.P[i][1] - (CONTACT[n] || 3); gap = Math.min(gap, b - supportUnder(S.P[i], b)); });
+  if (!isFinite(gap)) return 0;
+  return stick ? -gap : Math.max(0, -gap);
 }
 
 // ---- surfaces: put the selected hand / foot on the floor, a wall or the ceiling ------------------
@@ -378,7 +393,7 @@ function buildScenePanel(){
       <label>壁の向き</label><div class="row"><input type="number" class="num" id="scWallYaw" step="5"><span class="unit">°</span></div>
     </div>
     <label>接地</label><select id="scGround"><option value="off">しない（宙に浮ける）</option>
-      <option value="nopen">床にめり込まない</option><option value="stick">いつも床に着ける（一番低い所）</option></select>
+      <option value="nopen">床・物体の上にめり込まない</option><option value="stick">いつも床・物体の上に着ける（一番低い所）</option></select>
     <label><input type="checkbox" id="scShow"> 書き出すアタリにも床・壁を描く</label>
     <div class="btns" style="margin-top:6px"><button id="scToFloor">床に着ける</button><button id="scToWall">壁に着ける</button>
       <button id="scToCeil">天井に着ける</button></div>
@@ -438,7 +453,7 @@ function buildScenePanel(){
       ["scFloorY", "floorY", 1], ["scCeilY", "ceilingY", 1], ["scWallZ", "wallZ", 1], ["scWallYaw", "wallYaw", 1], ["scGround", "ground"]]){
     $(id).addEventListener("change", e => { remember(); const E = env();
       E[key] = num ? +e.target.value : e.target.type === "checkbox" ? e.target.checked : e.target.value;
-      if (key === "ground" && E.ground !== "off") E.floor = true;
+      if (key === "ground" && E.ground !== "off" && !(S.solids || []).length) E.floor = true;
       afterEdit(); syncScene(); draw(); });
   }
   $("scToFloor").addEventListener("click", () => toSurface("床"));
