@@ -14,7 +14,12 @@ beyond what ComfyUI already has (numpy, torch, Pillow, aiohttp).
 ```
 cd ComfyUI/custom_nodes
 git clone https://github.com/qwaxgo/ComfyUI-SymbolicPoseEditor
+cd ComfyUI-SymbolicPoseEditor/mods
+git clone git@github.com:qwaxgo/SymbolicPoseEditor-ComfyUIBridge.git
 ```
+
+The node's Confirm / Cancel come from the ComfyUI bridge mod (the second clone, into `mods/`).
+Without it the editor opens in the node but cannot hand the pose back.
 
 ## The node: Symbolic Pose Editor
 
@@ -114,8 +119,8 @@ hooks without changing the editor: put `*.js` files in `mods/`, or clone a repos
 Inside ComfyUI they load when the editor opens; opened from disk, run `python tools/make_mods_list.py`
 first. The API: [docs/MODDING.md](docs/MODDING.md) (日本語: [docs/MODDING-JA.md](docs/MODDING-JA.md)).
 Mods run with the editor's rights: install only mods you trust; `?nomods` starts without them.
-The ComfyUI hand-off itself is a built-in mod (`builtin_mods/comfyui.js`) that only the node loads,
-so the editor core has no ComfyUI code in it.
+The ComfyUI hand-off itself is a mod (the ComfyUI bridge, cloned into `mods/`), so the editor core
+has no ComfyUI code in it.
 
 ## License
 
@@ -128,7 +133,7 @@ MIT, (c) 2026 qwaxgo. All shapes and code are original to this project.
 線と丸の全身アタリを疑似3Dで動かす、ComfyUI 用のポーズエディタです。OpenPose 画像・アタリ画像・
 JSON としてワークフローに渡せます。
 
-- **入れ方**：`ComfyUI/custom_nodes/` に clone して ComfyUI を再起動。追加の Python パッケージは不要です。
+- **入れ方**：`ComfyUI/custom_nodes/` に clone し、その `mods/` に ComfyUI 連携 MOD（SymbolicPoseEditor-ComfyUIBridge）も clone して ComfyUI を再起動（連携 MOD がないと、ポーズをノードに返せません）。追加の Python パッケージは不要です。
 - **ノード**：**Symbolic Pose Editor**（分類 `SymbolicPose`）を置き、「Open Symbolic Pose Editor」でエディタを
   開き、ポーズを作って「確定して閉じる」。出力は `pose_json`・`scene_json`・`openpose`・`atari`・`width`・`height`。
   確定した内容はワークフローに保存され、次に開くとその続きから編集できます。
@@ -148,5 +153,5 @@ JSON としてワークフローに渡せます。
 - **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
 - **組み込みポーズ**：11種（立ち・Aポーズ・Tポーズ・コントラポスト・歩く・走る・椅子に座る・しゃがむ・ジャンプ・ファイティングポーズ・腰に手）。関節の角度で作ったもので、体格はそのまま。
 - **ユーザープリセット**：`user_presets/` に自分のプリセット（JSON）を置くと一覧に出ます（git には入りません）。
-- **MOD**：`mods/` に `*.js` を置くと、小物・物体・オーラ・手の形・ポーズ・翻訳・自分の欄・描画やマウスのフックを追加できます（MOD のリポジトリを `mods/` に clone しても可。説明：`docs/MODDING-JA.md`）。ComfyUI なしで開くときは `python tools/make_mods_list.py` を先に実行。信頼できる MOD だけを入れてください（`?nomods` で MOD なし）。ComfyUI とのやりとり自体も組み込み MOD（`builtin_mods/comfyui.js`）で、ノードからだけ読み込まれます。
+- **MOD**：`mods/` に `*.js` を置くと、小物・物体・オーラ・手の形・ポーズ・翻訳・自分の欄・描画やマウスのフックを追加できます（MOD のリポジトリを `mods/` に clone しても可。説明：`docs/MODDING-JA.md`）。ComfyUI なしで開くときは `python tools/make_mods_list.py` を先に実行。信頼できる MOD だけを入れてください（`?nomods` で MOD なし）。ComfyUI とのやりとり自体も MOD（ComfyUI 連携 MOD、`mods/` に clone）です。
 - **ライセンス**：MIT（c）2026 qwaxgo。

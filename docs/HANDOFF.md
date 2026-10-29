@@ -41,8 +41,9 @@ web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carr
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
-builtin_mods/comfyui.js          the ComfyUI hand-off, a mod the node serves first (tracked)
-mods/                            the user's mods and cloned mod repositories (README.md only is tracked)
+mods/                            the user's mods and cloned mod repositories (README.md only is tracked):
+                                 SymbolicPoseEditor-ComfyUIBridge (the node's hand-off, private repo),
+                                 SymbolicPoseEditor-SampleMods (examples, private repo)
 user_presets/                    the user's preset files (README.md only is tracked)
 tools/make_mods_list.py          web/mods.js for opening the editor from disk with mods
 docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API
@@ -50,9 +51,10 @@ docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API
 
 ## How the node and the editor talk
 
-The editor's side is the built-in mod `builtin_mods/comfyui.js` (MOD API: `api.io`, `api.ui`,
-`api.presets`). The node lists it first in `/symbolic_pose/mods.js`; opened from disk the editor
-never loads it, so the core runs without ComfyUI. It also loads the user presets from the node.
+The editor's side is the ComfyUI bridge mod, `comfyui.js` in its own private repository
+(qwaxgo/SymbolicPoseEditor-ComfyUIBridge) cloned into `mods/` (MOD API: `api.io`, `api.ui`,
+`api.presets`). The node serves it with the other mods; without it the editor opens but cannot
+hand the pose back (routes.py prints a warning at start). It also loads the user presets.
 
 1. The widget opens `/symbolic_pose/editor/index.html?node_id=<id>` in an iframe modal.
 2. The mod posts `{type: "symbolic-pose-ready", node_id}`; the widget answers

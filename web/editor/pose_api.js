@@ -5,10 +5,9 @@
 // hooks into drawing, editing and the mouse. See docs/MODDING.md.
 //
 // Mods are loaded from mods/*.js and mods/<folder>/*.js (a repository of mods cloned into mods/).
-// Inside ComfyUI the list comes from /symbolic_pose/mods.js, with the built-in mods first
-// (builtin_mods/, as "_builtin/...": the node's hand-off); opened from disk it is web/mods.js
-// (written by tools/make_mods_list.py). The MOD panel can also run a file for this session only.
-// ?nomods in the address starts without mods (the built-in ones still load).
+// Inside ComfyUI the list comes from /symbolic_pose/mods.js (the node's hand-off is one of them,
+// the ComfyUI bridge mod); opened from disk it is web/mods.js (written by tools/make_mods_list.py).
+// The MOD panel can also run a file for this session only. ?nomods in the address starts without mods.
 // A mod's own data lives in S.mods[id]: saved with the pose, undone with Ctrl+Z.
 (() => {
 const API_VERSION = "1.1.0", API_MAJOR = 1;
@@ -336,11 +335,10 @@ function runScript(src, file){
 }
 async function loadMods(){
   const list = Array.isArray(window.SYMBOLIC_POSE_MODS) ? window.SYMBOLIC_POSE_MODS : [];
-  const builtinOnly = new URLSearchParams(location.search).has("nomods");
-  if (!list.length) return;
+  if (new URLSearchParams(location.search).has("nomods") || !list.length) return;
   const base = location.protocol === "file:" ? "../../mods/" : "../mods/";
   loading = true;
-  for (const name of list) if (/^([\w.-]+\/)?[\w.-]+\.js$/.test(name) && (!builtinOnly || name.startsWith("_builtin/")))
+  for (const name of list) if (/^([\w.-]+\/)?[\w.-]+\.js$/.test(name))
     await runScript(base + name.split("/").map(encodeURIComponent).join("/"), name);
   loading = false;
   refreshPanels();

@@ -31,11 +31,11 @@ now, without copying them anywhere. That is the quickest way to try a mod while 
 `_` or `.` is skipped (a way to switch a mod off). `mods/` is git-ignored, so your mods stay on
 your machine.
 
-**Built-in mods.** Inside ComfyUI the node first loads its own mods from `builtin_mods/`
-(listed as `_builtin/<name>`): `comfyui.js` is the node's hand-off (the Confirm / Cancel section,
-the pose the node had, the user presets of `user_presets/`). The editor opened from disk does not
-load them, and `?nomods` keeps them (it skips only your mods). They are ordinary mods written with
-this API, so they are also examples of `api.io` and `api.ui`.
+**The ComfyUI bridge.** The node's hand-off (the Confirm / Cancel section, the pose the node had,
+the user presets of `user_presets/`) is a mod too, `comfyui.js` in its own repository
+(SymbolicPoseEditor-ComfyUIBridge) cloned into `mods/`. Without it the editor still opens in the
+node, but cannot hand the pose back; ComfyUI's console says so at start. `?nomods` turns it off too.
+Opened from disk it does nothing. It is an ordinary mod, so it is also an example of `api.io`.
 
 ## A mod file
 

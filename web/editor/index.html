@@ -1268,8 +1268,8 @@ function migrate(d){                  // version 1 had no waist joint (18 joints
 function say(msg, warn){ $("status").textContent = msg; $("status").style.color = warn ? "var(--warn)" : ""; }
 
 // the scene alone (things, floor and walls, wire, solids), for what reads the pose downstream.
-// Inside ComfyUI the node's hand-off (confirm / cancel, the pose it had) is the built-in mod
-// builtin_mods/comfyui.js, loaded by pose_api.js; the editor itself does not depend on ComfyUI.
+// Inside ComfyUI the node's hand-off (confirm / cancel, the pose it had) is a mod, the ComfyUI
+// bridge (mods/SymbolicPoseEditor-ComfyUIBridge/comfyui.js); the editor does not depend on ComfyUI.
 function sceneOnly(){ return {items: S.items || [], env: S.env || {}, wire: S.wire || {}, solids: S.solids || []}; }
 const qs = new URLSearchParams(location.search);
 if (qs.get("w")) $("W").value = qs.get("w");
