@@ -47,11 +47,14 @@ saved with the export buttons instead). Without ComfyUI, your own presets are lo
   cup, trigger, ...).
 - **Body mode**: bone lengths, joint sizes, head size, whole-body scale, height in cm, female /
   male builds, left-right symmetry.
-- **Perspective mode**: camera direction, height, roll, and lens (wide angle = strong
-  perspective).
-- **Perspective ruler**: 1-, 2- or 3-point guide lines, the eye level and a cube guide (size and
-  position in cm). The vanishing points come from the camera, so the ruler has the figure's
-  perspective. Editor only; "Ruler picture" saves it as a transparent PNG.
+- **Perspective mode**: camera direction, height, roll (Shift+drag tilts the camera off level),
+  and lens (wide angle = strong perspective). Grabbing a vanishing point or the eye level of the
+  ruler moves the camera to match.
+- **Place mode**: the camera stays; drag a vanishing point to turn the ruler, drag the box guide
+  and objects over the floor (Shift+drag: up and down, wheel: turn).
+- **Perspective ruler**: 1-, 2- or 3-point guide lines, the eye level and a box guide (width,
+  height, depth and position in cm). The vanishing points come from the camera, so the ruler has
+  the figure's perspective. Editor only; "Ruler picture" saves it as a transparent PNG.
 - **Human joint limits** (on by default) keep knees, elbows, neck and so on in a human range.
 
 ## Props and scene
@@ -67,6 +70,9 @@ bars, ladders).
 - Chairs and rides seat the figure and put hands and feet on handles and pedals.
 - Floor, wall and ceiling; grounding (free / no sinking into the floor / always on the floor);
   put the selected hand or foot on a surface; grab the nearest thing; hang from it.
+- Objects: boxes (crate, floor slab, wall slab, building, step), prisms, cylinders, pyramids,
+  cones and poles, sized in cm. With grounding on the figure stands on their tops (stepping up to
+  40 cm); a selected joint can be put on a face and pinned; "Stand on it" puts the figure on top.
 - Wire action: hang the figure from a point above by the chest, hips, a hand or an ankle.
 
 `scene_json` is `{"items": [...], "env": {...}, "wire": {...}}`; each item is
@@ -113,7 +119,9 @@ JSON としてワークフローに渡せます。
 - **小物・環境**：約130種の小物を簡単な形で（武器・銃・弓・盾・杖・楽器・文房具・食器・食べ物・花・日用品・
   コントローラー・スポーツ用具・椅子・机・乗り物・蔓や枝や鉄棒など）。床・壁・天井と接地、面に手足を着ける、
   つかまる、ぶら下がる、ワイヤーで吊る。
-- **パース定規**：1点・2点・3点透視の線、アイレベル、立方体のガイド（一辺と位置を cm で）。消失点はカメラから決まるので人物と同じパースになります。エディタ上だけの表示で、「定規の画像」で透明な PNG を保存できます。
+- **パース定規**：1点・2点・3点透視の線、アイレベル、直方体のガイド（幅・高さ・奥行きと位置を cm で）。消失点はカメラから決まるので人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードではカメラはそのままで消失点をつかむと定規が回ります。エディタ上だけの表示で、「定規の画像」で透明な PNG を保存できます。
+- **カメラの傾き**：パースモードで Shift＋ドラッグ（または「傾き」）で水平でなくできます（±90°）。
+- **物体**：直方体（箱・床・壁・建物・段差）、角柱、円柱、角錐、円錐、支柱を cm の大きさで置けます。配置モードでドラッグして動かし（Shift で上下、ホイールで向き）、接地をオンにすると上に立ちます（40cm までの段は乗り上げ）。選んだ関節を面に着けて固定する、上に立たせる、もできます。
 - **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
 - **組み込みポーズ**：11種（立ち・Aポーズ・Tポーズ・コントラポスト・歩く・走る・椅子に座る・しゃがむ・ジャンプ・ファイティングポーズ・腰に手）。関節の角度で作ったもので、体格はそのまま。
 - **ユーザープリセット**：`user_presets/` に自分のプリセット（JSON）を置くと一覧に出ます（git には入りません）。

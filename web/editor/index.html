@@ -51,7 +51,7 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:tra
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
 #status{font-size:12px;min-height:1.3em;margin-top:6px}
 .only{display:none}
-body.mode-pose .only.pose, body.mode-body .only.body, body.mode-persp .only.persp{display:block}
+body.mode-pose .only.pose, body.mode-body .only.body, body.mode-persp .only.persp, body.mode-place .only.place{display:block}
 input[type=checkbox]{accent-color:var(--accent)}
 </style>
 </head>
@@ -67,6 +67,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <button data-mode="pose" class="on">ポーズ（骨の長さを保つ）</button>
       <button data-mode="body">体格（長さ・太さを変える）</button>
       <button data-mode="persp">パース（カメラとレンズ）</button>
+      <button data-mode="place">配置（定規・物体）</button>
       <label style="margin:0 0 0 auto;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink)">
         <input type="checkbox" id="limits" checked> 人間の関節の限界</label>
     </div>
@@ -77,7 +78,8 @@ input[type=checkbox]{accent-color:var(--accent)}
     <div class="hint">身長 <span id="heightP">-</span>　<span id="pinInfo"></span></div>
     <div class="hint only pose">丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す。</div>
     <div class="hint only body">丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。</div>
-    <div class="hint only persp">ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。</div>
+    <div class="hint only persp">ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。Shift＋ドラッグ：カメラを傾ける（水平でなくする）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。パース定規の消失点やアイレベルをつかむと、そこに合うようにカメラが動きます。</div>
+    <div class="hint only place">カメラは動きません。消失点をドラッグ：定規の向きを変える。直方体のガイドや物体をドラッグ：床の上で動かす（Shift＋ドラッグで上下）。その上でホイール：向きを回す。丸をクリック：関節を選ぶ（「物体に着ける」用）。</div>
   </section>
 </div>
 
@@ -134,7 +136,7 @@ input[type=checkbox]{accent-color:var(--accent)}
     <label>高さ（俯瞰＋／あおり−）</label>
     <div class="row"><input type="range" id="pitch" min="-80" max="80" value="0"><input type="number" class="num" id="pitchV"><span class="unit">°</span></div>
     <label>傾き</label>
-    <div class="row"><input type="range" id="roll" min="-45" max="45" value="0"><input type="number" class="num" id="rollV"><span class="unit">°</span></div>
+    <div class="row"><input type="range" id="roll" min="-90" max="90" value="0"><input type="number" class="num" id="rollV"><span class="unit">°</span></div>
     <button id="camReset" style="margin-top:6px">カメラを戻す</button>
   </section>
 
@@ -144,21 +146,26 @@ input[type=checkbox]{accent-color:var(--accent)}
     <div id="rulerCtl" style="display:none">
       <label>透視の種類</label>
       <select id="rulerN"><option value="1">1点透視</option><option value="2">2点透視</option><option value="3">3点透視</option></select>
-      <div id="rulerYawRow"><label>定規の向き（カメラに対して）</label>
-        <div class="row"><input type="range" id="rulerYaw" min="-89" max="89" value="30"><input type="number" class="num" id="rulerYawV"><span class="unit">°</span></div></div>
+      <div id="rulerYawRow"><label>定規の向き</label>
+        <div class="row"><input type="range" id="rulerYaw" min="-180" max="180" value="30"><input type="number" class="num" id="rulerYawV"><span class="unit">°</span></div></div>
       <label>線の数</label>
       <div class="row"><input type="range" id="rulerLines" min="6" max="60" value="20"><span class="val" id="rulerLinesV"></span></div>
-      <label><input type="checkbox" id="cubeOn" checked> 立方体のガイド</label>
-      <div id="cubeCtl" class="grid2">
-        <div><label>一辺</label><div class="row"><input type="number" id="cubeSize" min="1" step="5"><span class="unit">cm</span></div></div>
-        <div><label>左右</label><div class="row"><input type="number" id="cubeX" step="5"><span class="unit">cm</span></div></div>
-        <div><label>上下</label><div class="row"><input type="number" id="cubeY" step="5"><span class="unit">cm</span></div></div>
-        <div><label>前後</label><div class="row"><input type="number" id="cubeZ" step="5"><span class="unit">cm</span></div></div>
+      <label><input type="checkbox" id="cubeOn" checked> 直方体のガイド（向きは定規と同じ）</label>
+      <div id="cubeCtl">
+        <div class="grid2">
+          <div><label>幅</label><div class="row"><input type="number" id="boxW" min="1" step="5"><span class="unit">cm</span></div></div>
+          <div><label>位置（左右）</label><div class="row"><input type="number" id="boxX" step="5"><span class="unit">cm</span></div></div>
+          <div><label>高さ</label><div class="row"><input type="number" id="boxH" min="1" step="5"><span class="unit">cm</span></div></div>
+          <div><label>位置（上下）</label><div class="row"><input type="number" id="boxY" step="5"><span class="unit">cm</span></div></div>
+          <div><label>奥行き</label><div class="row"><input type="number" id="boxD" min="1" step="5"><span class="unit">cm</span></div></div>
+          <div><label>位置（前後）</label><div class="row"><input type="number" id="boxZ" step="5"><span class="unit">cm</span></div></div>
+        </div>
+        <div class="btns" style="margin-top:6px"><button id="boxCube">立方体にする（幅にそろえる）</button></div>
       </div>
       <div class="btns" style="margin-top:8px"><button id="saveRuler">定規の画像</button></div>
       <div class="hint" id="rulerHint"></div>
       <div class="hint" id="rulerWarn" style="color:var(--warn);display:none"></div>
-      <div class="hint">消失点はカメラ（パース）から決まるので、人物と同じパースになります。アイレベルはカメラの高さで動きます。定規はアタリ画像には入りません（「定規の画像」で透明な PNG を保存）。</div>
+      <div class="hint">消失点はカメラ（パース）から決まるので、人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードで消失点をつかむとカメラはそのままで定規が回ります。直方体のガイドは配置モードでドラッグして動かせます。定規はアタリ画像には入りません（「定規の画像」で透明な PNG を保存）。</div>
     </div>
   </section>
 
@@ -230,8 +237,8 @@ function fresh(){
           body: {yaw: 0, pitch: 0, roll: 0}, twist: REST.map(() => 0),
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
-          center: [0, 90, 0],
-          ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, size: 100, off: [0, 0, 0]}};
+          center: [0, 90, 0], solids: [],
+          ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, box: [60, 60, 60], pos: [70, 0, 0]}};
 }
 const history = [];
 function remember(){ history.push(JSON.stringify(S)); if (history.length > 80) history.shift(); }
@@ -616,17 +623,30 @@ function dragBody(i, x, y, W, H){
   if ($("sym").checked && MIRROR[i] !== i) apply(MIRROR[i]);
 }
 let drag = null;
+// handles added by pose_solids.js / pose_ruler.js: a down hook returns a drag {move(x, y, e)} or
+// null; a wheel hook returns true when it used the wheel. Hooks run first in the order added.
+const DOWN_HOOKS = [], WHEEL_HOOKS = [];
 function down(cv, e){
   const [x, y] = evPos(cv, e);
   if (e.altKey){ const i = pick(cv, x, y); if (i >= 0){ remember(); sel = i; togglePin(i); draw(); } return; }
-  if (mode === "persp" && cv === front){ drag = {cam: true, x, y, yaw: S.cam.yaw, pitch: S.cam.pitch}; remember(); return; }
+  for (const h of DOWN_HOOKS){
+    const d = h(cv, x, y, e);
+    if (d){ remember(); drag = d; cv.setPointerCapture(e.pointerId); draw(); return; }
+  }
+  if (mode === "persp" && cv === front){
+    drag = {cam: true, roll: e.shiftKey, x, y, yaw: S.cam.yaw, pitch: S.cam.pitch, roll0: S.cam.roll}; remember(); return; }
+  if (mode === "place"){ if (cv === front){ sel = pick(cv, x, y); draw(); } return; }   // select only
   sel = pick(cv, x, y); draw();
   if (sel >= 0){ remember(); drag = {cv, i: sel, single: e.shiftKey}; cv.setPointerCapture(e.pointerId); }
 }
 function move(cv, e){
   if (!drag) return;
   const [x, y] = evPos(cv, e), W = cv.width, H = cv.height;
-  if (drag.cam){
+  if (drag.move){ drag.move(x, y, e); draw(); return; }
+  if (drag.cam && drag.roll){
+    S.cam.roll = Math.max(-90, Math.min(90, drag.roll0 + (x - drag.x) * 90 / W));
+    syncUI();
+  } else if (drag.cam){
     S.cam.yaw = Math.max(-180, Math.min(180, drag.yaw + (x - drag.x) * 180 / W));
     S.cam.pitch = Math.max(-80, Math.min(80, drag.pitch + (y - drag.y) * 120 / H));
     syncUI();
@@ -660,6 +680,7 @@ front.addEventListener("dblclick", e => {        // flip the bone toward / away 
 front.addEventListener("wheel", e => {
   e.preventDefault();
   const [x, y] = evPos(front, e), step = e.deltaY < 0 ? 1 : -1;
+  if (WHEEL_HOOKS.some(h => h(x, y, step, e))){ draw(); return; }
   if (mode === "persp"){ S.cam.lens = Math.max(14, Math.min(200, S.cam.lens * (step > 0 ? 1.1 : 1/1.1))); syncUI(); }
   else if (mode === "body"){ const i = pick(front, x, y);
     if (i >= 0){ remember(); const k = step > 0 ? 1.08 : 1/1.08; S.R[i] *= k;
@@ -1163,6 +1184,7 @@ $("mirror").addEventListener("click", () => {
   (S.items || []).forEach(it => { if (it.hand) it.hand = it.hand === "r" ? "l" : "r";
     if (it.base) it.base = [-it.base[0], it.base[1], it.base[2]]; if (it.yaw) it.yaw = -it.yaw; });
   if (S.wire && S.wire.anchor) S.wire.anchor = [-S.wire.anchor[0], S.wire.anchor[1], S.wire.anchor[2]];
+  (S.solids || []).forEach(o => { o.pos = [-o.pos[0], o.pos[1], o.pos[2]]; o.yaw = -(o.yaw || 0); });
   syncUI(); draw();
 });
 $("undo").addEventListener("click", undo);
@@ -1242,7 +1264,7 @@ function say(msg, warn){ $("status").textContent = msg; $("status").style.color 
 // ---- inside ComfyUI: the node's modal (?node_id=...) gets the result on "confirm" ---------------
 const qs0 = new URLSearchParams(location.search);
 const nodeId = qs0.get("node_id");
-function sceneOnly(){ return {items: S.items || [], env: S.env || {}, wire: S.wire || {}}; }
+function sceneOnly(){ return {items: S.items || [], env: S.env || {}, wire: S.wire || {}, solids: S.solids || []}; }
 if (nodeId !== null && window.parent !== window){
   $("nodeBtns").style.display = "";
   $("confirm").addEventListener("click", () => {
@@ -1280,7 +1302,9 @@ syncUI(); draw();
 </script>
 <!-- floor / walls / ceiling, holding and placing things, wires (uses the editor's state above) -->
 <script src="pose_scene.js"></script>
-<!-- the perspective ruler and the cube guide (uses the editor's camera) -->
+<!-- boxes, prisms, cylinders, pyramids, cones and poles to stand on and touch -->
+<script src="pose_solids.js"></script>
+<!-- the perspective ruler and the box guide (uses the editor's camera) -->
 <script src="pose_ruler.js"></script>
 <!-- Japanese / English -->
 <script src="i18n.js"></script>
