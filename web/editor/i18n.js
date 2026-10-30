@@ -15,8 +15,8 @@
     "正面（カメラ）": "Front (camera)",
     "横から（奥行き）": "Side (depth)",
     "身長": "Height",
-    "丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す。":
-      "Drag a circle: move the joint (bone lengths are kept; pulling it in tilts the bone toward or away from you). A wrist or ankle brings its whole arm or leg (Shift+drag: that bone only). Double-click: flip the bone toward / away from the camera. Alt+click: pin the joint (a pinned hand or foot stays when the rest moves). The hip circle moves the whole figure. Drag in the side view: move depth directly. Wheel: zoom. Ctrl+Z: undo.",
+    "丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す、Ctrl+Y：やり直す。":
+      "Drag a circle: move the joint (bone lengths are kept; pulling it in tilts the bone toward or away from you). A wrist or ankle brings its whole arm or leg (Shift+drag: that bone only). Double-click: flip the bone toward / away from the camera. Alt+click: pin the joint (a pinned hand or foot stays when the rest moves). The hip circle moves the whole figure. Drag in the side view: move depth directly. Wheel: zoom. Ctrl+Z: undo, Ctrl+Y: redo.",
     "丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。":
       "Drag a circle: lengthen / shorten that bone (what follows moves with it). Wheel over a circle: make it (the thickness) bigger / smaller. With symmetry on, the other side changes too.",
     // presets
@@ -42,7 +42,7 @@
       "Touch: tap a circle to pick it, then drag the picked circle. Swipe anywhere else with one finger: turn the camera. Two fingers: pinch to zoom, move them to move the view (the Perspective and Place modes keep the lens and objects). Camera pad: the left stick turns, the right stick moves, the slider at the right zooms (hide it with \"Camera pad\" above). Double-tap flips a bone toward / away from you. Shift and pin: the keys above. A pen drags circles directly, like a mouse (barrel button: Shift, eraser: pin).",
     "カメラ（どのモードでも。レンズはそのまま）：中ボタンでドラッグして回す、Shift＋中ボタンで動かす、Ctrl＋中ボタン（またはホイール）で拡大縮小。中ボタンのないマウスやトラックパッドは、何もない所を Alt＋ドラッグ。テンキー：1 正面、3 右から、7 上から（Ctrl で反対側）、2・4・6・8 で15°ずつ回す（Ctrl で動かす）、9 裏へ回る、＋－ 拡大縮小、. 選んだ関節を中心に、Home 人物を中心に。":
       "Camera (any mode; the lens stays): middle-button drag turns it, Shift+middle button moves it, Ctrl+middle button (or the wheel) zooms. Without a middle button: Alt+drag where there is no joint. Numeric keypad: 1 front, 3 from the right, 7 from above (Ctrl: the other side), 2 4 6 8 turn by 15° (Ctrl: move), 9 round to the back, + - zoom, . the selected joint to the middle, Home the figure to the middle.",
-    "左右同時に動かす（片方の手足を動かすと、反対側も同じ形に）": "Move both sides (the other arm or leg takes the same pose)", "反対側をそろえました。": "Matched the other side.", "元に戻す": "Undo",
+    "左右同時に動かす（片方の手足を動かすと、反対側も同じ形に）": "Move both sides (the other arm or leg takes the same pose)", "反対側をそろえました。": "Matched the other side.", "元に戻す": "Undo", "やり直す": "Redo",
     "立ち（標準）": "Standing", "Aポーズ": "A-pose", "Tポーズ": "T-pose", "コントラポスト": "Contrapposto",
     "歩く": "Walking", "走る": "Running", "椅子に座る": "Sitting on a chair", "しゃがむ": "Squatting",
     "ジャンプ（バンザイ）": "Jump (arms up)", "ファイティングポーズ": "Fighting stance", "腰に手": "Hands on hips",

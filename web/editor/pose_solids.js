@@ -308,7 +308,7 @@ function syncSolids(){
   const o = list[soSel];
   $("soCtl").style.display = $("soColorRow").style.display = o ? "" : "none";
   if (!o) return;
-  $("soColorOn").checked = !!o.color; if (o.color) $("soColor").value = o.color;
+  $("soColorOn").checked = !!o.color; $("soColor").value = o.color || $("soColor").defaultValue;
   const sh = solidKind(o).shape;
   $("soSidesBox").style.display = sh === "prism" || sh === "pyr" ? "" : "none";
   const vals = {soW: o.size[0], soH: o.size[1], soD: o.size[2], soSides: o.sides || solidKind(o).sides || 4,

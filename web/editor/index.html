@@ -224,6 +224,7 @@ body.split.full #stage{right:env(safe-area-inset-right);width:auto;height:calc(1
       <button type="button" id="vShift" class="touchkey" aria-pressed="false">Shift（その骨だけ・上下）</button>
       <button type="button" id="vAlt" class="touchkey" aria-pressed="false">固定（ピン）</button>
       <button type="button" id="vUndo" class="touchkey">元に戻す</button>
+      <button type="button" id="vRedo" class="touchkey">やり直す</button>
       <button type="button" id="vSide" class="vside">横の図</button>
       <button type="button" id="vPad" class="touchkey" aria-pressed="true">カメラパッド</button>
     </div>
@@ -238,7 +239,7 @@ body.split.full #stage{right:env(safe-area-inset-right);width:auto;height:calc(1
       <summary>操作のヒント</summary>
       <div class="hint touch-only">タッチ：丸をタップして選び、選んだ丸をドラッグして動かす。それ以外の所を1本指でスワイプ：カメラを回す。2本指：つまんで拡大縮小、そのまま動かして移動（パース・配置モードはレンズ・物体のまま）。カメラパッド：左のスティックで回す、右のスティックで動かす、右端のスライダーで拡大（上の「カメラパッド」で隠せます）。ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで。ペンはマウスと同じく丸を直接ドラッグ（サイドボタンは Shift、消しゴム側は固定）。</div>
       <div class="hint">カメラ（どのモードでも。レンズはそのまま）：中ボタンでドラッグして回す、Shift＋中ボタンで動かす、Ctrl＋中ボタン（またはホイール）で拡大縮小。中ボタンのないマウスやトラックパッドは、何もない所を Alt＋ドラッグ。テンキー：1 正面、3 右から、7 上から（Ctrl で反対側）、2・4・6・8 で15°ずつ回す（Ctrl で動かす）、9 裏へ回る、＋－ 拡大縮小、. 選んだ関節を中心に、Home 人物を中心に。</div>
-      <div class="hint only pose">丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す。</div>
+      <div class="hint only pose">丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す、Ctrl+Y：やり直す。</div>
       <div class="hint only body">丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。</div>
       <div class="hint only persp">ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。Shift＋ドラッグ：カメラを傾ける（水平でなくする）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。パース定規の消失点やアイレベルをつかむと、そこに合うようにカメラが動きます。</div>
       <div class="hint only place">ドラッグではカメラは動きません（中ボタン・テンキー・カメラパッドでは動きます）。消失点をドラッグ：定規の向きを変える。直方体のガイドや物体をドラッグ：床の上で動かす（Shift＋ドラッグで上下）。その上でホイール：向きを回す。丸をクリック：関節を選ぶ（「物体に着ける」用）。</div>
@@ -254,6 +255,7 @@ body.split.full #stage{right:env(safe-area-inset-right);width:auto;height:calc(1
       <button id="applyPreset">読み込む</button>
       <button id="mirror">左右反転</button>
       <button id="undo">元に戻す</button>
+      <button id="redo">やり直す</button>
     </div>
     <div class="btns" style="margin-top:6px">
       <button id="symToL">右の手足を左へ写す</button>
@@ -440,12 +442,29 @@ function fresh(){
           center: [0, 90, 0], cams: [], camLock: false, scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
           ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, box: [60, 60, 60], pos: [70, 0, 0]}};
 }
-const history = [];
+// undo / redo: remember() keeps the state before an edit. A step remembered when nothing changed
+// after it (a slider only touched) is skipped; an edit after an undo drops what could be redone.
+const history = [], future = [];
+let futureAt = "";
 function remember(){ const t = JSON.stringify(S); if (history[history.length - 1] === t) return;
   history.push(t); if (history.length > 80) history.shift(); }
-// a slider that still has the focus would not be refreshed (it is left alone while dragged)
-function undo(){ if (history.length){ const a = document.activeElement; if (a && a.type === "range") a.blur();
-  S = JSON.parse(history.pop()); syncUI(); draw(); } }
+function restore(text){
+  const a = document.activeElement; if (a && a.type === "range") a.blur();
+  S = JSON.parse(text); syncUI(); draw(); futureAt = JSON.stringify(S);
+}
+function undo(){
+  const now = JSON.stringify(S);
+  while (history.length && history[history.length - 1] === now) history.pop();
+  if (!history.length) return;
+  if (now !== futureAt) future.length = 0;
+  future.push(now); restore(history.pop());
+}
+function redo(){
+  const now = JSON.stringify(S);
+  if (!future.length || now !== futureAt){ future.length = 0; return; }
+  if (history[history.length - 1] !== now) history.push(now);
+  restore(future.pop());
+}
 
 // ---- small vector helpers ----------------------------------------------------------------
 const sub = (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
@@ -947,6 +966,7 @@ function dragBody(i, x, y, W, H){
   if ($("sym").checked && MIRROR[i] !== i) apply(MIRROR[i]);
 }
 let drag = null;
+let rangeHeld = null;                 // the slider being held (see the panel's pointer events)
 // handles added by pose_solids.js / pose_ruler.js: a down hook returns a drag {move(x, y, e)} or
 // null; a wheel hook returns true when it used the wheel. Hooks run first in the order added.
 const DOWN_HOOKS = [], WHEEL_HOOKS = [];
@@ -1071,8 +1091,11 @@ function flipAt(x, y){
   rotateSubtree(i, add(camRotInv(flipped), S.center)); afterEdit(i); draw();
 }
 // the wheel, a trackpad, two fingers: one "step" each (in or out)
+// a run of wheel notches (or pinch steps) on the camera is one undo step
+let wheelMem = 0;
 function wheelStep(x, y, step, e){
   if (WHEEL_HOOKS.some(h => h(x, y, step, e))){ draw(); return; }
+  if (mode !== "body" && !S.camLock){ const t = performance.now(); if (t - wheelMem > 800) remember(); wheelMem = t; }
   if (mode === "persp"){ if (camHeld()) return; S.cam.lens = Math.max(14, Math.min(200, S.cam.lens * (step > 0 ? 1.1 : 1/1.1))); syncUI(); }
   else if (mode === "body"){ const i = pick(front, x, y);
     if (i >= 0){ remember(); const k = step > 0 ? 1.08 : 1/1.08; S.R[i] *= k;
@@ -1157,7 +1180,14 @@ front.addEventListener("wheel", e => {
     const r = e.scale / g; if (r > 1.12 || r < 1 / 1.12){ g = e.scale;
       const [x, y] = evPos(front, e); wheelStep(x, y, r > 1 ? 1 : -1, evMods(e)); } });
 }
-document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")){ e.preventDefault(); undo(); } });
+// Ctrl+Z undoes; Ctrl+Y or Ctrl+Shift+Z redoes (⌘ on a Mac). Typing in a field, they undo the typing.
+document.addEventListener("keydown", e => {
+  if (!(e.ctrlKey || e.metaKey)) return;
+  if (e.target && e.target.matches && e.target.matches("textarea, input:not([type=range]):not([type=checkbox]):not([type=color])")) return;
+  const k = e.key.toLowerCase();
+  if (k === "z" && !e.shiftKey){ e.preventDefault(); undo(); }
+  else if (k === "y" || (k === "z" && e.shiftKey)){ e.preventDefault(); redo(); }
+});
 // the numeric keypad as in Blender: 1 front, 3 from the figure's right, 7 from above (Ctrl: the
 // other side), 2 4 6 8 turn by 15° (Ctrl: move), 9 round to the back, + - zoom, . the selected
 // joint to the middle; Home: the figure to the middle
@@ -1529,8 +1559,8 @@ function showSelected(){
     $(id + "Row").style.display = show ? "" : "none";
     if (!show) continue;
     const v = jointValue(id), r = $(id), n = $(id + "N");
-    const busy = document.activeElement === r || document.activeElement === n;
-    if (!busy){ r.value = v; n.value = Math.round(v * 10) / 10; }
+    if (rangeHeld !== r) r.value = v;
+    if (document.activeElement !== n) n.value = Math.round(v * 10) / 10;
   }
 }
 
@@ -1575,6 +1605,7 @@ $("viewHints").addEventListener("toggle", () => draw());
 for (const [id, key] of [["vShift", "shift"], ["vAlt", "alt"]])
   $(id).addEventListener("click", () => { VMOD[key] = !VMOD[key]; $(id).setAttribute("aria-pressed", String(VMOD[key])); $(id).classList.toggle("on", VMOD[key]); });
 $("vUndo").addEventListener("click", undo);
+$("vRedo").addEventListener("click", redo);
 $("vSide").addEventListener("click", () => { document.body.classList.toggle("show-side"); draw(); });
 if (navigator.maxTouchPoints > 0 || "ontouchstart" in window || matchMedia("(any-pointer: coarse)").matches)
   document.body.classList.add("touch");
@@ -1714,6 +1745,9 @@ function syncUI(){
 // any slider in the side panel: one undo step per drag or key press (the camera's, the ruler's,
 // a mod's ...); remember() skips a step that changed nothing
 document.addEventListener("pointerdown", e => { if (e.target.matches && e.target.matches("aside input[type=range]")) remember(); }, true);
+// the slider under a finger or the mouse is not set back while it moves (draw() refreshes the panel)
+document.addEventListener("pointerdown", e => { if (e.target.matches && e.target.matches("input[type=range]")) rangeHeld = e.target; }, true);
+for (const t of ["pointerup", "pointercancel"]) document.addEventListener(t, () => { rangeHeld = null; }, true);
 document.addEventListener("keydown", e => { if (e.target.matches && e.target.matches("aside input[type=range]")
   && /^(Arrow|Page|Home|End)/.test(e.key)) remember(); }, true);
 document.querySelectorAll("#modes button").forEach(b => b.addEventListener("click", () => {
@@ -1743,6 +1777,7 @@ $("mirror").addEventListener("click", () => {
   syncUI(); draw();
 });
 $("undo").addEventListener("click", undo);
+$("redo").addEventListener("click", redo);
 $("symToL").addEventListener("click", () => symmetrizeLimbs("r"));
 $("symToR").addEventListener("click", () => symmetrizeLimbs("l"));
 for (const [id, whole] of [["symJoint", false], ["symLimb", true]])

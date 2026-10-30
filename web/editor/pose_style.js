@@ -179,12 +179,17 @@ function buildStylePanel(){
 }
 function syncStyle(){
   const c = S.colors = Object.assign({parts: {}}, S.colors || {}); c.parts = c.parts || {};
-  const show = (id, v) => { $(id + "On").checked = !!v; if (v) $(id).value = v; };
+  // a colour that is not set shows the picker's own starting colour
+  const show = (id, v) => { $(id + "On").checked = !!v; $(id).value = v || $(id).defaultValue; };
   for (const [k] of PART_NAMES) show("pc_" + k, c.parts[k]);
   show("pc_env", c.env); show("pc_wire", c.wire);
   const list = S.auras = S.auras || [], cur = $("auList").value;
   $("auList").innerHTML = list.map((a, i) => `<option value="${i}">${i + 1}. ${(AURA_PARTS[a.part] || AURA_PARTS.body)[0]}：${(AURA_KINDS[a.kind] || AURA_KINDS.flame)[0]}</option>`).join("");
   if (cur !== "" && list[+cur]) $("auList").value = cur;
+  // the fields above the list show the chosen aura (after undo, redo, loading)
+  const a = list[+$("auList").value];
+  if ($("auList").value !== "" && a){ $("auPart").value = a.part; $("auKind").value = a.kind; $("auSize").value = a.size;
+    $("auColor").value = a.color || AURA_KINDS[a.kind][1]; }
 }
 buildStylePanel();
 syncStyle();
