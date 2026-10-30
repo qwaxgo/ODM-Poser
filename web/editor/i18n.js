@@ -26,6 +26,9 @@
     "左の手足を右へ写しました。": "Copied the left arm and leg to the right.",
     "反対側をこの形にそろえる": "Make the other side match", "この関節だけ": "This joint only",
     "ここから先まとめて": "From here on",
+    "GitHub リポジトリ": "GitHub repository", "意見箱": "Feedback",
+    "不具合の報告・要望・感想を GitHub の Issues に書けます（GitHub のアカウントが要ります）":
+      "Report a bug, ask for a feature or say what you think, in the GitHub Issues (a GitHub account is needed)",
     "カメラの固定と記憶": "Camera lock and memory", "カメラを固定する": "Lock the camera", "カメラパッドを表示": "Show the camera pad",
     "記憶したカメラ（": "Remembered cameras (", "今のカメラを記憶": "Remember this camera", "呼び出す": "Recall",
     "カメラを固定しました。": "Locked the camera.", "カメラの固定を外しました。": "Unlocked the camera.",
