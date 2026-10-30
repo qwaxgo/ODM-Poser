@@ -1,0 +1,19 @@
+name: 不具合の報告 / Bug report
+description: 思った通りに動かない所 / Something does not work as expected
+title: "[不具合] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 何が起きたか / What happened
+      description: 操作の手順と、期待した結果 / The steps and what you expected
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: 端末・ブラウザ / Device and browser
+      placeholder: 例 / e.g. iPhone 15 + Safari, Windows 11 + Chrome, ComfyUI
+    validations:
+      required: true
