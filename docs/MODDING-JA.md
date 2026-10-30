@@ -18,8 +18,8 @@ API の版：**1.1.0**。English: [MODDING.md](MODDING.md)（こちらが正式�
 ## まず試す
 
 1. 下の「MOD のファイル」の例を `mods/mymod.js` として保存します（または MOD のリポジトリを `mods/` に clone。このページの最後）。
-2. ComfyUI の中なら、エディタを開き直すだけです。ComfyUI なしで（`web/editor/index.html` を直接）開くときは、
-   先に `python tools/make_mods_list.py` を実行してから開き直します。
+2. `web/editor/index.html` を直接開くときは、`python tools/make_mods_list.py` を実行してから開き直します
+   （エディタを載せているページが一覧を用意する場合は、開き直すだけ。ComfyUI は [COMFYUI-JA.md](COMFYUI-JA.md)）。
 3. 横の欄のいちばん下の **MOD** 欄に、読み込んだ MOD が並びます（✓ 読み込み済み、✗ はエラーの内容つき）。
 
 MOD 欄の「MODファイルを読み込む（今回だけ）」は、選んだ `.js` をその場で動かします（どこにもコピーしません）。
@@ -27,10 +27,6 @@ MOD を作っている途中で試すのにいちばん手早い方法です。
 
 `mods/*.js` と `mods/<フォルダ>/*.js` を、パスの順に読み込みます。名前が `_` か `.` で始まるファイルやフォルダは読み込みません（MOD を一時的に止めるのに使えます）。
 
-**ComfyUI 連携 MOD。** ノードとのやりとり（確定・閉じるの欄、ノードが持っていたポーズ、`user_presets/` のユーザープリセット）も
-MOD で、専用のリポジトリ（SymbolicPoseEditor-ComfyUIBridge）の `comfyui.js` を `mods/` に clone して使います。ないとエディタは
-ノードの中で開きますが、ポーズをノードに返せません（ComfyUI の起動時にコンソールに出ます）。`?nomods` でこれも止まります。
-ComfyUI なしで開いたときは何もしません。普通の MOD なので `api.io` の例にもなります。
 `mods/` の中身は git に入りません。
 
 ## MOD のファイル
@@ -247,7 +243,7 @@ api.i18n.addRule(/^(.+)を投げました。$/, m => `Threw the ${m[1]}.`);   //
 
 ## 保存と互換性
 
-- `api.data()` の中身と、MOD が追加した小物・物体・オーラは、ポーズの JSON に保存されます（ComfyUI ノードの出力にも入ります）。
+- `api.data()` の中身と、MOD が追加した小物・物体・オーラは、ポーズの JSON に保存されます（`api.io.poseJSON()` で渡すものにも入ります）。
   MOD なしで開いてもファイルには残り、エディタが知らない小物とオーラは描かず、知らない物体の種類は直方体として描きます。
 - API はセマンティック バージョニングに従います。1.x では追加はあっても、ここに書いたものは動き続けます（1.1 で `api.io` と `addSection({at})` を追加）。`api: 2` の MOD は
   API 1 のエディタでは読み込みません。
@@ -259,9 +255,9 @@ MOD は専用の git リポジトリに置けます。`mods/` に clone する�
 読まないので、メモや素材やテストを置けます）。
 
 ```
-cd ComfyUI/custom_nodes/ComfyUI-SymbolicPoseEditor/mods
+cd <エディタのフォルダ>/mods
 git clone <MOD のリポジトリ>
 ```
 
-更新はそのフォルダで `git pull` して、エディタを開き直します（ComfyUI なしで開くときは、ファイルを増やしたり減らしたりしたら
+更新はそのフォルダで `git pull` して、エディタを開き直します（直接開くときは、ファイルを増やしたり減らしたりしたら
 `tools/make_mods_list.py` をもう一度実行）。`mods/` は git に入らないので、clone したリポジトリがエディタのリポジトリと混ざることはありません。

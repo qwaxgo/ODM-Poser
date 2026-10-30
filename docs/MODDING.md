@@ -20,8 +20,9 @@ API version: **1.1.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
 
 1. Save the file under *A mod file* below as `mods/mymod.js` (or clone a repository of mods into
    `mods/`, see the end of this page).
-2. Inside ComfyUI: open (or reload) the editor. Opened from disk (`web/editor/index.html`):
-   run `python tools/make_mods_list.py` first, then reload.
+2. Opened from disk (`web/editor/index.html`): run `python tools/make_mods_list.py`, then reload.
+   (When the page that hosts the editor serves the list itself, reloading is enough; for ComfyUI
+   see [COMFYUI.md](COMFYUI.md).)
 3. The **MOD** panel at the bottom of the side bar lists every mod: ✓ loaded, ✗ with the error.
 
 The **MOD** panel also has *Load mod files (this session only)*: it runs the chosen `.js` files
@@ -30,12 +31,6 @@ now, without copying them anywhere. That is the quickest way to try a mod while 
 `mods/*.js` and `mods/<folder>/*.js` load in path order. A file or folder whose name starts with
 `_` or `.` is skipped (a way to switch a mod off). `mods/` is git-ignored, so your mods stay on
 your machine.
-
-**The ComfyUI bridge.** The node's hand-off (the Confirm / Cancel section, the pose the node had,
-the user presets of `user_presets/`) is a mod too, `comfyui.js` in its own repository
-(SymbolicPoseEditor-ComfyUIBridge) cloned into `mods/`. Without it the editor still opens in the
-node, but cannot hand the pose back; ComfyUI's console says so at start. `?nomods` turns it off too.
-Opened from disk it does nothing. It is an ordinary mod, so it is also an example of `api.io`.
 
 ## A mod file
 
@@ -255,7 +250,7 @@ The canvas state (`ctx`) is saved and restored around each drawing hook.
 ## Saving and compatibility
 
 - Your data in `api.data()` and the props, solids and auras you added are saved in the pose JSON
-  (also in what the ComfyUI node outputs). Opened without your mod, they stay in the file; props and
+  (also in what `api.io.poseJSON()` hands on). Opened without your mod, they stay in the file; props and
   aura kinds the editor does not know are skipped when drawing, unknown solid kinds draw as boxes.
 - The API follows semantic versioning: 1.x adds things and keeps what is here working (1.1 added
   `api.io` and `addSection({at})`). A mod with
@@ -269,7 +264,7 @@ Mods can live in their own git repository: clone it into `mods/`, and every `*.j
 loads (deeper folders are not read, so a repository can keep notes, assets and tests there).
 
 ```
-cd ComfyUI/custom_nodes/ComfyUI-SymbolicPoseEditor/mods
+cd <the editor's folder>/mods
 git clone <your mods repository>
 ```
 

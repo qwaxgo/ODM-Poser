@@ -1041,7 +1041,7 @@ function applyPreset(name){
 // ---- UI wiring ---------------------------------------------------------------------------
 const $ = id => document.getElementById(id);
 const UNITS = {scaleAll: 1, scaleHead: 1, scaleThick: 1, lens: 1, yaw: 1, pitch: 1, roll: 1};
-const TC = [];                        // user presets: from files (the button below) or a mod (the ComfyUI one)
+const TC = [];                        // user presets: from files (the button below) or from a mod
 $("preset").innerHTML = Object.keys(PRESETS).map(n => `<option>${n}</option>`).join("");
 // user presets: possibly thousands, so a group, a search and a list
 const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;");
@@ -1136,7 +1136,7 @@ $("tcRandom").addEventListener("click", () => {
   const o = opts[Math.floor(Math.random() * opts.length)]; $("tcList").value = o.value; tcApply(+o.value);
 });
 setUserPresets(TC);
-// opened without ComfyUI there is no served list: the user picks their preset files instead
+// the user picks their preset files (a mod can add presets too)
 $("tcLoadFile").addEventListener("click", () => $("tcFile").click());
 $("tcFile").addEventListener("change", async e => {
   const files = [...e.target.files];
@@ -1267,9 +1267,8 @@ function migrate(d){                  // version 1 had no waist joint (18 joints
 }
 function say(msg, warn){ $("status").textContent = msg; $("status").style.color = warn ? "var(--warn)" : ""; }
 
-// the scene alone (things, floor and walls, wire, solids), for what reads the pose downstream.
-// Inside ComfyUI the node's hand-off (confirm / cancel, the pose it had) is a mod, the ComfyUI
-// bridge (mods/SymbolicPoseEditor-ComfyUIBridge/comfyui.js); the editor does not depend on ComfyUI.
+// the scene alone (things, floor and walls, wire, solids), for what reads the pose downstream
+// (a mod hands it on with api.io.sceneJSON)
 function sceneOnly(){ return {items: S.items || [], env: S.env || {}, wire: S.wire || {}, solids: S.solids || []}; }
 const qs = new URLSearchParams(location.search);
 if (qs.get("w")) $("W").value = qs.get("w");
@@ -1295,7 +1294,7 @@ syncUI(); draw();
 <script src="pose_ruler.js"></script>
 <!-- Japanese / English -->
 <script src="i18n.js"></script>
-<!-- mods: the list of mods/*.js (served by the node, or web/mods.js written by tools/make_mods_list.py) -->
+<!-- mods: the list of mods/*.js (web/mods.js written by tools/make_mods_list.py, or given by the page that hosts the editor) -->
 <script src="../mods.js"></script>
 <!-- the MOD API; it loads the mods (docs/MODDING.md) -->
 <script src="pose_api.js"></script>

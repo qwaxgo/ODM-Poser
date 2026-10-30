@@ -5,8 +5,8 @@
 // hooks into drawing, editing and the mouse. See docs/MODDING.md.
 //
 // Mods are loaded from mods/*.js and mods/<folder>/*.js (a repository of mods cloned into mods/).
-// Inside ComfyUI the list comes from /symbolic_pose/mods.js (the node's hand-off is one of them,
-// the ComfyUI bridge mod); opened from disk it is web/mods.js (written by tools/make_mods_list.py).
+// The list is window.SYMBOLIC_POSE_MODS from ../mods.js: opened from disk that is web/mods.js
+// (written by tools/make_mods_list.py); a page that hosts the editor may serve it instead.
 // The MOD panel can also run a file for this session only. ?nomods in the address starts without mods.
 // A mod's own data lives in S.mods[id]: saved with the pose, undone with Ctrl+Z.
 (() => {
@@ -290,7 +290,7 @@ window.SymbolicPose = {
     <div id="modBox" class="hint">読み込んだ MOD はありません。</div>
     <div class="btns" style="margin-top:6px"><button id="modLoad">MODファイルを読み込む（今回だけ）</button>
       <input type="file" id="modFile" accept=".js,text/javascript" multiple hidden></div>
-    <div class="hint">mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ComfyUI なしで開くときは tools/make_mods_list.py で一覧を作ります）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。</div>`;
+    <div class="hint">mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ブラウザで直接開くときは、tools/make_mods_list.py で一覧を作ります）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。</div>`;
   document.querySelector("aside").appendChild(sec);
   $("modLoad").addEventListener("click", () => $("modFile").click());
   $("modFile").addEventListener("change", async e => {
