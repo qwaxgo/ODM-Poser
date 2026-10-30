@@ -2,7 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Symbolic Pose Editor</title>
 <style>
 :root{
@@ -19,20 +22,82 @@
         --field:#1e1e1d; --accent:#4e9a74; --accent-ink:#10231a; --code:#2e2e2b; --warn:#e0864f;
         --stage:#2b2b29; --figure:#ececea; --sel:#ff8a5c; --far:#7a7a74;}
 *{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);
-     font:14px/1.6 "Yu Gothic UI","Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
+     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+     font:14px/1.6 system-ui,-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",
+       "Noto Sans JP","Noto Sans CJK JP","Source Han Sans JP","Droid Sans Japanese",sans-serif}
 header{padding:12px 16px 4px;max-width:1240px;margin:auto;position:relative}
 #headTools{position:absolute;top:12px;right:16px;display:flex;gap:6px}
 h1{font-size:17px;margin:0}
 header p{margin:0;color:var(--sub);font-size:12px}
 main{max-width:1240px;margin:auto;padding:8px 16px 32px;
      display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
-@media (max-width:900px){main{grid-template-columns:1fr}}
+/* one column: narrow windows, phones, tablets and monitors turned upright; the panels then
+   flow in columns under the views */
+@media (max-width:900px), (orientation:portrait) and (max-aspect-ratio:4/5){
+  main{grid-template-columns:1fr}
+  aside{column-width:300px;column-gap:12px}
+  aside>section{break-inside:avoid;display:inline-block;width:100%}
+}
+@media (orientation:portrait) and (min-width:1000px){main{max-width:1400px}}
+/* phones: the side view on request, the header's buttons in the flow */
+@media (max-width:700px){
+  main{padding:6px 8px 24px;gap:8px}
+  header{padding:8px 8px 2px}
+  #headTools{position:static;justify-content:flex-end;margin-bottom:4px;flex-wrap:wrap}
+  .views{grid-template-columns:1fr!important}
+  body:not(.show-side) .view.sideview{display:none}
+}
+/* short screens (phones held sideways): a compact header, the panels beside the views */
+@media (max-height:520px){
+  header p{display:none}
+  header{padding:4px 10px 0}
+  main{padding:4px 10px 16px}
+  .modes,.touchbar{margin-bottom:4px}
+}
+@media (max-height:520px) and (min-width:700px){
+  main{grid-template-columns:1fr 280px}
+  aside{columns:auto;max-height:calc(100dvh - 60px);overflow:auto}
+  .views{grid-template-columns:1fr 34%!important}
+  body:not(.show-side) .view.sideview{display:block}
+  .touchbar .vside{display:none!important}
+}
+/* two screens (dual-screen phones, foldables that report their fold): views on one, panels on the other */
+@media (horizontal-viewport-segments:2){
+  main{max-width:none;padding:0;gap:0;
+       grid-template-columns:env(viewport-segment-width 0 0) env(viewport-segment-width 1 0);
+       column-gap:calc(env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0))}
+  main>div,aside{height:100dvh;overflow:auto;padding:8px}
+  aside{columns:auto}
+}
+@media (vertical-viewport-segments:2){
+  main{grid-template-columns:1fr;grid-template-rows:env(viewport-segment-height 0 0) env(viewport-segment-height 0 1);
+       row-gap:calc(env(viewport-segment-top 0 1) - env(viewport-segment-bottom 0 0));padding:0}
+  main>div,aside{overflow:auto;padding:8px}
+}
+/* fingers: bigger targets; 16px fields so iOS does not zoom into them */
+@media (pointer:coarse){
+  button{min-height:40px;padding:8px 12px}
+  select,input[type=number],input[type=text]{min-height:40px;font-size:16px!important}
+  input[type=checkbox]{width:20px;height:20px}
+  input[type=range]{height:32px}
+  label{font-size:13px}
+}
+.touchbar{display:none;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.touchbar button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+body.touch .touchbar{display:flex}
+.touchbar .vside{display:none}
+@media (max-width:700px){.touchbar{display:flex}.touchbar .vside{display:inline-block}}
+body:not(.touch) .touchbar .touchkey{display:none}
+.touch-only{display:none}
+body.touch .touch-only{display:block}
 section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}
 section>h2{font-size:13.5px;margin:0 0 8px}
 .views{display:grid;grid-template-columns:1fr 34%;gap:10px}
 .view{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.view canvas{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
+.view canvas{display:block;width:100%;height:auto;margin:0 auto;touch-action:none;cursor:crosshair;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 .view .tag{position:absolute;left:8px;top:6px;font-size:11px;color:var(--sub);pointer-events:none}
 .modes{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .modes button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
@@ -73,10 +138,17 @@ input[type=checkbox]{accent-color:var(--accent)}
       <label style="margin:0 0 0 auto;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink)">
         <input type="checkbox" id="limits" checked> 人間の関節の限界</label>
     </div>
+    <div class="touchbar" id="touchBar">
+      <button type="button" id="vShift" class="touchkey" aria-pressed="false">Shift（その骨だけ・上下）</button>
+      <button type="button" id="vAlt" class="touchkey" aria-pressed="false">固定（ピン）</button>
+      <button type="button" id="vUndo" class="touchkey">元に戻す</button>
+      <button type="button" id="vSide" class="vside">横の図</button>
+    </div>
     <div class="views">
       <div class="view"><span class="tag">正面（カメラ）</span><canvas id="front"></canvas></div>
-      <div class="view"><span class="tag">横から（奥行き）</span><canvas id="side"></canvas></div>
+      <div class="view sideview"><span class="tag">横から（奥行き）</span><canvas id="side"></canvas></div>
     </div>
+    <div class="hint touch-only">タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（パースモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。</div>
     <div class="hint">身長 <span id="heightP">-</span>　<span id="pinInfo"></span></div>
     <div class="hint only pose">丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す。</div>
     <div class="hint only body">丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。</div>
@@ -514,10 +586,13 @@ const front = document.getElementById("front"), side = document.getElementById("
 let sel = -1, mode = "pose";
 function exportSize(){ return [Math.max(256, +$("W").value || 1080), Math.max(256, +$("H").value || 1920)]; }
 function fitCanvas(cv, aspect){
-  const w = cv.parentElement.clientWidth, dpr = window.devicePixelRatio || 1;
-  const h = Math.round(w / aspect);
-  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
-  cv.style.height = h + "px";
+  const dpr = window.devicePixelRatio || 1;
+  let w = cv.parentElement.clientWidth, h = Math.round(w / aspect);
+  // not taller than the window (phones held sideways, tall pictures on wide screens)
+  const maxH = Math.max(220, Math.round((window.innerHeight || 800) * (window.innerWidth <= 700 ? 0.7 : 0.86)));
+  if (h > maxH){ h = maxH; w = Math.round(h * aspect); }
+  cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));
+  cv.style.width = w + "px"; cv.style.height = h + "px";
 }
 function sideProject(p, W, H){                // orthographic, from the camera's right: depth across
   const q = toCam(p), k = 0.86 * H / 190;
@@ -578,7 +653,7 @@ function pick(cv, x, y){
     const d = Math.hypot(q.x - x, q.y - y) - Math.max(8, handleR(i) * q.s);
     if (d < bd){ bd = d; best = i; }
   });
-  return bd < 14 * (devicePixelRatio || 1) ? best : -1;
+  return bd < 14 * pointerScale() * (devicePixelRatio || 1) ? best : -1;
 }
 function rotateSubtree(i, newPos){            // turn the bone parent->i so i lands on newPos
   const p = S.P[PARENT[i]], a = sub(S.P[i], p), b = sub(newPos, p);
@@ -664,23 +739,42 @@ let drag = null;
 // handles added by pose_solids.js / pose_ruler.js: a down hook returns a drag {move(x, y, e)} or
 // null; a wheel hook returns true when it used the wheel. Hooks run first in the order added.
 const DOWN_HOOKS = [], WHEEL_HOOKS = [];
+// ---- one input for mouse, touch and pens (pointer events) -----------------------------------
+// Keys a touch screen has not: the on-screen 「Shift」「固定」 toggles stand for Shift and Alt; a
+// pen's barrel button and the mouse's right button act as Shift, a pen's eraser end as Alt. The
+// hooks get the same view of the event: {shiftKey, altKey, ctrlKey, metaKey, pointerType,
+// clientX, clientY, ..., original (the PointerEvent)}.
+const VMOD = {shift: false, alt: false};
+let lastPointer = "mouse";
+const pointerScale = () => (lastPointer === "touch" ? 1.9 : lastPointer === "pen" ? 1.25 : 1);
+function evMods(e){
+  const b = e.buttons || 0;
+  return {shiftKey: !!(e.shiftKey || VMOD.shift || (b & 2) || e.button === 2),
+          altKey: !!(e.altKey || VMOD.alt || (b & 32) || e.button === 5),
+          ctrlKey: !!e.ctrlKey, metaKey: !!e.metaKey, pointerType: e.pointerType || "mouse",
+          pointerId: e.pointerId, button: e.button, buttons: b, pressure: e.pressure,
+          clientX: e.clientX, clientY: e.clientY, preventDefault: () => e.preventDefault(), original: e};
+}
+// draw at most once a frame while dragging (phones and tablets send many moves)
+let drawQueued = false;
+function drawSoon(){ if (drawQueued) return; drawQueued = true; requestAnimationFrame(() => { drawQueued = false; draw(); }); }
 function down(cv, e){
   const [x, y] = evPos(cv, e);
   if (e.altKey){ const i = pick(cv, x, y); if (i >= 0){ remember(); sel = i; togglePin(i); draw(); } return; }
   for (const h of DOWN_HOOKS){
     const d = h(cv, x, y, e);
-    if (d){ remember(); drag = d; cv.setPointerCapture(e.pointerId); draw(); return; }
+    if (d){ remember(); drag = d; draw(); return; }
   }
   if (mode === "persp" && cv === front){
     drag = {cam: true, roll: e.shiftKey, x, y, yaw: S.cam.yaw, pitch: S.cam.pitch, roll0: S.cam.roll}; remember(); return; }
   if (mode === "place"){ if (cv === front){ sel = pick(cv, x, y); draw(); } return; }   // select only
   sel = pick(cv, x, y); draw();
-  if (sel >= 0){ remember(); drag = {cv, i: sel, single: e.shiftKey}; cv.setPointerCapture(e.pointerId); }
+  if (sel >= 0){ remember(); drag = {cv, i: sel, single: e.shiftKey}; }
 }
 function move(cv, e){
   if (!drag) return;
   const [x, y] = evPos(cv, e), W = cv.width, H = cv.height;
-  if (drag.move){ drag.move(x, y, e); draw(); return; }
+  if (drag.move){ drag.move(x, y, e); drawSoon(); return; }
   if (drag.cam && drag.roll){
     S.cam.roll = Math.max(-90, Math.min(90, drag.roll0 + (x - drag.x) * 90 / W));
     syncUI();
@@ -698,26 +792,21 @@ function move(cv, e){
     afterEdit(i);
   }
   else if (mode === "body") dragBody(drag.i, x, y, W, H);
-  draw();
+  drawSoon();
 }
 function up(){ drag = null; }
-for (const cv of [front, side]){
-  cv.addEventListener("pointerdown", e => down(cv, e));
-  cv.addEventListener("pointermove", e => move(cv, e));
-  cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
-}
-front.addEventListener("dblclick", e => {        // flip the bone toward / away from the camera
+// flip the bone toward / away from the camera (double-click, double-tap)
+function flipAt(x, y){
   if (mode !== "pose") return;
-  const [x, y] = evPos(front, e), i = pick(front, x, y);
+  const i = pick(front, x, y);
   if (i <= 0) return;
   remember();
   const par = PARENT[i], pc = toCam(S.P[par]), ic = toCam(S.P[i]);
   const flipped = [ic[0], ic[1], pc[2] - (ic[2] - pc[2])];
   rotateSubtree(i, add(camRotInv(flipped), S.center)); afterEdit(i); draw();
-});
-front.addEventListener("wheel", e => {
-  e.preventDefault();
-  const [x, y] = evPos(front, e), step = e.deltaY < 0 ? 1 : -1;
+}
+// the wheel, a trackpad, two fingers: one "step" each (in or out)
+function wheelStep(x, y, step, e){
   if (WHEEL_HOOKS.some(h => h(x, y, step, e))){ draw(); return; }
   if (mode === "persp"){ S.cam.lens = Math.max(14, Math.min(200, S.cam.lens * (step > 0 ? 1.1 : 1/1.1))); syncUI(); }
   else if (mode === "body"){ const i = pick(front, x, y);
@@ -725,8 +814,75 @@ front.addEventListener("wheel", e => {
       if ($("sym").checked && MIRROR[i] !== i) S.R[MIRROR[i]] *= k; } }
   else S.cam.zoom = Math.max(0.3, Math.min(4, S.cam.zoom * (step > 0 ? 1.1 : 1/1.1)));
   draw();
+}
+// pointers on a canvas: one drags; a second finger turns it into a pinch (no drag)
+const touches = new Map();
+let pinch = null, tap = null;
+for (const cv of [front, side]){
+  cv.addEventListener("pointerdown", e => {
+    lastPointer = e.pointerType || "mouse";
+    if (e.pointerType === "touch") document.body.classList.add("touch");
+    if (e.pointerType === "mouse" && e.button === 1) return;             // the middle button: nothing
+    try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+    if (e.pointerType === "touch"){
+      touches.set(e.pointerId, evPos(cv, e));
+      if (touches.size === 2 && cv === front){                          // a pinch: forget the drag
+        drag = null; tap = null;
+        const [a, b] = [...touches.values()];
+        pinch = {d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1}; return;
+      }
+      if (touches.size > 2 || pinch) return;
+    }
+    tap = {cv, x: e.clientX, y: e.clientY, t: performance.now(), type: e.pointerType};
+    down(cv, evMods(e));
+  });
+  cv.addEventListener("pointermove", e => {
+    if (e.pointerType === "touch" && touches.has(e.pointerId)) touches.set(e.pointerId, evPos(cv, e));
+    if (pinch && touches.size >= 2){
+      const [a, b] = [...touches.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1;
+      const r = d / pinch.d;
+      if (r > 1.12 || r < 1 / 1.12){ wheelStep((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, r > 1 ? 1 : -1, evMods(e)); pinch.d = d; }
+      return;
+    }
+    if (tap && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 10) tap = null;
+    move(cv, evMods(e));
+  });
+  const end = e => {
+    touches.delete(e.pointerId);
+    if (pinch){ if (touches.size === 0) pinch = null; return; }
+    up();
+    // a double tap (finger or pen) flips the bone, as a double-click does
+    if (e.type === "pointerup" && tap && tap.cv === front && tap.type !== "mouse" && performance.now() - tap.t < 300){
+      const now = {x: e.clientX, y: e.clientY, t: performance.now()};
+      if (lastTap && now.t - lastTap.t < 400 && Math.hypot(now.x - lastTap.x, now.y - lastTap.y) < 30){
+        const [x, y] = evPos(front, e); lastTap = null; flipAt(x, y);
+      } else lastTap = now;
+    }
+    tap = null;
+  };
+  cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+  cv.addEventListener("contextmenu", e => e.preventDefault());           // right button, pen button, long press
+}
+let lastTap = null;
+front.addEventListener("dblclick", e => { if (lastPointer === "mouse"){ const [x, y] = evPos(front, e); flipAt(x, y); } });
+// the wheel: a mouse notch is one step; small trackpad deltas add up first
+let wheelAcc = 0;
+front.addEventListener("wheel", e => {
+  e.preventDefault();
+  const dy = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaMode === 2 ? e.deltaY * 600 : e.deltaY;
+  const [x, y] = evPos(front, e);
+  if (Math.abs(dy) >= 40){ wheelAcc = 0; wheelStep(x, y, dy < 0 ? 1 : -1, evMods(e)); return; }
+  wheelAcc += dy;
+  if (Math.abs(wheelAcc) >= 40){ const step = wheelAcc < 0 ? 1 : -1; wheelAcc = 0; wheelStep(x, y, step, evMods(e)); }
 }, {passive: false});
-document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "z"){ e.preventDefault(); undo(); } });
+// Safari's trackpad pinch (gesture events) zooms the view, not the page
+{ let g = 1;
+  front.addEventListener("gesturestart", e => { e.preventDefault(); g = 1; });
+  front.addEventListener("gesturechange", e => { e.preventDefault();
+    const r = e.scale / g; if (r > 1.12 || r < 1 / 1.12){ g = e.scale;
+      const [x, y] = evPos(front, e); wheelStep(x, y, r > 1 ? 1 : -1, evMods(e)); } });
+}
+document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")){ e.preventDefault(); undo(); } });
 
 // ---- body mode sliders: whole-body scale, head, thickness (relative to the slider's last value)
 let lastScale = {all: 100, head: 100, thick: 100};
@@ -1072,6 +1228,12 @@ function applyPreset(name){
 
 // ---- UI wiring ---------------------------------------------------------------------------
 const $ = id => document.getElementById(id);
+// the on-screen keys (shown on touch screens and narrow windows)
+for (const [id, key] of [["vShift", "shift"], ["vAlt", "alt"]])
+  $(id).addEventListener("click", () => { VMOD[key] = !VMOD[key]; $(id).setAttribute("aria-pressed", String(VMOD[key])); $(id).classList.toggle("on", VMOD[key]); });
+$("vUndo").addEventListener("click", undo);
+$("vSide").addEventListener("click", () => { document.body.classList.toggle("show-side"); draw(); });
+if (navigator.maxTouchPoints > 0) document.body.classList.add("touch");
 const UNITS = {scaleAll: 1, scaleHead: 1, scaleThick: 1, lens: 1, yaw: 1, pitch: 1, roll: 1};
 const TC = [];                        // user presets: from files (the button below) or from a mod
 $("preset").innerHTML = Object.keys(PRESETS).map(n => `<option>${n}</option>`).join("");
@@ -1262,8 +1424,25 @@ for (const id of ["W", "H"]) $(id).addEventListener("change", draw);
 window.addEventListener("resize", draw);
 
 // ---- files ------------------------------------------------------------------------------
+// the largest canvas this device draws (iOS / iPadOS: about 16.7 megapixels; others vary): the
+// picture keeps its ratio and gets smaller, and the status line says so
+function exportCanvas(){
+  let [W, H] = exportSize();
+  const cv = document.createElement("canvas");
+  for (let k = 0; k < 8; k++){
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext("2d");
+    if (ctx){ ctx.fillStyle = "#000"; ctx.fillRect(W - 1, H - 1, 1, 1);
+      try { if (ctx.getImageData(W - 1, H - 1, 1, 1).data[3] === 255) break; } catch (e) {} }
+    W = Math.floor(W * 0.8); H = Math.floor(H * 0.8);
+  }
+  const [W0, H0] = exportSize();
+  if (W !== W0) setTimeout(() => say(`この端末では ${W0}×${H0} を描けないため、${W}×${H} にしました。`, true), 0);
+  cv.getContext("2d").clearRect(0, 0, W, H);
+  return [cv, W, H];
+}
 function render(kind){
-  const [W, H] = exportSize(), cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const [cv, W, H] = exportCanvas();
   const ctx = cv.getContext("2d");
   if (kind === "openpose") drawOpenpose(ctx, W, H);
   else { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
@@ -1273,7 +1452,7 @@ function render(kind){
 // the composition as seen in the front view, at the export size: the chosen parts, the ruler
 // (pose_ruler.js) and a white, clear or screen-coloured background
 function renderComposition(){
-  const [W, H] = exportSize(), cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const [cv, W, H] = exportCanvas();
   const ctx = cv.getContext("2d"), bg = $("cmBg").value, on = id => $(id).checked;
   const theme = bg === "theme";
   if (bg !== "clear"){ ctx.fillStyle = theme ? cssVar("--stage") : "#ffffff"; ctx.fillRect(0, 0, W, H); }
@@ -1296,12 +1475,20 @@ function applyRatio(){
 }
 for (const id of ["ratio", "longSide", "ratioW", "ratioH"]) $(id).addEventListener("change", applyRatio);
 for (const id of ["W", "H"]) $(id).addEventListener("input", () => { $("ratio").value = ""; $("ratioCustom").style.display = "none"; });
-function download(url, name){ const a = document.createElement("a"); a.href = url; a.download = name; a.click(); }
+// saving: a blob link (big data URLs fail in some browsers); iOS / iPadOS show it to save or share
+function download(url, name){
+  const go = href => { const a = document.createElement("a"); a.href = href; a.download = name; a.rel = "noopener";
+    document.body.appendChild(a); a.click(); a.remove(); };
+  if (!url.startsWith("data:")){ go(url); setTimeout(() => URL.revokeObjectURL(url), 60000); return; }
+  fetch(url).then(r => r.blob()).then(b => { const u = URL.createObjectURL(b); go(u); setTimeout(() => URL.revokeObjectURL(u), 60000); })
+    .catch(() => go(url));
+}
 const stamp = () => new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14);
 $("saveAtari").addEventListener("click", () => { download(render("atari"), `atari_${stamp()}.png`); say("アタリ画像を保存しました。"); });
 $("saveOpenpose").addEventListener("click", () => { download(render("openpose"), `openpose_${stamp()}.png`); say("OpenPose 画像を保存しました。"); });
-$("saveComp").addEventListener("click", () => { const [W, H] = exportSize();
-  download(renderComposition(), `composition_${W}x${H}_${stamp()}.png`); say(`構図を ${W}×${H} で保存しました。`); });
+$("saveComp").addEventListener("click", () => {
+  const url = renderComposition(), [W, H] = exportSize();
+  download(url, `composition_${W}x${H}_${stamp()}.png`); say(`構図を ${W}×${H} で保存しました。`); });
 $("saveJson").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify({version: 3, ...S}, null, 1)], {type: "application/json"});
   download(URL.createObjectURL(blob), `pose_${stamp()}.json`); say("ポーズを保存しました。");

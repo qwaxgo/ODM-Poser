@@ -134,6 +134,10 @@
     "人物が1人のときは削除できません。": "There is only one figure: nothing to delete.",
     "ポーズ・体格・小物・オーラは、選んだ人物だけに効きます（ほかの人物は薄く表示）。ほかの人物の丸をクリックしても切り替わります。床・壁・物体・定規・カメラはみんなで共通です。":
       "Pose, body, props and auras apply to the selected figure only (the others are drawn lighter). Clicking another figure's circle switches too. Floor, walls, objects, the ruler and the camera are shared.",
+    // touch, pens, phones (index.html)
+    "Shift（その骨だけ・上下）": "Shift (that bone only / up-down)", "固定（ピン）": "Pin", "横の図": "Side view",
+    "タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（パースモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。":
+      "Touch and pen: drag with one finger (or the pen), pinch with two to zoom (the lens in the Perspective mode), double-tap to flip a bone toward / away. Shift and Pin are the buttons above (a pen's side button is Shift, its eraser end pins).",
     // camera and export
     "カメラ": "Camera", "レンズ（mm、小さいほど広角）": "Lens (mm, smaller = wider)", "向き（左右）": "Direction (left / right)",
     "高さ（俯瞰＋／あおり−）": "Height (+ from above / − from below)", "傾き": "Roll", "カメラを戻す": "Reset camera",
@@ -210,6 +214,7 @@
   const joint = s => JOINT[s] || s;
   const figEn = n => n.replace(/^(\d+)人目$/, "Figure $1");
   const RULES = [
+    [/^この端末では (\d+)×(\d+) を描けないため、(\d+)×(\d+) にしました。$/, m => `This device cannot draw ${m[1]} × ${m[2]}: saved at ${m[3]} × ${m[4]}.`],
     // figures: "2人目" is "Figure 2" (pose_cast.js)
     [/^(\d+)人目$/, m => `Figure ${m[1]}`],
     [/^(.+)（編集中）$/, m => `${figEn(m[1])} (editing)`],
