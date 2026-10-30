@@ -359,12 +359,15 @@ function fresh(){
           body: {yaw: 0, pitch: 0, roll: 0}, twist: REST.map(() => 0),
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
-          center: [0, 90, 0], hiddenDashed: false, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
+          center: [0, 90, 0], scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
           ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, box: [60, 60, 60], pos: [70, 0, 0]}};
 }
 const history = [];
-function remember(){ history.push(JSON.stringify(S)); if (history.length > 80) history.shift(); }
-function undo(){ if (history.length){ S = JSON.parse(history.pop()); syncUI(); draw(); } }
+function remember(){ const t = JSON.stringify(S); if (history[history.length - 1] === t) return;
+  history.push(t); if (history.length > 80) history.shift(); }
+// a slider that still has the focus would not be refreshed (it is left alone while dragged)
+function undo(){ if (history.length){ const a = document.activeElement; if (a && a.type === "range") a.blur();
+  S = JSON.parse(history.pop()); syncUI(); draw(); } }
 
 // ---- small vector helpers ----------------------------------------------------------------
 const sub = (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
@@ -1013,8 +1016,8 @@ front.addEventListener("wheel", e => {
 }
 document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")){ e.preventDefault(); undo(); } });
 
-// ---- body mode sliders: whole-body scale, head, thickness (relative to the slider's last value)
-let lastScale = {all: 100, head: 100, thick: 100};
+// ---- body mode sliders: whole-body scale, head, thickness (relative to the slider's last value,
+// kept in S.scale so undo and each figure bring their sliders back)
 function scaleAbout(k){
   const c = S.P[IX.pelvis]; S.P = S.P.map(p => add(c, mul(sub(p, c), k))); S.R = S.R.map(r => r * k);
 }
@@ -1499,7 +1502,17 @@ function syncUI(){
       ["pitch", Math.round(S.cam.pitch)], ["roll", Math.round(S.cam.roll)]]){
     $(id).value = v; if (document.activeElement !== $(id + "V")) $(id + "V").value = v;
   }
+  const sc = Object.assign(fresh().scale, S.scale);
+  for (const [id, key] of [["scaleAll", "all"], ["scaleHead", "head"], ["scaleThick", "thick"]]){
+    const r = $(id), v = sc[key]; r.min = Math.min(+r.min, v); r.max = Math.max(+r.max, v);
+    r.value = v; if (document.activeElement !== $(id + "V")) $(id + "V").value = v;
+  }
 }
+// any slider in the side panel: one undo step per drag or key press (the camera's, the ruler's,
+// a mod's ...); remember() skips a step that changed nothing
+document.addEventListener("pointerdown", e => { if (e.target.matches && e.target.matches("aside input[type=range]")) remember(); }, true);
+document.addEventListener("keydown", e => { if (e.target.matches && e.target.matches("aside input[type=range]")
+  && /^(Arrow|Page|Home|End)/.test(e.key)) remember(); }, true);
 document.querySelectorAll("#modes button").forEach(b => b.addEventListener("click", () => {
   mode = b.dataset.mode; document.body.className = "mode-" + mode;
   document.querySelectorAll("#modes button").forEach(x => x.classList.toggle("on", x === b)); draw();
@@ -1508,9 +1521,8 @@ $("applyPreset").addEventListener("click", () => {
   const v = $("preset").value;
   remember(); applyPreset(v); S.pins = {};
   if (typeof sceneAfterEdit === "function") sceneAfterEdit();
-  S.R = REST_R.slice(); lastScale = {all: 100, head: 100, thick: 100};
-  for (const id of ["scaleAll", "scaleHead", "scaleThick"]){ $(id).value = 100; $(id + "V").value = 100; }
-  draw();
+  S.R = REST_R.slice(); S.scale = fresh().scale;
+  syncUI(); draw();
 });
 $("mirror").addEventListener("click", () => {
   remember();
@@ -1536,7 +1548,8 @@ for (const [id, key, fn] of [["scaleAll", "all", scaleAbout], ["scaleHead", "hea
     ["scaleThick", "thick", k => { S.R = S.R.map(r => r * k); }]]){
   $(id).addEventListener("pointerdown", remember);
   $(id).addEventListener("input", e => {
-    const v = +e.target.value; fn(v / lastScale[key]); lastScale[key] = v;
+    const sc = S.scale = Object.assign(fresh().scale, S.scale);
+    const v = +e.target.value; fn(v / sc[key]); sc[key] = v;
     if (document.activeElement !== $(id + "V")) $(id + "V").value = v; draw();
   });
 }
