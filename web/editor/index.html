@@ -147,6 +147,8 @@ input[type=checkbox]{accent-color:var(--accent)}
       <button data-mode="place">配置（定規・物体）</button>
       <label style="margin:0 0 0 auto;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink)">
         <input type="checkbox" id="limits" checked> 人間の関節の限界</label>
+      <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink)">
+        <input type="checkbox" id="hiddenDashed"> 隠れた線を破線に</label>
     </div>
     <div class="touchbar" id="touchBar">
       <button type="button" id="vShift" class="touchkey" aria-pressed="false">Shift（その骨だけ・上下）</button>
@@ -341,7 +343,7 @@ function fresh(){
           body: {yaw: 0, pitch: 0, roll: 0}, twist: REST.map(() => 0),
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
-          center: [0, 90, 0], solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
+          center: [0, 90, 0], hiddenDashed: false, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
           ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, box: [60, 60, 60], pos: [70, 0, 0]}};
 }
 const history = [];
@@ -418,6 +420,84 @@ const PART_OF = {pelvis: "torso", waist: "torso", chest: "torso", r_shoulder: "t
   l_elbow: "l_arm", l_wrist: "l_arm", r_knee: "r_leg", r_ankle: "r_leg", r_toe: "r_leg",
   l_knee: "l_leg", l_ankle: "l_leg", l_toe: "l_leg"};
 const partColor = g => (S.colors && S.colors.parts && S.colors.parts[g]) || "";
+// ---- hidden lines (S.hiddenDashed): what lies behind a body or a solid is drawn dashed ---------------
+// The bodies are spheres along the bones (the joints' circles as their thickness), the torso along
+// the spine, the head; the solids are their meshes (pose_solids.js). A point is hidden when the
+// camera's ray to it meets one of them first. Each figure's own neighbouring parts do not hide it.
+const TORSO_JOINTS = new Set([IX.pelvis, IX.waist, IX.chest, IX.neck, IX.r_shoulder, IX.l_shoulder, IX.r_hip, IX.l_hip]);
+let occMemo = {key: "", occ: null}, occFrozen = null;   // frozen while the figures are swapped in to be drawn
+function bodySpheres(fig){                    // the figure in S now
+  const out = [], P = S.P, R = S.R;
+  const put = (a, b, r, bone) => { const d = sub(b, a), L = len(d), n = Math.max(1, Math.ceil(L / Math.max(2, r)));
+    for (let k = 0; k <= n; k++) out.push({c: add(a, mul(d, k / n)), r, fig, bone}); };
+  BONES.forEach(([a, b]) => {
+    if (b === IX.head) return;
+    const r = TORSO_JOINTS.has(a) && TORSO_JOINTS.has(b) && (b === IX.waist || b === IX.chest || b === IX.neck)
+      ? R[IX.waist] * 0.8 : Math.max(2.5, Math.min(R[a] || 4, R[b] || 4) * 0.9);
+    put(P[a], P[b], r, b);
+  });
+  out.push({c: P[IX.head], r: R[IX.head], fig, bone: IX.head});
+  return out;
+}
+function occluders(W, H){
+  if (occFrozen) return occFrozen;
+  const figs = [S.P, ...(S.others || []).map(f => f.P)];
+  const key = [W, H, JSON.stringify(S.cam), JSON.stringify(S.center), JSON.stringify(figs), JSON.stringify(S.solids || [])].join("|");
+  if (occMemo.key === key) return occMemo.occ;
+  const spheres = bodySpheres(S.figId || 1);
+  for (const f of S.others || []){
+    if (typeof withFigure === "function") withFigure(f, () => spheres.push(...bodySpheres(f.figId || 0)));
+  }
+  const meshes = typeof solidMesh === "function" ? (S.solids || []).map((o, k) => ({mesh: solidMesh(o), solid: k})) : [];
+  const occ = {eye: add(camRotInv([0, 0, camDist(W, H)]), S.center), spheres, meshes};
+  occMemo = {key, occ};
+  return occ;
+}
+// the joints a bone (its child joint b) touches, and one step further
+function boneNear(b){ const s = new Set([b, PARENT[b]]); if (PARENT[b] >= 0) s.add(PARENT[PARENT[b]]); KIDS[b].forEach(k => s.add(k)); return s; }
+function jointNear(j){ const s = new Set([j, PARENT[j]]); KIDS[j].forEach(k => s.add(k)); return s; }
+const boneTouches = (bone, near) => near.has(bone) || near.has(PARENT[bone]);
+// skip rules: this figure's bones near a bone / a joint, its torso, or one solid
+const skipBone = b => { const near = boneNear(b), fig = S.figId || 1; return o => o.fig === fig && boneTouches(o.bone, near); };
+const skipJoint = j => { const near = jointNear(j), fig = S.figId || 1; return o => o.fig === fig && boneTouches(o.bone, near); };
+const skipTorso = () => { const fig = S.figId || 1; return o => o.fig === fig && (TORSO_JOINTS.has(o.bone) || TORSO_JOINTS.has(PARENT[o.bone])); };
+function hiddenAt(q, W, H, skip){
+  const o = occluders(W, H), d = sub(q, o.eye), dist = len(d);
+  if (dist < 1) return false;
+  const dir = mul(d, 1 / dist), limit = dist - 1.5;
+  for (const s of o.spheres){
+    if (skip && skip(s)) continue;
+    const oc = sub(o.eye, s.c), b = dot(oc, dir), c = dot(oc, oc) - s.r * s.r, disc = b * b - c;
+    if (disc < 0) continue;
+    const t = -b - Math.sqrt(disc);
+    if (t > 0 && t < limit) return true;
+  }
+  if (typeof rayHit === "function") for (const m of o.meshes){
+    if (skip && skip(m)) continue;
+    const t = rayHit(m.mesh, {o: o.eye, dir});
+    if (t !== null && t > 0 && t < limit) return true;
+  }
+  return false;
+}
+// a 3D segment: solid where it is seen, dashed where it is hidden (just solid when the switch is off)
+function strokeSeen(ctx, a, b, W, H, skip, proj = project){
+  const pa = proj(a, W, H), pb = proj(b, W, H);
+  if (!S.hiddenDashed){ ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke(); return; }
+  const n = Math.max(1, Math.min(14, Math.ceil(Math.hypot(pb.x - pa.x, pb.y - pa.y) / (10 * (devicePixelRatio || 1)))));
+  const lw = ctx.lineWidth, dash = [lw * 3, lw * 2.5];
+  let start = 0, prev = null;
+  const flush = (k0, k1, hid) => {
+    const p = proj(add(a, mul(sub(b, a), k0 / n)), W, H), q = proj(add(a, mul(sub(b, a), k1 / n)), W, H);
+    ctx.setLineDash(hid ? dash : []); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+  };
+  for (let k = 0; k < n; k++){
+    const hid = hiddenAt(add(a, mul(sub(b, a), (k + 0.5) / n)), W, H, skip);
+    if (prev !== null && hid !== prev){ flush(start, k, prev); start = k; }
+    prev = hid;
+  }
+  flush(start, n, prev);
+  ctx.setLineDash([]);
+}
 function drawAtari(ctx, W, H, opts = {}){
   const P = S.P.map(p => project(p, W, H));
   const ink = opts.ink || cssVar("--figure"), far = opts.far || cssVar("--far");
@@ -428,10 +508,10 @@ function drawAtari(ctx, W, H, opts = {}){
   const tp = torsoParts();
   for (const poly of tp.blocks){
     const pp = poly.map(q => project(q, W, H));
-    items.push({z: pp.reduce((m, q) => m + q.z, 0) / pp.length - 0.5, kind: "poly", pp});
+    items.push({z: pp.reduce((m, q) => m + q.z, 0) / pp.length - 0.5, kind: "poly", pp, q3: poly});
   }
   const wl = tp.waistLine.map(q => project(q, W, H));
-  items.push({z: wl[1].z - 0.4, kind: "line", pp: wl});
+  items.push({z: wl[1].z - 0.4, kind: "line", pp: wl, q3: tp.waistLine});
   BONES.forEach(([a, b]) => { if (!TORSO_BONES.has(b)) items.push({z: (P[a].z + P[b].z)/2, kind: "bone", a, b}); });
   J.forEach((_, i) => items.push({z: P[i].z + 0.01, kind: "joint", i}));
   items.sort((u, v) => u.z - v.z);
@@ -444,25 +524,28 @@ function drawAtari(ctx, W, H, opts = {}){
   if (!opts.noFigure) for (const it of items){
     if (it.kind === "line"){
       ctx.strokeStyle = shade(it.z, "torso"); ctx.lineWidth = lw * 1.6;
-      ctx.beginPath(); it.pp.forEach((q, k) => k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke();
+      for (let k = 1; k < it.q3.length; k++) strokeSeen(ctx, it.q3[k - 1], it.q3[k], W, H, skipTorso());
       continue;
     }
     if (it.kind === "poly"){
       ctx.beginPath(); it.pp.forEach((q, k) => k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.closePath();
       if (!opts.flat){ ctx.fillStyle = opts.bg || cssVar("--stage"); ctx.globalAlpha = 0.55; ctx.fill(); ctx.globalAlpha = 1; }
-      ctx.strokeStyle = shade(it.z, "torso"); ctx.lineWidth = lw * 1.6; ctx.stroke();
+      ctx.strokeStyle = shade(it.z, "torso"); ctx.lineWidth = lw * 1.6;
+      it.q3.forEach((q, k) => strokeSeen(ctx, q, it.q3[(k + 1) % it.q3.length], W, H, skipTorso()));
       continue;
     }
     if (it.kind === "bone"){
       ctx.strokeStyle = shade(it.z, PART_OF[J[it.b]]); ctx.lineWidth = lw * 1.4;
-      ctx.beginPath(); ctx.moveTo(P[it.a].x, P[it.a].y); ctx.lineTo(P[it.b].x, P[it.b].y); ctx.stroke();
+      strokeSeen(ctx, S.P[it.a], S.P[it.b], W, H, skipBone(it.b));
     } else {
       const i = it.i, p = P[i], r = handleR(i) * p.s;
       if (HANDLE.has(i) && opts.export) continue;           // handles are for the editor only
       ctx.strokeStyle = HANDLE.has(i) ? far : shade(it.z, PART_OF[J[i]]); ctx.lineWidth = lw * (i === IX.head ? 1.6 : 1.1);
       if (!opts.flat){ ctx.fillStyle = opts.bg || cssVar("--stage"); ctx.globalAlpha = 0.55;
         ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.fill(); ctx.globalAlpha = 1; }
-      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.stroke();
+      const hid = S.hiddenDashed && hiddenAt(S.P[i], W, H, skipJoint(i));
+      if (hid) ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2.5]);
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]);
       if (opts.sel === i){ ctx.strokeStyle = cssVar("--sel"); ctx.lineWidth = lw * 2;
         ctx.beginPath(); ctx.arc(p.x, p.y, r + 3*lw, 0, 2*Math.PI); ctx.stroke(); }
     }
@@ -472,11 +555,13 @@ function drawAtari(ctx, W, H, opts = {}){
   if (!opts.noFigure){
   const h = headFrame(), c = S.P[IX.head], r = h.r;
   ctx.strokeStyle = partColor("head") || ink; ctx.lineWidth = lw;
+  if (S.hiddenDashed && hiddenAt(c, W, H, skipJoint(IX.head))) ctx.setLineDash([lw * 3, lw * 2.5]);
   const arc = (fn) => { ctx.beginPath(); for (let k = 0; k <= 24; k++){
       const t = -Math.PI/2 + Math.PI * k/24, q = project(fn(t), W, H);
       k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); } ctx.stroke(); };
   arc(t => add(c, add(mul(h.fwd, r*Math.cos(t)), mul(h.up, r*Math.sin(t)))));        // vertical
   arc(t => add(c, add(mul(h.fwd, r*Math.cos(t)), mul(h.side, r*Math.sin(t)))));      // eye line
+  ctx.setLineDash([]);
   // pinned joints: a small filled square (editor only)
   if (!opts.export) for (const k of Object.keys(S.pins || {})){
     const q = P[+k]; ctx.fillStyle = cssVar("--sel"); ctx.fillRect(q.x - 3*lw, q.y - 3*lw, 6*lw, 6*lw);
@@ -486,10 +571,14 @@ function drawAtari(ctx, W, H, opts = {}){
   if (typeof drawScene === "function") drawScene(ctx, W, H, opts, project, ink, far, lw);
   // hands: a small fan of the fingers
   if (!opts.noFigure) for (const side of ["r", "l"]){
+    ctx.setLineDash([]);
     const pts = handPoints(side, W, H);
     ctx.strokeStyle = partColor(side + "_hand") || ink; ctx.lineWidth = lw * 0.9;
+    const hw = IX[side + "_wrist"];
+    ctx.setLineDash(S.hiddenDashed && hiddenAt(S.P[hw], W, H, skipJoint(hw)) ? [lw * 2.5, lw * 2] : []);
     HAND_EDGES.forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]); ctx.stroke(); });
   }
+  ctx.setLineDash([]);
 }
 
 // the torso as a mannequin draws it: the chest block (shoulder line -> under the ribs) and the
@@ -1374,6 +1463,7 @@ function applyUserPreset(t){
   if (typeof sceneAfterEdit === "function") sceneAfterEdit();
 }
 function syncUI(){
+  $("hiddenDashed").checked = !!S.hiddenDashed;
   for (const [id, v] of [["lens", Math.round(S.cam.lens)], ["yaw", Math.round(S.cam.yaw)],
       ["pitch", Math.round(S.cam.pitch)], ["roll", Math.round(S.cam.roll)]]){
     $(id).value = v; if (document.activeElement !== $(id + "V")) $(id + "V").value = v;
@@ -1573,6 +1663,8 @@ if (qs.get("h")) $("H").value = qs.get("h");
 // remember the last pose in this browser only (a convenience; files are the real save)
 const KEY = "odm-poser-editor-v1";
 try { const l = localStorage.getItem(KEY + "-limits"); if (l !== null) $("limits").checked = l === "1"; } catch (e) {}
+$("hiddenDashed").addEventListener("change", e => { remember(); S.hiddenDashed = e.target.checked; draw();
+  say(e.target.checked ? "物陰に隠れた線を破線で描きます（書き出しにも）。" : "隠れた線を破線にするのをやめました。"); });
 $("limits").addEventListener("change", e => { try { localStorage.setItem(KEY + "-limits", e.target.checked ? "1" : "0"); } catch (err) {}
   say(e.target.checked ? "関節の限界を有効にしました（これからの操作に効きます）。" : "関節の限界を無効にしました。"); });
 window.addEventListener("beforeunload", () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} });

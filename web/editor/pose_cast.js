@@ -21,8 +21,12 @@ function everyFigure(fn){
 // ---- drawing: the others lighter in the editor, all alike in the export; the floor once ---------
 { const core = drawAtari;
   drawAtari = function(ctx, W, H, opts = {}){
-    everyFigure((active, first) => core(ctx, W, H, Object.assign({}, opts, first ? {} : {noEnv: true},
-      active || opts.export ? {} : {sel: -1, ink: cssVar("--far")})));
+    // the bodies that hide lines: all figures, taken before they are swapped in one by one
+    occFrozen = S.hiddenDashed ? occluders(W, H) : null;
+    try {
+      everyFigure((active, first) => core(ctx, W, H, Object.assign({}, opts, first ? {} : {noEnv: true},
+        active || opts.export ? {} : {sel: -1, ink: cssVar("--far")})));
+    } finally { occFrozen = null; }
   };
 }
 { const op = drawOpenpose;                    // OpenPose: one person each, one background

@@ -142,10 +142,20 @@ function drawSolids(ctx, W, H, opts, proj, lw, toViewer){
     const m = solidMesh(o), P = m.V.map(p => proj(p, W, H));
     const seen = m.faces.map(f => dot(f.n, toViewer(m.V[f.v[0]])) > 0);
     const color = !opts.export && k === soSel && mode === "place" ? cssVar("--sel") : o.color || (opts.export ? "#8a8a8a" : cssVar("--accent"));
+    const dashed = S.hiddenDashed && !opts.side && typeof strokeSeen === "function";
     for (const hidden of [true, false]){
-      if (hidden && opts.export) continue;
+      if (hidden && opts.export && !dashed) continue;
       ctx.strokeStyle = color; ctx.lineWidth = hidden ? Math.max(1, lw * 0.5) : lw * 0.9;
       ctx.globalAlpha = hidden ? 0.3 : 0.9; ctx.setLineDash(hidden ? [lw * 3, lw * 3] : []);
+      if (hidden && dashed) ctx.globalAlpha = opts.export ? 0.8 : 0.55;
+      if (!hidden && dashed){                 // the front edges: dashed behind other solids and bodies
+        for (const e of m.edges){
+          const v0 = seen[e.f[0]], v1 = seen[e.f[1]];
+          if ((e.outline && v0 === v1) || !(v0 || v1)) continue;
+          strokeSeen(ctx, m.V[e.a], m.V[e.b], W, H, x => x.solid === k);
+        }
+        continue;
+      }
       ctx.beginPath();
       for (const e of m.edges){
         const v0 = seen[e.f[0]], v1 = seen[e.f[1]];
