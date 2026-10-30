@@ -20,7 +20,13 @@
     "丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。":
       "Drag a circle: lengthen / shorten that bone (what follows moves with it). Wheel over a circle: make it (the thickness) bigger / smaller. With symmetry on, the other side changes too.",
     // presets
-    "プリセット": "Presets", "読み込む": "Load", "左右反転": "Mirror", "元に戻す": "Undo",
+    "プリセット": "Presets", "読み込む": "Load", "左右反転": "Mirror",
+    "右の手足を左へ写す": "Copy right limbs to left", "左の手足を右へ写す": "Copy left limbs to right",
+    "右の手足を左へ写しました。": "Copied the right arm and leg to the left.",
+    "左の手足を右へ写しました。": "Copied the left arm and leg to the right.",
+    "反対側をこの形にそろえる": "Make the other side match", "この関節だけ": "This joint only",
+    "ここから先まとめて": "From here on",
+    "左右同時に動かす（片方の手足を動かすと、反対側も同じ形に）": "Move both sides (the other arm or leg takes the same pose)", "反対側をそろえました。": "Matched the other side.", "元に戻す": "Undo",
     "立ち（標準）": "Standing", "Aポーズ": "A-pose", "Tポーズ": "T-pose", "コントラポスト": "Contrapposto",
     "歩く": "Walking", "走る": "Running", "椅子に座る": "Sitting on a chair", "しゃがむ": "Squatting",
     "ジャンプ（バンザイ）": "Jump (arms up)", "ファイティングポーズ": "Fighting stance", "腰に手": "Hands on hips",
