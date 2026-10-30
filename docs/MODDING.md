@@ -262,7 +262,7 @@ event for every device: `{shiftKey, altKey, ctrlKey, metaKey, pointerType ("mous
 "pen"), pointerId, button, buttons, pressure, clientX, clientY, preventDefault(), original}`.
 `shiftKey` and `altKey` include the on-screen 「Shift」「固定」 keys of touch screens, a pen's barrel
 button and the mouse's right button (Shift), and a pen's eraser end (Alt); `original` is the
-browser's event. A two-finger pinch, a trackpad and the mouse wheel all arrive as `wheel` steps.
+browser's event. A two-finger pinch, a trackpad and the mouse wheel all arrive as `wheel` steps (a pinch in the Pose and Body modes moves the camera instead and does not reach `wheel`).
 Write a hook once and it works with a mouse, a finger, an Apple Pencil, an S Pen or a Wacom pen.
 
 ## Saving and compatibility

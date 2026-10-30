@@ -249,7 +249,7 @@ api.i18n.addRule(/^(.+)を投げました。$/, m => `Threw the ${m[1]}.`);   //
 **マウス・タッチ・ペン（API 1.2）。** `pointerDown`、ドラッグの `move`、`wheel` には、どの入力でも同じ形のイベントが渡ります：
 `{shiftKey, altKey, ctrlKey, metaKey, pointerType（"mouse"・"touch"・"pen"）, pointerId, button, buttons, pressure, clientX, clientY, preventDefault(), original}`。
 `shiftKey` と `altKey` には、タッチ画面の「Shift」「固定」ボタン、ペンのサイドボタンとマウスの右ボタン（Shift）、ペンの消しゴム側（Alt）も入ります。
-`original` はブラウザのイベントそのものです。2本指のピンチ・トラックパッド・マウスホイールは、どれも `wheel` の 1 段として届きます。
+`original` はブラウザのイベントそのものです。2本指のピンチ・トラックパッド・マウスホイールは、どれも `wheel` の 1 段として届きます（ポーズ・体格モードのピンチはカメラを動かし、`wheel` には届きません）。
 一度書けば、マウス・指・Apple Pencil・S ペン・ワコムのペンのどれでも動きます。
 
 ## 保存と互換性

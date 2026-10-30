@@ -142,11 +142,49 @@ button.primary{background:var(--accent);color:var(--accent-ink);border-color:tra
 .only{display:none}
 body.mode-pose .only.pose, body.mode-body .only.body, body.mode-persp .only.persp, body.mode-place .only.place{display:block}
 input[type=checkbox]{accent-color:var(--accent)}
+/* the camera pad (touch): a stick turns the view, a stick moves it, the slider zooms */
+.campad{display:none}
+body.pad .campad{display:block}
+.campad .stick,.campad .zoomer{position:absolute;bottom:10px;touch-action:none;-webkit-user-select:none;user-select:none;
+  background:rgba(128,128,128,.14);border:1px solid rgba(128,128,128,.45)}
+.campad .stick{width:84px;height:84px;border-radius:50%}
+.campad .stick.l{left:10px}
+.campad .stick.r{right:48px}
+.campad .stick i{position:absolute;left:50%;top:50%;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;
+  background:rgba(128,128,128,.5);pointer-events:none}
+.campad .stick b,.campad .zoomer b{position:absolute;left:0;right:0;bottom:3px;text-align:center;font-size:10px;line-height:14px;
+  font-weight:600;color:var(--ink);opacity:.75;pointer-events:none}
+.campad .zoomer{right:10px;width:28px;height:150px;max-height:calc(100% - 46px);border-radius:14px}
+.campad .zoomer b{bottom:auto;top:-16px;left:-10px;right:-10px}
+.campad .zoomer i{position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:rgba(128,128,128,.6);pointer-events:none}
+/* split screen (phones and tablets): the views stay on one half, the panels scroll on the other
+   (upright: top and bottom, sideways: left and right); 「操作欄を隠す」 gives the views the whole screen */
+.splitkey{display:none}
+body.split .touchbar{display:flex}
+body.split .touchbar .splitkey{display:inline-block}
+body.split{padding-top:50vh;padding-top:50dvh}
+body.split #stage{position:fixed;z-index:20;left:env(safe-area-inset-left);right:env(safe-area-inset-right);
+  top:env(safe-area-inset-top);height:calc(50vh - env(safe-area-inset-top));height:calc(50dvh - env(safe-area-inset-top));
+  padding:4px 6px 0;background:var(--bg);overflow:hidden}
+body.split #stage>section{margin:0;padding:6px 8px}
+body.split #stage .modes button, body.split #stage .touchbar button{min-height:30px;padding:3px 9px;font-size:12px}
+body.split #stage .modes, body.split #stage .touchbar{margin-bottom:4px}
+body.split main{grid-template-columns:1fr!important;max-width:none}
+body.split aside{max-height:none;overflow:visible}
+body.split #viewHints, body.split #stage .hint.keep{display:none}
+@media (orientation:landscape){
+  body.split{padding-top:env(safe-area-inset-top);padding-left:50vw}
+  body.split #stage{right:auto;width:50vw;height:calc(100vh - env(safe-area-inset-top));height:calc(100dvh - env(safe-area-inset-top))}
+}
+body.split.full{overflow:hidden}
+body.split.full header, body.split.full aside{display:none}
+body.split.full #stage{right:env(safe-area-inset-right);width:auto;height:calc(100vh - env(safe-area-inset-top));
+  height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
 </style>
 </head>
 <body class="mode-pose">
 <header>
-  <div id="headTools"><button type="button" id="installBtn" hidden>アプリとして追加</button><button type="button" id="themeBtn">表示：自動</button></div>
+  <div id="headTools"><button type="button" id="installBtn" hidden>アプリとして追加</button><button type="button" id="splitBtn">分割表示：オフ</button><button type="button" id="themeBtn">表示：自動</button></div>
   <h1>立体人形装置 <span style="font-weight:400;font-size:13px">ODM Poser — Omni-Directional Mannequin Poser</span></h1>
   <p>線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。</p>
 </header>
@@ -164,23 +202,28 @@ input[type=checkbox]{accent-color:var(--accent)}
         <input type="checkbox" id="hiddenDashed"> 隠れた線を破線に</label>
     </div>
     <div class="touchbar" id="touchBar">
+      <button type="button" id="vPanels" class="splitkey">操作欄を隠す</button>
       <button type="button" id="vShift" class="touchkey" aria-pressed="false">Shift（その骨だけ・上下）</button>
       <button type="button" id="vAlt" class="touchkey" aria-pressed="false">固定（ピン）</button>
       <button type="button" id="vUndo" class="touchkey">元に戻す</button>
       <button type="button" id="vSide" class="vside">横の図</button>
+      <button type="button" id="vPad" class="touchkey" aria-pressed="true">カメラパッド</button>
     </div>
     <div class="views">
-      <div class="view"><span class="tag">正面（カメラ）</span><canvas id="front"></canvas></div>
+      <div class="view"><span class="tag">正面（カメラ）</span><canvas id="front"></canvas>
+        <div class="campad" id="camPad"><div class="stick l" id="stickOrbit"><i></i><b>回す</b></div>
+          <div class="stick r" id="stickPan"><i></i><b>動かす</b></div><div class="zoomer" id="zoomer"><i></i><b>拡大</b></div></div></div>
       <div class="view sideview"><span class="tag">横から（奥行き）</span><canvas id="side"></canvas></div>
     </div>
     <div class="hint keep">身長 <span id="heightP">-</span>　<span id="pinInfo"></span></div>
     <details id="viewHints" class="hint">
       <summary>操作のヒント</summary>
-      <div class="hint touch-only">タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（パースモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。</div>
+      <div class="hint touch-only">タッチ：丸をタップして選び、選んだ丸をドラッグして動かす。それ以外の所を1本指でスワイプ：カメラを回す。2本指：つまんで拡大縮小、そのまま動かして移動（パース・配置モードはレンズ・物体のまま）。カメラパッド：左のスティックで回す、右のスティックで動かす、右端のスライダーで拡大（上の「カメラパッド」で隠せます）。ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで。ペンはマウスと同じく丸を直接ドラッグ（サイドボタンは Shift、消しゴム側は固定）。</div>
+      <div class="hint">カメラ（どのモードでも。レンズはそのまま）：中ボタンでドラッグして回す、Shift＋中ボタンで動かす、Ctrl＋中ボタン（またはホイール）で拡大縮小。中ボタンのないマウスやトラックパッドは、何もない所を Alt＋ドラッグ。テンキー：1 正面、3 右から、7 上から（Ctrl で反対側）、2・4・6・8 で15°ずつ回す（Ctrl で動かす）、9 裏へ回る、＋－ 拡大縮小、. 選んだ関節を中心に、Home 人物を中心に。</div>
       <div class="hint only pose">丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す。</div>
       <div class="hint only body">丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。</div>
       <div class="hint only persp">ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。Shift＋ドラッグ：カメラを傾ける（水平でなくする）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。パース定規の消失点やアイレベルをつかむと、そこに合うようにカメラが動きます。</div>
-      <div class="hint only place">カメラは動きません。消失点をドラッグ：定規の向きを変える。直方体のガイドや物体をドラッグ：床の上で動かす（Shift＋ドラッグで上下）。その上でホイール：向きを回す。丸をクリック：関節を選ぶ（「物体に着ける」用）。</div>
+      <div class="hint only place">ドラッグではカメラは動きません（中ボタン・テンキー・カメラパッドでは動きます）。消失点をドラッグ：定規の向きを変える。直方体のガイドや物体をドラッグ：床の上で動かす（Shift＋ドラッグで上下）。その上でホイール：向きを回す。丸をクリック：関節を選ぶ（「物体に着ける」用）。</div>
     </details>
   </section>
 </div>
@@ -247,6 +290,16 @@ input[type=checkbox]{accent-color:var(--accent)}
     <label>傾き</label>
     <div class="row"><input type="range" id="roll" min="-90" max="90" value="0"><input type="number" class="num" id="rollV"><span class="unit">°</span></div>
     <button id="camReset" style="margin-top:6px">カメラを戻す</button>
+  </section>
+
+  <section>
+    <h2>カメラの固定と記憶</h2>
+    <label style="margin-top:0"><input type="checkbox" id="camLock"> カメラを固定する</label>
+    <label><input type="checkbox" id="padOn"> カメラパッドを表示</label>
+    <label>記憶したカメラ（<span id="camCount">0</span>）</label>
+    <select id="camList"></select>
+    <div class="btns" style="margin-top:6px"><button id="camSave">今のカメラを記憶</button><button id="camLoad">呼び出す</button><button id="camDel">削除</button></div>
+    <div class="hint">固定すると、ドラッグ・スワイプ・2本指・ホイール・テンキー・カメラパッドではカメラが動きません（パースのスライダーと「呼び出す」は効きます）。記憶するのは向き・高さ・傾き・レンズ・拡大・中心で、ポーズと一緒に保存されます。一覧はダブルクリックでも呼び出せます。</div>
   </section>
 
   <section>
@@ -366,7 +419,7 @@ function fresh(){
           body: {yaw: 0, pitch: 0, roll: 0}, twist: REST.map(() => 0),
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
-          center: [0, 90, 0], scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
+          center: [0, 90, 0], cams: [], camLock: false, scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
           ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, box: [60, 60, 60], pos: [70, 0, 0]}};
 }
 const history = [];
@@ -726,7 +779,10 @@ function fitCanvas(cv, aspect){
   // height, above them (one column) part of it, so the panels show underneath
   const short = innerHeight <= 520 && innerWidth >= 700;          // a phone held sideways: panels beside
   const share = short || !matchMedia(ONE_COLUMN).matches ? 1 : innerWidth <= 700 ? 0.8 : 0.7;
-  const maxH = Math.max(200, Math.round((window.innerHeight || 800) * share - viewChrome() - 18));
+  // split screen: the views' own half of the screen
+  const st = document.body.classList.contains("split") ? document.getElementById("stage") : null;
+  const maxH = st ? Math.max(120, st.clientHeight - viewChrome() - 10)
+    : Math.max(200, Math.round((window.innerHeight || 800) * share - viewChrome() - 18));
   if (h > maxH){ h = maxH; w = Math.round(h * aspect); }
   cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));
   cv.style.width = w + "px"; cv.style.height = h + "px";
@@ -737,7 +793,7 @@ function sideProject(p, W, H){                // orthographic, from the camera's
 }
 function draw(){
   const [EW, EH] = exportSize();
-  fitCanvas(front, EW / EH); fitCanvas(side, EW / EH);
+  fitCanvas(front, EW / EH); fitCanvas(side, EW / EH); zoomThumb();
   let ctx = front.getContext("2d"), W = front.width, H = front.height;
   ctx.fillStyle = cssVar("--stage"); ctx.fillRect(0, 0, W, H);
   drawAtari(ctx, W, H, {sel});
@@ -897,13 +953,26 @@ let drawQueued = false;
 function drawSoon(){ if (drawQueued) return; drawQueued = true; requestAnimationFrame(() => { drawQueued = false; draw(); }); }
 function down(cv, e){
   const [x, y] = evPos(cv, e);
+  // the camera as in Blender: the middle button turns the view (Shift: moves it, Ctrl: zooms);
+  // Alt+drag where there is no joint does the same (a mouse or trackpad without a middle button)
+  if (cv === front && e.pointerType !== "touch" && (e.button === 1 || (e.altKey && pick(cv, x, y) < 0))){
+    if (camHeld()) return;
+    remember(); drag = {nav: e.ctrlKey ? "zoom" : e.shiftKey ? "pan" : "orbit", lx: x, ly: y}; return; }
   if (e.altKey){ const i = pick(cv, x, y); if (i >= 0){ remember(); sel = i; togglePin(i); draw(); } return; }
   for (const h of DOWN_HOOKS){
     const d = h(cv, x, y, e);
     if (d){ remember(); drag = d; draw(); return; }
   }
   if (mode === "persp" && cv === front){
+    if (camHeld()) return;
     drag = {cam: true, roll: e.shiftKey, x, y, yaw: S.cam.yaw, pitch: S.cam.pitch, roll0: S.cam.roll}; remember(); return; }
+  // a finger: a tap picks a joint and the picked one is dragged; a swipe elsewhere turns the camera
+  if (e.pointerType === "touch"){
+    const i = pick(cv, x, y);
+    if (i >= 0 && i === sel && mode !== "place"){ remember(); drag = {cv, i, single: e.shiftKey}; }
+    else drag = {tapPick: i, cv, x, y};
+    return;
+  }
   if (mode === "place"){ if (cv === front){ sel = pick(cv, x, y); draw(); } return; }   // select only
   sel = pick(cv, x, y); draw();
   if (sel >= 0){ remember(); drag = {cv, i: sel, single: e.shiftKey}; }
@@ -912,6 +981,18 @@ function move(cv, e){
   if (!drag) return;
   const [x, y] = evPos(cv, e), W = cv.width, H = cv.height;
   if (drag.move){ drag.move(x, y, e); drawSoon(); return; }
+  if (drag.nav){
+    const dx = x - drag.lx, dy = y - drag.ly; drag.lx = x; drag.ly = y;
+    if (drag.nav === "orbit") camOrbit(-dx * 240 / W, dy * 180 / H);
+    else if (drag.nav === "pan") camPan(dx, dy, W, H);
+    else camZoom(Math.exp(-dy * 3 / H));
+    camSync(); drawSoon(); return;
+  }
+  if (drag.tapPick !== undefined){
+    if (Math.hypot(x - drag.x, y - drag.y) < 12 * (devicePixelRatio || 1)) return;
+    if (cv === front && !camHeld()){ remember(); drag = {nav: "orbit", lx: drag.x, ly: drag.y}; move(cv, e); } else drag = null;
+    return;
+  }
   if (drag.cam && drag.roll){
     S.cam.roll = Math.max(-90, Math.min(90, drag.roll0 + (x - drag.x) * 90 / W));
     syncUI();
@@ -931,7 +1012,36 @@ function move(cv, e){
   else if (mode === "body") dragBody(drag.i, x, y, W, H);
   drawSoon();
 }
-function up(){ drag = null; }
+function up(){
+  if (drag && drag.tapPick !== undefined && !(mode === "place" && drag.cv === side)){ sel = drag.tapPick; draw(); }
+  if (drag && drag.nav) syncUI();
+  drag = null;
+}
+// ---- the camera without the Perspective mode: turn, move, zoom (the lens stays) -------------
+function zoomSpan(){ return [0.3, 4]; }
+// 「カメラを固定する」: free moves (drags, swipes, pinches, the wheel, the keypad, the pad) are
+// refused with a word; the Perspective sliders and a remembered camera still set it
+function camHeld(){ if (!S.camLock) return false; say("カメラは固定中です（「カメラの固定と記憶」で外せます）。", true); return true; }
+function camWrap(a){ return ((a + 180) % 360 + 360) % 360 - 180; }
+function camOrbit(dyaw, dpitch){
+  S.cam.yaw = camWrap(S.cam.yaw + dyaw);
+  S.cam.pitch = Math.max(-80, Math.min(80, S.cam.pitch + dpitch));
+}
+function camPan(dx, dy, W, H){                // the picture follows the pointer (pixels of a W x H view)
+  const s = lensF(W, H) / camDist(W, H);
+  S.center = add(S.center, camRotInv([-dx / s, dy / s, 0]));
+}
+function camZoom(k){ const [a, b] = zoomSpan(); S.cam.zoom = Math.max(a, Math.min(b, S.cam.zoom * k)); }
+// while dragging: only the camera's own sliders (the full syncUI runs when the drag ends)
+function camSync(){
+  for (const id of ["yaw", "pitch", "roll"]){ const v = Math.round(S.cam[id]); $(id).value = v;
+    if (document.activeElement !== $(id + "V")) $(id + "V").value = v; }
+}
+function zoomThumb(){
+  const z = document.getElementById("zoomer"); if (!z) return;
+  const [a, b] = zoomSpan(), k = 1 - Math.log(S.cam.zoom / a) / Math.log(b / a);
+  z.firstElementChild.style.top = `calc(3px + (100% - 26px) * ${Math.max(0, Math.min(1, k)).toFixed(3)})`;
+}
 // flip the bone toward / away from the camera (double-click, double-tap)
 function flipAt(x, y){
   if (mode !== "pose") return;
@@ -945,11 +1055,11 @@ function flipAt(x, y){
 // the wheel, a trackpad, two fingers: one "step" each (in or out)
 function wheelStep(x, y, step, e){
   if (WHEEL_HOOKS.some(h => h(x, y, step, e))){ draw(); return; }
-  if (mode === "persp"){ S.cam.lens = Math.max(14, Math.min(200, S.cam.lens * (step > 0 ? 1.1 : 1/1.1))); syncUI(); }
+  if (mode === "persp"){ if (camHeld()) return; S.cam.lens = Math.max(14, Math.min(200, S.cam.lens * (step > 0 ? 1.1 : 1/1.1))); syncUI(); }
   else if (mode === "body"){ const i = pick(front, x, y);
     if (i >= 0){ remember(); const k = step > 0 ? 1.08 : 1/1.08; S.R[i] *= k;
       if ($("sym").checked && MIRROR[i] !== i) S.R[MIRROR[i]] *= k; } }
-  else S.cam.zoom = Math.max(0.3, Math.min(4, S.cam.zoom * (step > 0 ? 1.1 : 1/1.1)));
+  else { if (camHeld()) return; S.cam.zoom = Math.max(0.3, Math.min(4, S.cam.zoom * (step > 0 ? 1.1 : 1/1.1))); }
   draw();
 }
 // pointers on a canvas: one drags; a second finger turns it into a pinch (no drag)
@@ -961,14 +1071,18 @@ for (const cv of [front, side]){
     // the on-screen keys appear after this touch (showing them now would move the view under the finger)
     if (e.pointerType === "touch" && !document.body.classList.contains("touch"))
       setTimeout(() => { document.body.classList.add("touch"); draw(); }, 0);
-    if (e.pointerType === "mouse" && e.button === 1) return;             // the middle button: nothing
+    if (e.button === 1) e.preventDefault();                              // the middle button: the camera, not autoscroll
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     if (e.pointerType === "touch"){
       touches.set(e.pointerId, evPos(cv, e));
       if (touches.size === 2 && cv === front){                          // a pinch: forget the drag
         drag = null; tap = null;
         const [a, b] = [...touches.values()];
-        pinch = {d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1}; return;
+        // pose and body modes: the camera zooms and moves; the others keep their wheel (lens, objects)
+        pinch = {d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2],
+                 cam: mode === "pose" || mode === "body", held: mode !== "place" && camHeld()};
+        if (pinch.cam && !pinch.held) remember();
+        return;
       }
       if (touches.size > 2 || pinch) return;
     }
@@ -979,6 +1093,10 @@ for (const cv of [front, side]){
     if (e.pointerType === "touch" && touches.has(e.pointerId)) touches.set(e.pointerId, evPos(cv, e));
     if (pinch && touches.size >= 2){
       const [a, b] = [...touches.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1;
+      if (pinch.held) return;
+      if (pinch.cam){ const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        camZoom(d / pinch.d); camPan(m[0] - pinch.m[0], m[1] - pinch.m[1], front.width, front.height);
+        pinch.d = d; pinch.m = m; camSync(); drawSoon(); return; }
       const r = d / pinch.d;
       if (r > 1.12 || r < 1 / 1.12){ wheelStep((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, r > 1 ? 1 : -1, evMods(e)); pinch.d = d; }
       return;
@@ -988,7 +1106,7 @@ for (const cv of [front, side]){
   });
   const end = e => {
     touches.delete(e.pointerId);
-    if (pinch){ if (touches.size === 0) pinch = null; return; }
+    if (pinch){ if (touches.size === 0){ if (pinch.cam) syncUI(); pinch = null; } return; }
     up();
     // a double tap (finger or pen) flips the bone, as a double-click does
     if (e.type === "pointerup" && tap && tap.cv === front && tap.type !== "mouse" && performance.now() - tap.t < 300){
@@ -1022,6 +1140,29 @@ front.addEventListener("wheel", e => {
       const [x, y] = evPos(front, e); wheelStep(x, y, r > 1 ? 1 : -1, evMods(e)); } });
 }
 document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")){ e.preventDefault(); undo(); } });
+// the numeric keypad as in Blender: 1 front, 3 from the figure's right, 7 from above (Ctrl: the
+// other side), 2 4 6 8 turn by 15° (Ctrl: move), 9 round to the back, + - zoom, . the selected
+// joint to the middle; Home: the figure to the middle
+document.addEventListener("keydown", e => {
+  if (e.target && e.target.closest && e.target.closest("input, select, textarea")) return;
+  const c = S.cam, ctl = e.ctrlKey || e.metaKey, W = front.width, H = front.height, step = H * 0.1;
+  const act = {
+    Numpad1: () => Object.assign(c, {yaw: ctl ? 180 : 0, pitch: 0, roll: 0}),
+    Numpad3: () => Object.assign(c, {yaw: ctl ? 90 : -90, pitch: 0, roll: 0}),
+    Numpad7: () => Object.assign(c, {yaw: 0, pitch: ctl ? -80 : 80, roll: 0}),
+    Numpad9: () => { c.yaw = camWrap(c.yaw + 180); },
+    Numpad4: () => ctl ? camPan(step, 0, W, H) : camOrbit(15, 0),
+    Numpad6: () => ctl ? camPan(-step, 0, W, H) : camOrbit(-15, 0),
+    Numpad8: () => ctl ? camPan(0, step, W, H) : camOrbit(0, 15),
+    Numpad2: () => ctl ? camPan(0, -step, W, H) : camOrbit(0, -15),
+    NumpadAdd: () => camZoom(1.15), NumpadSubtract: () => camZoom(1 / 1.15),
+    NumpadDecimal: () => { if (sel >= 0) S.center = S.P[sel].slice(); },
+    Home: () => { const p = S.P[IX.pelvis]; S.center = [p[0], p[1] - 5, p[2]]; c.zoom = 1; },
+  }[e.code];
+  if (!act) return;
+  e.preventDefault(); if (camHeld()) return;
+  remember(); act(); syncUI(); draw();
+});
 
 // ---- body mode sliders: whole-body scale, head, thickness (relative to the slider's last value,
 // kept in S.scale so undo and each figure bring their sliders back)
@@ -1558,7 +1699,8 @@ document.addEventListener("pointerdown", e => { if (e.target.matches && e.target
 document.addEventListener("keydown", e => { if (e.target.matches && e.target.matches("aside input[type=range]")
   && /^(Arrow|Page|Home|End)/.test(e.key)) remember(); }, true);
 document.querySelectorAll("#modes button").forEach(b => b.addEventListener("click", () => {
-  mode = b.dataset.mode; document.body.className = "mode-" + mode;
+  mode = b.dataset.mode;
+  document.body.className = document.body.className.replace(/\bmode-\S+/, "").trim() + " mode-" + mode;   // keep touch, split ...
   document.querySelectorAll("#modes button").forEach(x => x.classList.toggle("on", x === b)); draw();
 }));
 $("applyPreset").addEventListener("click", () => {
@@ -1757,6 +1899,83 @@ if (qs.get("h")) $("H").value = qs.get("h");
 const KEY = "odm-poser-editor-v1";
 try { const l = localStorage.getItem(KEY + "-limits"); if (l !== null) $("limits").checked = l === "1"; } catch (e) {}
 try { $("symPose").checked = localStorage.getItem(KEY + "-sympose") === "1"; } catch (e) {}
+// the camera pad: the left stick turns the camera round the figure, the right one moves it (both
+// as a game's camera: push right, the camera goes right), the slider zooms
+function padStick(id, act){
+  const el = $(id), knob = el.firstElementChild; let v = null, raf = 0, t0 = 0;
+  const tick = t => { if (!v) return; const dt = Math.min(0.05, (t - t0) / 1000); t0 = t;
+    act(v[0], v[1], dt); camSync(); draw(); raf = requestAnimationFrame(tick); };
+  const set = e => { const r = el.getBoundingClientRect(), half = r.width / 2;
+    let dx = (e.clientX - r.left - half) / half, dy = (e.clientY - r.top - half) / half; const m = Math.hypot(dx, dy);
+    if (m > 1){ dx /= m; dy /= m; }
+    v = [dx, dy]; knob.style.transform = `translate(${dx * half * 0.6}px, ${dy * half * 0.6}px)`; };
+  el.addEventListener("pointerdown", e => { e.preventDefault(); if (camHeld()) return;
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    remember(); set(e); cancelAnimationFrame(raf); t0 = performance.now(); raf = requestAnimationFrame(tick); });
+  el.addEventListener("pointermove", e => { if (v) set(e); });
+  const end = () => { if (!v) return; v = null; knob.style.transform = ""; cancelAnimationFrame(raf); syncUI(); };
+  el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+}
+padStick("stickOrbit", (x, y, dt) => camOrbit(x * 120 * dt, -y * 90 * dt));
+padStick("stickPan", (x, y, dt) => { const H = front.height; camPan(-x * 0.6 * H * dt, -y * 0.6 * H * dt, front.width, H); });
+{ const z = $("zoomer"); let on = false;
+  const set = e => { const r = z.getBoundingClientRect(), [a, b] = zoomSpan();
+    const f = 1 - Math.max(0, Math.min(1, (e.clientY - r.top - 13) / Math.max(1, r.height - 26)));
+    S.cam.zoom = a * Math.pow(b / a, f); drawSoon(); };
+  z.addEventListener("pointerdown", e => { e.preventDefault(); if (camHeld()) return;
+    try { z.setPointerCapture(e.pointerId); } catch (err) {}
+    remember(); on = true; set(e); });
+  z.addEventListener("pointermove", e => { if (on) set(e); });
+  const end = () => { if (on){ on = false; syncUI(); } };
+  z.addEventListener("pointerup", end); z.addEventListener("pointercancel", end);
+}
+// the pad: shown on touch screens unless switched off; on a computer when switched on
+{ let pref = null; try { pref = localStorage.getItem(KEY + "-pad"); } catch (e) {}
+  document.body.classList.toggle("pad", pref ? pref === "1" : document.body.classList.contains("touch")); }
+const padKey = () => { const on = document.body.classList.contains("pad");
+  $("vPad").setAttribute("aria-pressed", String(on)); $("vPad").classList.toggle("on", on); $("padOn").checked = on; };
+const setPad = on => { document.body.classList.toggle("pad", on);
+  try { localStorage.setItem(KEY + "-pad", on ? "1" : "0"); } catch (e) {} padKey(); };
+padKey();
+$("vPad").addEventListener("click", () => setPad(!document.body.classList.contains("pad")));
+$("padOn").addEventListener("change", e => setPad(e.target.checked));
+// remembered cameras (S.cams, saved with the pose and undone with it)
+const camLabel = c => `${c.name}（向き ${Math.round(c.cam.yaw)}°・高さ ${Math.round(c.cam.pitch)}°・${Math.round(c.cam.lens)}mm・×${(+c.cam.zoom).toFixed(1)}）`;
+function syncCams(){
+  const list = S.cams = Array.isArray(S.cams) ? S.cams : [], el = $("camList"), keep = el.value;
+  el.innerHTML = list.map((c, i) => `<option value="${i}">${esc(camLabel(c))}</option>`).join("");
+  if (keep !== "" && +keep < list.length) el.value = keep;
+  $("camCount").textContent = list.length; $("camLock").checked = !!S.camLock;
+  for (const id of ["camLoad", "camDel"]) $(id).disabled = !list.length;
+}
+{ const sync0 = syncUI; syncUI = function(){ sync0(); syncCams(); }; }
+$("camLock").addEventListener("change", e => { remember(); S.camLock = e.target.checked;
+  say(S.camLock ? "カメラを固定しました。" : "カメラの固定を外しました。"); });
+$("camSave").addEventListener("click", () => {
+  remember(); S.cams = Array.isArray(S.cams) ? S.cams : [];
+  let n = S.cams.length + 1; while (S.cams.some(c => c.name === `カメラ${n}`)) n++;
+  S.cams.push({name: `カメラ${n}`, cam: Object.assign({}, S.cam), center: S.center.slice()});
+  syncCams(); $("camList").value = String(S.cams.length - 1); say(`カメラ${n}として記憶しました。`);
+});
+const camRecall = () => { const c = (S.cams || [])[+$("camList").value]; if (!c) return;
+  remember(); S.cam = Object.assign({}, S.cam, c.cam); S.center = c.center.slice(); syncUI(); draw(); say(`${c.name}を呼び出しました。`); };
+$("camLoad").addEventListener("click", camRecall);
+$("camList").addEventListener("dblclick", camRecall);
+$("camDel").addEventListener("click", () => { const i = +$("camList").value; if (!(S.cams || [])[i]) return;
+  remember(); const [c] = S.cams.splice(i, 1); syncCams(); say(`${c.name}を削除しました。`); });
+syncCams();
+// split screen: on by itself where a finger is the main pointer (phones, tablets), or as chosen
+function setSplit(on){
+  document.body.classList.toggle("split", on);
+  if (!on){ document.body.classList.remove("full"); $("vPanels").textContent = "操作欄を隠す"; }
+  $("splitBtn").textContent = on ? "分割表示：オン" : "分割表示：オフ"; draw();
+}
+{ let pref = null; try { pref = localStorage.getItem(KEY + "-split"); } catch (e) {}
+  setSplit(pref ? pref === "1" : matchMedia("(pointer: coarse)").matches); }
+$("splitBtn").addEventListener("click", () => { const on = !document.body.classList.contains("split");
+  try { localStorage.setItem(KEY + "-split", on ? "1" : "0"); } catch (e) {} setSplit(on); });
+$("vPanels").addEventListener("click", () => { const full = document.body.classList.toggle("full");
+  $("vPanels").textContent = full ? "操作欄を出す" : "操作欄を隠す"; draw(); });
 $("symPose").addEventListener("change", e => { try { localStorage.setItem(KEY + "-sympose", e.target.checked ? "1" : "0"); } catch (err) {}
   if (e.target.checked && sel >= 0 && MIRROR[sel] !== sel){ remember(); afterEdit(sel); draw(); say("反対側をそろえました。"); } });
 $("hiddenDashed").addEventListener("change", e => { remember(); S.hiddenDashed = e.target.checked; draw();
