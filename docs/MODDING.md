@@ -1,6 +1,6 @@
-# Modding the Symbolic Pose Editor
+# Modding ODM Poser
 
-A mod is a JavaScript file that the editor loads at start. Through the **MOD API** (`window.SymbolicPose`,
+A mod is a JavaScript file that the editor loads at start. Through the **MOD API** (`window.ODMPoser`,
 `web/editor/pose_api.js`) it can add:
 
 - props: things held, worn, ridden, put on the floor or grabbed, and new prop categories
@@ -35,7 +35,7 @@ your machine.
 ## A mod file
 
 ```js
-SymbolicPose.registerMod({
+ODMPoser.registerMod({
   id: "mymod",                 // lower case letters, digits, _ and -; unique
   name: "My mod",              // shown in the MOD panel
   version: "1.0.0",

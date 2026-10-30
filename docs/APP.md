@@ -1,6 +1,6 @@
 # Using it as an app (PWA)
 
-The editor can be installed from the browser as an app (a PWA): it gets an icon (home screen,
+ODM Poser can be installed from the browser as an app (a PWA): it gets an icon (home screen,
 Start menu, Dock), opens in its own window, opens offline after the first time (with the mods and
 presets it last read), and updates itself the next time it opens online. 日本語: [APP-JA.md](APP-JA.md)
 
@@ -9,7 +9,7 @@ presets it last read), and updates itself the next time it opens online. 日本�
 
 ## Computers (Windows, macOS, Linux)
 
-- **With ComfyUI**: open `http://127.0.0.1:8188/symbolic_pose/editor/index.html` in a browser tab
+- **With ComfyUI**: open `http://127.0.0.1:8188/odm_poser/editor/index.html` in a browser tab
   (not the node's window) and press **Install as an app** (or the install icon in the address bar).
 - **Without ComfyUI**: run `python tools/serve.py`, open `http://localhost:8765/web/editor/`, press
   **Install as an app**. Once installed, the app opens without the server (run it again to update).

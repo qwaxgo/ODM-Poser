@@ -1,9 +1,9 @@
 """Web routes: the editor's files, and the user's preset files merged into one script.
 
-    /symbolic_pose/editor/            the editor (web/editor/index.html and its scripts)
-    /symbolic_pose/user_presets.js    window.USER_POSE_PRESETS from user_presets/*.json
-    /symbolic_pose/mods.js            window.SYMBOLIC_POSE_MODS: mods/*.js and mods/<folder>/*.js
-    /symbolic_pose/mods/{path}        one mod file (docs/MODDING.md)
+    /odm_poser/editor/            the editor (web/editor/index.html and its scripts)
+    /odm_poser/user_presets.js    window.USER_POSE_PRESETS from user_presets/*.json
+    /odm_poser/mods.js            window.ODM_POSER_MODS: mods/*.js and mods/<folder>/*.js
+    /odm_poser/mods/{path}        one mod file (docs/MODDING.md)
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ def user_presets():
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
-            print(f"[SymbolicPose] skipped {f.name}: {exc}")
+            print(f"[ODM Poser] skipped {f.name}: {exc}")
             continue
         items = data.get("presets", []) if isinstance(data, dict) else data
         for p in items if isinstance(items, list) else []:
@@ -52,8 +52,8 @@ def mod_files():
 
 # the node's Confirm / Cancel live in the ComfyUI bridge mod (mods/<its repository>/comfyui.js)
 if not any(m.rsplit("/", 1)[-1] == "comfyui.js" for m in mod_files()):
-    print("[SymbolicPose] the ComfyUI bridge mod (comfyui.js) is not in mods/: the editor opens, but "
-          "cannot hand the pose back to the node. Clone SymbolicPoseEditor-ComfyUIBridge into mods/.")
+    print("[ODM Poser] the ComfyUI bridge mod (comfyui.js) is not in mods/: the editor opens, but "
+          "cannot hand the pose back to the node. Clone ODM-Poser-ComfyUIBridge into mods/.")
 
 
 try:
@@ -62,15 +62,15 @@ try:
 
     routes = PromptServer.instance.routes
 
-    @routes.get("/symbolic_pose/user_presets.js")
+    @routes.get("/odm_poser/user_presets.js")
     async def _user_presets(request):
         body = "window.USER_POSE_PRESETS = " + json.dumps(user_presets(), ensure_ascii=False,
                                                           separators=(",", ":")) + ";\n"
         return web.Response(text=body, content_type="application/javascript")
 
-    @routes.get("/symbolic_pose/editor")
+    @routes.get("/odm_poser/editor")
     async def _editor_root(request):
-        raise web.HTTPFound("/symbolic_pose/editor/index.html" + (f"?{request.query_string}"
+        raise web.HTTPFound("/odm_poser/editor/index.html" + (f"?{request.query_string}"
                                                                   if request.query_string else ""))
 
     EDITOR_FILES = ("index.html", "pose_props.js", "pose_props_more.js", "pose_scene.js", "pose_solids.js",
@@ -80,19 +80,19 @@ try:
     KINDS = {".html": "text/html", ".js": "application/javascript", ".webmanifest": "application/manifest+json",
              ".svg": "image/svg+xml"}
 
-    @routes.get("/symbolic_pose/mods.js")
+    @routes.get("/odm_poser/mods.js")
     async def _mods_list(request):
-        body = "window.SYMBOLIC_POSE_MODS = " + json.dumps(mod_files()) + ";\n"
+        body = "window.ODM_POSER_MODS = " + json.dumps(mod_files()) + ";\n"
         return web.Response(text=body, content_type="application/javascript")
 
-    @routes.get("/symbolic_pose/mods/{path:.+}")
+    @routes.get("/odm_poser/mods/{path:.+}")
     async def _mod_file(request):
         path = request.match_info["path"]
         if path not in mod_files():               # only the listed files, nothing else under mods/
             raise web.HTTPNotFound()
         return web.Response(text=(MODS / path).read_text(encoding="utf-8"), content_type="application/javascript")
 
-    @routes.get("/symbolic_pose/editor/{name}")
+    @routes.get("/odm_poser/editor/{name}")
     async def _editor_file(request):
         name = request.match_info["name"]
         if name not in EDITOR_FILES:
@@ -102,4 +102,4 @@ try:
         kind = KINDS[Path(name).suffix]
         return web.Response(text=(EDITOR / name).read_text(encoding="utf-8"), content_type=kind)
 except Exception as exc:            # outside ComfyUI (tests, a plain import)
-    print(f"[SymbolicPose] web routes not registered: {exc}")
+    print(f"[ODM Poser] web routes not registered: {exc}")

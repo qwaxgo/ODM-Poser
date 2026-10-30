@@ -1,6 +1,6 @@
 # ComfyUI で使う（導入ガイド）
 
-記号ポーズエディタを ComfyUI のノードとして使うための手順です。English: [COMFYUI.md](COMFYUI.md)
+立体人形装置を ComfyUI のノードとして使うための手順です。English: [COMFYUI.md](COMFYUI.md)
 
 ## 必要なもの（2つ）
 
@@ -8,8 +8,8 @@ ComfyUI で使うには、次の 2 つを入れます。
 
 | 入れるもの | 何をするものか | 入れる場所 |
 |-----------|---------------|-----------|
-| **ComfyUI-SymbolicPoseEditor**（このリポジトリ） | ノード「Symbolic Pose Editor」と、ポーズエディタ本体 | `ComfyUI/custom_nodes/` |
-| **SymbolicPoseEditor-ComfyUIBridge**（非公開リポジトリ） | エディタとノードをつなぐ部品（MOD）。エディタに「確定して閉じる」ボタンを出し、作ったポーズをノードに送ります | 上のフォルダの中の `mods/` |
+| **ODM-Poser**（このリポジトリ） | ノード「ODM Poser」と、ポーズエディタ本体 | `ComfyUI/custom_nodes/` |
+| **ODM-Poser-ComfyUIBridge**（非公開リポジトリ） | エディタとノードをつなぐ部品（MOD）。エディタに「確定して閉じる」ボタンを出し、作ったポーズをノードに送ります | 上のフォルダの中の `mods/` |
 
 ポーズエディタ本体は ComfyUI に依存しない単体の道具です。ComfyUI とのやりとりは、2 つめの部品がすべて受け持ちます。
 2 つめを入れないと、ノードからエディタは開きますが、「確定して閉じる」ボタンが出ず、ポーズをノードに渡せません。
@@ -28,7 +28,7 @@ ComfyUI で使うには、次の 2 つを入れます。
 
 ```
 cd ComfyUI/custom_nodes
-git clone https://github.com/qwaxgo/ComfyUI-SymbolicPoseEditor
+git clone https://github.com/qwaxgo/ODM-Poser
 ```
 
 Windows ポータブル版なら、たとえば `C:\AI\ComfyUI_windows_portable\ComfyUI\custom_nodes` で実行します。
@@ -38,17 +38,17 @@ Windows ポータブル版なら、たとえば `C:\AI\ComfyUI_windows_portable\
 手順 1 でできたフォルダの中の `mods` フォルダに clone します。
 
 ```
-cd ComfyUI-SymbolicPoseEditor/mods
-git clone git@github.com:qwaxgo/SymbolicPoseEditor-ComfyUIBridge.git
+cd ODM-Poser/mods
+git clone git@github.com:qwaxgo/ODM-Poser-ComfyUIBridge.git
 ```
 
 入れたあとのフォルダはこうなります。
 
 ```
 ComfyUI/custom_nodes/
-  ComfyUI-SymbolicPoseEditor/
+  ODM-Poser/
     mods/
-      SymbolicPoseEditor-ComfyUIBridge/
+      ODM-Poser-ComfyUIBridge/
         comfyui.js
 ```
 
@@ -60,16 +60,16 @@ ComfyUI を一度再起動します（新しいノードを読み込むため）
 
 1. ComfyUI の起動時のコンソールに、次の行が**出ていない**こと。出ていたら手順 2 ができていません。
    ```
-   [SymbolicPose] the ComfyUI bridge mod (comfyui.js) is not in mods/ ...
+   [ODM Poser] the ComfyUI bridge mod (comfyui.js) is not in mods/ ...
    ```
-2. ノードを置く：キャンバスを右クリック →「Add Node」→「SymbolicPose」→「Symbolic Pose Editor」
-   （キャンバスのダブルクリックで「Symbolic Pose Editor」を検索しても置けます）。
-3. ノードの「Open Symbolic Pose Editor」を押すと、エディタが開きます。右側の欄のいちばん上に「ComfyUI」の欄
+2. ノードを置く：キャンバスを右クリック →「Add Node」→「ODM Poser」→「ODM Poser」
+   （キャンバスのダブルクリックで「ODM Poser」を検索しても置けます）。
+3. ノードの「Open ODM Poser」を押すと、エディタが開きます。右側の欄のいちばん上に「ComfyUI」の欄
    （「確定して閉じる」「閉じる」）があり、いちばん下の「MOD」欄に「✓ ComfyUI bridge」と出ていれば完了です。
 
 ## 使い方
 
-1. ノード「Symbolic Pose Editor」を置き、「Open Symbolic Pose Editor」を押す。
+1. ノード「ODM Poser」を置き、「Open ODM Poser」を押す。
 2. エディタでポーズを作る。書き出しの「幅」「高さ」が、ノードが出す画像の大きさになります。
 3. 「確定して閉じる」を押す。ポーズ・画像・大きさがノードに渡り、エディタが閉じます（「閉じる」は渡さずに閉じます）。
 4. ノードの出力を、ほかのノードにつなぐ。
@@ -82,7 +82,7 @@ ComfyUI を一度再起動します（新しいノードを読み込むため）
 | `atari` | IMAGE | アタリ画像（白地に線と丸、小物も簡単な形で）。下描きや img2img に |
 | `width`、`height` | INT | エディタで決めた書き出しの大きさ |
 
-確定した内容はワークフローに保存されます。次に「Open Symbolic Pose Editor」を押すと、そのポーズから続けて編集できます。
+確定した内容はワークフローに保存されます。次に「Open ODM Poser」を押すと、そのポーズから続けて編集できます。
 
 `scene_json` は `{"items": [...], "env": {...}, "wire": {...}, "solids": [...]}` です。小物は
 `{"key", "hand" または "base"＋"yaw", "off": [x, y, z], "rot": [x, y, z], "scale"}`（cm・度）、形の一覧は
@@ -90,7 +90,7 @@ ComfyUI を一度再起動します（新しいノードを読み込むため）
 
 ## ユーザープリセット
 
-`ComfyUI-SymbolicPoseEditor/user_presets/` に自分のプリセット（`*.json`、形式は `user_presets/README.md`）を置くと、
+`ODM-Poser/user_presets/` に自分のプリセット（`*.json`、形式は `user_presets/README.md`）を置くと、
 ノードから開いたエディタの「ユーザープリセット」に自動で並びます（つなぐ部品が読み込みます）。
 置いたあとはエディタを開き直すだけで、ComfyUI の再起動は要りません。
 
@@ -104,9 +104,9 @@ ComfyUI を一度再起動します（新しいノードを読み込むため）
 2 つのフォルダでそれぞれ `git pull` してから、ComfyUI を再起動します。
 
 ```
-cd ComfyUI/custom_nodes/ComfyUI-SymbolicPoseEditor
+cd ComfyUI/custom_nodes/ODM-Poser
 git pull
-cd mods/SymbolicPoseEditor-ComfyUIBridge
+cd mods/ODM-Poser-ComfyUIBridge
 git pull
 ```
 
@@ -114,13 +114,13 @@ git pull
 
 | 症状 | 原因と対処 |
 |------|-----------|
-| エディタに「確定して閉じる」が出ない | つなぐ部品がありません。`mods/SymbolicPoseEditor-ComfyUIBridge/comfyui.js` があるか確かめる。フォルダ名やファイル名が `_` や `.` で始まっていると読み込まれません。エディタのアドレスに `?nomods` が付いていると MOD をすべて止めます |
+| エディタに「確定して閉じる」が出ない | つなぐ部品がありません。`mods/ODM-Poser-ComfyUIBridge/comfyui.js` があるか確かめる。フォルダ名やファイル名が `_` や `.` で始まっていると読み込まれません。エディタのアドレスに `?nomods` が付いていると MOD をすべて止めます |
 | 手順 2 の clone で `Permission denied (publickey)` や `Repository not found` | 非公開リポジトリへのアクセス権か SSH 鍵の設定がありません。GitHub で権限と鍵を確かめる |
-| ノードの一覧に「Symbolic Pose Editor」がない | ComfyUI を再起動する。コンソールに読み込みのエラーが出ていないか確かめる |
+| ノードの一覧に「ODM Poser」がない | ComfyUI を再起動する。コンソールに読み込みのエラーが出ていないか確かめる |
 | 実行すると「ポーズがまだありません」 | エディタで一度も「確定して閉じる」を押していません。エディタを開いて確定する |
 | MOD 欄に ✗ が出る | その MOD にエラーがあります。✗ の行に理由が出ます |
 
 ## ComfyUI なしで使う
 
-`ComfyUI-SymbolicPoseEditor/web/editor/index.html` をブラウザで開くと、エディタだけで使えます
+`ODM-Poser/web/editor/index.html` をブラウザで開くと、エディタだけで使えます
 （つなぐ部品は何もしません）。画像やポーズは「書き出し」のボタンでファイルに保存します。

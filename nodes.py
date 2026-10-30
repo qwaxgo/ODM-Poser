@@ -1,4 +1,4 @@
-"""The Symbolic Pose Editor node: what the editor confirmed, as JSON and pictures."""
+"""The ODM Poser node: what the editor confirmed, as JSON and pictures."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ def _picture(data_url: str) -> torch.Tensor:
     return torch.from_numpy(np.asarray(img, dtype=np.float32) / 255.0)[None]
 
 
-class SymbolicPoseEditor:
+class ODMPoser:
     """Open the editor with the node's button, pose the figure, press "Confirm"."""
 
     @classmethod
@@ -39,7 +39,7 @@ class SymbolicPoseEditor:
     RETURN_TYPES = ("STRING", "STRING", "IMAGE", "IMAGE", "INT", "INT")
     RETURN_NAMES = ("pose_json", "scene_json", "openpose", "atari", "width", "height")
     FUNCTION = "run"
-    CATEGORY = "SymbolicPose"
+    CATEGORY = "ODM Poser"
     OUTPUT_NODE = False
 
     @classmethod
@@ -49,9 +49,9 @@ class SymbolicPoseEditor:
     def run(self, node_id="", pose_json="", scene_json="", openpose_image="", atari_image="", **_):
         if not pose_json:
             raise RuntimeError(
-                "Symbolic Pose Editor: no pose yet. Press 'Open Symbolic Pose Editor' on the "
+                "ODM Poser: no pose yet. Press 'Open ODM Poser' on the "
                 "node, pose the figure and press 'Confirm'.\n"
-                "ポーズがまだありません。ノードの『Open Symbolic Pose Editor』でエディタを開き、"
+                "ポーズがまだありません。ノードの『Open ODM Poser』でエディタを開き、"
                 "『確定して閉じる』を押してください。")
         json.loads(pose_json)                     # a broken widget value fails here, not later
         openpose, atari = _picture(openpose_image), _picture(atari_image)
@@ -59,5 +59,6 @@ class SymbolicPoseEditor:
         return (pose_json, scene_json or "{}", openpose, atari, w, h)
 
 
-NODE_CLASS_MAPPINGS = {"SymbolicPoseEditor": SymbolicPoseEditor}
-NODE_DISPLAY_NAME_MAPPINGS = {"SymbolicPoseEditor": "Symbolic Pose Editor"}
+# "SymbolicPoseEditor" is the node's old name: workflows saved with it still load and run
+NODE_CLASS_MAPPINGS = {"ODMPoser": ODMPoser, "SymbolicPoseEditor": ODMPoser}
+NODE_DISPLAY_NAME_MAPPINGS = {"ODMPoser": "ODM Poser", "SymbolicPoseEditor": "ODM Poser (old name)"}

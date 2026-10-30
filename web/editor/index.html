@@ -12,10 +12,10 @@
 <meta name="theme-color" content="#2f6f4f" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1a1a19" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="ポーズエディタ">
+<meta name="apple-mobile-web-app-title" content="立体人形装置">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Symbolic Pose Editor</title>
+<title>立体人形装置 ODM Poser</title>
 <style>
 :root{
   --bg:#f5f5f2; --panel:#fff; --ink:#1c1c1a; --sub:#6c6c66; --line:#dededa;
@@ -134,7 +134,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 <body class="mode-pose">
 <header>
   <div id="headTools"><button type="button" id="installBtn" hidden>アプリとして追加</button><button type="button" id="themeBtn">表示：自動</button></div>
-  <h1>Symbolic Pose Editor <span style="font-weight:400;font-size:13px">記号ポーズエディタ</span></h1>
+  <h1>立体人形装置 <span style="font-weight:400;font-size:13px">ODM Poser — Omni-Directional Mannequin Poser</span></h1>
   <p>線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。</p>
 </header>
 <main>
@@ -1240,6 +1240,11 @@ function applyPreset(name){
 
 // ---- UI wiring ---------------------------------------------------------------------------
 const $ = id => document.getElementById(id);
+// settings this browser kept under the old name (before ODM Poser): carried over once
+try { for (const k of ["theme", "lang", "editor-v1", "editor-v1-limits"]){
+  const o = localStorage.getItem("symbolic-pose-" + k);
+  if (o !== null && localStorage.getItem("odm-poser-" + k) === null) localStorage.setItem("odm-poser-" + k, o);
+} } catch (e) {}
 // the on-screen keys (shown on touch screens and narrow windows)
 for (const [id, key] of [["vShift", "shift"], ["vAlt", "alt"]])
   $(id).addEventListener("click", () => { VMOD[key] = !VMOD[key]; $(id).setAttribute("aria-pressed", String(VMOD[key])); $(id).classList.toggle("on", VMOD[key]); });
@@ -1535,7 +1540,7 @@ if (qs.get("w")) $("W").value = qs.get("w");
 if (qs.get("h")) $("H").value = qs.get("h");
 
 // light / dark: auto follows the system; the choice is kept in this browser
-{ const KEY_T = "symbolic-pose-theme", LABEL = {auto: "表示：自動", light: "表示：ライト", dark: "表示：ダーク"};
+{ const KEY_T = "odm-poser-theme", LABEL = {auto: "表示：自動", light: "表示：ライト", dark: "表示：ダーク"};
   const set = t => { if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
     else delete document.documentElement.dataset.theme;
     $("themeBtn").textContent = LABEL[t] || LABEL.auto; draw(); };
@@ -1566,7 +1571,7 @@ if (qs.get("h")) $("H").value = qs.get("h");
   });
 }
 // remember the last pose in this browser only (a convenience; files are the real save)
-const KEY = "symbolic-pose-editor-v1";
+const KEY = "odm-poser-editor-v1";
 try { const l = localStorage.getItem(KEY + "-limits"); if (l !== null) $("limits").checked = l === "1"; } catch (e) {}
 $("limits").addEventListener("change", e => { try { localStorage.setItem(KEY + "-limits", e.target.checked ? "1" : "0"); } catch (err) {}
   say(e.target.checked ? "関節の限界を有効にしました（これからの操作に効きます）。" : "関節の限界を無効にしました。"); });

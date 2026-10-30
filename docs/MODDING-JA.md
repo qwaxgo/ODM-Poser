@@ -1,6 +1,6 @@
-# 記号ポーズエディタの MOD
+# 立体人形装置の MOD
 
-MOD は、エディタの起動時に読み込まれる JavaScript のファイルです。**MOD API**（`window.SymbolicPose`、
+MOD は、エディタの起動時に読み込まれる JavaScript のファイルです。**MOD API**（`window.ODMPoser`、
 `web/editor/pose_api.js`）を通して、次のものを追加できます。
 
 - 小物（手に持つ・身に着ける・乗る・床に置く・つかまる物）と、その分類
@@ -32,7 +32,7 @@ MOD を作っている途中で試すのにいちばん手早い方法です。
 ## MOD のファイル
 
 ```js
-SymbolicPose.registerMod({
+ODMPoser.registerMod({
   id: "mymod",                 // 小文字・数字・_ と -。ほかの MOD と重ならない名前
   name: "My mod",              // MOD 欄に出る名前
   version: "1.0.0",

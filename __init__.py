@@ -1,4 +1,4 @@
-"""ComfyUI-SymbolicPoseEditor: a stick-and-circle pose editor (pseudo 3D) as a ComfyUI node.
+"""ODM-Poser: a stick-and-circle pose editor (pseudo 3D) as a ComfyUI node.
 
 The node has a button that opens the editor in a modal; "Confirm" hands the pose back to the
 node, which outputs it as JSON (the pose, and the scene: props, floor / walls, wire) and as two

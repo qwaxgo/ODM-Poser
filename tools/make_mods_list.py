@@ -29,8 +29,8 @@ def main():
     names.sort()
     OUT.write_text("// written by tools/make_mods_list.py: the mods the editor loads when opened from disk\n"
                    "// or from tools/serve.py (mods/ is two folders up from web/editor/)\n"
-                   "window.SYMBOLIC_POSE_MODS = " + json.dumps(names) + ";\n"
-                   'window.SYMBOLIC_POSE_MODS_BASE = "../../mods/";\n', encoding="utf-8")
+                   "window.ODM_POSER_MODS = " + json.dumps(names) + ";\n"
+                   'window.ODM_POSER_MODS_BASE = "../../mods/";\n', encoding="utf-8")
     print(f"{OUT.relative_to(ROOT)}: {len(names)} mod(s)" + (": " + ", ".join(names) if names else ""))
 
 

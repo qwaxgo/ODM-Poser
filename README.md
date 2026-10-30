@@ -1,4 +1,7 @@
-# ComfyUI-SymbolicPoseEditor
+# ODM Poser（立体人形装置）
+
+**ODM Poser** stands for **Omni-Directional Mannequin Poser**: a mannequin you pose and view from
+any direction. Its Japanese name is 立体人形装置.
 
 A stick-and-circle pose editor (pseudo 3D). Pose a simple figure — circles for the joints, lines
 for the bones, two blocks for the torso — and export it as an OpenPose picture, a line-and-circle
@@ -129,7 +132,8 @@ MIT, (c) 2026 qwaxgo. All shapes and code are original to this project.
 
 ## 日本語
 
-線と丸の全身アタリを疑似3Dで動かすポーズエディタです。OpenPose 画像・アタリ画像・JSON として書き出せます。
+**立体人形装置**（英語名 **ODM Poser**）は、線と丸の全身アタリを疑似3Dで動かすポーズエディタです。
+ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせるマネキン人形）の略です。OpenPose 画像・アタリ画像・JSON として書き出せます。
 
 - **使い方**：`web/editor/index.html` をブラウザで開く（書き出しボタンでファイルに保存、ユーザープリセットは「ファイルから読込」で選ぶ）。
 - **アプリとして使う**：パソコン・スマホ・タブレットにアプリとして追加でき、オフラインでも開けます。方法は **[docs/APP-JA.md](docs/APP-JA.md)**（`python tools/serve.py` でこのパソコンから開けます）。

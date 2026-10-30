@@ -1,4 +1,7 @@
-# Handoff: ComfyUI-SymbolicPoseEditor (for the next Claude session)
+# Handoff: ODM Poser / 立体人形装置 (for the next Claude session)
+
+ODM Poser = Omni-Directional Mannequin Poser; the Japanese name on screen and in Japanese docs is
+立体人形装置. Repository and folder: `ODM-Poser` (formerly ComfyUI-SymbolicPoseEditor).
 
 Read this first when you pick the project up in a new thread. It says what exists, how it fits
 together, the owner's rules, and what is still open.
@@ -30,11 +33,11 @@ nothing third-party: keep it that way.
 
 ```
 __init__.py          node mappings, WEB_DIRECTORY = web/js, imports routes
-nodes.py             SymbolicPoseEditor node: hidden values -> outputs
-routes.py            /symbolic_pose/editor/<file>   the editor's files
-                     /symbolic_pose/user_presets.js  (user_presets/*.json -> window.USER_POSE_PRESETS)
-                     /symbolic_pose/mods.js, /symbolic_pose/mods/<path>  built-in mods, then mods/
-web/js/symbolic_pose_editor.js   node widget: button, modal iframe, postMessage hand-over
+nodes.py             ODMPoser node (old name SymbolicPoseEditor kept for saved workflows): hidden values -> outputs
+routes.py            /odm_poser/editor/<file>   the editor's files
+                     /odm_poser/user_presets.js  (user_presets/*.json -> window.USER_POSE_PRESETS)
+                     /odm_poser/mods.js, /odm_poser/mods/<path>  built-in mods, then mods/
+web/js/odm_poser.js   node widget: button, modal iframe, postMessage hand-over
 web/editor/index.html            the editor core (plain JS, Canvas 2D; no ComfyUI in it)
 web/editor/pose_props*.js        window.PROP_CATS / window.PROPS: the props as primitives
 web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carrying, mounting, grabbing, wire
@@ -42,8 +45,8 @@ web/editor/pose_solids.js        solids; pose_style.js line colours and auras; p
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
 mods/                            the user's mods and cloned mod repositories (README.md only is tracked):
-                                 SymbolicPoseEditor-ComfyUIBridge (the node's hand-off, private repo),
-                                 SymbolicPoseEditor-SampleMods (examples, private repo)
+                                 ODM-Poser-ComfyUIBridge (the node's hand-off, private repo),
+                                 ODM-Poser-SampleMods (examples, private repo)
 user_presets/                    the user's preset files (README.md only is tracked)
 tools/make_mods_list.py          web/mods.js for opening the editor from disk with mods
 tools/serve.py                   a local server (localhost / --lan) so the editor installs as an app
@@ -55,19 +58,19 @@ docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API
 ## How the node and the editor talk
 
 The editor's side is the ComfyUI bridge mod, `comfyui.js` in its own private repository
-(qwaxgo/SymbolicPoseEditor-ComfyUIBridge) cloned into `mods/` (MOD API: `api.io`, `api.ui`,
+(qwaxgo/ODM-Poser-ComfyUIBridge) cloned into `mods/` (MOD API: `api.io`, `api.ui`,
 `api.presets`). The node serves it with the other mods; without it the editor opens but cannot
 hand the pose back (routes.py prints a warning at start). It also loads the user presets.
 
-1. The widget opens `/symbolic_pose/editor/index.html?node_id=<id>` in an iframe modal.
-2. The mod posts `{type: "symbolic-pose-ready", node_id}`; the widget answers
-   `{type: "symbolic-pose-load", pose_json}` with what the node holds (so it reopens on it).
-3. "確定して閉じる / Confirm" (the mod's section at the top of the side bar) posts `{type: "symbolic-pose-confirmed", node_id, pose_json,
+1. The widget opens `/odm_poser/editor/index.html?node_id=<id>` in an iframe modal.
+2. The mod posts `{type: "odm-poser-ready", node_id}`; the widget answers
+   `{type: "odm-poser-load", pose_json}` with what the node holds (so it reopens on it).
+3. "確定して閉じる / Confirm" (the mod's section at the top of the side bar) posts `{type: "odm-poser-confirmed", node_id, pose_json,
    scene_json, openpose, atari, width, height}` (pictures as PNG data URLs). The widget stores
    them in the node's hidden widgets `pose_json`, `scene_json`, `openpose_image`,
    `atari_image` (serialized with the workflow) and closes the modal. Cancel posts
-   `symbolic-pose-cancelled`.
-4. On queue, `nodes.SymbolicPoseEditor.run` decodes the pictures and returns `pose_json`,
+   `odm-poser-cancelled`.
+4. On queue, `nodes.ODMPoser.run` decodes the pictures and returns `pose_json`,
    `scene_json`, `openpose`, `atari`, `width`, `height`. It raises a clear error when nothing
    was confirmed. All messages are checked against `location.origin`.
 
@@ -109,8 +112,8 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
   `--virtual-time-budget`, a fresh `--user-data-dir` per run). To test the node hand-over,
   serve a small same-origin host page that iframes the editor with `?node_id=` and listens
   for the messages (put it temporarily under `web/js/`, it is served at
-  `/extensions/ComfyUI-SymbolicPoseEditor/`; delete it afterwards).
-- Node: queue a prompt with `SymbolicPoseEditor` inputs `pose_json`, `scene_json`,
+  `/extensions/ODM-Poser/`; delete it afterwards).
+- Node: queue a prompt with `ODMPoser` inputs `pose_json`, `scene_json`,
   `openpose_image`, `atari_image` (data URLs) and preview the outputs.
 
 ## Open items

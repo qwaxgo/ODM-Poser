@@ -1,10 +1,10 @@
-// Symbolic Pose Editor: the node's button opens the editor in a modal; "Confirm" in the
+// ODM Poser: the node's button opens the editor in a modal; "Confirm" in the
 // editor sends the pose, the scene and the two pictures back into the node's hidden values.
 import { app } from "../../scripts/app.js";
 
-const NODE = "SymbolicPoseEditor";
-const EDITOR = "/symbolic_pose/editor/index.html";
-const MODAL = "symbolic-pose-editor-modal";
+const NODES = new Set(["ODMPoser", "SymbolicPoseEditor"]);   // the old name: saved workflows
+const EDITOR = "/odm_poser/editor/index.html";
+const MODAL = "odm-poser-modal";
 const VALUES = ["pose_json", "scene_json", "openpose_image", "atari_image"];
 
 function hiddenValue(node, name) {
@@ -36,7 +36,7 @@ function setup(node) {
   const status = node.addWidget("text", "status", "", () => {}, { serialize: false });
   status.disabled = true;
   node.__spe.status = status;
-  node.addWidget("button", "Open Symbolic Pose Editor", null, () => openEditor(node));
+  node.addWidget("button", "Open ODM Poser", null, () => openEditor(node));
   node.__spe.refresh = () => {
     status.value = statusText(node);
     node.setDirtyCanvas?.(true, true);
@@ -85,18 +85,18 @@ function openEditor(node) {
 
 window.addEventListener("message", (e) => {
   const d = e.data || {};
-  if (e.origin !== window.location.origin || typeof d.type !== "string" || !d.type.startsWith("symbolic-pose-")) return;
+  if (e.origin !== window.location.origin || typeof d.type !== "string" || !d.type.startsWith("odm-poser-")) return;
   const node = app.graph?.getNodeById?.(Number(d.node_id));
-  if (!node || node.comfyClass !== NODE || !node.__spe) return;
-  if (d.type === "symbolic-pose-ready") {
+  if (!node || !NODES.has(node.comfyClass) || !node.__spe) return;
+  if (d.type === "odm-poser-ready") {
     // open on what was confirmed last time
     const frame = document.querySelector(`#${MODAL} iframe`);
-    frame?.contentWindow?.postMessage({ type: "symbolic-pose-load",
+    frame?.contentWindow?.postMessage({ type: "odm-poser-load",
       pose_json: node.__spe.pose_json.value || "" }, window.location.origin);
     return;
   }
-  if (d.type === "symbolic-pose-cancelled") { closeEditor(); return; }
-  if (d.type !== "symbolic-pose-confirmed" || typeof d.pose_json !== "string") return;
+  if (d.type === "odm-poser-cancelled") { closeEditor(); return; }
+  if (d.type !== "odm-poser-confirmed" || typeof d.pose_json !== "string") return;
   node.__spe.pose_json.value = d.pose_json;
   node.__spe.scene_json.value = d.scene_json || "{}";
   node.__spe.openpose_image.value = d.openpose || "";
@@ -107,12 +107,12 @@ window.addEventListener("message", (e) => {
 });
 
 app.registerExtension({
-  name: "SymbolicPoseEditor.node",
+  name: "ODMPoser.node",
   async nodeCreated(node) {
-    if (node.comfyClass === NODE) setup(node);
+    if (NODES.has(node.comfyClass)) setup(node);
   },
   async loadedGraphNode(node) {
-    if (node.comfyClass === NODE) {
+    if (NODES.has(node.comfyClass)) {
       setup(node);
       node.__spe.refresh();
     }
