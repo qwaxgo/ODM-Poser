@@ -1,4 +1,4 @@
-"""Serve the editor from this computer, so it can be installed as an app (PWA) without ComfyUI:
+"""Serve the editor from this computer, so it can be installed as an app (PWA):
 
     python tools/serve.py            http://localhost:8765/web/editor/  (this computer)
     python tools/serve.py --lan      also to other devices on the same network (see below)

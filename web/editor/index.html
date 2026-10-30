@@ -185,7 +185,7 @@ input[type=checkbox]{accent-color:var(--accent)}
       <input type="text" id="tcSearch" placeholder="検索：日本語でも英語でも（例：キック / kick、座る / sit）" style="margin-top:6px;width:100%;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:inherit;font-size:13px">
       <select id="tcList" size="9" style="margin-top:6px"></select>
       <div class="btns" style="margin-top:6px"><button id="tcApply">このポーズにする</button><button id="tcRandom">ランダム</button></div>
-      <div class="hint">骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。ファイルから読むと、一覧は選んだファイルの内容に置き換わります（user_presets/*.json と同じ形式）。</div>
+      <div class="hint">骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。ファイルから読むと、一覧は選んだファイルの内容に置き換わります（形式は README の「ユーザープリセット」）。</div>
     </div>
   </section>
 
@@ -1644,7 +1644,7 @@ if (qs.get("h")) $("H").value = qs.get("h");
 }
 // the app (PWA): offline with a service worker, an "add as an app" button. Only over https or
 // from this computer (localhost): opened as a file there is no app; inside another page's frame
-// (the ComfyUI node's window) neither.
+// (a host page's window, such as a node editor's) neither.
 { const top = window.top === window, secure = window.isSecureContext && location.protocol !== "file:";
   const ua = navigator.userAgent, ios = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
   const macSafari = /Macintosh/.test(ua) && /Safari\//.test(ua) && !/Chrome|Chromium|Edg\/|Firefox|OPR\//.test(ua) && !ios;

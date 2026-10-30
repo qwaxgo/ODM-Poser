@@ -1,15 +1,20 @@
 # Handoff: ODM Poser / 立体人形装置 (for the next Claude session)
 
 ODM Poser = Omni-Directional Mannequin Poser; the Japanese name on screen and in Japanese docs is
-立体人形装置. Repository and folder: `ODM-Poser` (formerly ComfyUI-SymbolicPoseEditor).
+立体人形装置. Repository `ODM-Poser` (formerly ComfyUI-SymbolicPoseEditor); the owner's working copy
+is `C:\AI\ODM-Poser` (outside ComfyUI). Related public repositories: `ODM-Poser-ComfyUIBridge`
+(the ComfyUI custom node; it carries this editor as the git submodule `editor/`) and
+`ODM-Poser-SampleMods`. All three state that they were implemented with Claude Code.
 
 Read this first when you pick the project up in a new thread. It says what exists, how it fits
 together, the owner's rules, and what is still open.
 
 ## What it is
 
-A pseudo-3D stick-and-circle pose editor ("atari" = a rough of lines and circles), packaged as a
-ComfyUI custom node. The owner (qwaxgo, an illustrator) will publish it under MIT. It started
+A pseudo-3D stick-and-circle pose editor ("atari" = a rough of lines and circles): a web page
+that runs from disk, from any static site (GitHub Pages) and as an installed app. The ComfyUI node
+is a separate repository (ODM-Poser-ComfyUIBridge) that embeds this one; nothing about ComfyUI
+lives here. The owner (qwaxgo, an illustrator) publishes it under MIT. It started
 as a tool inside a private project and was split out on 2026-10-19 with no git history and
 nothing third-party: keep it that way.
 
@@ -20,11 +25,10 @@ nothing third-party: keep it that way.
   and shapes are hand-made primitives. If you borrow an *idea* from another project, write the
   code yourself and do not copy text.
 - **Built-in poses**: only the 11 written by hand as joint turns (`PRESETS` in index.html:
-  nothing traced from pictures). Other poses come from the user's own files in
-  `user_presets/` (git-ignored). The public repo must not reveal what the owner keeps there:
-  describe the feature generically.
-- **Standalone**: it must work with ComfyUI alone (no other custom node pack) and as a plain
-  HTML page opened from disk.
+  nothing traced from pictures). Other poses come from the user's own preset files (loaded in
+  the editor, or from the bridge's git-ignored `user_presets/`). The public repos must not reveal
+  what the owner keeps there: describe the feature generically.
+- **Standalone**: the editor must work as a plain HTML page opened from disk, with no server.
 - The owner commits and pushes. Do not commit unless asked; finish a batch with ready-to-paste
   commit / push commands. Reports to the owner are in Japanese.
 - Heavy GPU runs are not needed for this project.
@@ -32,22 +36,14 @@ nothing third-party: keep it that way.
 ## Layout
 
 ```
-__init__.py          node mappings, WEB_DIRECTORY = web/js, imports routes
-nodes.py             ODMPoser node (old name SymbolicPoseEditor kept for saved workflows): hidden values -> outputs
-routes.py            /odm_poser/editor/<file>   the editor's files
-                     /odm_poser/user_presets.js  (user_presets/*.json -> window.USER_POSE_PRESETS)
-                     /odm_poser/mods.js, /odm_poser/mods/<path>  built-in mods, then mods/
-web/js/odm_poser.js   node widget: button, modal iframe, postMessage hand-over
 web/editor/index.html            the editor core (plain JS, Canvas 2D; no ComfyUI in it)
 web/editor/pose_props*.js        window.PROP_CATS / window.PROPS: the props as primitives
 web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carrying, mounting, grabbing, wire
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
-mods/                            the user's mods and cloned mod repositories (README.md only is tracked):
-                                 ODM-Poser-ComfyUIBridge (the node's hand-off, private repo),
-                                 ODM-Poser-SampleMods (examples, private repo)
-user_presets/                    the user's preset files (README.md only is tracked)
+mods/                            the user's mods and cloned mod repositories (README.md only is tracked),
+                                 e.g. ODM-Poser-SampleMods
 tools/make_mods_list.py          web/mods.js for opening the editor from disk with mods
 tools/serve.py                   a local server (localhost / --lan) so the editor installs as an app
 tools/make_icons.py              draws the app icons (web/editor/icon-*.png, apple-touch-icon, favicon, icon.svg)
@@ -55,24 +51,13 @@ web/editor/manifest.webmanifest, sw.js   the app (PWA): network first, the kept 
 docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API
 ```
 
-## How the node and the editor talk
+## Hosts (ComfyUI and others)
 
-The editor's side is the ComfyUI bridge mod, `comfyui.js` in its own private repository
-(qwaxgo/ODM-Poser-ComfyUIBridge) cloned into `mods/` (MOD API: `api.io`, `api.ui`,
-`api.presets`). The node serves it with the other mods; without it the editor opens but cannot
-hand the pose back (routes.py prints a warning at start). It also loads the user presets.
-
-1. The widget opens `/odm_poser/editor/index.html?node_id=<id>` in an iframe modal.
-2. The mod posts `{type: "odm-poser-ready", node_id}`; the widget answers
-   `{type: "odm-poser-load", pose_json}` with what the node holds (so it reopens on it).
-3. "確定して閉じる / Confirm" (the mod's section at the top of the side bar) posts `{type: "odm-poser-confirmed", node_id, pose_json,
-   scene_json, openpose, atari, width, height}` (pictures as PNG data URLs). The widget stores
-   them in the node's hidden widgets `pose_json`, `scene_json`, `openpose_image`,
-   `atari_image` (serialized with the workflow) and closes the modal. Cancel posts
-   `odm-poser-cancelled`.
-4. On queue, `nodes.ODMPoser.run` decodes the pictures and returns `pose_json`,
-   `scene_json`, `openpose`, `atari`, `width`, `height`. It raises a clear error when nothing
-   was confirmed. All messages are checked against `location.origin`.
+A page that hosts the editor talks to it only through a mod (MOD API: `api.io`, `api.ui`,
+`api.presets`) and the list of mods it serves at `../mods.js`. The ComfyUI bridge repository does
+exactly that (its `mod/comfyui.js`, its own HANDOFF in its README); keep the API stable for it:
+state format `version: 3`, message names `odm-poser-*`, `window.ODMPoser` (old alias
+`window.SymbolicPose`).
 
 ## The editor in brief (web/editor/index.html)
 
@@ -108,23 +93,18 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
 - JS syntax: `python -c "import esprima, re; [esprima.parseScript(m) for m in re.findall(r'<script>(.*?)</script>', open('web/editor/index.html', encoding='utf-8').read(), re.S)]"`
   (esprima knows no `?.` or `??`: keep those out of the editor files; the widget file uses `?.`
   and is checked in the browser).
-- Headless Edge works with `--headless=new` (`--screenshot` or `--dump-dom`,
-  `--virtual-time-budget`, a fresh `--user-data-dir` per run). To test the node hand-over,
-  serve a small same-origin host page that iframes the editor with `?node_id=` and listens
-  for the messages (put it temporarily under `web/js/`, it is served at
-  `/extensions/ODM-Poser/`; delete it afterwards).
-- Node: queue a prompt with `ODMPoser` inputs `pose_json`, `scene_json`,
-  `openpose_image`, `atari_image` (data URLs) and preview the outputs.
+- Browsers: Playwright (installed in ComfyUI's python_embeded) drives Edge (`channel="msedge"`),
+  WebKit and Firefox, with device emulation for phones and tablets; the headless Edge command
+  line can hang while a newer Edge waits to install.
 
 ## Open items
 
 - English UI done (2026-10-19). To find untranslated text: open the editor headless with
   `?lang=en`, step through the modes, joints and props, and list text nodes that still hold
   Japanese (only the "日本語" switch and the search example should remain).
-- Real mouse use in ComfyUI (the modal, wheel, drag) has been checked by automation only.
+- Real mouse, touch and pen use has been checked by automation only.
 - Prop shapes and grip positions are estimates; the owner will report the ones that look off.
 - The owner's private project keeps its own copy of the editor (it embeds it elsewhere).
   Changes made there are copied here with a sync script that lives in that project (it
-  rewrites index.html, pose_props.js and pose_scene.js; i18n.js, the node and the docs are this
-  repo's own). Keep the two compatible (same state format, same message names) or note the
-  difference here.
+  is now retired: this repository has moved far past that copy). Keep the state format readable
+  by both, or note the difference here.

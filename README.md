@@ -17,8 +17,8 @@ Open `web/editor/index.html` in a browser. The export buttons save the pictures 
 To install it as an app (PC, phone, tablet; works offline), see **[docs/APP.md](docs/APP.md)**
 (日本語: [docs/APP-JA.md](docs/APP-JA.md)); `python tools/serve.py` serves it on this computer.
 
-To use it as a ComfyUI node, see **[docs/COMFYUI.md](docs/COMFYUI.md)** (日本語:
-[docs/COMFYUI-JA.md](docs/COMFYUI-JA.md)): install, the node's outputs, troubleshooting.
+To use it as a ComfyUI node, install [ODM-Poser-ComfyUIBridge](https://github.com/qwaxgo/ODM-Poser-ComfyUIBridge)
+(that repository alone installs everything, this editor included).
 
 ## Editing
 
@@ -115,10 +115,18 @@ the figure's body.
 
 ## User presets
 
-Your own presets (JSON files, format in `user_presets/README.md`) are loaded with
-"ファイルから読込 / Load from files" and listed under "ユーザープリセット / User presets" with a
-group filter and a Japanese / English search. Keep them in `user_presets/` (not committed); a mod
-can also add presets (in ComfyUI those of `user_presets/` appear by themselves).
+Your own presets (JSON files) are loaded with "ファイルから読込 / Load from files" and listed under
+"ユーザープリセット / User presets" with a group filter and a Japanese / English search; a mod can
+add presets too. A file is a list of presets or `{"presets": [...]}`; a preset is
+
+```json
+{"group": "Standing", "name": "contrapposto 01", "P": [[0, 95, 0], [0, 111, 0], ...]}
+```
+
+`P` holds the 19 joints in centimetres (y up, the figure faces +z) in this order: pelvis, waist,
+chest, neck, head, r_shoulder, r_elbow, r_wrist, l_shoulder, l_elbow, l_wrist, r_hip, r_knee,
+r_ankle, r_toe, l_hip, l_knee, l_ankle, l_toe. Only the bones' directions are taken; the figure
+keeps its own body. `group` defaults to the file name.
 
 ## Mods
 
@@ -128,6 +136,11 @@ Opened from disk, run `python tools/make_mods_list.py` first so the editor knows
 On a site without `mods/` (GitHub Pages, the installed app, a phone), install mods in the MOD panel from a
 file or by URL; they are kept in the browser. Mods run with the editor's rights: install only mods you
 trust; `?nomods` starts without them.
+
+## Built with Claude Code
+
+The code and documents of this repository were implemented by [Claude Code](https://claude.com/claude-code),
+Anthropic's AI coding tool, under qwaxgo's design and direction.
 
 ## License
 
@@ -142,7 +155,7 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 
 - **使い方**：`web/editor/index.html` をブラウザで開く（書き出しボタンでファイルに保存、ユーザープリセットは「ファイルから読込」で選ぶ）。
 - **アプリとして使う**：パソコン・スマホ・タブレットにアプリとして追加でき、オフラインでも開けます。方法は **[docs/APP-JA.md](docs/APP-JA.md)**（`python tools/serve.py` でこのパソコンから開けます）。
-- **ComfyUI で使う**：導入方法・ノードの出力・うまくいかないときは **[docs/COMFYUI-JA.md](docs/COMFYUI-JA.md)** にまとめてあります。
+- **ComfyUI で使う**：[ODM-Poser-ComfyUIBridge](https://github.com/qwaxgo/ODM-Poser-ComfyUIBridge) を入れます（そのリポジトリだけで、このエディタも含めて導入できます）。
 - **操作**：丸をドラッグ（骨の長さは保たれる）。手首・足首は腕・脚ごと（Shift でその骨だけ）。ダブルクリックで
   手前と奥を入れ替え。横図で奥行き。すべての関節を3軸（前後・左右・ねじり。頭はうなずく・かしげる・左右を向く）で
   回せます。関節の固定（ピン、Alt＋クリック）、腕の欄で手の形、体格モード、パースモード、人間の関節の限界。
@@ -166,6 +179,7 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **大きな書き出し**：端末が描ける大きさ（iOS／iPadOS は約 1670 万画素）を超えるときは、比率を保って小さくし、そのことを表示します。
 - **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
 - **組み込みポーズ**：11種（立ち・Aポーズ・Tポーズ・コントラポスト・歩く・走る・椅子に座る・しゃがむ・ジャンプ・ファイティングポーズ・腰に手）。関節の角度で作ったもので、体格はそのまま。
-- **ユーザープリセット**：`user_presets/` に自分のプリセット（JSON）を置くと一覧に出ます（git には入りません）。
+- **ユーザープリセット**：自分のプリセット（JSON）を「ファイルから読込」で読むと一覧に出ます（形式は上の User presets）。MOD からも足せます。
 - **MOD**：`mods/` に `*.js` を置くと、小物・物体・オーラ・手の形・ポーズ・翻訳・自分の欄・描画やマウスのフックを追加できます（MOD のリポジトリを `mods/` に clone しても可。説明：`docs/MODDING-JA.md`）。直接開くときは `python tools/make_mods_list.py` を先に実行。サイトやスマホでは MOD 欄の「ファイルから入れる」「URLから追加」で入れられます（ブラウザに保存）。信頼できる MOD だけを入れてください（`?nomods` で MOD なし）。
+- **Claude Code での実装**：このリポジトリのコードとドキュメントは、qwaxgo の設計と指示のもとで、Anthropic の AI コーディングツール [Claude Code](https://claude.com/claude-code) が実装しました。
 - **ライセンス**：MIT（c）2026 qwaxgo。

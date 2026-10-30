@@ -19,7 +19,7 @@ API の版：**1.2.0**。English: [MODDING.md](MODDING.md)（こちらが正式�
 
 1. 下の「MOD のファイル」の例を `mods/mymod.js` として保存します（または MOD のリポジトリを `mods/` に clone。このページの最後）。
 2. `web/editor/index.html` を直接開くときは、`python tools/make_mods_list.py` を実行してから開き直します
-   （エディタを載せているページが一覧を用意する場合は、開き直すだけ。ComfyUI は [COMFYUI-JA.md](COMFYUI-JA.md)）。
+   （エディタを載せているページが一覧を用意する場合は、開き直すだけ）。
 3. 横の欄のいちばん下の **MOD** 欄に、読み込んだ MOD が並びます（✓ 読み込み済み、✗ はエラーの内容つき）。
 
 MOD 欄では、`mods/` フォルダがない場所（GitHub Pages などのサイト、アプリとして追加したもの、スマホ・タブレット）でも MOD を使えます。

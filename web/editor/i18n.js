@@ -25,8 +25,8 @@
     "歩く": "Walking", "走る": "Running", "椅子に座る": "Sitting on a chair", "しゃがむ": "Squatting",
     "ジャンプ（バンザイ）": "Jump (arms up)", "ファイティングポーズ": "Fighting stance", "腰に手": "Hands on hips",
     "ユーザープリセット（": "User presets (", "）": ")", "このポーズにする": "Use this pose", "ランダム": "Random",
-    "骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。ファイルから読むと、一覧は選んだファイルの内容に置き換わります（user_presets/*.json と同じ形式）。":
-      "Only the bones' directions are taken; the body stays as it is. Double-click a row to load it too. Loading from files replaces the list with the chosen files' contents (same format as user_presets/*.json).",
+    "骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。ファイルから読むと、一覧は選んだファイルの内容に置き換わります（形式は README の「ユーザープリセット」）。":
+      "Only the bones' directions are taken; the body stays as it is. Double-click a row to load it too. Loading from files replaces the list with the chosen files' contents (format: \"User presets\" in the README).",
     "ファイルから読込": "Load from files",
     "すべての分類": "All groups",
     "検索：日本語でも英語でも（例：キック / kick、座る / sit）": "Search in Japanese or English (e.g. kick / キック, sit / 座る)",

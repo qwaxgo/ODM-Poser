@@ -1,6 +1,5 @@
 """Write web/mods.js, the list of mods/*.js and mods/<folder>/*.js (a repository of mods cloned
-into mods/), so the editor opened from disk (without ComfyUI) loads the mods too. Inside ComfyUI
-the node serves the same list itself.
+into mods/), so the editor opened from disk (or from tools/serve.py) loads the mods too.
 
     python tools/make_mods_list.py
 
