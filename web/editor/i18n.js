@@ -153,6 +153,9 @@
     "アプリとして追加": "Install as an app", "アプリとして追加しました。": "Installed as an app.",
     "Safari の共有ボタン（□↑）→「ホーム画面に追加」で、アプリとして使えます。": "In Safari: the Share button (□↑) → \"Add to Home Screen\" installs it as an app.",
     "Safari のメニュー「ファイル」→「Dock に追加」で、アプリとして使えます。": "In Safari: File → \"Add to Dock\" installs it as an app.",
+    // hidden lines (index.html)
+    "隠れた線を破線に": "Hidden lines dashed", "物陰に隠れた線を破線で描きます（書き出しにも）。": "Lines hidden behind bodies and objects are drawn dashed (in exports too).",
+    "隠れた線を破線にするのをやめました。": "Hidden lines are drawn solid again.",
     // camera and export
     "カメラ": "Camera", "レンズ（mm、小さいほど広角）": "Lens (mm, smaller = wider)", "向き（左右）": "Direction (left / right)",
     "高さ（俯瞰＋／あおり−）": "Height (+ from above / − from below)", "傾き": "Roll", "カメラを戻す": "Reset camera",

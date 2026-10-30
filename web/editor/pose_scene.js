@@ -131,7 +131,13 @@ function circle3(c, n, r, k = 24){            // points of a circle about the no
 }
 function drawShape(ctx, sh, it, f, P, lw){
   const W2 = q => itemToWorld(it, q, f), k = (it.scale || 1) * (f.k || 1);
-  const line = pts => { ctx.beginPath(); pts.forEach((q, i) => { const s = P(q); i ? ctx.lineTo(s.x, s.y) : ctx.moveTo(s.x, s.y); }); ctx.stroke(); };
+  const line = pts => {
+    if (S.hiddenDashed && typeof strokeSeen === "function" && !sceneSide){      // dashed where a body or a solid hides it
+      const W = ctx.canvas.width, H = ctx.canvas.height;
+      for (let i = 1; i < pts.length; i++) strokeSeen(ctx, pts[i - 1], pts[i], W, H, null, (q) => P(q));
+      return;
+    }
+    ctx.beginPath(); pts.forEach((q, i) => { const s = P(q); i ? ctx.lineTo(s.x, s.y) : ctx.moveTo(s.x, s.y); }); ctx.stroke(); };
   if (sh.c){
     const [x1, y1, z1, x2, y2, z2, r0] = sh.c, a = W2([x1, y1, z1]), b = W2([x2, y2, z2]), r = r0 * k;
     const pa = P(a), pb = P(b), wpx = 2 * r * Math.max(pa.s, pb.s);
@@ -211,7 +217,9 @@ function envLines(){                          // floor / wall / ceiling as 3D li
   }
   return out;
 }
+let sceneSide = false;                        // drawing the side view (no hidden lines there)
 function drawScene(ctx, W, H, opts, proj, ink, far, lw){
+  sceneSide = !!opts.side;
   const P = q => proj(q, W, H), E = S.env || {};
   ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
   if (!opts.noEnv && (!opts.export || E.show || opts.showEnv)){

@@ -51,6 +51,9 @@ To use it as a ComfyUI node, see **[docs/COMFYUI.md](docs/COMFYUI.md)** (日本�
 - **Composition picture**: "Save composition" saves what the front view shows at that size, with
   the parts you tick (figures, props, objects, floor and walls, the ruler, auras) on white, clear or
   the screen's background.
+- **Hidden lines dashed** (a switch above the views): what lies behind a body or an object is drawn
+  dashed, in the view and in every export. With a clear background the composition picture is lines
+  only (auras as outlines).
 - **Light / dark**: the button at the top right (auto follows the system).
 
 ## Props and scene
@@ -155,6 +158,7 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **複数の人物**：「人物」の欄の「人物を追加」「複製」。編集するのは選んだ人物だけ（ポーズ・体格・小物・オーラ・ワイヤー）で、ほかの人物は薄く表示され、その丸をクリックすると切り替わります。床・壁・物体・定規・カメラは共通。アタリ・OpenPose（1人ずつ）・構図の画像には全員が入ります。
 - **書き出しの比率と解像度**：比率（1:1・3:4・16:9・A判・2.35:1・自分で指定）と長い辺（最大 8192 px）から幅と高さを決めます。画面の図もその比率になります。
 - **構図の画像**：「構図を保存」で、正面の図をその大きさで保存。入れるもの（人物・小物・物体・床と壁・パース定規・オーラ）と背景（白・透明・画面と同じ色）を選べます。
+- **隠れた線を破線に**（図の上のスイッチ）：体や物体の陰に隠れた線を破線で描きます（画面と書き出しの両方）。構図の画像を背景「透明」で保存すると、線だけの透過画像になります（オーラも輪郭だけ）。
 - **ライト／ダーク**：右上のボタンで切り替え（自動はシステムの設定に合わせる）。
 - **端末**：Windows・macOS・Linux（Ubuntu など）・iOS／iPadOS・Android・Fire OS の今のブラウザ（Chrome・Edge・Safari・Firefox・Vivaldi・Brave・Samsung Internet・Silk）。画面に合わせて、横長は左右に、縦置きモニターとタブレットは図の下に欄を段組みで、スマホは横の図をボタンで、横向きのスマホは図の横に欄を、2画面の端末は画面ごとに並べます。
 - **タッチ**：1本指でドラッグ、2本指でつまんで拡大縮小（パースモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。画面の「Shift」「固定」ボタンが Shift と Alt の代わり。

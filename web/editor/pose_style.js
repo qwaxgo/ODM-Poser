@@ -59,6 +59,7 @@ function resample(hull, n){
 }
 function seeded(n){ let s = 1234567 + n * 7919; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
 
+let flatAura = false;                         // lines only (the composition on a clear background)
 function drawAura(ctx, a, idx, W, H, front){
   const kind = AURA_KINDS[a.kind] ? a.kind : "flame", col = a.color || AURA_KINDS[kind][1];
   const extra = AURA_KINDS[kind][2] || {};    // a mod's kind: {front, draw, margin} (pose_api.js)
@@ -86,7 +87,7 @@ function drawAura(ctx, a, idx, W, H, front){
           const x = p.x + p.nx * h * 0.6, y = p.y + p.ny * h * 0.6 - (tip ? h * up * 0.9 : 0);
           i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
         });
-        ctx.closePath(); ctx.globalAlpha = fill; ctx.fill(); ctx.globalAlpha = alpha; ctx.lineWidth = lw * 1.3; ctx.stroke();
+        ctx.closePath(); if (!flatAura){ ctx.globalAlpha = fill; ctx.fill(); } ctx.globalAlpha = alpha; ctx.lineWidth = lw * 1.3; ctx.stroke();
       }
     } else if (kind === "glow"){
       for (const [grow, alpha, w] of [[0, 0.85, 1.4], [size * 0.18, 0.4, 2.5], [size * 0.36, 0.18, 4]]){
@@ -94,7 +95,7 @@ function drawAura(ctx, a, idx, W, H, front){
         pts.forEach((p, i) => { const x = p.x + p.nx * grow, y = p.y + p.ny * grow; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
         ctx.closePath(); ctx.globalAlpha = alpha; ctx.lineWidth = lw * w; ctx.stroke();
       }
-      ctx.globalAlpha = 0.1; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath(); ctx.fill();
+      if (!flatAura){ ctx.globalAlpha = 0.1; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath(); ctx.fill(); }
     } else {
       // plasma: bolts that jump along and across the outline
       const bolts = 6 + Math.round(chains.length > 1 ? 4 : 10 * Math.min(1, chain.length / 8));
@@ -119,6 +120,7 @@ function drawAura(ctx, a, idx, W, H, front){
   // every figure's auras (pose_cast.js swaps each one in); none when the composition leaves them out
   const each = fn => (typeof everyFigure === "function" ? everyFigure(fn) : fn(true, true));
   drawAtari = function(ctx, W, H, opts = {}){
+    flatAura = !!opts.flat;
     if (!opts.noAuras) each(() => (S.auras || []).forEach((a, i) => drawAura(ctx, a, i, W, H, false)));
     atari0(ctx, W, H, opts);
     if (!opts.noAuras) each(() => (S.auras || []).forEach((a, i) => drawAura(ctx, a, i, W, H, true)));
