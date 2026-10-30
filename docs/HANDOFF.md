@@ -36,6 +36,9 @@ web/editor/i18n.js               Japanese / English (exists only in this repo; s
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
 mods/                            the user's mods and cloned mod repositories (README.md only is tracked):
 tools/make_mods_list.py          web/mods.js for opening the editor from disk with mods
+tools/serve.py                   a local server (localhost / --lan) so the editor installs as an app
+tools/make_icons.py              draws the app icons (web/editor/icon-*.png, apple-touch-icon, favicon, icon.svg)
+web/editor/manifest.webmanifest, sw.js   the app (PWA): network first, the kept copy offline (docs/APP.md)
 docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API
 ```
 
