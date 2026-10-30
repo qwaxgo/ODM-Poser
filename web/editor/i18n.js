@@ -26,6 +26,19 @@
     "左の手足を右へ写しました。": "Copied the left arm and leg to the right.",
     "反対側をこの形にそろえる": "Make the other side match", "この関節だけ": "This joint only",
     "ここから先まとめて": "From here on",
+    "カメラの固定と記憶": "Camera lock and memory", "カメラを固定する": "Lock the camera", "カメラパッドを表示": "Show the camera pad",
+    "記憶したカメラ（": "Remembered cameras (", "今のカメラを記憶": "Remember this camera", "呼び出す": "Recall",
+    "カメラを固定しました。": "Locked the camera.", "カメラの固定を外しました。": "Unlocked the camera.",
+    "カメラは固定中です（「カメラの固定と記憶」で外せます）。": "The camera is locked (unlock it in \"Camera lock and memory\").",
+    "固定すると、ドラッグ・スワイプ・2本指・ホイール・テンキー・カメラパッドではカメラが動きません（パースのスライダーと「呼び出す」は効きます）。記憶するのは向き・高さ・傾き・レンズ・拡大・中心で、ポーズと一緒に保存されます。一覧はダブルクリックでも呼び出せます。":
+      "Locked, the camera does not move with drags, swipes, two fingers, the wheel, the keypad or the camera pad (the Perspective sliders and Recall still set it). A remembered camera keeps the direction, height, roll, lens, zoom and centre and is saved with the pose. Double-click the list to recall too.",
+    "分割表示：オン": "Split screen: on", "分割表示：オフ": "Split screen: off",
+    "カメラパッド": "Camera pad", "操作欄を隠す": "Hide panels", "操作欄を出す": "Show panels",
+    "回す": "Turn", "動かす": "Move", "拡大": "Zoom",
+    "タッチ：丸をタップして選び、選んだ丸をドラッグして動かす。それ以外の所を1本指でスワイプ：カメラを回す。2本指：つまんで拡大縮小、そのまま動かして移動（パース・配置モードはレンズ・物体のまま）。カメラパッド：左のスティックで回す、右のスティックで動かす、右端のスライダーで拡大（上の「カメラパッド」で隠せます）。ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで。ペンはマウスと同じく丸を直接ドラッグ（サイドボタンは Shift、消しゴム側は固定）。":
+      "Touch: tap a circle to pick it, then drag the picked circle. Swipe anywhere else with one finger: turn the camera. Two fingers: pinch to zoom, move them to move the view (the Perspective and Place modes keep the lens and objects). Camera pad: the left stick turns, the right stick moves, the slider at the right zooms (hide it with \"Camera pad\" above). Double-tap flips a bone toward / away from you. Shift and pin: the keys above. A pen drags circles directly, like a mouse (barrel button: Shift, eraser: pin).",
+    "カメラ（どのモードでも。レンズはそのまま）：中ボタンでドラッグして回す、Shift＋中ボタンで動かす、Ctrl＋中ボタン（またはホイール）で拡大縮小。中ボタンのないマウスやトラックパッドは、何もない所を Alt＋ドラッグ。テンキー：1 正面、3 右から、7 上から（Ctrl で反対側）、2・4・6・8 で15°ずつ回す（Ctrl で動かす）、9 裏へ回る、＋－ 拡大縮小、. 選んだ関節を中心に、Home 人物を中心に。":
+      "Camera (any mode; the lens stays): middle-button drag turns it, Shift+middle button moves it, Ctrl+middle button (or the wheel) zooms. Without a middle button: Alt+drag where there is no joint. Numeric keypad: 1 front, 3 from the right, 7 from above (Ctrl: the other side), 2 4 6 8 turn by 15° (Ctrl: move), 9 round to the back, + - zoom, . the selected joint to the middle, Home the figure to the middle.",
     "左右同時に動かす（片方の手足を動かすと、反対側も同じ形に）": "Move both sides (the other arm or leg takes the same pose)", "反対側をそろえました。": "Matched the other side.", "元に戻す": "Undo",
     "立ち（標準）": "Standing", "Aポーズ": "A-pose", "Tポーズ": "T-pose", "コントラポスト": "Contrapposto",
     "歩く": "Walking", "走る": "Running", "椅子に座る": "Sitting on a chair", "しゃがむ": "Squatting",
@@ -189,8 +202,8 @@
     "配置（定規・物体）": "Place (ruler, objects)",
     "ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。Shift＋ドラッグ：カメラを傾ける（水平でなくする）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。パース定規の消失点やアイレベルをつかむと、そこに合うようにカメラが動きます。":
       "Drag: orbit the camera (sideways = direction, up and down = height). Shift+drag: tilt the camera (off level). Wheel: lens (the wider, the stronger the perspective). The figure keeps its size on screen. Grabbing a vanishing point or the eye level of the ruler moves the camera to match.",
-    "カメラは動きません。消失点をドラッグ：定規の向きを変える。直方体のガイドや物体をドラッグ：床の上で動かす（Shift＋ドラッグで上下）。その上でホイール：向きを回す。丸をクリック：関節を選ぶ（「物体に着ける」用）。":
-      "The camera stays. Drag a vanishing point: turn the ruler. Drag the box guide or an object: move it over the floor (Shift+drag: up and down). Wheel over it: turn it. Click a circle: select the joint (for \"put the joint on it\").",
+    "ドラッグではカメラは動きません（中ボタン・テンキー・カメラパッドでは動きます）。消失点をドラッグ：定規の向きを変える。直方体のガイドや物体をドラッグ：床の上で動かす（Shift＋ドラッグで上下）。その上でホイール：向きを回す。丸をクリック：関節を選ぶ（「物体に着ける」用）。":
+      "Dragging does not move the camera (the middle button, the keypad and the camera pad do). Drag a vanishing point: turn the ruler. Drag the box guide or an object: move it over the floor (Shift+drag: up and down). Wheel over it: turn it. Click a circle: select the joint (for \"put the joint on it\").",
     "物体（床・壁・建物・柱など）": "Objects (floors, walls, buildings, poles ...)",
     "直方体（箱・台）": "Box (crate, stand)", "床（板）": "Floor slab", "壁（板）": "Wall slab", "建物": "Building", "段差": "Step",
     "角柱": "Prism", "円柱": "Cylinder", "角錐": "Pyramid", "円錐": "Cone", "支柱": "Pole", "直方体": "Box",
@@ -237,9 +250,14 @@
     return null;
   };
   const joint = s => JOINT[s] || s;
-  const figEn = n => n.replace(/^(\d+)人目$/, "Figure $1");
+  const figEn = n => n.replace(/^(\d+)人目$/, "Figure $1").replace(/^カメラ(\d+)$/, "Camera $1");
   const RULES = [
     [/^この端末では (\d+)×(\d+) を描けないため、(\d+)×(\d+) にしました。$/, m => `This device cannot draw ${m[1]} × ${m[2]}: saved at ${m[3]} × ${m[4]}.`],
+    // remembered cameras: "カメラ2（向き 30°・高さ 10°・50mm・×1.2）"
+    [/^カメラ(\d+)（向き (-?\d+)°・高さ (-?\d+)°・(\d+)mm・×([\d.]+)）$/,
+      m => `Camera ${m[1]} (direction ${m[2]}°, height ${m[3]}°, ${m[4]} mm, ×${m[5]})`],
+    [/^カメラ(\d+)として記憶しました。$/, m => `Remembered as Camera ${m[1]}.`],
+    [/^(.+)を呼び出しました。$/, m => `Recalled ${figEn(m[1])}.`],
     // figures: "2人目" is "Figure 2" (pose_cast.js)
     [/^(\d+)人目$/, m => `Figure ${m[1]}`],
     [/^(.+)（編集中）$/, m => `${figEn(m[1])} (editing)`],
