@@ -1,7 +1,7 @@
 // The service worker of the installed app (PWA): every GET of the editor, its mods and its
 // presets goes to the network first (so an update or a new mod shows at once) and is kept; with
 // no network, the kept copy is used, so the editor also opens offline.
-const CACHE = "symbolic-pose-editor-v1";
+const CACHE = "odm-poser-editor-v1";
 const SHELL = ["./", "./index.html", "./i18n.js", "./pose_props.js", "./pose_props_more.js", "./pose_scene.js",
   "./pose_cast.js", "./pose_solids.js", "./pose_style.js", "./pose_ruler.js", "./pose_api.js",
   "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png",
@@ -14,7 +14,7 @@ self.addEventListener("install", e => {
 });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k.startsWith("symbolic-pose-editor-") && k !== CACHE).map(k => caches.delete(k))))
+    .then(keys => Promise.all(keys.filter(k => (k.startsWith("odm-poser-editor-") || k.startsWith("symbolic-pose-editor-")) && k !== CACHE).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 self.addEventListener("fetch", e => {

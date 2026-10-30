@@ -1,11 +1,11 @@
 // The MOD API (index.html, loaded last, after i18n.js). A mod is a script that calls
-//   SymbolicPose.registerMod({id, name, version, api: 1, init(api){ ... }})
+//   ODMPoser.registerMod({id, name, version, api: 1, init(api){ ... }})
 // and adds things through the api object it gets: props and their categories, solid kinds,
 // aura kinds and parts, hand shapes, built-in poses, user presets, translations, panels, and
 // hooks into drawing, editing and the mouse. See docs/MODDING.md.
 //
 // Mods are loaded from mods/*.js and mods/<folder>/*.js (a repository of mods cloned into mods/).
-// The list is window.SYMBOLIC_POSE_MODS from ../mods.js: opened from disk that is web/mods.js
+// The list is window.ODM_POSER_MODS from ../mods.js: opened from disk that is web/mods.js
 // (written by tools/make_mods_list.py); a page that hosts the editor may serve it instead.
 // The MOD panel can also run a file for this session only. ?nomods in the address starts without mods.
 // A mod's own data lives in S.mods[id]: saved with the pose, undone with Ctrl+Z.
@@ -18,7 +18,7 @@ let currentFile = "";
 // ---- reporting: a mod's error is shown in the MOD panel and the console, the editor goes on ------
 function fail(mod, where, err){
   const msg = `${where}: ${err && err.message ? err.message : err}`;
-  console.error(`[SymbolicPose MOD ${mod ? mod.id : "?"}] ${msg}`, err);
+  console.error(`[ODM Poser MOD ${mod ? mod.id : "?"}] ${msg}`, err);
   if (mod){ mod.status = "error"; mod.error = mod.error ? mod.error : msg; }
   renderModList();
 }
@@ -112,7 +112,7 @@ const SHAPES = {
 
 // ---- the api a mod gets -----------------------------------------------------------------------------
 function makeApi(mod){
-  const i18n = () => window.SymbolicPoseI18n;
+  const i18n = () => window.ODMPoserI18n;
   const tr = (ja, en) => { if (en) i18n() && i18n().add({[ja]: en}); };
   const api = {
     version: API_VERSION,
@@ -261,7 +261,7 @@ function makeApi(mod){
 }
 
 // ---- registering ---------------------------------------------------------------------------------
-window.SymbolicPose = {
+window.ODMPoser = {
   version: API_VERSION,
   registerMod(def){
     const mod = {id: def && def.id, name: (def && def.name) || (def && def.id) || currentFile, version: (def && def.version) || "",
@@ -283,6 +283,7 @@ window.SymbolicPose = {
   },
   mods: () => mods.map(m => Object.assign({}, m)),
 };
+window.SymbolicPose = window.ODMPoser;        // the old name: mods written for it still load
 
 // ---- the MOD panel ---------------------------------------------------------------------------------
 { const sec = document.createElement("section");
@@ -334,9 +335,10 @@ function runScript(src, file){
   });
 }
 async function loadMods(){
-  const list = Array.isArray(window.SYMBOLIC_POSE_MODS) ? window.SYMBOLIC_POSE_MODS : [];
+  const list = Array.isArray(window.ODM_POSER_MODS) ? window.ODM_POSER_MODS
+    : Array.isArray(window.SYMBOLIC_POSE_MODS) ? window.SYMBOLIC_POSE_MODS : [];       // a list written before the rename
   if (new URLSearchParams(location.search).has("nomods") || !list.length) return;
-  const base = window.SYMBOLIC_POSE_MODS_BASE || (location.protocol === "file:" ? "../../mods/" : "../mods/");
+  const base = window.ODM_POSER_MODS_BASE || window.SYMBOLIC_POSE_MODS_BASE || (location.protocol === "file:" ? "../../mods/" : "../mods/");
   loading = true;
   for (const name of list) if (/^([\w.-]+\/)?[\w.-]+\.js$/.test(name))
     await runScript(base + name.split("/").map(encodeURIComponent).join("/"), name);

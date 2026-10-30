@@ -52,7 +52,7 @@ def main():
     subprocess.run([sys.executable, str(ROOT / "tools" / "make_mods_list.py")], check=False)
     host = "0.0.0.0" if a.lan else "127.0.0.1"
     server = http.server.ThreadingHTTPServer((host, a.port), functools.partial(Handler, directory=str(ROOT)))
-    print(f"Symbolic Pose Editor: http://localhost:{a.port}/web/editor/")
+    print(f"ODM Poser: http://localhost:{a.port}/web/editor/")
     if a.lan:
         print(f"  other devices on this network: http://{lan_address()}:{a.port}/web/editor/ "
               "(opens there; adding as an app needs https)")

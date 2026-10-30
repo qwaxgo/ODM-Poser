@@ -1,6 +1,6 @@
 # Using it as an app (PWA)
 
-The editor can be installed from the browser as an app (a PWA): it gets an icon (home screen,
+ODM Poser can be installed from the browser as an app (a PWA): it gets an icon (home screen,
 Start menu, Dock), opens in its own window, opens offline after the first time (with the mods and
 presets it last read), and updates itself the next time it opens online. 日本語: [APP-JA.md](APP-JA.md)
 

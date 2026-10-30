@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Symbolic Pose Editor 記号ポーズエディタ",
-  "short_name": "ポーズエディタ",
-  "description": "線と丸の全身アタリを疑似3Dで動かし、アタリ画像・OpenPose 画像・構図を書き出すポーズエディタ",
+  "name": "立体人形装置 ODM Poser",
+  "short_name": "立体人形装置",
+  "description": "立体人形装置（ODM Poser: Omni-Directional Mannequin Poser）。線と丸の全身アタリを疑似3Dで動かし、アタリ画像・OpenPose 画像・構図を書き出す",
   "lang": "ja",
   "start_url": "./index.html",
   "scope": "./",

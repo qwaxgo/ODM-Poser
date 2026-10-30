@@ -2,10 +2,10 @@
 // text node, placeholder and title (also the ones the editor adds later) and the canvas
 // labels are shown through this table and the rules below. The choice is kept in this browser.
 (() => {
-  const KEY = "symbolic-pose-lang";
+  const KEY = "odm-poser-lang";
   const T = {
     // header, modes, views
-    "記号ポーズエディタ": "",
+    "立体人形装置": "",                         // the header shows "ODM Poser — Omni-Directional Mannequin Poser" after it
     "線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。":
       "Pose a full-body rough of lines and circles in pseudo 3D. Export the rough, an OpenPose picture and the pose (JSON).",
     "ポーズ（骨の長さを保つ）": "Pose (bone lengths kept)",
@@ -348,7 +348,7 @@
   document.documentElement.lang = lang;
   if (lang === "en") { walk(document.body); if (typeof draw === "function") draw(); }
   // for mods (pose_api.js): more words and rules; what is on the page is translated again
-  window.SymbolicPoseI18n = {
+  window.ODMPoserI18n = window.SymbolicPoseI18n = {
     get lang(){ return lang; },
     add(table){ Object.assign(T, table); if (lang === "en"){ walk(document.body); if (typeof draw === "function") draw(); } },
     addRule(re, fn){ RULES.unshift([re, fn]); if (lang === "en") walk(document.body); },

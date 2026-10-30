@@ -1,4 +1,7 @@
-# Handoff: SymbolicPoseEditor (for the next Claude session)
+# Handoff: ODM Poser / 立体人形装置 (for the next Claude session)
+
+ODM Poser = Omni-Directional Mannequin Poser; the Japanese name on screen and in Japanese docs is
+立体人形装置. Repository and folder: `ODM-Poser`.
 
 Read this first when you pick the project up in a new thread. It says what exists, how it fits
 together, the owner's rules, and what is still open.
@@ -42,6 +45,12 @@ web/editor/manifest.webmanifest, sw.js   the app (PWA): network first, the kept 
 docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API
 ```
 
+## How the node and the editor talk
+
+4. On queue, `nodes.ODMPoser.run` decodes the pictures and returns `pose_json`,
+   `scene_json`, `openpose`, `atari`, `width`, `height`. It raises a clear error when nothing
+   was confirmed. All messages are checked against `location.origin`.
+
 ## The editor in brief (web/editor/index.html)
 
 - State `S`: `P` 19 joints (cm, y up, the figure faces +z; order in `J`), `R` circle radii,
@@ -75,6 +84,8 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
 
 - JS syntax: `python -c "import esprima, re; [esprima.parseScript(m) for m in re.findall(r'<script>(.*?)</script>', open('web/editor/index.html', encoding='utf-8').read(), re.S)]"`
   (esprima knows no `?.` or `??`: keep those out of the editor files).
+- Node: queue a prompt with `ODMPoser` inputs `pose_json`, `scene_json`,
+  `openpose_image`, `atari_image` (data URLs) and preview the outputs.
 
 ## Open items
 
