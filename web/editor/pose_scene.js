@@ -633,7 +633,7 @@ function buildScenePanel(){
   $("scMount").addEventListener("click", () => { const it = S.items[scSel]; if (it) mountOn(it); });
   $("scFlip").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
     it.rot[0] = ((it.rot[0] + 360) % 360) - 180; afterEdit(); showItem(); draw(); });
-  $("scBoth").addEventListener("change", e => { const it = S.items[scSel]; if (!it) return;
+  $("scBoth").addEventListener("change", e => { const it = S.items[scSel]; if (!it) return; remember();
     freeHands(it); it.both = e.target.checked; holdHands(it); afterEdit(); draw(); });
   const onItem = (id, fn, msg) => $(id).addEventListener("click", () => { const it = S.items[scSel]; if (!it) return;
     remember(); fn(it); afterEdit(); fillItemList(); draw(); if (msg) say(msg); });
@@ -696,7 +696,7 @@ function showItem(){
     $("scHold").style.display = it.where ? "" : "none";
     $("scGround2").style.display = movable(it) ? "" : "none";
     $("scBayRow").style.display = d && d.bayonet ? "" : "none"; $("scBay").checked = !!it.bayonet;
-    $("scColorOn").checked = !!it.color; if (it.color || (d && d.color)) $("scColor").value = it.color || d.color;
+    $("scColorOn").checked = !!it.color; $("scColor").value = it.color || (d && d.color) || $("scColor").defaultValue;
     const dims = (d && d.dims) || [], vals = itemDims(it);
     $("scDims").innerHTML = dims.map(([label], i) => `<div><label>${label}</label><div class="row"><input type="number" class="num" data-dim="${i}" min="1" step="1" value="${vals[i]}"><span class="unit">cm</span></div></div>`).join("");
     $("scDims").querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
