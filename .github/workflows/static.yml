@@ -1,0 +1,44 @@
+# Publish the editor (web/) to GitHub Pages.
+# Address: https://qwaxgo.github.io/ODM-Poser/ (redirects to the editor)
+name: Deploy the editor to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+    paths: ["web/**", ".github/workflows/static.yml"]   # only when the editor changes
+  workflow_dispatch:                                     # can also be run by hand from the Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}editor/
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Site root -> the editor
+        run: |
+          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=editor/"><a href="editor/">ODM Poser</a>\n' > web/index.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
