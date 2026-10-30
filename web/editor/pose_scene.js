@@ -464,7 +464,7 @@ function holdAgain(it){
 }
 // 配置 mode: drag what lies in the scene (Shift: up and down), the wheel turns it
 function itemUnder(x, y){
-  const W = front.width, H = front.height, reach = 14 * (devicePixelRatio || 1);
+  const W = front.width, H = front.height, reach = 14 * pointerScale() * (devicePixelRatio || 1);
   let best = null, bd = reach;
   (S.items || []).forEach((it, n) => { if (!movable(it)) return;
     for (const q of worldSamples(it)){ const s = project(q, W, H), d = Math.hypot(s.x - x, s.y - y);

@@ -10,7 +10,7 @@ A mod is a JavaScript file that the editor loads at start. Through the **MOD API
 - English words for its Japanese labels (and the other way round)
 - panels in the side bar, and hooks into drawing, editing, undo / load, the mode and the mouse
 
-API version: **1.1.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
+API version: **1.2.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
 
 > **Safety.** A mod is a program that runs inside the editor page with the same rights as the
 > editor itself. Install only mods you trust. Add `?nomods` to the editor's address to start
@@ -247,12 +247,20 @@ English only. Prefix your element ids with your mod's id. `api.ui.$(id)` is `doc
 
 The canvas state (`ctx`) is saved and restored around each drawing hook.
 
+**Mouse, touch and pens (API 1.2).** `pointerDown`, the drag's `move` and `wheel` get the same
+event for every device: `{shiftKey, altKey, ctrlKey, metaKey, pointerType ("mouse" | "touch" |
+"pen"), pointerId, button, buttons, pressure, clientX, clientY, preventDefault(), original}`.
+`shiftKey` and `altKey` include the on-screen 「Shift」「固定」 keys of touch screens, a pen's barrel
+button and the mouse's right button (Shift), and a pen's eraser end (Alt); `original` is the
+browser's event. A two-finger pinch, a trackpad and the mouse wheel all arrive as `wheel` steps.
+Write a hook once and it works with a mouse, a finger, an Apple Pencil, an S Pen or a Wacom pen.
+
 ## Saving and compatibility
 
 - Your data in `api.data()` and the props, solids and auras you added are saved in the pose JSON
   (also in what `api.io.poseJSON()` hands on). Opened without your mod, they stay in the file; props and
   aura kinds the editor does not know are skipped when drawing, unknown solid kinds draw as boxes.
-- The API follows semantic versioning: 1.x adds things and keeps what is here working (1.1 added
+- The API follows semantic versioning: 1.x adds things and keeps what is here working (1.2: the same events for mouse, touch and pens; 1.1 added
   `api.io` and `addSection({at})`). A mod with
   `api: 2` does not load in an editor with API 1.
 - Only what this page describes is the API. The editor's other functions and globals can change

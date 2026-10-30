@@ -77,6 +77,22 @@ headphones ...), the torso, the waist, the back (backpack, cases) and the feet (
 
 The shapes are listed in `web/editor/pose_props.js` and `web/editor/pose_props_more.js`.
 
+## Devices
+
+Any current browser (Chrome, Edge, Safari, Firefox, Vivaldi, Brave, Samsung Internet, Silk) on
+Windows, macOS, Linux (Ubuntu and others), iOS / iPadOS, Android and Fire OS. The layout follows
+the screen: side by side on wide screens, one column with the panels in columns under the views on
+upright monitors and tablets, the side view on request on phones, panels beside the view on phones
+held sideways, and one screen each on dual-screen devices.
+
+- **Touch**: drag with one finger, pinch with two to zoom (the lens in the Perspective mode),
+  double-tap to flip a bone; the on-screen 「Shift」「固定」 keys stand for Shift and Alt.
+- **Pens** (Apple Pencil, Galaxy S Pen, Wacom tablets and pen displays such as MovinkPad, on
+  Windows, macOS and Linux): the tip drags, the barrel button is Shift, the eraser end pins.
+- **Mac**: ⌘Z undoes; a trackpad pinch or scroll zooms smoothly.
+- Big exports are kept within what the device can draw (iOS / iPadOS about 16.7 megapixels): the
+  picture keeps its ratio and the status line says so.
+
 ## Language
 
 The editor follows the browser's language (Japanese or English); the button at the top right
@@ -130,6 +146,10 @@ MIT, (c) 2026 qwaxgo. All shapes and code are original to this project.
 - **書き出しの比率と解像度**：比率（1:1・3:4・16:9・A判・2.35:1・自分で指定）と長い辺（最大 8192 px）から幅と高さを決めます。画面の図もその比率になります。
 - **構図の画像**：「構図を保存」で、正面の図をその大きさで保存。入れるもの（人物・小物・物体・床と壁・パース定規・オーラ）と背景（白・透明・画面と同じ色）を選べます。
 - **ライト／ダーク**：右上のボタンで切り替え（自動はシステムの設定に合わせる）。
+- **端末**：Windows・macOS・Linux（Ubuntu など）・iOS／iPadOS・Android・Fire OS の今のブラウザ（Chrome・Edge・Safari・Firefox・Vivaldi・Brave・Samsung Internet・Silk）。画面に合わせて、横長は左右に、縦置きモニターとタブレットは図の下に欄を段組みで、スマホは横の図をボタンで、横向きのスマホは図の横に欄を、2画面の端末は画面ごとに並べます。
+- **タッチ**：1本指でドラッグ、2本指でつまんで拡大縮小（パースモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。画面の「Shift」「固定」ボタンが Shift と Alt の代わり。
+- **ペン**：Apple Pencil、Galaxy の S ペン、ワコムのペンタブレット・液晶ペンタブ（MovinkPad など。Windows・macOS・Linux）。ペン先でドラッグ、サイドボタンは Shift、消しゴム側は固定。
+- **大きな書き出し**：端末が描ける大きさ（iOS／iPadOS は約 1670 万画素）を超えるときは、比率を保って小さくし、そのことを表示します。
 - **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
 - **組み込みポーズ**：11種（立ち・Aポーズ・Tポーズ・コントラポスト・歩く・走る・椅子に座る・しゃがむ・ジャンプ・ファイティングポーズ・腰に手）。関節の角度で作ったもので、体格はそのまま。
 - **ユーザープリセット**：`user_presets/` に自分のプリセット（JSON）を置くと一覧に出ます（git には入りません）。

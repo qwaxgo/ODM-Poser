@@ -171,7 +171,7 @@ function cameraToHorizon(x, y, W, H){
 DOWN_HOOKS.unshift((cv, x, y) => {
   const r = rulerState();
   if (!r.on || cv !== front || (mode !== "place" && mode !== "persp")) return null;
-  const W = cv.width, H = cv.height, reach = 16 * (devicePixelRatio || 1), ax = rulerAxes();
+  const W = cv.width, H = cv.height, reach = 16 * pointerScale() * (devicePixelRatio || 1), ax = rulerAxes();
   let hit = -1;
   for (const k of rulerFamilies()){ const v = vanish(ax[k], W, H);
     if (v.x !== undefined && Math.hypot(v.x - x, v.y - y) < reach) hit = k; }
@@ -245,7 +245,7 @@ function syncRuler(){
       r[key] = r[key].slice(); r[key][k] = key === "box" ? Math.max(1, Math.min(5000, v)) : v; }));
   $("boxCube").addEventListener("click", set(r => { r.box = [r.box[0], r.box[0], r.box[0]]; }));
   $("saveRuler").addEventListener("click", () => {
-    const [W, H] = exportSize(), cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const [cv, W, H] = exportCanvas();
     drawRuler(cv.getContext("2d"), W, H, {export: true, force: true});
     download(cv.toDataURL("image/png"), `perspective_${stamp()}.png`); say("パース定規の画像を保存しました。");
   });
