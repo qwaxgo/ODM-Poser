@@ -1,0 +1,32 @@
+name: 提案 / Suggestion
+description: 新しい機能や、今ある機能の変え方の提案 / A new feature, or a change to one that exists
+title: "[提案] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        思いついた所だけ書けば大丈夫です。うまくまとまらないときは「意見箱」からでもかまいません。
+        Fill in what you can; the Feedback form is fine too if this feels like too much.
+  - type: textarea
+    id: idea
+    attributes:
+      label: 提案の内容 / The idea
+      description: どんな機能・どう変えたいか / What to add or how to change it
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 使いたい場面・理由 / When you would use it, and why
+      description: たとえば「腕を組むポーズを作るとき、〜できると楽」 / e.g. "When posing crossed arms, it would help to ..."
+  - type: textarea
+    id: reference
+    attributes:
+      label: 参考（任意） / References (optional)
+      description: 似た機能があるソフト、画像、手描きのメモなど（貼り付け・ドラッグで添付） / Other software that does it, pictures, sketches (paste or drag)
+  - type: input
+    id: device
+    attributes:
+      label: 使っている端末・ブラウザ（任意） / Device and browser (optional)
+      placeholder: 例 / e.g. iPhone + Safari, Windows + Chrome, ComfyUI

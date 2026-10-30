@@ -1,0 +1,26 @@
+name: "意見箱（issueって何？という方はこちら） / Feedback (not sure what an issue is? start here)"
+description: "感想・要望・困ったこと、なんでも気軽にどうぞ / Thoughts, wishes, trouble: anything, casually"
+title: "[意見] "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **issue（イシュー）は、このアプリへの意見を書き込める掲示板のようなものです。**
+        書き方の決まりはありません。下の欄に思ったことをそのまま書いて、いちばん下の「Create」（または「Submit new issue」）を押せば届きます。
+        題名（Title）は「[意見] 」のあとに一言足すだけで大丈夫です。画像は欄に貼り付けるかドラッグで添えられます。
+
+        **An issue is like a message board for this app.** There are no rules for writing one: type what you think below and press "Create" (or "Submit new issue") at the bottom.
+        For the title, add a few words after "[意見] ". You can paste or drag a picture into the box.
+  - type: textarea
+    id: opinion
+    attributes:
+      label: ご意見 / Your feedback
+      description: 日本語でも英語でも、短くても大丈夫です / Japanese or English, short is fine
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: 使っている端末・ブラウザ（分かれば） / Device and browser (if you know)
+      placeholder: 例 / e.g. iPad + Safari, Windows + Edge, ComfyUI
