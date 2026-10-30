@@ -59,6 +59,19 @@ main{max-width:1240px;margin:auto;padding:8px 16px 32px;
   .views{grid-template-columns:1fr!important}
   body:not(.show-side) .view.sideview{display:none}
 }
+/* the views follow the page: they stay on screen while the panels scroll (fitCanvas sizes them
+   so they fit); on a dual screen each side scrolls by itself */
+#stage{position:sticky;top:calc(env(safe-area-inset-top) + 6px);align-self:start;z-index:5}
+#stage>section{margin-bottom:0;box-shadow:0 6px 14px -10px rgba(0,0,0,.35)}
+#viewHints summary{cursor:pointer;color:var(--sub)}
+#viewHints[open] summary{margin-bottom:2px}
+/* phones and short screens: the mode buttons and the keys as one row each (swipe for more) */
+@media (max-width:700px), (max-height:520px){
+  #stage .modes, #stage .touchbar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #stage .modes>*, #stage .touchbar>*{flex:none}
+  #stage .modes button, #stage .touchbar button{min-height:34px;padding:5px 10px}
+}
+@media (horizontal-viewport-segments:2), (vertical-viewport-segments:2){#stage{position:static}}
 /* short screens (phones held sideways): a compact header, the panels beside the views */
 @media (max-height:520px){
   header p{display:none}
@@ -138,7 +151,7 @@ input[type=checkbox]{accent-color:var(--accent)}
   <p>線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。</p>
 </header>
 <main>
-<div>
+<div id="stage">
   <section>
     <div class="modes" id="modes">
       <button data-mode="pose" class="on">ポーズ（骨の長さを保つ）</button>
@@ -160,12 +173,15 @@ input[type=checkbox]{accent-color:var(--accent)}
       <div class="view"><span class="tag">正面（カメラ）</span><canvas id="front"></canvas></div>
       <div class="view sideview"><span class="tag">横から（奥行き）</span><canvas id="side"></canvas></div>
     </div>
-    <div class="hint touch-only">タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（パースモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。</div>
-    <div class="hint">身長 <span id="heightP">-</span>　<span id="pinInfo"></span></div>
-    <div class="hint only pose">丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す。</div>
-    <div class="hint only body">丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。</div>
-    <div class="hint only persp">ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。Shift＋ドラッグ：カメラを傾ける（水平でなくする）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。パース定規の消失点やアイレベルをつかむと、そこに合うようにカメラが動きます。</div>
-    <div class="hint only place">カメラは動きません。消失点をドラッグ：定規の向きを変える。直方体のガイドや物体をドラッグ：床の上で動かす（Shift＋ドラッグで上下）。その上でホイール：向きを回す。丸をクリック：関節を選ぶ（「物体に着ける」用）。</div>
+    <div class="hint keep">身長 <span id="heightP">-</span>　<span id="pinInfo"></span></div>
+    <details id="viewHints" class="hint">
+      <summary>操作のヒント</summary>
+      <div class="hint touch-only">タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（パースモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。</div>
+      <div class="hint only pose">丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す。</div>
+      <div class="hint only body">丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。</div>
+      <div class="hint only persp">ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。Shift＋ドラッグ：カメラを傾ける（水平でなくする）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。パース定規の消失点やアイレベルをつかむと、そこに合うようにカメラが動きます。</div>
+      <div class="hint only place">カメラは動きません。消失点をドラッグ：定規の向きを変える。直方体のガイドや物体をドラッグ：床の上で動かす（Shift＋ドラッグで上下）。その上でホイール：向きを回す。丸をクリック：関節を選ぶ（「物体に着ける」用）。</div>
+    </details>
   </section>
 </div>
 
@@ -684,11 +700,23 @@ function hsvToRgb(h, s, v){
 const front = document.getElementById("front"), side = document.getElementById("side");
 let sel = -1, mode = "pose";
 function exportSize(){ return [Math.max(256, +$("W").value || 1080), Math.max(256, +$("H").value || 1920)]; }
+// the height of what sits around the views in their panel (modes, keys, hints), measured again
+// when the window, the mode or the layout changes
+let chromeKey = "", chromeH = 160;
+function viewChrome(){
+  const sec = front.closest("section"), key = [innerWidth, innerHeight, document.body.className].join("|");
+  if (sec && key !== chromeKey){ chromeKey = key; chromeH = Math.max(0, sec.offsetHeight - front.offsetHeight); }
+  return chromeH;
+}
+const ONE_COLUMN = "(max-width:900px), (orientation:portrait) and (max-aspect-ratio:4/5)";
 function fitCanvas(cv, aspect){
   const dpr = window.devicePixelRatio || 1;
   let w = cv.parentElement.clientWidth, h = Math.round(w / aspect);
-  // not taller than the window (phones held sideways, tall pictures on wide screens)
-  const maxH = Math.max(220, Math.round((window.innerHeight || 800) * (window.innerWidth <= 700 ? 0.7 : 0.86)));
+  // the views stay on screen as the page scrolls: beside the panels they may take the window's
+  // height, above them (one column) part of it, so the panels show underneath
+  const short = innerHeight <= 520 && innerWidth >= 700;          // a phone held sideways: panels beside
+  const share = short || !matchMedia(ONE_COLUMN).matches ? 1 : innerWidth <= 700 ? 0.8 : 0.7;
+  const maxH = Math.max(200, Math.round((window.innerHeight || 800) * share - viewChrome() - 18));
   if (h > maxH){ h = maxH; w = Math.round(h * aspect); }
   cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));
   cv.style.width = w + "px"; cv.style.height = h + "px";
@@ -1334,6 +1362,9 @@ try { for (const k of ["theme", "lang", "editor-v1", "editor-v1-limits"]){
   const o = localStorage.getItem("symbolic-pose-" + k);
   if (o !== null && localStorage.getItem("odm-poser-" + k) === null) localStorage.setItem("odm-poser-" + k, o);
 } } catch (e) {}
+// the hints under the views: open where there is room (two columns, a tall window)
+if (!matchMedia(ONE_COLUMN).matches && innerHeight >= 760) $("viewHints").open = true;
+$("viewHints").addEventListener("toggle", () => draw());
 // the on-screen keys (shown on touch screens and narrow windows)
 for (const [id, key] of [["vShift", "shift"], ["vAlt", "alt"]])
   $(id).addEventListener("click", () => { VMOD[key] = !VMOD[key]; $(id).setAttribute("aria-pressed", String(VMOD[key])); $(id).classList.toggle("on", VMOD[key]); });
