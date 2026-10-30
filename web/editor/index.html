@@ -21,7 +21,8 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
      font:14px/1.6 "Yu Gothic UI","Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
-header{padding:12px 16px 4px;max-width:1240px;margin:auto}
+header{padding:12px 16px 4px;max-width:1240px;margin:auto;position:relative}
+#headTools{position:absolute;top:12px;right:16px;display:flex;gap:6px}
 h1{font-size:17px;margin:0}
 header p{margin:0;color:var(--sub);font-size:12px}
 main{max-width:1240px;margin:auto;padding:8px 16px 32px;
@@ -57,6 +58,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 </head>
 <body class="mode-pose">
 <header>
+  <div id="headTools"><button type="button" id="themeBtn">表示：自動</button></div>
   <h1>Symbolic Pose Editor <span style="font-weight:400;font-size:13px">記号ポーズエディタ</span></h1>
   <p>線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。</p>
 </header>
@@ -172,8 +174,21 @@ input[type=checkbox]{accent-color:var(--accent)}
   <section>
     <h2>書き出し</h2>
     <div class="grid2">
-      <div><label>幅</label><input type="number" id="W" value="1080" min="256" max="4096"></div>
-      <div><label>高さ</label><input type="number" id="H" value="1920" min="256" max="4096"></div>
+      <div><label>比率</label><select id="ratio">
+        <option value="">自由（幅と高さを直接）</option><option value="1:1">1:1（正方形）</option>
+        <option value="3:4">3:4（縦）</option><option value="4:3">4:3（横）</option><option value="2:3">2:3（縦）</option>
+        <option value="3:2">3:2（横）</option><option value="9:16">9:16（縦・スマホ）</option><option value="16:9">16:9（横・動画）</option>
+        <option value="1:1.414">A判・B判（縦）</option><option value="1.414:1">A判・B判（横）</option>
+        <option value="2.35:1">2.35:1（映画）</option><option value="custom">比率を指定</option></select></div>
+      <div><label>長い辺</label><div class="row"><input type="number" id="longSide" min="256" max="8192" step="64" value="1920"><span class="unit">px</span></div></div>
+    </div>
+    <div class="grid2" id="ratioCustom" style="display:none">
+      <div><label>横の比</label><input type="number" id="ratioW" min="0.1" step="0.1" value="5"></div>
+      <div><label>縦の比</label><input type="number" id="ratioH" min="0.1" step="0.1" value="7"></div>
+    </div>
+    <div class="grid2">
+      <div><label>幅</label><input type="number" id="W" value="1080" min="256" max="8192"></div>
+      <div><label>高さ</label><input type="number" id="H" value="1920" min="256" max="8192"></div>
     </div>
     <div class="btns" style="margin-top:8px">
       <button id="saveAtari">アタリ画像</button>
@@ -183,6 +198,17 @@ input[type=checkbox]{accent-color:var(--accent)}
       <input type="file" id="file" accept=".json,application/json" hidden>
     </div>
     <div class="hint">OpenPose 画像は ControlNet（OpenPose）に、アタリ画像は下描きのレイヤーに使えます。</div>
+    <label style="margin-top:10px">構図の画像（この比率と大きさで）</label>
+    <div class="grid2">
+      <label><input type="checkbox" id="cmFigure" checked> 人物</label><label><input type="checkbox" id="cmItems" checked> 小物</label>
+      <label><input type="checkbox" id="cmSolids" checked> 物体</label><label><input type="checkbox" id="cmEnv" checked> 床・壁・天井</label>
+      <label><input type="checkbox" id="cmRuler" checked> パース定規</label><label><input type="checkbox" id="cmAuras" checked> オーラ</label>
+    </div>
+    <div class="grid2">
+      <div><label>背景</label><select id="cmBg"><option value="white">白（黒い線）</option><option value="clear">透明（黒い線）</option>
+        <option value="theme">画面と同じ色</option></select></div>
+      <div><label>&nbsp;</label><button id="saveComp" style="width:100%">構図を保存</button></div>
+    </div>
     <div id="status"></div>
   </section>
 </aside>
@@ -233,7 +259,7 @@ function fresh(){
           body: {yaw: 0, pitch: 0, roll: 0}, twist: REST.map(() => 0),
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
-          center: [0, 90, 0], solids: [], auras: [], colors: {parts: {}},
+          center: [0, 90, 0], solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
           ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, box: [60, 60, 60], pos: [70, 0, 0]}};
 }
 const history = [];
@@ -333,7 +359,7 @@ function drawAtari(ctx, W, H, opts = {}){
   const isFar = z => !(opts.flat || z > zmid - 10);
   const shade = (z, g) => { const c = partColor(g);
     ctx.globalAlpha = c && isFar(z) ? 0.55 : 1; return c || (isFar(z) ? far : ink); };
-  for (const it of items){
+  if (!opts.noFigure) for (const it of items){
     if (it.kind === "line"){
       ctx.strokeStyle = shade(it.z, "torso"); ctx.lineWidth = lw * 1.6;
       ctx.beginPath(); it.pp.forEach((q, k) => k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke();
@@ -361,6 +387,7 @@ function drawAtari(ctx, W, H, opts = {}){
     ctx.globalAlpha = 1;
   }
   // the face's centre lines (where the head looks), like a Loomis cross
+  if (!opts.noFigure){
   const h = headFrame(), c = S.P[IX.head], r = h.r;
   ctx.strokeStyle = partColor("head") || ink; ctx.lineWidth = lw;
   const arc = (fn) => { ctx.beginPath(); for (let k = 0; k <= 24; k++){
@@ -372,10 +399,11 @@ function drawAtari(ctx, W, H, opts = {}){
   if (!opts.export) for (const k of Object.keys(S.pins || {})){
     const q = P[+k]; ctx.fillStyle = cssVar("--sel"); ctx.fillRect(q.x - 3*lw, q.y - 3*lw, 6*lw, 6*lw);
   }
+  }
   // the scene: floor, walls, things held and placed (pose_scene.js)
   if (typeof drawScene === "function") drawScene(ctx, W, H, opts, project, ink, far, lw);
   // hands: a small fan of the fingers
-  for (const side of ["r", "l"]){
+  if (!opts.noFigure) for (const side of ["r", "l"]){
     const pts = handPoints(side, W, H);
     ctx.strokeStyle = partColor(side + "_hand") || ink; ctx.lineWidth = lw * 0.9;
     HAND_EDGES.forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]); ctx.stroke(); });
@@ -454,8 +482,8 @@ function openposePoints(W, H){
                  P[IX.l_hip], P[IX.l_knee], P[IX.l_ankle], f.r_eye, f.l_eye, f.r_ear, f.l_ear];
   return order.map(p => project(p, W, H));
 }
-function drawOpenpose(ctx, W, H){
-  ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H);
+function drawOpenpose(ctx, W, H, noBg){
+  if (!noBg){ ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); }
   const K = openposePoints(W, H), sw = Math.max(2, Math.round(4 * Math.max(W, H) / 1024));
   OP_LIMBS.forEach(([a, b], i) => {
     const pa = K[a], pb = K[b], mx = (pa.x + pb.x)/2, my = (pa.y + pb.y)/2;
@@ -508,17 +536,21 @@ function draw(){
   ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
   ctx.fillStyle = cssVar("--sub"); ctx.font = `${Math.round(11 * (devicePixelRatio || 1))}px sans-serif`;
   ctx.fillText("← カメラ側", 6, H - 8);
-  const P = S.P.map(p => sideProject(p, W, H));
-  ctx.strokeStyle = cssVar("--figure"); ctx.lineWidth = Math.max(1.2, W / 260);
-  BONES.forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(P[a].x, P[a].y); ctx.lineTo(P[b].x, P[b].y); ctx.stroke(); });
-  const tps = torsoParts();
-  for (const poly of tps.blocks){ ctx.beginPath(); poly.map(q => sideProject(q, W, H)).forEach((q, k) =>
-      k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.closePath(); ctx.stroke(); }
-  ctx.beginPath(); tps.waistLine.map(q => sideProject(q, W, H)).forEach((q, k) =>
-    k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke();
-  P.forEach((p, i) => { ctx.strokeStyle = i === sel ? cssVar("--sel") : cssVar("--figure");
-    ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2, handleR(i) * p.s), 0, 2*Math.PI); ctx.stroke(); });
-  if (typeof drawScene === "function") drawScene(ctx, W, H, {side: true}, sideProject, cssVar("--figure"), cssVar("--far"), Math.max(1, W / 360));
+  const sideFigure = (active, first) => {
+    const P = S.P.map(p => sideProject(p, W, H)), ink = cssVar(active ? "--figure" : "--far");
+    ctx.strokeStyle = ink; ctx.lineWidth = Math.max(1.2, W / 260);
+    BONES.forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(P[a].x, P[a].y); ctx.lineTo(P[b].x, P[b].y); ctx.stroke(); });
+    const tps = torsoParts();
+    for (const poly of tps.blocks){ ctx.beginPath(); poly.map(q => sideProject(q, W, H)).forEach((q, k) =>
+        k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.closePath(); ctx.stroke(); }
+    ctx.beginPath(); tps.waistLine.map(q => sideProject(q, W, H)).forEach((q, k) =>
+      k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke();
+    P.forEach((p, i) => { ctx.strokeStyle = active && i === sel ? cssVar("--sel") : ink;
+      ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2, handleR(i) * p.s), 0, 2*Math.PI); ctx.stroke(); });
+    if (typeof drawScene === "function")
+      drawScene(ctx, W, H, {side: true, noEnv: !first}, sideProject, ink, cssVar("--far"), Math.max(1, W / 360));
+  };
+  if (typeof everyFigure === "function") everyFigure(sideFigure); else sideFigure(true, true);
   const hgt = standingHeight();
   $("headsV").textContent = (hgt / (2 * S.R[IX.head])).toFixed(1) + " 頭身";
   if (document.activeElement !== $("heightN")) $("heightN").value = hgt.toFixed(1);
@@ -1238,10 +1270,38 @@ function render(kind){
     drawAtari(ctx, W, H, {ink: "#1a1a1a", far: "#8a8a8a", bg: "#ffffff", export: true}); }
   return cv.toDataURL("image/png");
 }
+// the composition as seen in the front view, at the export size: the chosen parts, the ruler
+// (pose_ruler.js) and a white, clear or screen-coloured background
+function renderComposition(){
+  const [W, H] = exportSize(), cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d"), bg = $("cmBg").value, on = id => $(id).checked;
+  const theme = bg === "theme";
+  if (bg !== "clear"){ ctx.fillStyle = theme ? cssVar("--stage") : "#ffffff"; ctx.fillRect(0, 0, W, H); }
+  if (on("cmRuler") && typeof drawRuler === "function") drawRuler(ctx, W, H, {export: true, force: true});
+  drawAtari(ctx, W, H, Object.assign(theme ? {} : {ink: "#1a1a1a", far: "#8a8a8a", bg: "#ffffff"},
+    {export: true, noFigure: !on("cmFigure"), noItems: !on("cmItems"), noSolids: !on("cmSolids"), noAuras: !on("cmAuras"),
+     showEnv: on("cmEnv"), showSolids: on("cmSolids"), flat: bg === "clear"}));
+  return cv.toDataURL("image/png");
+}
+// the export size from a ratio ("3:4") and the long side
+function applyRatio(){
+  const r = $("ratio").value;
+  $("ratioCustom").style.display = r === "custom" ? "" : "none";
+  if (!r) return;
+  const [a, b] = r === "custom" ? [+$("ratioW").value, +$("ratioH").value] : r.split(":").map(Number);
+  if (!(a > 0 && b > 0)) return;
+  const L = Math.max(256, Math.min(8192, +$("longSide").value || 1920));
+  const w = a >= b ? L : L * a / b, h = a >= b ? L * b / a : L;
+  $("W").value = Math.max(64, Math.round(w)); $("H").value = Math.max(64, Math.round(h)); draw();
+}
+for (const id of ["ratio", "longSide", "ratioW", "ratioH"]) $(id).addEventListener("change", applyRatio);
+for (const id of ["W", "H"]) $(id).addEventListener("input", () => { $("ratio").value = ""; $("ratioCustom").style.display = "none"; });
 function download(url, name){ const a = document.createElement("a"); a.href = url; a.download = name; a.click(); }
 const stamp = () => new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14);
 $("saveAtari").addEventListener("click", () => { download(render("atari"), `atari_${stamp()}.png`); say("アタリ画像を保存しました。"); });
 $("saveOpenpose").addEventListener("click", () => { download(render("openpose"), `openpose_${stamp()}.png`); say("OpenPose 画像を保存しました。"); });
+$("saveComp").addEventListener("click", () => { const [W, H] = exportSize();
+  download(renderComposition(), `composition_${W}x${H}_${stamp()}.png`); say(`構図を ${W}×${H} で保存しました。`); });
 $("saveJson").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify({version: 3, ...S}, null, 1)], {type: "application/json"});
   download(URL.createObjectURL(blob), `pose_${stamp()}.json`); say("ポーズを保存しました。");
@@ -1274,6 +1334,19 @@ const qs = new URLSearchParams(location.search);
 if (qs.get("w")) $("W").value = qs.get("w");
 if (qs.get("h")) $("H").value = qs.get("h");
 
+// light / dark: auto follows the system; the choice is kept in this browser
+{ const KEY_T = "symbolic-pose-theme", LABEL = {auto: "表示：自動", light: "表示：ライト", dark: "表示：ダーク"};
+  const set = t => { if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    else delete document.documentElement.dataset.theme;
+    $("themeBtn").textContent = LABEL[t] || LABEL.auto; draw(); };
+  let theme = "auto"; try { theme = localStorage.getItem(KEY_T) || "auto"; } catch (e) {}
+  $("themeBtn").addEventListener("click", () => {
+    theme = {auto: "light", light: "dark", dark: "auto"}[theme] || "auto";
+    try { localStorage.setItem(KEY_T, theme); } catch (e) {}
+    set(theme); });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => draw());
+  set(theme);
+}
 // remember the last pose in this browser only (a convenience; files are the real save)
 const KEY = "symbolic-pose-editor-v1";
 try { const l = localStorage.getItem(KEY + "-limits"); if (l !== null) $("limits").checked = l === "1"; } catch (e) {}
@@ -1286,6 +1359,8 @@ syncUI(); draw();
 </script>
 <!-- floor / walls / ceiling, holding and placing things, wires (uses the editor's state above) -->
 <script src="pose_scene.js"></script>
+<!-- the second figure and more (the one being edited is S; the others wait in S.others) -->
+<script src="pose_cast.js"></script>
 <!-- boxes, prisms, cylinders, pyramids, cones and poles to stand on and touch -->
 <script src="pose_solids.js"></script>
 <!-- line colours and auras -->
