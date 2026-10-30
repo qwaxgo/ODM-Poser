@@ -74,7 +74,7 @@ try:
                                                                   if request.query_string else ""))
 
     EDITOR_FILES = ("index.html", "pose_props.js", "pose_props_more.js", "pose_scene.js", "pose_solids.js",
-                    "pose_style.js", "pose_ruler.js", "i18n.js", "pose_api.js")
+                    "pose_style.js", "pose_ruler.js", "i18n.js", "pose_api.js", "pose_cast.js")
 
     @routes.get("/symbolic_pose/mods.js")
     async def _mods_list(request):

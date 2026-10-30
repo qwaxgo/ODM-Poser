@@ -214,7 +214,7 @@ function envLines(){                          // floor / wall / ceiling as 3D li
 function drawScene(ctx, W, H, opts, proj, ink, far, lw){
   const P = q => proj(q, W, H), E = S.env || {};
   ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
-  if (!opts.export || E.show){
+  if (!opts.noEnv && (!opts.export || E.show || opts.showEnv)){
     const envCol = S.colors && S.colors.env;
     ctx.strokeStyle = envCol || (opts.export ? "#b0b0b0" : far); ctx.lineWidth = Math.max(1, lw * 0.6);
     ctx.globalAlpha = opts.export ? 1 : 0.55;
@@ -230,7 +230,7 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
     ctx.beginPath(); ctx.arc(a.x, a.y, lw * 3, 0, 2 * Math.PI); ctx.stroke();
   }
   // the things: their own colour (or an effect's), glowing effects drawn twice
-  (S.items || []).forEach((it, n) => {
+  if (!opts.noItems) (S.items || []).forEach((it, n) => {
     const def = PROPS_[it.key]; if (!def) return;
     const col = it.color || def.color, sets = partSets(it);
     const stroke = opts.export ? col || ink : n === scSel ? cssVar("--sel") : col || cssVar("--accent");

@@ -36,6 +36,16 @@ To use it as a ComfyUI node, see **[docs/COMFYUI.md](docs/COMFYUI.md)** (日本�
   height, depth and position in cm). The vanishing points come from the camera, so the ruler has
   the figure's perspective. Editor only; "Ruler picture" saves it as a transparent PNG.
 - **Human joint limits** (on by default) keep knees, elbows, neck and so on in a human range.
+- **Several figures**: "Add a figure" / "Duplicate" in the Figures box. The one selected is edited
+  (pose, body, props, auras, wire); the others are drawn lighter, and clicking one of their circles
+  switches to it. Floor, walls, objects, the ruler and the camera are shared; the rough, the
+  OpenPose picture (one person each) and the composition picture show everyone.
+- **Export size**: an aspect ratio (1:1, 3:4, 16:9, A paper, 2.35:1 or your own) and the long side
+  (up to 8192 px) set the width and height; the view keeps that ratio.
+- **Composition picture**: "Save composition" saves what the front view shows at that size, with
+  the parts you tick (figures, props, objects, floor and walls, the ruler, auras) on white, clear or
+  the screen's background.
+- **Light / dark**: the button at the top right (auto follows the system).
 
 ## Props and scene
 
@@ -116,6 +126,10 @@ MIT, (c) 2026 qwaxgo. All shapes and code are original to this project.
 - **パース定規**：1点・2点・3点透視の線、アイレベル、直方体のガイド（幅・高さ・奥行きと位置を cm で）。消失点はカメラから決まるので人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードではカメラはそのままで消失点をつかむと定規が回ります。エディタ上だけの表示で、「定規の画像」で透明な PNG を保存できます。
 - **カメラの傾き**：パースモードで Shift＋ドラッグ（または「傾き」）で水平でなくできます（±90°）。
 - **物体**：直方体（箱・床・壁・建物・段差）、角柱、円柱、角錐、円錐、支柱を cm の大きさで置けます。配置モードでドラッグして動かし（Shift で上下、ホイールで向き）、接地をオンにすると上に立ちます（40cm までの段は乗り上げ）。選んだ関節を面に着けて固定する、上に立たせる、もできます。
+- **複数の人物**：「人物」の欄の「人物を追加」「複製」。編集するのは選んだ人物だけ（ポーズ・体格・小物・オーラ・ワイヤー）で、ほかの人物は薄く表示され、その丸をクリックすると切り替わります。床・壁・物体・定規・カメラは共通。アタリ・OpenPose（1人ずつ）・構図の画像には全員が入ります。
+- **書き出しの比率と解像度**：比率（1:1・3:4・16:9・A判・2.35:1・自分で指定）と長い辺（最大 8192 px）から幅と高さを決めます。画面の図もその比率になります。
+- **構図の画像**：「構図を保存」で、正面の図をその大きさで保存。入れるもの（人物・小物・物体・床と壁・パース定規・オーラ）と背景（白・透明・画面と同じ色）を選べます。
+- **ライト／ダーク**：右上のボタンで切り替え（自動はシステムの設定に合わせる）。
 - **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
 - **組み込みポーズ**：11種（立ち・Aポーズ・Tポーズ・コントラポスト・歩く・走る・椅子に座る・しゃがむ・ジャンプ・ファイティングポーズ・腰に手）。関節の角度で作ったもので、体格はそのまま。
 - **ユーザープリセット**：`user_presets/` に自分のプリセット（JSON）を置くと一覧に出ます（git には入りません）。

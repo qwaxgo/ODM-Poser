@@ -161,7 +161,7 @@ function drawSolids(ctx, W, H, opts, proj, lw, toViewer){
 function eyePoint(W, H){ return add(camRotInv([0, 0, camDist(W, H)]), S.center); }
 { const atari0 = drawAtari;
   drawAtari = function(ctx, W, H, opts = {}){
-    if (!opts.export || (S.env && S.env.show)){
+    if (!opts.noSolids && (!opts.export || (S.env && S.env.show) || opts.showSolids)){
       const eye = eyePoint(W, H);
       drawSolids(ctx, W, H, opts, project, Math.max(1.5, W / 540), p => sub(eye, p));
     }

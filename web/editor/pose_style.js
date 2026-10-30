@@ -116,11 +116,12 @@ function drawAura(ctx, a, idx, W, H, front){
   });
 }
 { const atari0 = drawAtari;
+  // every figure's auras (pose_cast.js swaps each one in); none when the composition leaves them out
+  const each = fn => (typeof everyFigure === "function" ? everyFigure(fn) : fn(true, true));
   drawAtari = function(ctx, W, H, opts = {}){
-    const auras = S.auras || [];
-    auras.forEach((a, i) => drawAura(ctx, a, i, W, H, false));
+    if (!opts.noAuras) each(() => (S.auras || []).forEach((a, i) => drawAura(ctx, a, i, W, H, false)));
     atari0(ctx, W, H, opts);
-    auras.forEach((a, i) => drawAura(ctx, a, i, W, H, true));
+    if (!opts.noAuras) each(() => (S.auras || []).forEach((a, i) => drawAura(ctx, a, i, W, H, true)));
   };
 }
 

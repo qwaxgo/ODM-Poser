@@ -120,6 +120,20 @@
     "読み込んだ MOD はありません。": "No mods loaded.", "MODファイルを読み込む（今回だけ）": "Load mod files (this session only)",
     "mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ブラウザで直接開くときは、tools/make_mods_list.py で一覧を作ります）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。":
       "The *.js files in mods/ (and its folders) are loaded at start (opened straight from disk, run tools/make_mods_list.py to list them). A mod is a program that can do anything inside the editor: install only mods you trust. Add ?nomods to the address to start without mods.",
+    // theme, the composition picture, figures (index.html, pose_cast.js)
+    "表示：自動": "Theme: auto", "表示：ライト": "Theme: light", "表示：ダーク": "Theme: dark",
+    "比率": "Aspect ratio", "自由（幅と高さを直接）": "Free (width and height)", "1:1（正方形）": "1:1 (square)",
+    "3:4（縦）": "3:4 (portrait)", "4:3（横）": "4:3 (landscape)", "2:3（縦）": "2:3 (portrait)", "3:2（横）": "3:2 (landscape)",
+    "9:16（縦・スマホ）": "9:16 (portrait, phone)", "16:9（横・動画）": "16:9 (landscape, video)",
+    "A判・B判（縦）": "A / B paper (portrait)", "A判・B判（横）": "A / B paper (landscape)", "2.35:1（映画）": "2.35:1 (cinema)",
+    "比率を指定": "Custom ratio", "長い辺": "Long side", "横の比": "Width part", "縦の比": "Height part",
+    "構図の画像（この比率と大きさで）": "Composition picture (at this ratio and size)", "人物": "Figures", "小物": "Props",
+    "物体": "Objects", "オーラ": "Auras", "背景": "Background", "白（黒い線）": "White (black lines)",
+    "透明（黒い線）": "Transparent (black lines)", "画面と同じ色": "As on screen", "構図を保存": "Save composition",
+    "人物を追加": "Add a figure", "削除": "Delete", "名前": "Name",
+    "人物が1人のときは削除できません。": "There is only one figure: nothing to delete.",
+    "ポーズ・体格・小物・オーラは、選んだ人物だけに効きます（ほかの人物は薄く表示）。ほかの人物の丸をクリックしても切り替わります。床・壁・物体・定規・カメラはみんなで共通です。":
+      "Pose, body, props and auras apply to the selected figure only (the others are drawn lighter). Clicking another figure's circle switches too. Floor, walls, objects, the ruler and the camera are shared.",
     // camera and export
     "カメラ": "Camera", "レンズ（mm、小さいほど広角）": "Lens (mm, smaller = wider)", "向き（左右）": "Direction (left / right)",
     "高さ（俯瞰＋／あおり−）": "Height (+ from above / − from below)", "傾き": "Roll", "カメラを戻す": "Reset camera",
@@ -194,7 +208,16 @@
     return null;
   };
   const joint = s => JOINT[s] || s;
+  const figEn = n => n.replace(/^(\d+)人目$/, "Figure $1");
   const RULES = [
+    // figures: "2人目" is "Figure 2" (pose_cast.js)
+    [/^(\d+)人目$/, m => `Figure ${m[1]}`],
+    [/^(.+)（編集中）$/, m => `${figEn(m[1])} (editing)`],
+    [/^(.+)を(複製して)?追加しました。いま編集しているのは(.+)です。$/,
+      m => `Added ${figEn(m[1])}${m[2] ? " (a copy)" : ""}; now editing ${figEn(m[3])}.`],
+    [/^(.+)を削除しました。$/, m => `Deleted ${figEn(m[1])}.`],
+    [/^(.+)を編集しています。$/, m => `Editing ${figEn(m[1])}.`],
+    [/^構図を (\d+)×(\d+) で保存しました。$/, m => `Composition saved at ${m[1]} × ${m[2]}.`],
     // objects (pose_solids.js); before the general rules below
     [/^(.+)を置きました。配置モードでドラッグして動かせます。$/, m => `Placed: ${T[m[1]] || m[1]}. Drag it in the Place mode.`],
     [/^(.+)の上に立たせました（関節の固定は外しました）。$/, m => `Stood the figure on the ${(T[m[1]] || m[1]).toLowerCase()} (pins removed).`],
@@ -299,7 +322,8 @@
   // the switch
   const btn = document.createElement("button");
   btn.type = "button";
-  btn.style.cssText = "position:absolute;top:12px;right:16px";
+  const tools = document.getElementById("headTools");
+  if (!tools) btn.style.cssText = "position:absolute;top:12px;right:16px";
   const label = () => { btn.textContent = lang === "en" ? "日本語" : "English"; };
   btn.addEventListener("click", () => {
     lang = lang === "en" ? "ja" : "en";
@@ -309,7 +333,8 @@
     if (typeof draw === "function") draw();
   });
   const header = document.querySelector("header");
-  if (header) { header.style.position = "relative"; header.appendChild(btn); }
+  if (tools) tools.appendChild(btn);
+  else if (header) { header.style.position = "relative"; header.appendChild(btn); }
   label();
   document.documentElement.lang = lang;
   if (lang === "en") { walk(document.body); if (typeof draw === "function") draw(); }
