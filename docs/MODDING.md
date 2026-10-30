@@ -25,8 +25,19 @@ API version: **1.2.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
    see [COMFYUI.md](COMFYUI.md).)
 3. The **MOD** panel at the bottom of the side bar lists every mod: ✓ loaded, ✗ with the error.
 
-The **MOD** panel also has *Load mod files (this session only)*: it runs the chosen `.js` files
-now, without copying them anywhere. That is the quickest way to try a mod while writing it.
+The **MOD** panel also loads mods without a `mods/` folder (a site such as GitHub Pages, the
+installed app, a phone or tablet):
+
+- **Install from a file (this device)**: the mod is kept in this browser (IndexedDB) and loads every
+  time; installing a file of the same name replaces it. A private mod never leaves the device.
+- **Add by URL**: the address is kept; the mod is read fresh at each start and its last copy is used
+  offline. A GitHub file page (`github.com/…/blob/…`) is turned into its raw file. Use public
+  addresses (a private repository's file cannot be read by the page).
+- **Load for this session only**: runs the chosen `.js` now without keeping it; the quickest way to
+  try a mod while writing it.
+
+Mods kept in the browser can be switched off or removed in the same panel (it takes effect when
+the editor is reopened). They load after the `mods/` folder's, and `?nomods` skips them too.
 
 `mods/*.js` and `mods/<folder>/*.js` load in path order. A file or folder whose name starts with
 `_` or `.` is skipped (a way to switch a mod off). `mods/` is git-ignored, so your mods stay on

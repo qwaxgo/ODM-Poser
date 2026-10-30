@@ -24,7 +24,7 @@ presets it last read), and updates itself the next time it opens online. 日本�
 
 They need the editor on an **https site**:
 
-1. Put the `web` folder (and `mods` for mods; run `python tools/make_mods_list.py` first) on an
+1. Put the `web` folder (mods: install them from the MOD panel on each device, or upload `mods` too after `python tools/make_mods_list.py`) on an
    https static host such as GitHub Pages, Cloudflare Pages or Netlify; the editor is at
    `https://<site>/web/editor/`. What you upload is public on that site, private mods included.
    GitHub Pages serves private repositories only on paid plans.
@@ -47,4 +47,4 @@ offline it opens with what it kept. A new version shows the next time it opens o
 | no **Install as an app** button | opened as a file (use https or localhost), already installed, Firefox, or inside the node's window |
 | cannot install on a phone | not https: put the editor on an https site |
 | no update | open the app again while online |
-| no mods | upload `mods/` and `web/mods.js` (`tools/make_mods_list.py`) |
+| no mods | on a site, install them in the MOD panel (from a file, or by URL), or upload `mods/` and `web/mods.js` |

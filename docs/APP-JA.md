@@ -43,7 +43,7 @@ English: [APP.md](APP.md)
 
 スマホやタブレットでは **https のサイト** に置いたエディタが必要です。
 
-1. エディタの `web` フォルダ（MOD も使うなら `mods` フォルダも）を、https の静的サイトに置く。
+1. エディタの `web` フォルダを（MOD は各端末で MOD 欄から入れるか、`mods` フォルダも置く）、https の静的サイトに置く。
    GitHub Pages・Cloudflare Pages・Netlify などで置けます。エディタの場所は `https://（サイト）/web/editor/` です。
    - 置いたものはそのサイトで誰でも見られるようになります。非公開の MOD を置くときは注意してください。
    - MOD を置くときは、置く前に `python tools/make_mods_list.py` を実行して `web/mods.js` を作ります。
@@ -72,4 +72,4 @@ English: [APP.md](APP.md)
 | 「アプリとして追加」ボタンが出ない | ファイルとして開いている（https か localhost で開く）、すでに追加済み、Firefox、ノードの中の窓で開いている、のどれか |
 | スマホで追加できない | https で開いていない。https のサイトに置く |
 | 新しい版にならない | ネットにつながった状態でアプリを開き直す。まだなら、アプリを閉じてもう一度開く |
-| MOD が出ない | サイトに `mods` フォルダと `web/mods.js` を置いたか確かめる（`tools/make_mods_list.py`） |
+| MOD が出ない | サイトでは MOD 欄の「ファイルから入れる」「URLから追加」で入れる（または `mods` フォルダと `web/mods.js` も置く） |
