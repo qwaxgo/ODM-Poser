@@ -194,6 +194,10 @@ input[type=checkbox]{accent-color:var(--accent)}
       <button id="mirror">左右反転</button>
       <button id="undo">元に戻す</button>
     </div>
+    <div class="btns" style="margin-top:6px">
+      <button id="symToL">右の手足を左へ写す</button>
+      <button id="symToR">左の手足を右へ写す</button>
+    </div>
     <div id="tcBox">
       <label style="margin-top:10px">ユーザープリセット（<span id="tcCount">0</span>）</label>
       <div class="btns" style="margin-top:6px"><button id="tcLoadFile">ファイルから読込</button><input type="file" id="tcFile" accept=".json,application/json" multiple hidden></div>
@@ -223,8 +227,11 @@ input[type=checkbox]{accent-color:var(--accent)}
 
   <section class="only pose body">
     <h2>選んだ関節：<span id="selName">（丸をクリック）</span></h2>
+    <label class="only pose"><input type="checkbox" id="symPose"> 左右同時に動かす（片方の手足を動かすと、反対側も同じ形に）</label>
     <label id="pinRow" style="display:none"><input type="checkbox" id="pin"> この関節を固定する（ピン。Alt＋クリックでも）</label>
     <div id="handRow" style="display:none"><label>この腕の手の形</label><select id="handSel"></select></div>
+    <div id="symRow" style="display:none"><label>反対側をこの形にそろえる</label>
+      <div class="btns"><button id="symJoint">この関節だけ</button><button id="symLimb">ここから先まとめて</button></div></div>
     <div id="jointCtl"></div>
     <div class="hint" id="selHint">ドラッグした結果がここの数値になります。数値やバーで動かすこともできます。</div>
   </section>
@@ -1085,6 +1092,37 @@ function setTwist(i, v){
   for (const k of subtree(i)) S.P[k] = add(S.P[p], rotAxis(sub(S.P[k], S.P[p]), axis, d));
   S.twist[i] = v;
 }
+// ---- left-right symmetry: the other side takes a joint's pose, mirrored in the body's frame
+// (so both sides then read the same 前後 / 左右 / ねじり); each side keeps its own bone lengths
+function mirroredBone(k){
+  const m = MIRROR[k], v = bodyRot(sub(S.P[k], S.P[PARENT[k]]), true);
+  return mul(norm(bodyRot([-v[0], v[1], v[2]])), len(sub(S.P[m], S.P[PARENT[m]])));
+}
+// whole: the joint and everything after it; else this bone only (what hangs on it follows)
+function symmetrize(i, whole){
+  const m = MIRROR[i]; if (m === i) return [];
+  const moved = subtree(m);
+  if (whole){
+    for (const k of subtree(i)){ const o = MIRROR[k];
+      const d = add(S.P[PARENT[o]], mirroredBone(k)), shift = sub(d, S.P[o]);
+      S.P[o] = d; for (const q of subtree(o).slice(1)) S.P[q] = add(S.P[q], shift);
+      S.twist[o] = -(S.twist[k] || 0); }
+    const side = J[i][0], other = J[m][0];
+    if (subtree(i).some(k => /_wrist$/.test(J[k]))) S.hands[other] = S.hands[side];
+  } else {
+    rotateSubtree(m, add(S.P[PARENT[m]], mirroredBone(i)));
+    setTwist(m, -(S.twist[i] || 0));
+  }
+  // a pinned joint on the other side stays where the copy put it
+  for (const k of moved) if (S.pins && S.pins[k]) S.pins[k] = S.P[k].slice();
+  return moved;
+}
+function symmetrizeLimbs(from){
+  remember();
+  for (const n of ["shoulder", "hip"]) symmetrize(IX[`${from}_${n}`], true);
+  afterEdit(); draw();
+  say(from === "r" ? "右の手足を左へ写しました。" : "左の手足を右へ写しました。");
+}
 function setBodyTurn(key, v){
   const c = S.P[IX.pelvis], old = S.P.map(q => bodyRot(sub(q, c), true));
   S.body[key] = v;
@@ -1258,8 +1296,13 @@ function holdPins(except){
     else rotateSubtree(i, add(S.P[PARENT[i]], mul(norm(sub(pos, S.P[PARENT[i]])), len(sub(S.P[i], S.P[PARENT[i]])))));
   }
 }
+// a joint of an arm or leg -> the first joint of that limb (shoulder / hip)
+function limbRoot(i){ while (PARENT[i] >= 0 && MIRROR[PARENT[i]] !== PARENT[i]) i = PARENT[i]; return i; }
 function afterEdit(moved){
   enforceLimits();
+  // 左右同時に動かす: the other arm or leg follows (pose mode; the body mode has its own 左右対称)
+  const sp = document.getElementById("symPose");
+  if (sp && sp.checked && mode === "pose" && moved >= 0 && MIRROR[moved] !== moved) symmetrize(limbRoot(moved), true);
   if (typeof sceneAfterEdit === "function") sceneAfterEdit(moved);
   holdPins(moved);
   if (moved !== undefined && S.pins && S.pins[moved]) S.pins[moved] = S.P[moved].slice();
@@ -1315,6 +1358,7 @@ function showSelected(){
   // pin and hand shape
   $("pinRow").style.display = ok && PINNABLE.has(J[sel]) ? "" : "none";
   $("pin").checked = !!(ok && S.pins && S.pins[sel]);
+  $("symRow").style.display = ok && MIRROR[sel] !== sel ? "" : "none";
   const arm = ok && /_(shoulder|elbow|wrist)$/.test(J[sel]) ? J[sel][0] : null;
   $("handRow").style.display = arm ? "" : "none";
   if (arm){ $("handRow").querySelector("label").textContent = (arm === "r" ? "右手" : "左手") + "の形";
@@ -1539,6 +1583,11 @@ $("mirror").addEventListener("click", () => {
   syncUI(); draw();
 });
 $("undo").addEventListener("click", undo);
+$("symToL").addEventListener("click", () => symmetrizeLimbs("r"));
+$("symToR").addEventListener("click", () => symmetrizeLimbs("l"));
+for (const [id, whole] of [["symJoint", false], ["symLimb", true]])
+  $(id).addEventListener("click", () => { if (sel < 0 || MIRROR[sel] === sel) return;
+    remember(); symmetrize(sel, whole); afterEdit(); draw(); say("反対側をそろえました。"); });
 for (const [id, set] of [["lens", v => S.cam.lens = v], ["yaw", v => S.cam.yaw = v], ["pitch", v => S.cam.pitch = v],
     ["roll", v => S.cam.roll = v]]){
   $(id).addEventListener("input", e => { set(+e.target.value); syncUI(); draw(); });
@@ -1707,6 +1756,9 @@ if (qs.get("h")) $("H").value = qs.get("h");
 // remember the last pose in this browser only (a convenience; files are the real save)
 const KEY = "odm-poser-editor-v1";
 try { const l = localStorage.getItem(KEY + "-limits"); if (l !== null) $("limits").checked = l === "1"; } catch (e) {}
+try { $("symPose").checked = localStorage.getItem(KEY + "-sympose") === "1"; } catch (e) {}
+$("symPose").addEventListener("change", e => { try { localStorage.setItem(KEY + "-sympose", e.target.checked ? "1" : "0"); } catch (err) {}
+  if (e.target.checked && sel >= 0 && MIRROR[sel] !== sel){ remember(); afterEdit(sel); draw(); say("反対側をそろえました。"); } });
 $("hiddenDashed").addEventListener("change", e => { remember(); S.hiddenDashed = e.target.checked; draw();
   say(e.target.checked ? "物陰に隠れた線を破線で描きます（書き出しにも）。" : "隠れた線を破線にするのをやめました。"); });
 $("limits").addEventListener("change", e => { try { localStorage.setItem(KEY + "-limits", e.target.checked ? "1" : "0"); } catch (err) {}
