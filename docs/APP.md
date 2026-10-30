@@ -9,7 +9,7 @@ presets it last read), and updates itself the next time it opens online. 日本�
 
 ## Computers (Windows, macOS, Linux)
 
-- **On this computer**: run `python tools/serve.py`, open `http://localhost:8765/web/editor/`, press
+- Run `python tools/serve.py`, open `http://localhost:8765/web/editor/`, press
   **Install as an app**. Once installed, the app opens without the server (run it again to update).
 
 | browser | how |
@@ -42,7 +42,7 @@ offline it opens with what it kept. A new version shows the next time it opens o
 
 | symptom | cause and fix |
 |---------|---------------|
-| no **Install as an app** button | opened as a file (use https or localhost), already installed, Firefox, or inside the node's window |
+| no **Install as an app** button | opened as a file (use https or localhost), already installed, Firefox, or inside another page's frame |
 | cannot install on a phone | not https: put the editor on an https site |
 | no update | open the app again while online |
 | no mods | on a site, install them in the MOD panel (from a file, or by URL), or upload `mods/` and `web/mods.js` |

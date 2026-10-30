@@ -1,15 +1,17 @@
 # Handoff: ODM Poser / 立体人形装置 (for the next Claude session)
 
 ODM Poser = Omni-Directional Mannequin Poser; the Japanese name on screen and in Japanese docs is
-立体人形装置. Repository and folder: `ODM-Poser`.
+立体人形装置. Repository `ODM-Poser`; the owner's working copy
+is `C:\AI\ODM-Poser`. Related public repository: `ODM-Poser-SampleMods`. Both state that they were
+implemented with Claude Code.
 
 Read this first when you pick the project up in a new thread. It says what exists, how it fits
 together, the owner's rules, and what is still open.
 
 ## What it is
 
-A pseudo-3D stick-and-circle pose editor ("atari" = a rough of lines and circles): a web page.
-The owner (qwaxgo, an illustrator) will publish it under MIT. It started
+A pseudo-3D stick-and-circle pose editor ("atari" = a rough of lines and circles): a web page
+that runs from disk, from any static site (GitHub Pages) and as an installed app. The owner (qwaxgo, an illustrator) publishes it under MIT. It started
 as a tool inside a private project and was split out on 2026-10-19 with no git history and
 nothing third-party: keep it that way.
 
@@ -20,10 +22,10 @@ nothing third-party: keep it that way.
   and shapes are hand-made primitives. If you borrow an *idea* from another project, write the
   code yourself and do not copy text.
 - **Built-in poses**: only the 11 written by hand as joint turns (`PRESETS` in index.html:
-  nothing traced from pictures). Other poses come from the user's own
-  preset files. The public repo must not reveal what the owner keeps there:
-  describe the feature generically.
-- **Standalone**: it must work as a plain HTML page opened from disk.
+  nothing traced from pictures). Other poses come from the user's own preset files (loaded in
+  the editor, or added by a host through a mod). The public repos must not reveal
+  what the owner keeps there: describe the feature generically.
+- **Standalone**: the editor must work as a plain HTML page opened from disk, with no server.
 - The owner commits and pushes. Do not commit unless asked; finish a batch with ready-to-paste
   commit / push commands. Reports to the owner are in Japanese.
 - Heavy GPU runs are not needed for this project.
@@ -37,7 +39,8 @@ web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carr
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
-mods/                            the user's mods and cloned mod repositories (README.md only is tracked):
+mods/                            the user's mods and cloned mod repositories (README.md only is tracked),
+                                 e.g. ODM-Poser-SampleMods
 tools/make_mods_list.py          web/mods.js for opening the editor from disk with mods
 tools/serve.py                   a local server (localhost / --lan) so the editor installs as an app
 tools/make_icons.py              draws the app icons (web/editor/icon-*.png, apple-touch-icon, favicon, icon.svg)
@@ -45,11 +48,11 @@ web/editor/manifest.webmanifest, sw.js   the app (PWA): network first, the kept 
 docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API
 ```
 
-## How the node and the editor talk
+## Hosts
 
-4. On queue, `nodes.ODMPoser.run` decodes the pictures and returns `pose_json`,
-   `scene_json`, `openpose`, `atari`, `width`, `height`. It raises a clear error when nothing
-   was confirmed. All messages are checked against `location.origin`.
+A page that hosts the editor talks to it only through a mod (MOD API: `api.io`, `api.ui`,
+`api.presets`) and the list of mods it serves at `../mods.js`; keep the API stable for hosts:
+state format `version: 3`, `window.ODMPoser` (old alias `window.SymbolicPose`).
 
 ## The editor in brief (web/editor/index.html)
 
@@ -84,17 +87,18 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
 
 - JS syntax: `python -c "import esprima, re; [esprima.parseScript(m) for m in re.findall(r'<script>(.*?)</script>', open('web/editor/index.html', encoding='utf-8').read(), re.S)]"`
   (esprima knows no `?.` or `??`: keep those out of the editor files).
-- Node: queue a prompt with `ODMPoser` inputs `pose_json`, `scene_json`,
-  `openpose_image`, `atari_image` (data URLs) and preview the outputs.
+- Browsers: Playwright (for Python) drives Edge (`channel="msedge"`),
+  WebKit and Firefox, with device emulation for phones and tablets; the headless Edge command
+  line can hang while a newer Edge waits to install.
 
 ## Open items
 
 - English UI done (2026-10-19). To find untranslated text: open the editor headless with
   `?lang=en`, step through the modes, joints and props, and list text nodes that still hold
   Japanese (only the "日本語" switch and the search example should remain).
+- Real mouse, touch and pen use has been checked by automation only.
 - Prop shapes and grip positions are estimates; the owner will report the ones that look off.
 - The owner's private project keeps its own copy of the editor (it embeds it elsewhere).
   Changes made there are copied here with a sync script that lives in that project (it
-  rewrites index.html, pose_props.js and pose_scene.js; i18n.js, the node and the docs are this
-  repo's own). Keep the two compatible (same state format, same message names) or note the
-  difference here.
+  is now retired: this repository has moved far past that copy). Keep the state format readable
+  by both, or note the difference here.
