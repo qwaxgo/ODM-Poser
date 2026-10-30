@@ -1,24 +1,15 @@
 # SymbolicPoseEditor
 
-A stick-and-circle pose editor (pseudo 3D). Pose a simple figure — circles for the
-joints, lines for the bones, two blocks for the torso — then export it as an
-OpenPose picture, a line-and-circle rough ("atari"), and JSON.
+A stick-and-circle pose editor (pseudo 3D). Pose a simple figure — circles for the joints, lines
+for the bones, two blocks for the torso — and export it as an OpenPose picture, a line-and-circle
+rough ("atari"), and JSON.
 
 [日本語は下にあります](#日本語)
 
-## The node: Symbolic Pose Editor
+## Use
 
-| Output | Type | What it is |
-|---|---|---|
-| `pose_json` | STRING | The figure: 19 joints (cm), body turn, twists, hand shapes, pins, camera |
-| `scene_json` | STRING | Props, floor / wall / ceiling settings and the wire (see below) |
-| `openpose` | IMAGE | COCO-18 body + 2 x 21 hand points, standard colours, black background |
-| `atari` | IMAGE | The rough: lines and circles on white, props drawn as simple shapes |
-| `width`, `height` | INT | The export size set in the editor |
-
-Open `web/editor/index.html` in a browser (files are
-saved with the export buttons). Your own presets are loaded with
-"ファイルから読込 / Load from files" in the user presets box.
+Open `web/editor/index.html` in a browser. The export buttons save the pictures and the pose;
+"ファイルから読込 / Load from files" in the user presets box loads your own presets.
 
 ## Editing
 
@@ -71,9 +62,7 @@ headphones ...), the torso, the waist, the back (backpack, cases) and the feet (
   40 cm); a selected joint can be put on a face and pinned; "Stand on it" puts the figure on top.
 - Wire action: hang the figure from a point above by the chest, hips, a hand or an ankle.
 
-`scene_json` is `{"items": [...], "env": {...}, "wire": {...}}`; each item is
-`{"key", "hand" | "base" + "yaw", "off": [x, y, z], "rot": [x, y, z], "scale"}` (cm, degrees).
-The shapes are listed in `web/editor/pose_props.js`.
+The shapes are listed in `web/editor/pose_props.js` and `web/editor/pose_props_more.js`.
 
 ## Language
 
@@ -88,16 +77,16 @@ the figure's body.
 
 ## User presets
 
-Your own preset files (JSON) are loaded with "ファイルから読込 / Load from files" and show
-up in the editor under "ユーザープリセット / User presets" with a group filter and a
-Japanese / English search.
+Your own presets (JSON files) are loaded with
+"ファイルから読込 / Load from files" and listed under "ユーザープリセット / User presets" with a
+group filter and a Japanese / English search. A mod
+can also add presets.
 
 ## Mods
 
 Mods add props, solid kinds, auras, hand shapes, poses, translations, panels and drawing / mouse
 hooks without changing the editor: put `*.js` files in `mods/`, or clone a repository of mods into it.
-They load when the editor opens; opened from disk, run `python tools/make_mods_list.py`
-first. The API: [docs/MODDING.md](docs/MODDING.md) (日本語: [docs/MODDING-JA.md](docs/MODDING-JA.md)).
+Opened from disk, run `python tools/make_mods_list.py` first so the editor knows them. The API: [docs/MODDING.md](docs/MODDING.md) (日本語: [docs/MODDING-JA.md](docs/MODDING-JA.md)).
 Mods run with the editor's rights: install only mods you trust; `?nomods` starts without them.
 
 ## License
@@ -108,10 +97,9 @@ MIT, (c) 2026 qwaxgo. All shapes and code are original to this project.
 
 ## 日本語
 
-線と丸の全身アタリを疑似3Dで動かす、ポーズエディタです。OpenPose 画像・アタリ画像・
-JSON として書き出せます。
+線と丸の全身アタリを疑似3Dで動かすポーズエディタです。OpenPose 画像・アタリ画像・JSON として書き出せます。
 
-- **単体でも動きます**：`web/editor/index.html` をブラウザで開く（書き出しボタンでファイルに保存、ユーザープリセットは「ファイルから読込」で選ぶ）。
+- **使い方**：`web/editor/index.html` をブラウザで開く（書き出しボタンでファイルに保存、ユーザープリセットは「ファイルから読込」で選ぶ）。
 - **操作**：丸をドラッグ（骨の長さは保たれる）。手首・足首は腕・脚ごと（Shift でその骨だけ）。ダブルクリックで
   手前と奥を入れ替え。横図で奥行き。すべての関節を3軸（前後・左右・ねじり。頭はうなずく・かしげる・左右を向く）で
   回せます。関節の固定（ピン、Alt＋クリック）、腕の欄で手の形、体格モード、パースモード、人間の関節の限界。

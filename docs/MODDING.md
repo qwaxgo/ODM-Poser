@@ -20,8 +20,8 @@ API version: **1.1.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
 
 1. Save the file under *A mod file* below as `mods/mymod.js` (or clone a repository of mods into
    `mods/`, see the end of this page).
-2. Opened from disk (`web/editor/index.html`):
-   run `python tools/make_mods_list.py` first, then reload.
+2. Opened from disk (`web/editor/index.html`): run `python tools/make_mods_list.py`, then reload.
+   (When the page that hosts the editor serves the list itself, reloading is enough.)
 3. The **MOD** panel at the bottom of the side bar lists every mod: ✓ loaded, ✗ with the error.
 
 The **MOD** panel also has *Load mod files (this session only)*: it runs the chosen `.js` files
@@ -249,7 +249,7 @@ The canvas state (`ctx`) is saved and restored around each drawing hook.
 ## Saving and compatibility
 
 - Your data in `api.data()` and the props, solids and auras you added are saved in the pose JSON
-  Opened without your mod, they stay in the file; props and
+  (also in what `api.io.poseJSON()` hands on). Opened without your mod, they stay in the file; props and
   aura kinds the editor does not know are skipped when drawing, unknown solid kinds draw as boxes.
 - The API follows semantic versioning: 1.x adds things and keeps what is here working (1.1 added
   `api.io` and `addSection({at})`). A mod with
@@ -263,7 +263,7 @@ Mods can live in their own git repository: clone it into `mods/`, and every `*.j
 loads (deeper folders are not read, so a repository can keep notes, assets and tests there).
 
 ```
-cd mods
+cd <the editor's folder>/mods
 git clone <your mods repository>
 ```
 
