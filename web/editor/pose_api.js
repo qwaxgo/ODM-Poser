@@ -285,24 +285,119 @@ window.ODMPoser = {
 };
 window.SymbolicPose = window.ODMPoser;        // the old name: mods written for it still load
 
+// ---- mods kept in this browser: installed from a file, or added by URL ---------------------------------
+// They work where the editor has no mods/ folder (a site such as GitHub Pages, the installed app,
+// a phone). A file mod keeps its text; a URL mod is read again at each start (GitHub "blob" pages
+// become their raw file) and its last text is kept for offline use. Records:
+// {key, kind: "file" | "url", name, url, source, enabled, added, fetched}
+const STORE = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((ok, no) => {
+    const r = indexedDB.open("odm-poser-mods", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("mods", {keyPath: "key", autoIncrement: true});
+    r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+  }));
+  const tx = (mode, fn) => open().then(db => new Promise((ok, no) => {
+    const t = db.transaction("mods", mode), req = fn(t.objectStore("mods"));
+    t.oncomplete = () => ok(req.result); t.onerror = () => no(t.error);
+  }));
+  return {all: () => tx("readonly", st => st.getAll()), put: rec => tx("readwrite", st => st.put(rec)),
+          del: key => tx("readwrite", st => st.delete(key))};
+})();
+function rawUrl(u){
+  const m = u.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/);
+  return m ? `https://raw.githubusercontent.com/${m[1]}/${m[2]}/${m[3]}` : u;
+}
+async function runSource(text, label){
+  const url = URL.createObjectURL(new Blob([text], {type: "text/javascript"}));
+  await runScript(url, label);
+  URL.revokeObjectURL(url);
+}
+async function runStored(rec){
+  if (rec.kind === "url"){
+    let text = null;
+    try { const r = await fetch(rawUrl(rec.url), {cache: "no-cache"});
+      if (r.ok){ text = await r.text(); if (text !== rec.source){ rec.source = text; } rec.fetched = Date.now(); STORE.put(rec).catch(() => {}); } }
+    catch (e) {}
+    text = text || rec.source;
+    if (!text){ const m = {id: rec.url, name: rec.name, file: rec.url, status: "error", error: ""}; mods.push(m);
+      fail(m, "load", new Error("the address could not be read (and no copy is kept yet)")); return; }
+    return runSource(text, rec.url);
+  }
+  return runSource(rec.source || "", "device/" + rec.name);
+}
+async function loadStored(){
+  let recs = [];
+  try { recs = await STORE.all(); } catch (e) { return; }
+  for (const rec of recs.sort((a, b) => a.key - b.key)) if (rec.enabled !== false) await runStored(rec);
+}
+
 // ---- the MOD panel ---------------------------------------------------------------------------------
 { const sec = document.createElement("section");
+  const field = "flex:1;min-width:0;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:inherit;font-size:13px";
   sec.innerHTML = `<h2>MOD</h2>
     <div id="modBox" class="hint">読み込んだ MOD はありません。</div>
-    <div class="btns" style="margin-top:6px"><button id="modLoad">MODファイルを読み込む（今回だけ）</button>
+    <label style="margin-top:10px">この端末に入れた MOD</label>
+    <div id="modStored" class="hint">まだありません。</div>
+    <div class="btns" style="margin-top:6px"><button id="modInstall">ファイルから入れる（この端末）</button>
+      <input type="file" id="modInstallFile" accept=".js,text/javascript" multiple hidden>
+      <button id="modLoad">今回だけ読み込む</button>
       <input type="file" id="modFile" accept=".js,text/javascript" multiple hidden></div>
-    <div class="hint">mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ブラウザで直接開くときは、tools/make_mods_list.py で一覧を作ります）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。</div>`;
+    <div class="row" style="margin-top:6px"><input type="text" id="modUrl" inputmode="url" placeholder="https://…/mod.js（GitHub のファイルのページでも可）" style="${field}">
+      <button id="modUrlAdd">URLから追加</button></div>
+    <div class="hint">mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ブラウザで直接開くときは、tools/make_mods_list.py で一覧を作ります）。「ファイルから入れる」と「URLから追加」の MOD はこのブラウザに保存され、毎回読み込まれます（mods フォルダのないサイトやスマホでも使えます。URL の MOD は毎回新しい版を読み、オフラインでは前回のものを使います）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。</div>`;
   document.querySelector("aside").appendChild(sec);
   $("modLoad").addEventListener("click", () => $("modFile").click());
   $("modFile").addEventListener("change", async e => {
     const files = [...e.target.files]; e.target.value = "";
-    for (const f of files){
-      const url = URL.createObjectURL(new Blob([await f.text()], {type: "text/javascript"}));
-      await runScript(url, f.name);
-      URL.revokeObjectURL(url);
-    }
+    for (const f of files) await runSource(await f.text(), f.name);
     refreshPanels();
   });
+  // install: kept in this browser (a file of the same name is replaced), and run now
+  $("modInstall").addEventListener("click", () => $("modInstallFile").click());
+  $("modInstallFile").addEventListener("change", async e => {
+    const files = [...e.target.files]; e.target.value = "";
+    let recs = [];
+    try { recs = await STORE.all(); } catch (err) { say("このブラウザには MOD を保存できません（今回だけ読み込みます）。", true); }
+    for (const f of files){
+      const text = await f.text(), old = recs.find(r => r.kind === "file" && r.name === f.name);
+      try { await STORE.put(Object.assign(old || {kind: "file", added: Date.now()}, {name: f.name, source: text, enabled: true})); } catch (err) {}
+      if (!old) await runSource(text, "device/" + f.name);
+    }
+    renderStored(); refreshPanels();
+    say(files.some(f => recs.some(r => r.kind === "file" && r.name === f.name))
+      ? "MOD を入れ替えました。開き直すと新しい版になります。" : "MOD をこの端末に入れました。次からは自動で読み込みます。");
+  });
+  // by address: confirmed once, kept, read at once
+  $("modUrlAdd").addEventListener("click", async () => {
+    const url = $("modUrl").value.trim();
+    if (!/^https:\/\/\S+$/.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(url)){ say("https:// で始まる MOD のアドレスを入れてください。", true); return; }
+    if (!confirm("このアドレスの MOD を、エディタを開くたびに読み込んで実行します。信頼できるものだけを追加してください。\n\n" + url)) return;
+    const rec = {kind: "url", url, name: decodeURIComponent(url.split("/").pop() || url), enabled: true, added: Date.now()};
+    try { rec.key = await STORE.put(rec); } catch (err) { say("このブラウザには MOD を保存できません。", true); return; }
+    $("modUrl").value = "";
+    await runStored(rec); renderStored(); refreshPanels();
+    say("MOD を追加しました。次からは自動で読み込みます。");
+  });
+}
+async function renderStored(){
+  const box = $("modStored"); if (!box) return;
+  let recs = [];
+  try { recs = await STORE.all(); } catch (e) { box.textContent = "このブラウザには保存できません。"; return; }
+  if (!recs.length){ box.textContent = "まだありません。"; return; }
+  box.innerHTML = "";
+  for (const rec of recs.sort((a, b) => a.key - b.key)){
+    const row = document.createElement("div"); row.className = "row"; row.style.marginTop = "4px";
+    const on = document.createElement("input"); on.type = "checkbox"; on.checked = rec.enabled !== false; on.title = "有効";
+    const name = document.createElement("span"); name.style.cssText = "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+    name.textContent = (rec.kind === "url" ? "URL: " : "") + rec.name; name.title = rec.url || rec.name;
+    const del = document.createElement("button"); del.type = "button"; del.textContent = "外す";
+    on.addEventListener("change", async () => { rec.enabled = on.checked; await STORE.put(rec).catch(() => {});
+      say(on.checked ? "有効にしました。開き直すと読み込みます。" : "無効にしました。開き直すと読み込まれません。"); });
+    del.addEventListener("click", async () => { if (!confirm(`「${rec.name}」をこの端末から外しますか？`)) return;
+      await STORE.del(rec.key).catch(() => {}); renderStored(); say("外しました。開き直すと読み込まれません。"); });
+    row.append(on, name, del); box.appendChild(row);
+  }
 }
 function renderModList(){
   const box = $("modBox"); if (!box) return;
@@ -337,11 +432,13 @@ function runScript(src, file){
 async function loadMods(){
   const list = Array.isArray(window.ODM_POSER_MODS) ? window.ODM_POSER_MODS
     : Array.isArray(window.SYMBOLIC_POSE_MODS) ? window.SYMBOLIC_POSE_MODS : [];       // a list written before the rename
-  if (new URLSearchParams(location.search).has("nomods") || !list.length) return;
+  renderStored();
+  if (new URLSearchParams(location.search).has("nomods")) return;
   const base = window.ODM_POSER_MODS_BASE || window.SYMBOLIC_POSE_MODS_BASE || (location.protocol === "file:" ? "../../mods/" : "../mods/");
   loading = true;
   for (const name of list) if (/^([\w.-]+\/)?[\w.-]+\.js$/.test(name))
     await runScript(base + name.split("/").map(encodeURIComponent).join("/"), name);
+  await loadStored();                         // then the ones kept in this browser
   loading = false;
   refreshPanels();
 }

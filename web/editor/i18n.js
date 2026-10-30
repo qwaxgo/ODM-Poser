@@ -118,8 +118,19 @@
     "気（炎のように立ちのぼる）": "Ki (rising like flames)", "オーラ（なめらかな光）": "Aura (smooth glow)", "プラズマ（電撃）": "Plasma (lightning)",
     // the MOD panel (pose_api.js)
     "読み込んだ MOD はありません。": "No mods loaded.", "MODファイルを読み込む（今回だけ）": "Load mod files (this session only)",
-    "mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ブラウザで直接開くときは、tools/make_mods_list.py で一覧を作ります）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。":
-      "The *.js files in mods/ (and its folders) are loaded at start (opened straight from disk, run tools/make_mods_list.py to list them). A mod is a program that can do anything inside the editor: install only mods you trust. Add ?nomods to the address to start without mods.",
+    "mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ブラウザで直接開くときは、tools/make_mods_list.py で一覧を作ります）。「ファイルから入れる」と「URLから追加」の MOD はこのブラウザに保存され、毎回読み込まれます（mods フォルダのないサイトやスマホでも使えます。URL の MOD は毎回新しい版を読み、オフラインでは前回のものを使います）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。":
+      "The *.js files in mods/ (and its folders) load at start (opened straight from disk, run tools/make_mods_list.py to list them). Mods installed from a file or added by URL are kept in this browser and load every time (also on a site without a mods folder, or on a phone; a URL mod is read fresh each time and its last copy is used offline). A mod is a program that can do anything inside the editor: install only mods you trust. Add ?nomods to the address to start without mods.",
+    "この端末に入れた MOD": "Mods kept in this browser", "まだありません。": "None yet.", "ファイルから入れる（この端末）": "Install from a file (this device)",
+    "今回だけ読み込む": "Load for this session only", "URLから追加": "Add by URL", "https://…/mod.js（GitHub のファイルのページでも可）": "https://…/mod.js (a GitHub file page works too)",
+    "このブラウザには MOD を保存できません（今回だけ読み込みます）。": "This browser cannot keep mods (loaded for this session only).",
+    "MOD を入れ替えました。開き直すと新しい版になります。": "Mod replaced; reopen the editor for the new version.",
+    "MOD をこの端末に入れました。次からは自動で読み込みます。": "Mod installed on this device; it loads automatically from now on.",
+    "https:// で始まる MOD のアドレスを入れてください。": "Enter a mod address starting with https://.",
+    "このブラウザには MOD を保存できません。": "This browser cannot keep mods.", "MOD を追加しました。次からは自動で読み込みます。": "Mod added; it loads automatically from now on.",
+    "このブラウザには保存できません。": "This browser cannot keep them.", "有効": "On",
+    "有効にしました。開き直すと読み込みます。": "Turned on; it loads when the editor is reopened.",
+    "無効にしました。開き直すと読み込まれません。": "Turned off; it will not load when the editor is reopened.",
+    "外しました。開き直すと読み込まれません。": "Removed; it will not load when the editor is reopened.",
     // theme, the composition picture, figures (index.html, pose_cast.js)
     "表示：自動": "Theme: auto", "表示：ライト": "Theme: light", "表示：ダーク": "Theme: dark",
     "比率": "Aspect ratio", "自由（幅と高さを直接）": "Free (width and height)", "1:1（正方形）": "1:1 (square)",
