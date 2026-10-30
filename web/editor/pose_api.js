@@ -336,7 +336,7 @@ function runScript(src, file){
 async function loadMods(){
   const list = Array.isArray(window.SYMBOLIC_POSE_MODS) ? window.SYMBOLIC_POSE_MODS : [];
   if (new URLSearchParams(location.search).has("nomods") || !list.length) return;
-  const base = location.protocol === "file:" ? "../../mods/" : "../mods/";
+  const base = window.SYMBOLIC_POSE_MODS_BASE || (location.protocol === "file:" ? "../../mods/" : "../mods/");
   loading = true;
   for (const name of list) if (/^([\w.-]+\/)?[\w.-]+\.js$/.test(name))
     await runScript(base + name.split("/").map(encodeURIComponent).join("/"), name);

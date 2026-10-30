@@ -11,6 +11,9 @@ rough ("atari"), and JSON.
 Open `web/editor/index.html` in a browser. The export buttons save the pictures and the pose;
 "ファイルから読込 / Load from files" in the user presets box loads your own presets.
 
+To install it as an app (PC, phone, tablet; works offline), see **[docs/APP.md](docs/APP.md)**
+(日本語: [docs/APP-JA.md](docs/APP-JA.md)); `python tools/serve.py` serves it on this computer.
+
 To use it as a ComfyUI node, see **[docs/COMFYUI.md](docs/COMFYUI.md)** (日本語:
 [docs/COMFYUI-JA.md](docs/COMFYUI-JA.md)): install, the node's outputs, troubleshooting.
 
@@ -129,6 +132,7 @@ MIT, (c) 2026 qwaxgo. All shapes and code are original to this project.
 線と丸の全身アタリを疑似3Dで動かすポーズエディタです。OpenPose 画像・アタリ画像・JSON として書き出せます。
 
 - **使い方**：`web/editor/index.html` をブラウザで開く（書き出しボタンでファイルに保存、ユーザープリセットは「ファイルから読込」で選ぶ）。
+- **アプリとして使う**：パソコン・スマホ・タブレットにアプリとして追加でき、オフラインでも開けます。方法は **[docs/APP-JA.md](docs/APP-JA.md)**（`python tools/serve.py` でこのパソコンから開けます）。
 - **ComfyUI で使う**：導入方法・ノードの出力・うまくいかないときは **[docs/COMFYUI-JA.md](docs/COMFYUI-JA.md)** にまとめてあります。
 - **操作**：丸をドラッグ（骨の長さは保たれる）。手首・足首は腕・脚ごと（Shift でその骨だけ）。ダブルクリックで
   手前と奥を入れ替え。横図で奥行き。すべての関節を3軸（前後・左右・ねじり。頭はうなずく・かしげる・左右を向く）で

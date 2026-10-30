@@ -4,7 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
+<!-- the app (PWA): manifest, icons, the bar colour; the service worker is registered below -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#2f6f4f" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1a19" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ポーズエディタ">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Symbolic Pose Editor</title>
 <style>
@@ -22,6 +31,7 @@
         --field:#1e1e1d; --accent:#4e9a74; --accent-ink:#10231a; --code:#2e2e2b; --warn:#e0864f;
         --stage:#2b2b29; --figure:#ececea; --sel:#ff8a5c; --far:#7a7a74;}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);
      padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -123,7 +133,7 @@ input[type=checkbox]{accent-color:var(--accent)}
 </head>
 <body class="mode-pose">
 <header>
-  <div id="headTools"><button type="button" id="themeBtn">表示：自動</button></div>
+  <div id="headTools"><button type="button" id="installBtn" hidden>アプリとして追加</button><button type="button" id="themeBtn">表示：自動</button></div>
   <h1>Symbolic Pose Editor <span style="font-weight:400;font-size:13px">記号ポーズエディタ</span></h1>
   <p>線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。</p>
 </header>
@@ -821,7 +831,9 @@ let pinch = null, tap = null;
 for (const cv of [front, side]){
   cv.addEventListener("pointerdown", e => {
     lastPointer = e.pointerType || "mouse";
-    if (e.pointerType === "touch") document.body.classList.add("touch");
+    // the on-screen keys appear after this touch (showing them now would move the view under the finger)
+    if (e.pointerType === "touch" && !document.body.classList.contains("touch"))
+      setTimeout(() => { document.body.classList.add("touch"); draw(); }, 0);
     if (e.pointerType === "mouse" && e.button === 1) return;             // the middle button: nothing
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     if (e.pointerType === "touch"){
@@ -1233,7 +1245,8 @@ for (const [id, key] of [["vShift", "shift"], ["vAlt", "alt"]])
   $(id).addEventListener("click", () => { VMOD[key] = !VMOD[key]; $(id).setAttribute("aria-pressed", String(VMOD[key])); $(id).classList.toggle("on", VMOD[key]); });
 $("vUndo").addEventListener("click", undo);
 $("vSide").addEventListener("click", () => { document.body.classList.toggle("show-side"); draw(); });
-if (navigator.maxTouchPoints > 0) document.body.classList.add("touch");
+if (navigator.maxTouchPoints > 0 || "ontouchstart" in window || matchMedia("(any-pointer: coarse)").matches)
+  document.body.classList.add("touch");
 const UNITS = {scaleAll: 1, scaleHead: 1, scaleThick: 1, lens: 1, yaw: 1, pitch: 1, roll: 1};
 const TC = [];                        // user presets: from files (the button below) or from a mod
 $("preset").innerHTML = Object.keys(PRESETS).map(n => `<option>${n}</option>`).join("");
@@ -1533,6 +1546,24 @@ if (qs.get("h")) $("H").value = qs.get("h");
     set(theme); });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => draw());
   set(theme);
+}
+// the app (PWA): offline with a service worker, an "add as an app" button. Only over https or
+// from this computer (localhost): opened as a file there is no app; inside another page's frame
+// (the ComfyUI node's window) neither.
+{ const top = window.top === window, secure = window.isSecureContext && location.protocol !== "file:";
+  const ua = navigator.userAgent, ios = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const macSafari = /Macintosh/.test(ua) && /Safari\//.test(ua) && !/Chrome|Chromium|Edg\/|Firefox|OPR\//.test(ua) && !ios;
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  if (top && secure && "serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  let prompt = null;
+  addEventListener("beforeinstallprompt", e => { e.preventDefault(); prompt = e; if (top) $("installBtn").hidden = false; });
+  addEventListener("appinstalled", () => { $("installBtn").hidden = true; say("アプリとして追加しました。"); });
+  if (top && secure && !standalone && (ios || macSafari)) $("installBtn").hidden = false;
+  $("installBtn").addEventListener("click", async () => {
+    if (prompt){ prompt.prompt(); const r = await prompt.userChoice; prompt = null; if (r.outcome === "accepted") $("installBtn").hidden = true; }
+    else if (ios) say("Safari の共有ボタン（□↑）→「ホーム画面に追加」で、アプリとして使えます。");
+    else if (macSafari) say("Safari のメニュー「ファイル」→「Dock に追加」で、アプリとして使えます。");
+  });
 }
 // remember the last pose in this browser only (a convenience; files are the real save)
 const KEY = "symbolic-pose-editor-v1";

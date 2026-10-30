@@ -74,7 +74,11 @@ try:
                                                                   if request.query_string else ""))
 
     EDITOR_FILES = ("index.html", "pose_props.js", "pose_props_more.js", "pose_scene.js", "pose_solids.js",
-                    "pose_style.js", "pose_ruler.js", "i18n.js", "pose_api.js", "pose_cast.js")
+                    "pose_style.js", "pose_ruler.js", "i18n.js", "pose_api.js", "pose_cast.js",
+                    "manifest.webmanifest", "sw.js", "icon.svg", "icon-192.png", "icon-512.png",
+                    "icon-maskable-512.png", "apple-touch-icon.png", "favicon-32.png")
+    KINDS = {".html": "text/html", ".js": "application/javascript", ".webmanifest": "application/manifest+json",
+             ".svg": "image/svg+xml"}
 
     @routes.get("/symbolic_pose/mods.js")
     async def _mods_list(request):
@@ -93,7 +97,9 @@ try:
         name = request.match_info["name"]
         if name not in EDITOR_FILES:
             raise web.HTTPNotFound()
-        kind = "text/html" if name.endswith(".html") else "application/javascript"
+        if name.endswith(".png"):
+            return web.FileResponse(EDITOR / name)
+        kind = KINDS[Path(name).suffix]
         return web.Response(text=(EDITOR / name).read_text(encoding="utf-8"), content_type=kind)
 except Exception as exc:            # outside ComfyUI (tests, a plain import)
     print(f"[SymbolicPose] web routes not registered: {exc}")

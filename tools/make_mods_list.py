@@ -28,7 +28,9 @@ def main():
             names.append("/".join(parts))
     names.sort()
     OUT.write_text("// written by tools/make_mods_list.py: the mods the editor loads when opened from disk\n"
-                   "window.SYMBOLIC_POSE_MODS = " + json.dumps(names) + ";\n", encoding="utf-8")
+                   "// or from tools/serve.py (mods/ is two folders up from web/editor/)\n"
+                   "window.SYMBOLIC_POSE_MODS = " + json.dumps(names) + ";\n"
+                   'window.SYMBOLIC_POSE_MODS_BASE = "../../mods/";\n', encoding="utf-8")
     print(f"{OUT.relative_to(ROOT)}: {len(names)} mod(s)" + (": " + ", ".join(names) if names else ""))
 
 

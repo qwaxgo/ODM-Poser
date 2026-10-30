@@ -46,6 +46,9 @@ mods/                            the user's mods and cloned mod repositories (RE
                                  SymbolicPoseEditor-SampleMods (examples, private repo)
 user_presets/                    the user's preset files (README.md only is tracked)
 tools/make_mods_list.py          web/mods.js for opening the editor from disk with mods
+tools/serve.py                   a local server (localhost / --lan) so the editor installs as an app
+tools/make_icons.py              draws the app icons (web/editor/icon-*.png, apple-touch-icon, favicon, icon.svg)
+web/editor/manifest.webmanifest, sw.js   the app (PWA): network first, the kept copy offline (docs/APP.md)
 docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API
 ```
 
