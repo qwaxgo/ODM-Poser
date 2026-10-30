@@ -233,7 +233,7 @@ function syncRuler(){
   $("rulerWarn").textContent = tilt ? RULER_TILT : ""; $("rulerWarn").style.display = tilt ? "" : "none";
 }
 { const sync0 = syncUI; syncUI = function(){ sync0(); syncRuler(); }; }
-{ const set = fn => e => { fn(rulerState(), e.target); syncRuler(); draw(); };
+{ const set = fn => e => { if (e.type !== "input") remember(); fn(rulerState(), e.target); syncRuler(); draw(); };
   $("rulerOn").addEventListener("change", set((r, t) => { r.on = t.checked; }));
   $("rulerN").addEventListener("change", set((r, t) => { r.n = +t.value; }));
   $("rulerYaw").addEventListener("input", set((r, t) => { r.yaw = +t.value; }));

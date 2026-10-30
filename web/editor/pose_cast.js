@@ -5,7 +5,7 @@
 // camera are shared; each figure has its own pose, body, hands, pins, things, auras and wire.
 //
 // S.others: [{P, R, hands, head, body, twist, pins, items, auras, wire, figId, figName}]
-const FIG_KEYS = ["P", "R", "hands", "head", "body", "twist", "pins", "items", "auras", "wire", "figId", "figName"];
+const FIG_KEYS = ["P", "R", "hands", "head", "body", "twist", "pins", "items", "auras", "wire", "scale", "figId", "figName"];
 function takeFigure(){ const f = {}; for (const k of FIG_KEYS) f[k] = S[k]; return f; }
 function putFigure(f){ const d = fresh(); for (const k of FIG_KEYS) S[k] = f[k] !== undefined ? f[k] : d[k]; }
 function withFigure(f, fn){ const keep = takeFigure(); putFigure(f); try { return fn(); } finally { putFigure(keep); } }
