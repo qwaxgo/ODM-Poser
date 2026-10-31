@@ -12,6 +12,7 @@
 (() => {
 const API_VERSION = "1.2.0", API_MAJOR = 1;
 const mods = [];                              // {id, name, version, file, status: "ok" | "error", error}
+const ORIGIN = {props: {}, solids: {}, auras: {}, parts: {}, hands: {}};   // kind key -> the mod id that added it
 const hooks = {drawBehind: [], draw: [], drawSide: [], afterEdit: [], sync: [], mode: []};
 let currentFile = "";
 
@@ -143,7 +144,7 @@ function makeApi(mod){
       add(key, def){
         if (PROPS[key] && !def.replace) throw new Error(`prop "${key}" exists (use a key like "${mod.id}:${key}", or replace: true)`);
         checkProp(key, def);
-        PROPS[key] = Object.assign({}, def, {mod: mod.id}); delete PROPS[key].replace;
+        PROPS[key] = Object.assign({}, def, {mod: mod.id}); delete PROPS[key].replace; ORIGIN.props[key] = mod.id;
         tr(def.note, def.noteEn);
       },
       get: key => PROPS[key],
@@ -161,6 +162,7 @@ function makeApi(mod){
         if (!(Array.isArray(def.size) && def.size.length === 3 && def.size.every(v => v > 0))) throw new Error(`solid ${key}: size [w, h, d] cm`);
         SOLID_KINDS[key] = {ja: def.ja || key, en: def.en || def.ja || key, shape: def.shape, size: def.size.slice(),
           sides: def.sides, at: isPoint(def.at) ? def.at.slice() : [90, 0, 0]};
+        ORIGIN.solids[key] = mod.id;
         tr(def.ja, def.en);
       },
       add: kind => addSolid(kind),
@@ -174,6 +176,7 @@ function makeApi(mod){
         if (typeof def.draw !== "function") throw new Error(`aura ${key}: draw(ctx, info) is required`);
         AURA_KINDS[key] = [def.ja || key, def.color || "#ffffff", {front: !!def.front, draw: guarded(mod, `aura ${key}`, def.draw),
           margin: isNum(def.margin) ? def.margin : 0.6}];
+        ORIGIN.auras[key] = mod.id;
         tr(def.ja, def.en);
       },
       // chains: lists of joint names (and "r_hand" / "l_hand", the middle of the fist); one outline each
@@ -181,6 +184,7 @@ function makeApi(mod){
         if (!Array.isArray(def.chains) || !def.chains.every(c => Array.isArray(c) && c.every(n => IX[n] !== undefined || n === "r_hand" || n === "l_hand")))
           throw new Error(`aura part ${key}: chains of joint names`);
         AURA_PARTS[key] = [def.ja || key, def.chains];
+        ORIGIN.parts[key] = mod.id;
         tr(def.ja, def.en);
       },
     },
@@ -189,7 +193,7 @@ function makeApi(mod){
       add(key, def){
         if (!/^[a-z_][a-z0-9_]*$/.test(key)) throw new Error(`hand shape key "${key}": lower case, digits and _`);
         if (!(Array.isArray(def.curl) && def.curl.length === 5 && def.curl.every(isNum))) throw new Error(`hand ${key}: curl is five numbers`);
-        HANDS[key] = def.curl.slice(); HAND_JA[key] = def.ja || key;
+        HANDS[key] = def.curl.slice(); HAND_JA[key] = def.ja || key; ORIGIN.hands[key] = mod.id;
         tr(`${def.ja || key}（${key}）`, def.en);
       },
       set(side, key){ if (!HANDS[key]) throw new Error(`no hand shape "${key}"`); S.hands[side === "l" ? "l" : "r"] = key; },
@@ -282,7 +286,41 @@ window.ODMPoser = {
     if (!loading) refreshPanels();
   },
   mods: () => mods.map(m => Object.assign({}, m)),
+  // what the editor has before any mod (props, solid kinds, auras, aura parts, hand shapes): a link
+  // that opens a pose (pose_share.js) carries no mod, so what a mod added is swapped for these
+  builtin: Object.freeze({props: new Set(Object.keys(PROPS)), solids: new Set(Object.keys(SOLID_KINDS)),
+    auras: new Set(Object.keys(AURA_KINDS)), parts: new Set(Object.keys(AURA_PARTS)), hands: new Set(Object.keys(HANDS))}),
+  // the official mods (qwaxgo's, on GitHub) may travel with a link: their kinds stay and whoever
+  // opens it may add them from GitHub. A clone of a qwaxgo repository in mods/ counts as its GitHub
+  // copy (the one who opens the link gets the GitHub file, never the sender's).
+  origin: (kind, key) => (ORIGIN[kind] || {})[key] || "",
+  officialMods(){
+    return mods.filter(m => m.status === "ok").map(m => ({id: m.id, url: officialUrl(m.file)})).filter(m => m.url);
+  },
+  isOfficial: url => !!officialUrl(url),
+  // add an official mod by its GitHub address (the person's click on the link's offer is the consent)
+  async addOfficialMod(url){
+    url = officialUrl(url); if (!url) return false;
+    let recs = []; try { recs = await STORE.all(); } catch (e) {}
+    if (recs.some(r => r.kind === "url" && officialUrl(r.url) === url)) return true;
+    const rec = {kind: "url", url, name: decodeURIComponent(url.split("/").pop() || url), enabled: true, added: Date.now()};
+    try { rec.key = await STORE.put(rec); } catch (err) { return false; }
+    await runStored(rec); renderStored(); refreshPanels();
+    return true;
+  },
+  modsReady: null,                            // a promise: the mods are loaded
 };
+// a qwaxgo GitHub address of a mod file (raw), or ""
+function officialUrl(file){
+  file = String(file || "");
+  let m = file.match(/^https:\/\/github\.com\/qwaxgo\/([\w.-]+)\/blob\/([\w.-]+)\/([\w./-]+\.js)$/);
+  if (m) return `https://raw.githubusercontent.com/qwaxgo/${m[1]}/${m[2]}/${m[3]}`;
+  m = file.match(/^https:\/\/raw\.githubusercontent\.com\/qwaxgo\/[\w.-]+\/[\w.-]+\/[\w./-]+\.js$/);
+  if (m && !file.includes("..")) return file;
+  m = file.match(/^(ODM-Poser-[\w.-]+)\/([\w./-]+\.js)$/);           // a clone in mods/
+  if (m && !file.includes("..")) return `https://raw.githubusercontent.com/qwaxgo/${m[1]}/main/${m[2]}`;
+  return "";
+}
 window.SymbolicPose = window.ODMPoser;        // the old name: mods written for it still load
 
 // ---- mods kept in this browser: installed from a file, or added by URL ---------------------------------
@@ -442,5 +480,5 @@ async function loadMods(){
   loading = false;
   refreshPanels();
 }
-loadMods();
+window.ODMPoser.modsReady = loadMods();
 })();
