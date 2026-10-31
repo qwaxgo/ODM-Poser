@@ -73,13 +73,16 @@ unless the definition says `replace: true`.
 The world is in **centimetres**, **y up**, the floor at y = 0. The figure faces **+z**; its right
 side is at x < 0 (screen left when it faces the camera). It is about 168 cm tall in the rest pose.
 
-The 19 joints (`api.joints.names`, index = position in this list):
+The 21 joints (`api.joints.names`, index = position in this list):
 
 ```text
  0 pelvis   1 waist   2 chest   3 neck   4 head
  5 r_shoulder  6 r_elbow  7 r_wrist     8 l_shoulder  9 l_elbow 10 l_wrist
 11 r_hip  12 r_knee  13 r_ankle  14 r_toe      15 l_hip  16 l_knee  17 l_ankle  18 l_toe
+19 r_hand 20 l_hand   (the hands, wrist to knuckles: they bend the wrist)
 ```
+
+A pose saved before the hands (19 joints) still loads; the hands go on along the forearms.
 
 `api.joints.parent[i]` is the index of the joint's parent (−1 for the pelvis).
 
@@ -165,7 +168,7 @@ Every prop can be carried on the back (hand and body props) and put down on the 
 | `api.mode()` | `"pose"`, `"body"`, `"persp"` or `"place"` |
 | `api.selectedJoint()` | the selected joint's name, or `null` |
 
-Fields of `S` a mod may read (and change inside `api.edit`): `P` (19 joints, [x, y, z] cm),
+Fields of `S` a mod may read (and change inside `api.edit`): `P` (21 joints, [x, y, z] cm),
 `R` (joint radii), `hands` (`{r, l}` hand shapes), `cam` (`lens` mm, `yaw`, `pitch`, `roll` degrees,
 `zoom`), `pins` (pinned joints), `items` (props in the scene), `solids`, `auras`, `colors`, `env`
 (floor, walls, ceiling, grounding), `wire`, `ruler`.
@@ -199,7 +202,7 @@ Fields of `S` a mod may read (and change inside `api.edit`): `P` (19 joints, [x,
 | `api.hands.set(side, key)`, `api.hands.shapes()` | set a hand's shape; the shape keys |
 | `api.poses.add(name, {en, turns})` | a built-in pose: `turns: [[joint, "x" \| "y" \| "z", degrees], ...]`, each a turn of that joint's bone from the standing pose |
 | `api.poses.apply(name)` | put the figure in that pose |
-| `api.presets.add(list)` | user presets `{group, name, P}` (P: 19 joints in cm; only the bones' directions are used) |
+| `api.presets.add(list)` | user presets `{group, name, P}` (P: 21 joints in cm, or the first 19; only the bones' directions are used) |
 
 ### Files (API 1.1)
 

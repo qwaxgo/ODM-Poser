@@ -138,9 +138,10 @@ add presets too. A file is a list of presets or `{"presets": [...]}`; a preset i
 {"group": "Standing", "name": "contrapposto 01", "P": [[0, 95, 0], [0, 111, 0], ...]}
 ```
 
-`P` holds the 19 joints in centimetres (y up, the figure faces +z) in this order: pelvis, waist,
+`P` holds the 21 joints in centimetres (y up, the figure faces +z) in this order: pelvis, waist,
 chest, neck, head, r_shoulder, r_elbow, r_wrist, l_shoulder, l_elbow, l_wrist, r_hip, r_knee,
-r_ankle, r_toe, l_hip, l_knee, l_ankle, l_toe. Only the bones' directions are taken; the figure
+r_ankle, r_toe, l_hip, l_knee, l_ankle, l_toe, r_hand, l_hand (the hands, wrist to knuckles; a
+list of the first 19 also works, the hands then go on along the forearms). Only the bones' directions are taken; the figure
 keeps its own body. `group` defaults to the file name.
 
 ## Mods

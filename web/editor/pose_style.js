@@ -23,8 +23,8 @@ const AURA_KINDS = {flame: ["気（炎のように立ちのぼる）", "#ffd84a"
 
 // ---- the hull: circles round the joints (and the middle of the fist), sampled on screen ------------
 function auraPoint(name){                     // a joint, or "r_hand": the middle of the fist
-  if (name.endsWith("_hand")){ const s = name[0], w = S.P[IX[s + "_wrist"]], e = S.P[IX[s + "_elbow"]];
-    return {p: add(w, mul(norm(sub(w, e)), 8)), r: 6}; }
+  if (name.endsWith("_hand")){ const s = name[0], w = S.P[IX[s + "_wrist"]], h = S.P[IX[s + "_hand"]];
+    return {p: add(w, mul(sub(h, w), 0.9)), r: 6}; }
   return {p: S.P[IX[name]], r: S.R[IX[name]] || 4};
 }
 function convexHull(pts){

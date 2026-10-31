@@ -61,7 +61,7 @@ state format `version: 3`, message names `odm-poser-*`, `window.ODMPoser` (old a
 
 ## The editor in brief (web/editor/index.html)
 
-- State `S`: `P` 19 joints (cm, y up, the figure faces +z; order in `J`), `R` circle radii,
+- State `S`: `P` 21 joints (the hands r_hand / l_hand last, so older 19-joint poses upgrade by appending) (cm, y up, the figure faces +z; order in `J`), `R` circle radii,
   `hands {r,l}`, `cam`, `body` (whole-body turn), `twist` per joint, `pins {joint: [x,y,z]}`,
   `items`, `env`, `wire`, `center` (view centre). Saved JSON has `version: 3`; `migrate()` reads
   older files (18 joints; `head.yaw`).
