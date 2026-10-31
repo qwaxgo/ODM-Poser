@@ -206,9 +206,9 @@ function makeApi(mod){
       apply: name => { remember(); applyPreset(name); S.pins = {}; afterEdit(); syncUI(); draw(); },
     },
     presets: {
-      // user presets {group, name, P (19 joints, cm)}, added to the list of user presets
+      // user presets {group, name, P (21 joints, cm; 19 without the hands also do)}, added to the list of user presets
       add(list){ if (!Array.isArray(list)) throw new Error("presets.add takes a list");
-        setUserPresets(TC.concat(list.filter(p => p && Array.isArray(p.P) && p.P.length === J.length)
+        setUserPresets(TC.concat(list.filter(p => p && Array.isArray(p.P) && (p.P.length === J.length || p.P.length === 19))
           .map(p => ({group: String(p.group || mod.name), name: String(p.name || ""), P: p.P})))); },
     },
     // files: the exported pictures and the pose, as the 書き出し buttons make them

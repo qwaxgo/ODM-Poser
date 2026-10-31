@@ -21,14 +21,17 @@ function itemLocal(it, p, k = 1){             // the item's own size and turn, b
   q = rotAxis(q, [0, 0, 1], deg(r[2])); q = rotAxis(q, [1, 0, 0], deg(r[0])); q = rotAxis(q, [0, 1, 0], deg(r[1]));
   return add(q, it.off || [0, 0, 0]);
 }
-// the fist: origin in the middle of the fist, z along the forearm, y toward the thumb
+// the fist: origin in the middle of the fist, z along the hand, y toward the thumb. The forearm's
+// frame (its twist) is carried over the wrist's bend, so a bent wrist turns what the hand holds.
 function handFrame(side){
-  const el = S.P[IX[side + "_elbow"]], wr = S.P[IX[side + "_wrist"]];
-  const z = norm(sub(wr, el));
+  const el = S.P[IX[side + "_elbow"]], wr = S.P[IX[side + "_wrist"]], hd = S.P[IX[side + "_hand"]];
+  const z0 = norm(sub(wr, el)), z = hd ? norm(sub(hd, wr)) : z0;
   const ref = add(bodyFront(), mul(bodyRot([0, 1, 0]), 0.4));
-  let y = sub(ref, mul(z, dot(ref, z)));
-  if (len(y) < 1e-4) y = cross(z, [1, 0, 0]);
-  y = rotAxis(norm(y), z, deg(S.twist[IX[side + "_wrist"]] || 0) * (side === "r" ? 1 : -1));
+  let y = sub(ref, mul(z0, dot(ref, z0)));
+  if (len(y) < 1e-4) y = cross(z0, [1, 0, 0]);
+  const tw = (S.twist[IX[side + "_wrist"]] || 0) + (S.twist[IX[side + "_hand"]] || 0);
+  y = rotAxis(norm(y), z0, deg(tw) * (side === "r" ? 1 : -1));
+  y = norm(rotBetween(y, z0, z));
   const x = mul(norm(cross(y, z)), side === "r" ? 1 : -1);
   return {o: add(wr, mul(z, 7)), x, y, z};
 }
@@ -255,7 +258,7 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
 // ---- simulation after each edit ---------------------------------------------------------------
 const CONTACT = {pelvis: 14, waist: 11, chest: 12, neck: 5, head: 11, r_shoulder: 6, l_shoulder: 6,
   r_elbow: 4, l_elbow: 4, r_wrist: 3, l_wrist: 3, r_hip: 10, l_hip: 10, r_knee: 5, l_knee: 5,
-  r_ankle: 7, l_ankle: 7, r_toe: 2, l_toe: 2};
+  r_ankle: 7, l_ankle: 7, r_toe: 2, l_toe: 2, r_hand: 3, l_hand: 3};
 function lowest(){ let m = 1e9; J.forEach((n, i) => { m = Math.min(m, S.P[i][1] - (CONTACT[n] || 3)); }); return m; }
 function moveAll(d, view){                    // view: the camera follows (for the buttons)
   S.P = S.P.map(q => add(q, d));

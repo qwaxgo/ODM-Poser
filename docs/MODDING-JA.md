@@ -63,14 +63,17 @@ ODMPoser.registerMod({
 世界の単位は **cm**、**y が上**、床が y = 0 です。人物は **+z** を向き、人物の右側が x < 0（カメラと向き合うと画面の左）。
 立った姿勢で身長は約 168 cm です。
 
-関節は 19 個です（`api.joints.names`、番号はこの並び）。
+関節は 21 個です（`api.joints.names`、番号はこの並び）。
 
 ```text
  0 pelvis 腰   1 waist ウエスト   2 chest 胸   3 neck 首   4 head 頭
  5 r_shoulder 右肩  6 r_elbow 右肘  7 r_wrist 右手首     8 l_shoulder 左肩  9 l_elbow 左肘 10 l_wrist 左手首
 11 r_hip 右股関節  12 r_knee 右膝  13 r_ankle 右足首  14 r_toe 右つま先
 15 l_hip 左股関節  16 l_knee 左膝  17 l_ankle 左足首  18 l_toe 左つま先
+19 r_hand 右手  20 l_hand 左手（手首から指の付け根まで。手首を曲げる）
 ```
+
+手の関節がなかった頃（19 関節）のポーズも読めます。手は前腕の延長上に補われます。
 
 `api.joints.parent[i]` はその関節の親の番号です（腰は −1）。
 
@@ -156,7 +159,7 @@ ODMPoser.registerMod({
 | `api.mode()` | `"pose"`・`"body"`・`"persp"`・`"place"` |
 | `api.selectedJoint()` | 選んでいる関節の名前（なければ `null`） |
 
-MOD が読める（`api.edit` の中で変えてよい）`S` の項目：`P`（19 関節の [x, y, z] cm）、`R`（関節の丸の半径）、
+MOD が読める（`api.edit` の中で変えてよい）`S` の項目：`P`（21 関節の [x, y, z] cm）、`R`（関節の丸の半径）、
 `hands`（`{r, l}` 手の形）、`cam`（`lens` mm、`yaw`・`pitch`・`roll` 度、`zoom`）、`pins`（固定した関節）、
 `items`（出ている小物）、`solids`、`auras`、`colors`、`env`（床・壁・天井・接地）、`wire`、`ruler`。
 
@@ -189,7 +192,7 @@ MOD が読める（`api.edit` の中で変えてよい）`S` の項目：`P`（1
 | `api.hands.set(side, key)`、`api.hands.shapes()` | 手の形を変える、手の形の一覧 |
 | `api.poses.add(name, {en, turns})` | 組み込みポーズ。`turns: [[関節, "x" \| "y" \| "z", 度], ...]`（立った姿勢からその関節の骨を回す） |
 | `api.poses.apply(name)` | そのポーズにする |
-| `api.presets.add(list)` | ユーザープリセット `{group, name, P}`（P は 19 関節の cm。骨の向きだけを使います） |
+| `api.presets.add(list)` | ユーザープリセット `{group, name, P}`（P は 21 関節か最初の 19 関節の cm。骨の向きだけを使います） |
 
 ### ファイル（API 1.1）
 

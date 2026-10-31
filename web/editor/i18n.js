@@ -26,6 +26,9 @@
     "左の手足を右へ写しました。": "Copied the left arm and leg to the right.",
     "反対側をこの形にそろえる": "Make the other side match", "この関節だけ": "This joint only",
     "ここから先まとめて": "From here on",
+    "右手": "Right hand", "左手": "Left hand",
+    "手首の曲げ（＋前へ）": "Bend the wrist (+ forward)", "手首の左右（＋外へ）": "Wrist sideways (+ outward)",
+    "手のひねり（前腕のひねりに足される）": "Hand twist (added to the forearm's)",
     "GitHub リポジトリ": "GitHub repository", "意見箱": "Feedback",
     "不具合の報告・要望・感想を GitHub の Issues に書けます（GitHub のアカウントが要ります）":
       "Report a bug, ask for a feature or say what you think, in the GitHub Issues (a GitHub account is needed)",
