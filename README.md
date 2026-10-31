@@ -29,8 +29,10 @@ To use it as a ComfyUI node, install [ODM-Poser-ComfyUIBridge](https://github.co
   the head: nod, tilt, turn left and right — the face cross follows).
 - **Pins**: tick "fix this joint" or Alt+click. A pinned hand or foot stays where it is while
   the rest moves; dragging the elbow / knee of a pinned limb swings it around.
-- **Hand shapes** are picked in the arm's joint panel (open, fist, peace, point, grip, pinch,
-  cup, trigger, ...).
+- **Hands**: select the small circle at the knuckles to bend the wrist, turn the palm (the
+  forearm's twist) and pick the hand's shape; the fingers bend toward the palm, so a fist shows
+  its knuckles and the hand reads from any side. Shapes: open, fist, peace, point, grip, pinch,
+  cup, trigger and more.
 - **Body mode**: bone lengths, joint sizes, head size, whole-body scale, height in cm, female /
   male builds, left-right symmetry.
 - **Perspective mode**: camera direction, height, roll (Shift+drag tilts the camera off level),
@@ -51,6 +53,8 @@ To use it as a ComfyUI node, install [ODM-Poser-ComfyUIBridge](https://github.co
 - **Composition picture**: "Save composition" saves what the front view shows at that size, with
   the parts you tick (figures, props, objects, floor and walls, the ruler, auras) on white, clear or
   the screen's background.
+- **Solid torso** (a switch above the views, on by default): the chest and pelvis are drawn as
+  blocks with depth; off, as flat trapezoids.
 - **Hidden lines dashed** (a switch above the views): what lies behind a body or an object is drawn
   dashed, in the view and in every export. With a clear background the composition picture is lines
   only (auras as outlines).
@@ -174,7 +178,7 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **ComfyUI で使う**：[ODM-Poser-ComfyUIBridge](https://github.com/qwaxgo/ODM-Poser-ComfyUIBridge) を入れます（そのリポジトリだけで、このエディタも含めて導入できます）。
 - **操作**：丸をドラッグ（骨の長さは保たれる）。手首・足首は腕・脚ごと（Shift でその骨だけ）。ダブルクリックで
   手前と奥を入れ替え。横図で奥行き。すべての関節を3軸（前後・左右・ねじり。頭はうなずく・かしげる・左右を向く）で
-  回せます。関節の固定（ピン、Alt＋クリック）、腕の欄で手の形、体格モード、パースモード、人間の関節の限界。
+  回せます。関節の固定（ピン、Alt＋クリック）、手の関節（指の付け根の小さな丸）で手首の曲げ・手のひらの向き・手の形（指は手のひら側へ曲がって描かれ、どの向きからも手の向きが分かります）、体格モード、パースモード、人間の関節の限界。
 - **小物・環境**：約250種の小物を簡単な形で（武器・銃・弓・盾・杖・楽器・文房具・食器・食べ物・花・日用品・
   コントローラー・スポーツ用具・椅子・机・乗り物・蔓や枝や鉄棒、エフェクト、大きさ自由の立体図形、手提げ・バッグ・かご、
   頭・胴体・腰・背中・脚に身に着ける物など）。床・壁・天井と接地、面に手足を着ける、つかまる、ぶら下がる、ワイヤーで吊る。
@@ -187,6 +191,7 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **複数の人物**：「人物」の欄の「人物を追加」「複製」。編集するのは選んだ人物だけ（ポーズ・体格・小物・オーラ・ワイヤー）で、ほかの人物は薄く表示され、その丸をクリックすると切り替わります。床・壁・物体・定規・カメラは共通。アタリ・OpenPose（1人ずつ）・構図の画像には全員が入ります。
 - **書き出しの比率と解像度**：比率（1:1・3:4・16:9・A判・2.35:1・自分で指定）と長い辺（最大 8192 px）から幅と高さを決めます。画面の図もその比率になります。
 - **構図の画像**：「構図を保存」で、正面の図をその大きさで保存。入れるもの（人物・小物・物体・床と壁・パース定規・オーラ）と背景（白・透明・画面と同じ色）を選べます。
+- **胴体を立体に**（図の上のスイッチ、最初はオン）：胸と骨盤を厚みのある台形の箱で描きます。オフにすると平らな台形。
 - **隠れた線を破線に**（図の上のスイッチ）：体や物体の陰に隠れた線を破線で描きます（画面と書き出しの両方）。構図の画像を背景「透明」で保存すると、線だけの透過画像になります（オーラも輪郭だけ）。
 - **ライト／ダーク**：右上のボタンで切り替え（自動はシステムの設定に合わせる）。
 - **端末**：Windows・macOS・Linux（Ubuntu など）・iOS／iPadOS・Android・Fire OS の今のブラウザ（Chrome・Edge・Safari・Firefox・Vivaldi・Brave・Samsung Internet・Silk）。画面に合わせて、横長は左右に、縦置きモニターとタブレットは図の下に欄を段組みで、スマホは横の図をボタンで、横向きのスマホは図の横に欄を、2画面の端末は画面ごとに並べます。
