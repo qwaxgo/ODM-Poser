@@ -242,6 +242,9 @@ Most `add` calls take an `en` field (props, solids, auras, hands, poses) and reg
 `api.ui.addSection({title, titleEn?, html, at?})` adds a section to the side bar (above the MOD panel;
 `at: "top"` puts it first, API 1.1) and returns it. Write the labels in Japanese and add their English with `api.i18n.add`, or write them in
 English only. Prefix your element ids with your mod's id. `api.ui.$(id)` is `document.getElementById`.
+The editor gives your section's controls melta UI's look by what they are (`section > h2`, `label`,
+`button`, `class="primary"` for the main action, `select`, `input`, `class="hint"`, `"row"`, `"btns"`,
+`"grid2"`), in light and dark: write plain markup and leave colours, borders and fonts out of it.
 
 ### Events
 

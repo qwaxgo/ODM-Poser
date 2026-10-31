@@ -9,8 +9,8 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#2f6f4f" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1a1a19" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#2b70ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161718" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="立体人形装置">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -30,183 +30,20 @@
 <meta property="og:locale" content="ja_JP">
 <meta property="og:locale:alternate" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
-<style>
-:root{
-  --bg:#f5f5f2; --panel:#fff; --ink:#1c1c1a; --sub:#6c6c66; --line:#dededa;
-  --field:#fbfbf9; --accent:#2f6f4f; --accent-ink:#fff; --code:#f0f0ec; --warn:#b4531f;
-  --stage:#ffffff; --figure:#1c1c1a; --sel:#d24a1f; --far:#8a8a84;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--bg:#1a1a19; --panel:#242423; --ink:#ececea; --sub:#a0a09a; --line:#383835;
-        --field:#1e1e1d; --accent:#4e9a74; --accent-ink:#10231a; --code:#2e2e2b; --warn:#e0864f;
-        --stage:#2b2b29; --figure:#ececea; --sel:#ff8a5c; --far:#7a7a74;}
-}
-:root[data-theme="dark"]{--bg:#1a1a19; --panel:#242423; --ink:#ececea; --sub:#a0a09a; --line:#383835;
-        --field:#1e1e1d; --accent:#4e9a74; --accent-ink:#10231a; --code:#2e2e2b; --warn:#e0864f;
-        --stage:#2b2b29; --figure:#ececea; --sel:#ff8a5c; --far:#7a7a74;}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);
-     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-     font:14px/1.6 system-ui,-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",
-       "Noto Sans JP","Noto Sans CJK JP","Source Han Sans JP","Droid Sans Japanese",sans-serif}
-header{padding:12px 16px 4px;max-width:1240px;margin:auto;position:relative}
-#headTools{position:absolute;top:12px;right:16px;display:flex;gap:6px}
-h1{font-size:17px;margin:0}
-header p{margin:0;color:var(--sub);font-size:12px}
-#siteLinks{display:flex;gap:12px;font-size:12px;margin-top:2px}
-#siteLinks a{color:var(--accent)}
-main{max-width:1240px;margin:auto;padding:8px 16px 32px;
-     display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
-/* one column: narrow windows, phones, tablets and monitors turned upright; the panels then
-   flow in columns under the views */
-@media (max-width:900px), (orientation:portrait) and (max-aspect-ratio:4/5){
-  main{grid-template-columns:1fr}
-  aside{column-width:300px;column-gap:12px}
-  aside>section{break-inside:avoid;display:inline-block;width:100%}
-}
-@media (orientation:portrait) and (min-width:1000px){main{max-width:1400px}}
-/* phones: the side view on request, the header's buttons in the flow */
-@media (max-width:700px){
-  main{padding:6px 8px 24px;gap:8px}
-  header{padding:8px 8px 2px}
-  #headTools{position:static;justify-content:flex-end;margin-bottom:4px;flex-wrap:wrap}
-  .views{grid-template-columns:1fr!important}
-  body:not(.show-side) .view.sideview{display:none}
-}
-/* the views follow the page: they stay on screen while the panels scroll (fitCanvas sizes them
-   so they fit); on a dual screen each side scrolls by itself */
-#stage{position:sticky;top:calc(env(safe-area-inset-top) + 6px);align-self:start;z-index:5}
-#stage>section{margin-bottom:0;box-shadow:0 6px 14px -10px rgba(0,0,0,.35)}
-#viewHints summary{cursor:pointer;color:var(--sub)}
-#viewHints[open] summary{margin-bottom:2px}
-/* phones and short screens: the mode buttons and the keys as one row each (swipe for more) */
-@media (max-width:700px), (max-height:520px){
-  #stage .modes, #stage .touchbar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  #stage .modes>*, #stage .touchbar>*{flex:none}
-  #stage .modes button, #stage .touchbar button{min-height:34px;padding:5px 10px}
-}
-@media (horizontal-viewport-segments:2), (vertical-viewport-segments:2){#stage{position:static}}
-/* short screens (phones held sideways): a compact header, the panels beside the views */
-@media (max-height:520px){
-  header p{display:none}
-  header{padding:4px 10px 0}
-  main{padding:4px 10px 16px}
-  .modes,.touchbar{margin-bottom:4px}
-}
-@media (max-height:520px) and (min-width:700px){
-  main{grid-template-columns:1fr 280px}
-  aside{columns:auto;max-height:calc(100dvh - 60px);overflow:auto}
-  .views{grid-template-columns:1fr 34%!important}
-  body:not(.show-side) .view.sideview{display:block}
-  .touchbar .vside{display:none!important}
-}
-/* two screens (dual-screen phones, foldables that report their fold): views on one, panels on the other */
-@media (horizontal-viewport-segments:2){
-  main{max-width:none;padding:0;gap:0;
-       grid-template-columns:env(viewport-segment-width 0 0) env(viewport-segment-width 1 0);
-       column-gap:calc(env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0))}
-  main>div,aside{height:100dvh;overflow:auto;padding:8px}
-  aside{columns:auto}
-}
-@media (vertical-viewport-segments:2){
-  main{grid-template-columns:1fr;grid-template-rows:env(viewport-segment-height 0 0) env(viewport-segment-height 0 1);
-       row-gap:calc(env(viewport-segment-top 0 1) - env(viewport-segment-bottom 0 0));padding:0}
-  main>div,aside{overflow:auto;padding:8px}
-}
-/* fingers: bigger targets; 16px fields so iOS does not zoom into them */
-@media (pointer:coarse){
-  button{min-height:40px;padding:8px 12px}
-  select,input[type=number],input[type=text]{min-height:40px;font-size:16px!important}
-  input[type=checkbox]{width:20px;height:20px}
-  input[type=range]{height:32px}
-  label{font-size:13px}
-}
-.touchbar{display:none;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.touchbar button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
-body.touch .touchbar{display:flex}
-.touchbar .vside{display:none}
-@media (max-width:700px){.touchbar{display:flex}.touchbar .vside{display:inline-block}}
-body:not(.touch) .touchbar .touchkey{display:none}
-.touch-only{display:none}
-body.touch .touch-only{display:block}
-section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}
-section>h2{font-size:13.5px;margin:0 0 8px}
-.views{display:grid;grid-template-columns:1fr 34%;gap:10px}
-.view{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.view canvas{display:block;width:100%;height:auto;margin:0 auto;touch-action:none;cursor:crosshair;
-  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
-.view .tag{position:absolute;left:8px;top:6px;font-size:11px;color:var(--sub);pointer-events:none}
-.modes{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.modes button.on{background:var(--accent);color:var(--accent-ink);border-color:transparent}
-label{display:block;font-size:12px;color:var(--sub);margin:6px 0 2px}
-select,input[type=number]{width:100%;background:var(--field);color:var(--ink);border:1px solid var(--line);
-  border-radius:6px;padding:5px 7px;font:inherit;font-size:13px}
-.row{display:flex;align-items:center;gap:8px}
-.row input[type=range]{flex:1;accent-color:var(--accent)}
-.num{width:68px!important;flex:none;padding:3px 5px!important;text-align:right}
-.unit{font-size:11.5px;color:var(--sub);min-width:20px}
-.val{min-width:46px;text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:var(--sub)}
-button{border:1px solid var(--line);background:var(--field);color:var(--ink);
-       border-radius:7px;padding:6px 10px;font:inherit;font-size:12.5px;cursor:pointer}
-button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
-.btns{display:flex;flex-wrap:wrap;gap:6px}
-.hint{font-size:11.5px;color:var(--sub);margin-top:6px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
-#status{font-size:12px;min-height:1.3em;margin-top:6px}
-.only{display:none}
-body.mode-pose .only.pose, body.mode-body .only.body, body.mode-persp .only.persp, body.mode-place .only.place{display:block}
-input[type=checkbox]{accent-color:var(--accent)}
-/* the camera pad (touch): a stick turns the view, a stick moves it, the slider zooms */
-.campad{display:none}
-body.pad .campad{display:block}
-.campad .stick,.campad .zoomer{position:absolute;bottom:10px;touch-action:none;-webkit-user-select:none;user-select:none;
-  background:rgba(128,128,128,.14);border:1px solid rgba(128,128,128,.45)}
-.campad .stick{width:84px;height:84px;border-radius:50%}
-.campad .stick.l{left:10px}
-.campad .stick.r{right:48px}
-.campad .stick i{position:absolute;left:50%;top:50%;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;
-  background:rgba(128,128,128,.5);pointer-events:none}
-.campad .stick b,.campad .zoomer b{position:absolute;left:0;right:0;bottom:3px;text-align:center;font-size:10px;line-height:14px;
-  font-weight:600;color:var(--ink);opacity:.75;pointer-events:none}
-.campad .zoomer{right:10px;width:28px;height:150px;max-height:calc(100% - 46px);border-radius:14px}
-.campad .zoomer b{bottom:auto;top:-16px;left:-10px;right:-10px}
-.campad .zoomer i{position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:rgba(128,128,128,.6);pointer-events:none}
-/* split screen (phones and tablets): the views stay on one half, the panels scroll on the other
-   (upright: top and bottom, sideways: left and right); 「操作欄を隠す」 gives the views the whole screen */
-.splitkey{display:none}
-body.split .touchbar{display:flex}
-body.split .touchbar .splitkey{display:inline-block}
-body.split{padding-top:50vh;padding-top:50dvh}
-body.split #stage{position:fixed;z-index:20;left:env(safe-area-inset-left);right:env(safe-area-inset-right);
-  top:env(safe-area-inset-top);height:calc(50vh - env(safe-area-inset-top));height:calc(50dvh - env(safe-area-inset-top));
-  padding:4px 6px 0;background:var(--bg);overflow:hidden}
-body.split #stage>section{margin:0;padding:6px 8px}
-body.split #stage .modes button, body.split #stage .touchbar button{min-height:30px;padding:3px 9px;font-size:12px}
-body.split #stage .modes, body.split #stage .touchbar{margin-bottom:4px}
-body.split main{grid-template-columns:1fr!important;max-width:none}
-body.split aside{max-height:none;overflow:visible}
-body.split #viewHints, body.split #stage .hint.keep{display:none}
-@media (orientation:landscape){
-  body.split{padding-top:env(safe-area-inset-top);padding-left:50vw}
-  body.split #stage{right:auto;width:50vw;height:calc(100vh - env(safe-area-inset-top));height:calc(100dvh - env(safe-area-inset-top))}
-}
-body.split.full{overflow:hidden}
-body.split.full header, body.split.full aside{display:none}
-body.split.full #stage{right:env(safe-area-inset-right);width:auto;height:calc(100vh - env(safe-area-inset-top));
-  height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
-</style>
+<!-- the look: melta UI (design/melta-ui) through Tailwind CSS; ui.css is made from ui.src.css
+     (npm run css), ui.js gives the controls their classes -->
+<link rel="stylesheet" href="ui.css">
+<script src="ui.js"></script>
 </head>
 <body class="mode-pose">
-<header>
+<header class="app-header">
   <div id="headTools"><button type="button" id="installBtn" hidden>アプリとして追加</button><button type="button" id="splitBtn">分割表示：オフ</button><button type="button" id="themeBtn">表示：自動</button></div>
-  <h1>立体人形装置 <span style="font-weight:400;font-size:13px">ODM Poser — Omni-Directional Mannequin Poser</span></h1>
-  <p>線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。</p>
-  <nav id="siteLinks"><a href="https://github.com/qwaxgo/ODM-Poser" target="_blank" rel="noopener">GitHub リポジトリ</a>
+  <h1 class="text-xl font-bold text-text-heading m-0">立体人形装置 <span class="text-sm font-normal text-text-muted">ODM Poser — Omni-Directional Mannequin Poser</span></h1>
+  <p class="text-xs text-text-muted mt-1 mb-0">線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。</p>
+  <nav id="siteLinks" class="flex gap-4 text-xs mt-1" aria-label="サイトのリンク"><a href="https://github.com/qwaxgo/ODM-Poser" target="_blank" rel="noopener">GitHub リポジトリ</a>
     <a href="https://github.com/qwaxgo/ODM-Poser/issues/new/choose" target="_blank" rel="noopener" title="不具合の報告・要望・感想を GitHub の Issues に書けます（GitHub のアカウントが要ります）">意見箱</a></nav>
 </header>
-<main>
+<main class="app-main">
 <div id="stage">
   <section>
     <div class="modes" id="modes">
@@ -214,12 +51,11 @@ body.split.full #stage{right:env(safe-area-inset-right);width:auto;height:calc(1
       <button data-mode="body">体格（長さ・太さを変える）</button>
       <button data-mode="persp">パース（カメラとレンズ）</button>
       <button data-mode="place">配置（定規・物体）</button>
-      <label style="margin:0 0 0 auto;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink)">
-        <input type="checkbox" id="limits" checked> 人間の関節の限界</label>
-      <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink)">
-        <input type="checkbox" id="hiddenDashed"> 隠れた線を破線に</label>
-      <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink)">
-        <input type="checkbox" id="torso3d" checked> 胴体を立体に</label>
+    </div>
+    <div id="viewOpts" class="flex flex-wrap items-center gap-x-5 gap-y-1 mb-3">
+      <label class="!mt-0"><input type="checkbox" id="limits" checked> 人間の関節の限界</label>
+      <label class="!mt-0"><input type="checkbox" id="hiddenDashed"> 隠れた線を破線に</label>
+      <label class="!mt-0"><input type="checkbox" id="torso3d" checked> 胴体を立体に</label>
     </div>
     <div class="touchbar" id="touchBar">
       <button type="button" id="vPanels" class="splitkey">操作欄を隠す</button>
@@ -267,7 +103,7 @@ body.split.full #stage{right:env(safe-area-inset-right);width:auto;height:calc(1
       <label style="margin-top:10px">ユーザープリセット（<span id="tcCount">0</span>）</label>
       <div class="btns" style="margin-top:6px"><button id="tcLoadFile">ファイルから読込</button><input type="file" id="tcFile" accept=".json,application/json" multiple hidden></div>
       <select id="tcGroup"></select>
-      <input type="text" id="tcSearch" placeholder="検索：日本語でも英語でも（例：キック / kick、座る / sit）" style="margin-top:6px;width:100%;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:inherit;font-size:13px">
+      <input type="text" id="tcSearch" placeholder="検索：日本語でも英語でも（例：キック / kick、座る / sit）" style="margin-top:6px">
       <select id="tcList" size="9" style="margin-top:6px"></select>
       <div class="btns" style="margin-top:6px"><button id="tcApply">このポーズにする</button><button id="tcRandom">ランダム</button></div>
       <div class="hint">骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。ファイルから読むと、一覧は選んだファイルの内容に置き換わります（形式は README の「ユーザープリセット」）。</div>

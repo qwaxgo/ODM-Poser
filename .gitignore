@@ -4,3 +4,5 @@ __pycache__/
 mods/*
 !mods/README.md
 web/mods.js
+# tools for working on the UI (package.json); the editor itself needs none
+node_modules/

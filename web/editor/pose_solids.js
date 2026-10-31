@@ -270,7 +270,7 @@ function buildSolidPanel(){
     <div id="soCtl" class="grid2" style="margin-top:6px">${SOLID_CTL.map(([id, label]) =>
       `<div id="${id}Box"><label>${label}</label><div class="row"><input type="number" id="${id}" step="${id === "soSides" ? 1 : 5}"><span class="unit">${unit(id)}</span></div></div>`).join("")}</div>
     <div class="row" id="soColorRow" style="margin-top:6px"><label style="margin:0;flex:1"><input type="checkbox" id="soColorOn"> 線の色を変える</label>
-      <input type="color" id="soColor" value="#e0605a" style="width:52px;height:24px;padding:0;border:none;background:none"></div>
+      <input type="color" id="soColor" value="#e0605a" ></div>
     <div class="btns" style="margin-top:8px"><button id="soTouch">選んだ関節を着ける</button><button id="soStand">この上に立つ</button></div>
     <div class="hint">配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、ホイールで向き）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。</div>`;
   const scene = $("scCat").closest("section");

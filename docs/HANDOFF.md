@@ -37,6 +37,7 @@ nothing third-party: keep it that way.
 
 ```
 web/editor/index.html            the editor core (plain JS, Canvas 2D; no ComfyUI in it)
+web/editor/ui.js, ui.src.css     the look after melta UI (design/melta-ui); ui.css is generated (npm run css); see AGENTS.md
 web/editor/pose_props*.js        window.PROP_CATS / window.PROPS: the props as primitives
 web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carrying, mounting, grabbing, wire
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler

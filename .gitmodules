@@ -1,0 +1,3 @@
+[submodule "design/melta-ui"]
+	path = design/melta-ui
+	url = https://github.com/tsubotax/melta-ui

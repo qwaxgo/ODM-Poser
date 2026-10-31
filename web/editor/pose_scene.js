@@ -565,7 +565,7 @@ function buildScenePanel(){
       <label id="scBayRow"><input type="checkbox" id="scBay"> 銃剣を付ける</label>
       <div id="scDims" class="grid2"></div>
       <div class="row" style="margin-top:6px"><label style="margin:0;flex:1"><input type="checkbox" id="scColorOn"> 線の色を変える</label>
-        <input type="color" id="scColor" value="#e0605a" style="width:52px;height:26px;padding:0;border:none;background:none"></div>
+        <input type="color" id="scColor" value="#e0605a" ></div>
       <div class="hint">置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。</div>
     </div>
     <div id="scItemCtl">${ITEM_CTL.map(rng).join("")}</div>

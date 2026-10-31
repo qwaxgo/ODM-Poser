@@ -94,7 +94,7 @@ function buildCastPanel(){
   sec.innerHTML = `<h2>人物</h2>
     <select id="castList" size="3"></select>
     <div class="btns" style="margin-top:6px"><button id="castAdd">人物を追加</button><button id="castDup">複製</button><button id="castDel">削除</button></div>
-    <label>名前</label><input type="text" id="castName" style="width:100%;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:inherit;font-size:13px">
+    <label>名前</label><input type="text" id="castName" >
     <div class="hint">ポーズ・体格・小物・オーラは、選んだ人物だけに効きます（ほかの人物は薄く表示）。ほかの人物の丸をクリックしても切り替わります。床・壁・物体・定規・カメラはみんなで共通です。</div>`;
   const presets = $("preset").closest("section");
   presets.parentNode.insertBefore(sec, presets.nextSibling);

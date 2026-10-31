@@ -166,6 +166,15 @@ On a site without `mods/` (GitHub Pages, the installed app, a phone), install mo
 file or by URL; they are kept in the browser. Mods run with the editor's rights: install only mods you
 trust; `?nomods` starts without them.
 
+## Working on the UI
+
+The look follows [melta UI](https://github.com/tsubotax/melta-ui) (the submodule `design/melta-ui`:
+`git submodule update --init`). The editor needs no build; its CSS, `web/editor/ui.css`, is made by
+Tailwind CSS 4 from `web/editor/ui.src.css` and committed. With Node.js 22: `npm install` once, then
+`npm run css` after changing `ui.src.css` or `web/editor/ui.js` (which gives the controls melta's
+classes). `python tools/lint_ui.py` checks the page as drawn with melta's lint. Notes for AI coding
+agents: `AGENTS.md`.
+
 ## Built with Claude Code
 
 The code and documents of this repository were implemented by [Claude Code](https://claude.com/claude-code),
@@ -215,5 +224,6 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **組み込みポーズ**：11種（立ち・Aポーズ・Tポーズ・コントラポスト・歩く・走る・椅子に座る・しゃがむ・ジャンプ・ファイティングポーズ・腰に手）。関節の角度で作ったもので、体格はそのまま。
 - **ユーザープリセット**：自分のプリセット（JSON）を「ファイルから読込」で読むと一覧に出ます（形式は上の User presets）。MOD からも足せます。
 - **MOD**：`mods/` に `*.js` を置くと、小物・物体・オーラ・手の形・ポーズ・翻訳・自分の欄・描画やマウスのフックを追加できます（MOD のリポジトリを `mods/` に clone しても可。説明：`docs/MODDING-JA.md`）。直接開くときは `python tools/make_mods_list.py` を先に実行。サイトやスマホでは MOD 欄の「ファイルから入れる」「URLから追加」で入れられます（ブラウザに保存）。信頼できる MOD だけを入れてください（`?nomods` で MOD なし）。
+- **画面の作り**：見た目は [melta UI](https://github.com/tsubotax/melta-ui)（サブモジュール `design/melta-ui`）に従います。エディタはビルドなしで動き、CSS（`web/editor/ui.css`）は `web/editor/ui.src.css` から Tailwind CSS 4 で作ってコミットしています。変えるときは Node.js 22 で `npm install` のあと `npm run css`、確認は `python tools/lint_ui.py`（melta の lint）。AI 向けの注意は `AGENTS.md`。
 - **Claude Code での実装**：このリポジトリのコードとドキュメントは、qwaxgo の設計と指示のもとで、Anthropic の AI コーディングツール [Claude Code](https://claude.com/claude-code) が実装しました。
 - **ライセンス**：MIT（c）2026 qwaxgo。
