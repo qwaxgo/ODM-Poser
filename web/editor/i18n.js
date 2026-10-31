@@ -26,6 +26,20 @@
     "左の手足を右へ写しました。": "Copied the left arm and leg to the right.",
     "反対側をこの形にそろえる": "Make the other side match", "この関節だけ": "This joint only",
     "ここから先まとめて": "From here on",
+    "SNS に投稿": "Post to social media", "ひとこと（なくても可）": "A few words (optional)",
+    "編集データを入れたリンクにする（開くと同じ人物・小物・カメラになります）": "Link with the editing data (opening it gives the same figures, props and camera)",
+    "X に投稿": "Post to X", "ほかのアプリ（共有メニュー）": "Other apps (share menu)", "リンクをコピー": "Copy the link",
+    "そのほかの SNS・チャット": "More networks and chats", "Reddit（英文）": "Reddit (in English)", "オープンチャット": "LINE OpenChat",
+    "カカオトーク": "KakaoTalk",
+    "Misskey・Mastodon のサーバー": "Misskey / Mastodon server", "その他（自分で入力）": "Other (type it in)",
+    "みすてむず（misskey.systems）": "Misskey.systems", "サーバーのアドレスを入れてください（例：example.com）。": "Type the server's address (e.g. example.com).", "リンクを開く前の編集に戻す": "Back to the editing before the link",
+    "公式 MOD を追加して開き直す": "Add the official mods and open again",
+    "投稿には #ODMPoser #立体人形装置 とリンクが付き、リンクは「立体人形装置」の画像付きカードで表示されます。リンクに入る MOD は公式（GitHub の qwaxgo）のものだけで、ほかの MOD の小物・物体は単純な図形や棒になります。":
+      "A post gets #ODMPoser #立体人形装置 and the link, shown as a card with the ODM Poser picture. A link carries only the official mods (qwaxgo's on GitHub); props and solids of other mods become plain shapes and rods.",
+    "投稿画面を開きました。": "Opened the post window.",
+    "この端末には共有メニューがないため、投稿の文をコピーしました。": "This device has no share menu: the post's text is copied.",
+    "リンクの編集データを読めませんでした（壊れているか、このブラウザが対応していません）。": "Could not read the link's editing data (it is broken, or this browser cannot).",
+    "リンクを開く前の編集に戻しました（元に戻すで、リンクの編集データに戻れます）。": "Back to the editing before the link (Undo goes back to the link's).",
     "胴体を立体に": "Solid torso", "胴体を立体（厚みのある台形）で描きます。": "The torso is drawn as solid blocks.",
     "胴体を平らな台形で描きます。": "The torso is drawn as flat trapezoids.",
     "右手": "Right hand", "左手": "Left hand",
@@ -261,6 +275,16 @@
   const figEn = n => n.replace(/^(\d+)人目$/, "Figure $1").replace(/^カメラ(\d+)$/, "Camera $1");
   const RULES = [
     [/^この端末では (\d+)×(\d+) を描けないため、(\d+)×(\d+) にしました。$/, m => `This device cannot draw ${m[1]} × ${m[2]}: saved at ${m[3]} × ${m[4]}.`],
+    // posting and links (pose_share.js)
+    [/^投稿の文をコピーしました。(.+)に貼り付けてください。$/, m => `Copied the post's text: paste it into ${m[1].replace("カカオトーク", "KakaoTalk")}.`],
+    [/^(.+)には、この文を貼り付けてください：([\s\S]+)$/, m => `Paste this into ${m[1].replace("カカオトーク", "KakaoTalk")}: ${m[2]}`],
+    [/^(.+)は文字数の上限があるため、編集データの入らないサイトのリンクにしました。$/, m => `${m[1]} allows only so many characters: the post has the site's link without the editing data.`],
+    [/^(.+)の投稿画面を開き、ひとことをコピーしました（貼り付けて使えます）。$/, m => `Opened ${m[1]}'s post page and copied your words (paste them there).`],
+    [/^リンクの編集データを開きました。(.*)$/, m => "Opened the link's editing data." + (m[1] ? " The editing before it: \"Back to the editing before the link\"." : "")],
+    [/^リンクをコピーしました（(\d+) 文字）。$/, m => `Copied the link (${m[1]} characters).`],
+    [/^このポーズは公式 MOD（GitHub の qwaxgo）を使っています。[^：]*：\n([\s\S]*)$/,
+      m => `This pose uses official mods (qwaxgo's on GitHub). Add them to see their props too (plain shapes for now):\n${m[1]}`],
+    [/^追加できなかった MOD があります：(.+)$/, m => `Some mods could not be added: ${m[1]}`],
     // remembered cameras: "カメラ2（向き 30°・高さ 10°・50mm・×1.2）"
     [/^カメラ(\d+)（向き (-?\d+)°・高さ (-?\d+)°・(\d+)mm・×([\d.]+)）$/,
       m => `Camera ${m[1]} (direction ${m[2]}°, height ${m[3]}°, ${m[4]} mm, ×${m[5]})`],

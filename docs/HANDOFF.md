@@ -42,6 +42,8 @@ web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carr
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
+web/editor/pose_share.js         posting (X, Bluesky, Misskey, Mastodon, share menu) and #pose= links;
+                                 only the official mods (qwaxgo on GitHub) travel; opened links are sanitised
 mods/                            the user's mods and cloned mod repositories (README.md only is tracked),
                                  e.g. ODM-Poser-SampleMods
 tools/make_mods_list.py          web/mods.js for opening the editor from disk with mods

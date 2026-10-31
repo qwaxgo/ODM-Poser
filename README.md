@@ -59,6 +59,15 @@ To use it as a ComfyUI node, install [ODM-Poser-ComfyUIBridge](https://github.co
   dashed, in the view and in every export. With a clear background the composition picture is lines
   only (auras as outlines).
 - **Light / dark**: the button at the top right (auto follows the system).
+- **Post to social media**: X, Bluesky, Threads, Misskey (misskey.io, misskey.dev, misskey.systems
+  or your own server), Mastodon (Pawoo, mstdn.jp, Fedibird or your own), Facebook, Reddit (an
+  English title), LINE and OpenChat, Teams, Pinterest; Instagram, TikTok, KakaoTalk, Discord, Slack
+  and Yay! through the share menu on a phone (on a computer the text is copied and the network
+  opened); any other app through the share menu. A post has #ODMPoser #立体人形装置 and a link
+  shown as a card (Threads: the site's link when the editing data would not fit). The link can carry the editing
+  data (after `#pose=`): opening it gives the same figures, props, solids and camera; what the
+  browser had before is kept and can be brought back. Only the official mods (qwaxgo's on GitHub)
+  travel, added on the opener's click; other mods' props and solids become plain shapes and rods.
 
 ## Props and scene
 
@@ -194,6 +203,7 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **胴体を立体に**（図の上のスイッチ、最初はオン）：胸と骨盤を厚みのある台形の箱で描きます。オフにすると平らな台形。
 - **隠れた線を破線に**（図の上のスイッチ）：体や物体の陰に隠れた線を破線で描きます（画面と書き出しの両方）。構図の画像を背景「透明」で保存すると、線だけの透過画像になります（オーラも輪郭だけ）。
 - **ライト／ダーク**：右上のボタンで切り替え（自動はシステムの設定に合わせる）。
+- **SNS に投稿**：X・Bluesky・Threads・Misskey（misskey.io・misskey.dev・みすてむず、ほかは自分で登録）・Mastodon（Pawoo・mstdn.jp・Fedibird、ほかは自分で登録）・Facebook・Reddit（英文のタイトル）・LINE とオープンチャット・Teams・Pinterest に投稿画面を開いて、Instagram・TikTok・カカオトーク・Discord・Slack・Yay! にはスマホの共有メニューから（パソコンでは文をコピーしてサービスを開きます）、そのほかのアプリには共有メニューで、#ODMPoser #立体人形装置 とリンクを付けて投稿（Threads は文字数に収まらないときサイトのリンクに）。リンクは画像付きのカードで表示されます。リンクには編集データを入れられ（`#pose=` 以降）、開くと同じ人物・小物・物体・カメラになります（そのブラウザの前の編集は保存され、戻せます）。リンクに入る MOD は公式（GitHub の qwaxgo）のものだけで、開いた人がボタンを押したときだけ追加されます。ほかの MOD の小物・物体は単純な図形や棒になります。
 - **端末**：Windows・macOS・Linux（Ubuntu など）・iOS／iPadOS・Android・Fire OS の今のブラウザ（Chrome・Edge・Safari・Firefox・Vivaldi・Brave・Samsung Internet・Silk）。画面に合わせて、横長は左右に、縦置きモニターとタブレットは図の下に欄を段組みで、スマホは横の図をボタンで、横向きのスマホは図の横に欄を、2画面の端末は画面ごとに並べます。
 - **カメラ（パースモード以外でも。レンズはそのまま）**：Blender と同じく、中ボタンのドラッグで回す、Shift＋中ボタンで動かす、Ctrl＋中ボタンかホイールで拡大縮小（中ボタンがなければ何もない所を Alt＋ドラッグ）。テンキー：1・3・7 で正面・右・上（Ctrl で反対側）、2・4・6・8 で15°ずつ回す（Ctrl で動かす）、9 で裏へ、＋－ で拡大縮小、. で選んだ関節を中心に、Home で人物を中心に。
 - **カメラの固定と記憶**（どのモードでも出る欄）：固定すると、ドラッグ・スワイプ・2本指・ホイール・テンキー・カメラパッドではカメラが動きません。今のカメラ（向き・高さ・傾き・レンズ・拡大・中心）をいくつでも記憶して呼び出せます（ポーズと一緒に保存）。カメラパッドの表示・非表示もここで（パソコンでも出せます）。

@@ -670,7 +670,9 @@ function fillItemList(){
   $("scList").innerHTML = items.map((it, n) => { const d = PROPS_[it.key] || {};
     const where = it.where === "back" ? "背中" : it.where === "world" ? "置く" : d.place === "hand" ? (it.hand === "r" ? "右手" : "左手")
       : d.place === "body" ? "構える" : d.place === "wear" ? "身に着ける" : "置く";
-    return `<option value="${n}">${d.ja || it.key}（${where}）</option>`; }).join("");
+    // a key no prop has (a pose from a file or a link) is shown as text, never as markup
+    const nm = String(d.ja || it.key).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    return `<option value="${n}">${nm}（${where}）</option>`; }).join("");
   if (scSel >= items.length) scSel = items.length - 1;
   if (scSel >= 0) $("scList").value = String(scSel);
   showItem();
@@ -688,7 +690,7 @@ function showItem(){
     $("scBayRow").style.display = d && d.bayonet ? "" : "none"; $("scBay").checked = !!it.bayonet;
     $("scColorOn").checked = !!it.color; $("scColor").value = it.color || (d && d.color) || $("scColor").defaultValue;
     const dims = (d && d.dims) || [], vals = itemDims(it);
-    $("scDims").innerHTML = dims.map(([label], i) => `<div><label>${label}</label><div class="row"><input type="number" class="num" data-dim="${i}" min="1" step="1" value="${vals[i]}"><span class="unit">cm</span></div></div>`).join("");
+    $("scDims").innerHTML = dims.map(([label], i) => `<div><label>${label}</label><div class="row"><input type="number" class="num" data-dim="${i}" min="1" step="1" value="${+vals[i] || 1}"><span class="unit">cm</span></div></div>`).join("");
     $("scDims").querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
       const v = +inp.value; if (!(v > 0)) return; remember();
       it.dims = itemDims(it); it.dims[+inp.dataset.dim] = v; if (it.grounded) groundItem(it); afterEdit(); draw(); }));

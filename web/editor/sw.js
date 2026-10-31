@@ -3,7 +3,7 @@
 // no network, the kept copy is used, so the editor also opens offline.
 const CACHE = "odm-poser-editor-v1";
 const SHELL = ["./", "./index.html", "./i18n.js", "./pose_props.js", "./pose_props_more.js", "./pose_scene.js",
-  "./pose_cast.js", "./pose_solids.js", "./pose_style.js", "./pose_ruler.js", "./pose_api.js",
+  "./pose_cast.js", "./pose_solids.js", "./pose_style.js", "./pose_ruler.js", "./pose_api.js", "./pose_share.js",
   "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png",
   "./favicon-32.png", "./icon.svg"];
 
