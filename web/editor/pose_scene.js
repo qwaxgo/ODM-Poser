@@ -21,20 +21,7 @@ function itemLocal(it, p, k = 1){             // the item's own size and turn, b
   q = rotAxis(q, [0, 0, 1], deg(r[2])); q = rotAxis(q, [1, 0, 0], deg(r[0])); q = rotAxis(q, [0, 1, 0], deg(r[1]));
   return add(q, it.off || [0, 0, 0]);
 }
-// the fist: origin in the middle of the fist, z along the hand, y toward the thumb. The forearm's
-// frame (its twist) is carried over the wrist's bend, so a bent wrist turns what the hand holds.
-function handFrame(side){
-  const el = S.P[IX[side + "_elbow"]], wr = S.P[IX[side + "_wrist"]], hd = S.P[IX[side + "_hand"]];
-  const z0 = norm(sub(wr, el)), z = hd ? norm(sub(hd, wr)) : z0;
-  const ref = add(bodyFront(), mul(bodyRot([0, 1, 0]), 0.4));
-  let y = sub(ref, mul(z0, dot(ref, z0)));
-  if (len(y) < 1e-4) y = cross(z0, [1, 0, 0]);
-  const tw = (S.twist[IX[side + "_wrist"]] || 0) + (S.twist[IX[side + "_hand"]] || 0);
-  y = rotAxis(norm(y), z0, deg(tw) * (side === "r" ? 1 : -1));
-  y = norm(rotBetween(y, z0, z));
-  const x = mul(norm(cross(y, z)), side === "r" ? 1 : -1);
-  return {o: add(wr, mul(z, 7)), x, y, z};
-}
+// handFrame(side): the hand's frame, in index.html (the fingers are drawn from it too)
 function chestFrame(){
   const P = S.P, x = norm(sub(P[IX.l_shoulder], P[IX.r_shoulder]));
   let y = sub(P[IX.neck], P[IX.waist]); y = norm(sub(y, mul(x, dot(y, x))));

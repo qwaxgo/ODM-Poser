@@ -218,6 +218,8 @@ body.split.full #stage{right:env(safe-area-inset-right);width:auto;height:calc(1
         <input type="checkbox" id="limits" checked> 人間の関節の限界</label>
       <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink)">
         <input type="checkbox" id="hiddenDashed"> 隠れた線を破線に</label>
+      <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink)">
+        <input type="checkbox" id="torso3d" checked> 胴体を立体に</label>
     </div>
     <div class="touchbar" id="touchBar">
       <button type="button" id="vPanels" class="splitkey">操作欄を隠す</button>
@@ -428,11 +430,18 @@ const HAND_LEN = 8;                          // wrist -> knuckles, cm
 // a pose from before the hands (19 joints): each hand goes on along its forearm
 function upgradeState(st){
   if (!st) return;
-  const one = f => { if (!f || !Array.isArray(f.P) || f.P.length >= J.length) return;
-    for (const s of ["r", "l"]){ const w = f.P[IX[s + "_wrist"]], e = f.P[IX[s + "_elbow"]];
-      if (w && e) f.P.push(add(w, mul(norm(sub(w, e)), HAND_LEN))); }
-    if (Array.isArray(f.R)) while (f.R.length < J.length) f.R.push(REST_R[f.R.length]);
-    if (Array.isArray(f.twist)) while (f.twist.length < J.length) f.twist.push(0); };
+  const one = f => {
+    if (!f || !Array.isArray(f.P)) return;
+    if (f.P.length < J.length){
+      for (const s of ["r", "l"]){ const w = f.P[IX[s + "_wrist"]], e = f.P[IX[s + "_elbow"]];
+        if (w && e) f.P.push(add(w, mul(norm(sub(w, e)), HAND_LEN))); }
+      if (Array.isArray(f.R)) while (f.R.length < J.length) f.R.push(REST_R[f.R.length]);
+      if (Array.isArray(f.twist)) while (f.twist.length < J.length) f.twist.push(0);
+    }
+    // a hand twist kept from before goes to the forearm (the palm stays where it is)
+    if (Array.isArray(f.twist)) for (const s of ["r", "l"]){ const h = IX[s + "_hand"], w = IX[s + "_wrist"];
+      if (f.twist[h]){ f.twist[w] = (f.twist[w] || 0) + f.twist[h]; f.twist[h] = 0; } }
+  };
   one(st); (st.others || []).forEach(one);
 }
 const handleR = i => HANDLE.has(i) ? 3.2 : S.R[i];
@@ -457,7 +466,7 @@ function fresh(){
           body: {yaw: 0, pitch: 0, roll: 0}, twist: REST.map(() => 0),
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
-          center: [0, 90, 0], cams: [], camLock: false, scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
+          center: [0, 90, 0], cams: [], camLock: false, scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, torso3d: true, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
           ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, box: [60, 60, 60], pos: [70, 0, 0]}};
 }
 // undo / redo: remember() keeps the state before an edit. A step remembered when nothing changed
@@ -641,7 +650,11 @@ function drawAtari(ctx, W, H, opts = {}){
   // far things first: bones and circles sorted by depth, farther drawn lighter in the editor
   const items = [];
   const tp = torsoParts();
-  for (const poly of tp.blocks){
+  if (S.torso3d) for (const c of torsoBoxes()){
+    const pp = c.map(q => project(q, W, H));
+    items.push({z: pp.reduce((m, q) => m + q.z, 0) / pp.length - 0.5, kind: "box", pp, q3: c});
+  }
+  else for (const poly of tp.blocks){
     const pp = poly.map(q => project(q, W, H));
     items.push({z: pp.reduce((m, q) => m + q.z, 0) / pp.length - 0.5, kind: "poly", pp, q3: poly});
   }
@@ -660,6 +673,22 @@ function drawAtari(ctx, W, H, opts = {}){
     if (it.kind === "line"){
       ctx.strokeStyle = shade(it.z, "torso"); ctx.lineWidth = lw * 1.6;
       for (let k = 1; k < it.q3.length; k++) strokeSeen(ctx, it.q3[k - 1], it.q3[k], W, H, skipTorso());
+      continue;
+    }
+    if (it.kind === "box"){
+      // the faces turned to the camera are filled and outlined; the edges behind the box are left
+      // out, or dashed with 隠れた線を破線に
+      const see = boxFacing(it.q3, add(camRotInv([0, 0, camDist(W, H)]), S.center));
+      if (!opts.flat){ ctx.fillStyle = opts.bg || cssVar("--stage"); ctx.globalAlpha = 0.55;
+        BOX_FACES.forEach((f, k) => { if (!see[k]) return; ctx.beginPath();
+          f.forEach((i, n) => n ? ctx.lineTo(it.pp[i].x, it.pp[i].y) : ctx.moveTo(it.pp[i].x, it.pp[i].y)); ctx.closePath(); ctx.fill(); });
+        ctx.globalAlpha = 1; }
+      ctx.strokeStyle = shade(it.z, "torso"); ctx.lineWidth = lw * 1.6;
+      for (const [a, b, f1, f2] of BOX_EDGES){
+        if (see[f1] || see[f2]) strokeSeen(ctx, it.q3[a], it.q3[b], W, H, skipTorso());
+        else if (S.hiddenDashed){ ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2.5]); ctx.beginPath();
+          ctx.moveTo(it.pp[a].x, it.pp[a].y); ctx.lineTo(it.pp[b].x, it.pp[b].y); ctx.stroke(); ctx.setLineDash([]); }
+      }
       continue;
     }
     if (it.kind === "poly"){
@@ -737,44 +766,84 @@ function torsoParts(){
   return {blocks: [chestBlock, pelvisBlock], waistLine: [ribs, w, pelvisTop]};
 }
 function torso(){ return torsoParts().blocks; }
+// 胴体を立体に (S.torso3d, on by default): each trapezoid becomes a box along the body's front, its
+// front and back faces the trapezoid moved forward and back. The ribcage is deepest at the
+// shoulders, the pelvis at the hips. Faces: [corner indices], corners 0-3 front, 4-7 back.
+const BOX_FACES = [[0, 1, 2, 3], [7, 6, 5, 4], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]];
+const BOX_EDGES = [[0, 1, 0, 2], [1, 2, 0, 3], [2, 3, 0, 4], [3, 0, 0, 5], [4, 5, 1, 2], [5, 6, 1, 3], [6, 7, 1, 4],
+                   [7, 4, 1, 5], [0, 4, 2, 5], [1, 5, 2, 3], [2, 6, 3, 4], [3, 7, 4, 5]];   // [a, b, face, face]
+function torsoBoxes(){
+  const P = S.P, half = S.R[IX.waist], tp = torsoParts();
+  const box = (quad, across, up, [dTop, dBottom]) => {
+    let u = sub(up, mul(across, dot(up, across))); u = norm(u);
+    const fwd = norm(cross(across, u)), d = [dTop, dTop, dBottom, dBottom].map(k => k * half);
+    return [...quad.map((q, k) => add(q, mul(fwd, d[k]))), ...quad.map((q, k) => add(q, mul(fwd, -d[k])))];
+  };
+  return [box(tp.blocks[0], norm(sub(P[IX.l_shoulder], P[IX.r_shoulder])), sub(P[IX.neck], P[IX.waist]), [0.75, 0.68]),
+          box(tp.blocks[1], norm(sub(P[IX.l_hip], P[IX.r_hip])), sub(P[IX.waist], P[IX.pelvis]), [0.62, 0.8])];
+}
+// which faces of a box look at the camera
+function boxFacing(c, eye){
+  const mid = mul(c.reduce((m, q) => add(m, q), [0, 0, 0]), 1 / c.length);
+  return BOX_FACES.map(f => { const q = f.map(i => c[i]), fc = mul(add(add(q[0], q[1]), add(q[2], q[3])), 0.25);
+    let n = cross(sub(q[1], q[0]), sub(q[3], q[0])); if (dot(n, sub(fc, mid)) < 0) n = mul(n, -1);
+    return dot(n, sub(eye, fc)) > 0; });
+}
 
-// ---- hands: 21 OpenPose points from the hand shape, along the forearm -------------------------
+// ---- hands: 21 OpenPose points from the hand shape, in 3D --------------------------------------
 const HAND_EDGES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],
                     [0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20]];
-function handPoints(side, W, H){
-  const P = S.P, el = P[IX[side + "_elbow"]], wr = P[IX[side + "_wrist"]], hd = P[IX[side + "_hand"]];
-  const a = project(el, W, H), b = project(wr, W, H), c = project(hd, W, H);
-  let dx = c.x - b.x, dy = c.y - b.y, l = Math.hypot(dx, dy);
-  const reach = len(sub(hd, wr)) * b.s, fore = Math.max(0.15, Math.min(1, l / (reach || 1)));
-  if (l < 1e-3){ dx = b.x - a.x; dy = b.y - a.y; l = Math.hypot(dx, dy) || 1; }
-  dx /= l; dy /= l;
-  const size = 17 * b.s;                                  // hand length, cm on screen
-  const mir = side === "r" ? 1 : -1;                      // the thumb is on the body's front side
-  // the forearm's twist (前腕のひねり) turns the palm: the hand narrows as it turns edge-on and
-  // the thumb crosses to the other side past 90 degrees
-  const tw = Math.cos(deg((S.twist[IX[side + "_wrist"]] || 0) + (S.twist[IX[side + "_hand"]] || 0)));
-  const px = -dy * mir * tw, py = dx * mir * tw;          // across the palm, toward the thumb
+// the hand's frame: origin in the middle of the fist, z along the hand (wrist -> knuckles), y toward
+// the thumb, x toward the palm. The forearm's frame (its twist) is carried over the wrist's bend,
+// so a bent wrist turns the fingers and what the hand holds (pose_scene.js).
+function handFrame(side){
+  const el = S.P[IX[side + "_elbow"]], wr = S.P[IX[side + "_wrist"]], hd = S.P[IX[side + "_hand"]];
+  const z0 = norm(sub(wr, el)), z = hd ? norm(sub(hd, wr)) : z0;
+  const ref = add(bodyFront(), mul(bodyRot([0, 1, 0]), 0.4));
+  let y = sub(ref, mul(z0, dot(ref, z0)));
+  if (len(y) < 1e-4) y = cross(z0, [1, 0, 0]);
+  const tw = (S.twist[IX[side + "_wrist"]] || 0) + (S.twist[IX[side + "_hand"]] || 0);
+  y = rotAxis(norm(y), z0, deg(tw));       // the same way as setTwist turns the bones (mirrored twists mirror)
+  y = norm(rotBetween(y, z0, z));
+  const x = mul(norm(cross(y, z)), side === "r" ? 1 : -1);
+  return {o: add(wr, mul(z, 7)), x, y, z};
+}
+// the fingers in the hand's frame, for an 8 cm hand (wrist -> knuckles): root [x, y, z] cm, the
+// direction it starts in (deg toward the thumb across the palm; the thumb also toward the palm),
+// its three segments, and how far each of its joints bends at a full curl (deg)
+const FINGERS = [
+  {root: [0.6, 2.2, 1.4], spread: 55, palm: 0.35, segs: [3.6, 3.0, 2.5], bend: [30, 55, 70], thumb: true},
+  {root: [0, 3.0, 8.0], spread: 7, segs: [4.0, 2.5, 2.0], bend: [80, 100, 70]},
+  {root: [0, 1.0, 8.3], spread: 0, segs: [4.5, 2.8, 2.2], bend: [80, 100, 70]},
+  {root: [0, -1.0, 8.0], spread: -6, segs: [4.2, 2.6, 2.0], bend: [80, 100, 70]},
+  {root: [0, -2.8, 7.3], spread: -13, segs: [3.3, 2.0, 1.8], bend: [80, 100, 70]}];
+// the 21 points in the world: the wrist, then thumb, index, middle, ring and little finger, each
+// root -> tip. A finger curls by bending toward the palm at each of its joints, so a fist shows
+// the back of the hand and its knuckles, and which way the palm faces reads at a glance.
+function handPoints3D(side){
+  const f = handFrame(side), wr = S.P[IX[side + "_wrist"]], hd = S.P[IX[side + "_hand"]];
+  const k = (hd ? len(sub(hd, wr)) : HAND_LEN) / HAND_LEN;
+  const at = v => add(wr, mul(add(add(mul(f.x, v[0]), mul(f.y, v[1])), mul(f.z, v[2])), k));
   const curl = HANDS[S.hands[side]] || HANDS.relaxed;
-  const base = [[0.20, 0.12], [0.16, 0.45], [0.05, 0.47], [-0.06, 0.45], [-0.16, 0.41]];   // finger roots
-  const dirs = [[0.75, 0.66], [0.10, 1], [0.0, 1], [-0.08, 1], [-0.18, 1]];
-  const segs = [[0.17, 0.14, 0.12], [0.22, 0.14, 0.11], [0.24, 0.16, 0.11], [0.22, 0.15, 0.11], [0.17, 0.12, 0.10]];
-  const pt = (u, v) => [b.x + (dx*v*fore + px*u) * size, b.y + (dy*v*fore + py*u) * size];
-  const out = [pt(0, 0)];
-  for (let f = 0; f < 5; f++){
-    let [u, v] = base[f], [du, dv] = dirs[f]; const n = Math.hypot(du, dv); du /= n; dv /= n;
-    out.push(pt(u, v));
-    const c = curl[f];
-    let bend = 0;
-    for (let s = 0; s < 3; s++){
-      // a finger curling toward the palm, seen from the front: each joint bends it a little
-      // more, so its segments get shorter and then come back down over the palm
-      bend += c * 1.25;
-      const k = segs[f][s] * Math.cos(Math.min(bend, Math.PI));
-      u += du * k; v += dv * k;
-      out.push(pt(u, v));
-    }
-  }
+  const out = [wr];
+  FINGERS.forEach((g, n) => {
+    const sp = deg(g.spread);
+    let d = add(mul(f.z, Math.cos(sp)), mul(f.y, Math.sin(sp)));
+    if (g.palm) d = add(d, mul(f.x, g.palm));
+    d = norm(d);
+    // the way it bends: toward the palm (the thumb: toward the palm and across it)
+    let toward = g.thumb ? norm(sub(mul(f.x, 0.75), mul(f.y, 0.65))) : f.x;
+    let p = at(g.root); out.push(p);
+    g.segs.forEach((L, s) => {
+      const t = sub(toward, mul(d, dot(toward, d)));
+      if (len(t) > 1e-6){ const a = deg(curl[n] * g.bend[s]); d = norm(add(mul(d, Math.cos(a)), mul(norm(t), Math.sin(a)))); }
+      p = add(p, mul(d, L * k)); out.push(p);
+    });
+  });
   return out;
+}
+function handPoints(side, W, H){
+  return handPoints3D(side).map(p => { const q = project(p, W, H); return [q.x, q.y]; });
 }
 
 // ---- OpenPose picture -----------------------------------------------------------------------
@@ -868,7 +937,9 @@ function draw(){
     ctx.strokeStyle = ink; ctx.lineWidth = Math.max(1.2, W / 260);
     BONES.forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(P[a].x, P[a].y); ctx.lineTo(P[b].x, P[b].y); ctx.stroke(); });
     const tps = torsoParts();
-    for (const poly of tps.blocks){ ctx.beginPath(); poly.map(q => sideProject(q, W, H)).forEach((q, k) =>
+    if (S.torso3d) for (const c of torsoBoxes()){ const q = c.map(p => sideProject(p, W, H));
+      for (const [a, b] of BOX_EDGES){ ctx.beginPath(); ctx.moveTo(q[a].x, q[a].y); ctx.lineTo(q[b].x, q[b].y); ctx.stroke(); } }
+    else for (const poly of tps.blocks){ ctx.beginPath(); poly.map(q => sideProject(q, W, H)).forEach((q, k) =>
         k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.closePath(); ctx.stroke(); }
     ctx.beginPath(); tps.waistLine.map(q => sideProject(q, W, H)).forEach((q, k) =>
       k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke();
@@ -1320,6 +1391,9 @@ function symmetrize(i, whole){
       S.twist[o] = -(S.twist[k] || 0); }
     const side = J[i][0], other = J[m][0];
     if (subtree(i).some(k => /_wrist$/.test(J[k]))) S.hands[other] = S.hands[side];
+  } else if (HAND_J.has(i)){
+    setTwist(twistJoint(m), -(S.twist[twistJoint(i)] || 0));
+    rotateSubtree(m, add(S.P[PARENT[m]], mirroredBone(i)));
   } else {
     rotateSubtree(m, add(S.P[PARENT[m]], mirroredBone(i)));
     setTwist(m, -(S.twist[i] || 0));
@@ -1366,17 +1440,19 @@ const AXIS_NAMES = {
   r_knee: ["脚を前・後ろへ（＋前へ）", "脚を横へ開く（＋外へ）", "脚のひねり（つま先の向き）"],
   r_ankle: ["膝の曲げ（すねの前後）", "すねの左右", "すねのひねり"],
   r_toe: ["足首の上下（つま先）", "足首の左右", "足のひねり"],
-  r_hand: ["手首の曲げ（＋前へ）", "手首の左右（＋外へ）", "手のひねり（前腕のひねりに足される）"],
+  r_hand: ["手首の曲げ（＋前へ）", "手首の左右（＋外へ）", "手のひらの向き（前腕のひねり）"],
 };
 function axisNames(i){
   const n = J[i].startsWith("l_") ? "r_" + J[i].slice(2) : J[i];
   return AXIS_NAMES[n] || ["前後（＋前へ）", "左右（＋外へ）", "ねじり（骨を軸に先を回す）"];
 }
+// the hand's twist is the forearm's (the palm turns with the forearm): kept on the wrist joint
+const twistJoint = i => HAND_J.has(i) ? IX[J[i][0] + "_wrist"] : i;
 function jointValue(id){
   const i = sel;
   if (id === "jFwd") return boneAngles(i).fwd;
   if (id === "jSide") return boneAngles(i).side;
-  if (id === "jTwist") return S.twist[i] || 0;
+  if (id === "jTwist") return S.twist[twistJoint(i)] || 0;
   if (id === "jLen") return len(sub(S.P[i], S.P[PARENT[i]]));
   if (id === "jRad") return S.R[i];
   if (id === "pX") return S.P[IX.pelvis][0];
@@ -1390,7 +1466,7 @@ function setJointValue(id, v){
   if (id === "jFwd" || id === "jSide"){
     const a = boneAngles(i), fwd = id === "jFwd" ? v : a.fwd, side = id === "jSide" ? v : a.side;
     setBoneAngles(i, fwd, side);
-  } else if (id === "jTwist") setTwist(i, v);
+  } else if (id === "jTwist") setTwist(twistJoint(i), v);
   else if (id === "jLen") both(j => { const d = sub(S.P[j], S.P[PARENT[j]]); moveSubtree(j, mul(norm(d), v - len(d))); });
   else if (id === "jRad") both(j => { S.R[j] = v; });
   else if (id[0] === "p"){ const k = {pX: 0, pY: 1, pZ: 2}[id], d = [0, 0, 0];
@@ -1572,14 +1648,15 @@ function showSelected(){
   $("pinRow").style.display = ok && PINNABLE.has(J[sel]) ? "" : "none";
   $("pin").checked = !!(ok && S.pins && S.pins[sel]);
   $("symRow").style.display = ok && MIRROR[sel] !== sel ? "" : "none";
-  const arm = ok && /_(shoulder|elbow|wrist)$/.test(J[sel]) ? J[sel][0] : null;
+  const arm = ok && /_hand$/.test(J[sel]) ? J[sel][0] : null;     // the hand's shape: on the hand joint
   $("handRow").style.display = arm ? "" : "none";
   if (arm){ $("handRow").querySelector("label").textContent = (arm === "r" ? "右手" : "左手") + "の形";
     if (document.activeElement !== $("handSel")) $("handSel").value = S.hands[arm]; }
   const np = Object.keys(S.pins || {}).length;
   $("pinInfo").textContent = np ? `固定中の関節：${Object.keys(S.pins).map(k => J_JA[J[+k]]).join("・")}` : "";
   for (const [id, , mn, mx, , , kind] of JOINT_CTL){
-    const show = ok && (kind === "any" || (kind === "root") === root);
+    // the wrist joint shows the elbow's bend and the forearm; its twist is the hand joint's
+    const show = ok && (kind === "any" || (kind === "root") === root) && !(id === "jTwist" && /_wrist$/.test(J[sel]));
     $(id + "Row").style.display = show ? "" : "none";
     if (!show) continue;
     const v = jointValue(id), r = $(id), n = $(id + "N");
@@ -1758,6 +1835,7 @@ function applyUserPreset(t){
 function syncUI(){
   upgradeState(S);
   $("hiddenDashed").checked = !!S.hiddenDashed;
+  $("torso3d").checked = S.torso3d !== false;
   for (const [id, v] of [["lens", Math.round(S.cam.lens)], ["yaw", Math.round(S.cam.yaw)],
       ["pitch", Math.round(S.cam.pitch)], ["roll", Math.round(S.cam.roll)]]){
     $(id).value = v; if (document.activeElement !== $(id + "V")) $(id + "V").value = v;
@@ -2059,6 +2137,8 @@ $("vPanels").addEventListener("click", () => { const full = document.body.classL
   $("vPanels").textContent = full ? "操作欄を出す" : "操作欄を隠す"; draw(); });
 $("symPose").addEventListener("change", e => { try { localStorage.setItem(KEY + "-sympose", e.target.checked ? "1" : "0"); } catch (err) {}
   if (e.target.checked && sel >= 0 && MIRROR[sel] !== sel){ remember(); afterEdit(sel); draw(); say("反対側をそろえました。"); } });
+$("torso3d").addEventListener("change", e => { remember(); S.torso3d = e.target.checked; draw();
+  say(e.target.checked ? "胴体を立体（厚みのある台形）で描きます。" : "胴体を平らな台形で描きます。"); });
 $("hiddenDashed").addEventListener("change", e => { remember(); S.hiddenDashed = e.target.checked; draw();
   say(e.target.checked ? "物陰に隠れた線を破線で描きます（書き出しにも）。" : "隠れた線を破線にするのをやめました。"); });
 $("limits").addEventListener("change", e => { try { localStorage.setItem(KEY + "-limits", e.target.checked ? "1" : "0"); } catch (err) {}
