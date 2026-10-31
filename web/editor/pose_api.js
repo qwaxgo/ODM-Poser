@@ -372,7 +372,7 @@ async function loadStored(){
 
 // ---- the MOD panel ---------------------------------------------------------------------------------
 { const sec = document.createElement("section");
-  const field = "flex:1;min-width:0;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:inherit;font-size:13px";
+  const field = "flex:1;min-width:0";
   sec.innerHTML = `<h2>MOD</h2>
     <div id="modBox" class="hint">読み込んだ MOD はありません。</div>
     <label style="margin-top:10px">この端末に入れた MOD</label>

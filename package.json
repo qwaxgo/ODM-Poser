@@ -1,0 +1,14 @@
+{
+  "name": "odm-poser-dev",
+  "private": true,
+  "description": "Tools for working on the editor only: the editor itself needs no build. Tailwind CSS makes web/editor/ui.css from web/editor/ui.src.css (commit both); melta-lint checks the UI against melta UI (design/melta-ui).",
+  "scripts": {
+    "css": "tailwindcss -i web/editor/ui.src.css -o web/editor/ui.css --minify",
+    "css:watch": "tailwindcss -i web/editor/ui.src.css -o web/editor/ui.css --watch",
+    "lint:ui": "melta-lint web/editor/index.html"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "melta-ds-mcp": "1.9.1"
+  }
+}

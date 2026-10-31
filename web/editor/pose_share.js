@@ -83,7 +83,7 @@ async function poseLink(){
 }
 
 // ---- the panel -------------------------------------------------------------------------------------
-const field = "width:100%;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font:inherit;font-size:13px";
+const field = "width:100%";
 const sec = document.createElement("section");
 sec.innerHTML = `<h2>SNS に投稿</h2>
   <label style="margin-top:0">ひとこと（なくても可）</label>

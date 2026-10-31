@@ -33,22 +33,21 @@ POSE = """async () => {
 
 CARD = """<!doctype html><html lang="ja"><meta charset="utf-8"><style>
 *{box-sizing:border-box;margin:0}
-body{width:1200px;height:630px;overflow:hidden;background:#f5f5f2;color:#1c1c1a;
+body{width:1200px;height:630px;overflow:hidden;background:#f9fafb;color:#0f172a;
   font-family:"Yu Gothic UI","Yu Gothic","Hiragino Sans","Noto Sans JP",system-ui,sans-serif}
-.bar{position:absolute;left:0;top:0;bottom:0;width:14px;background:#2f6f4f}
 .text{position:absolute;left:70px;top:62px;width:560px}
 .icon{width:84px;height:84px;border-radius:19px;display:block;margin-bottom:26px}
 h1{font-size:68px;font-weight:800;letter-spacing:.04em;line-height:1.1}
-h2{font-size:38px;font-weight:700;margin-top:8px;color:#2f6f4f}
-.full{font-size:20px;color:#6c6c66;margin-top:4px;letter-spacing:.02em}
+h2{font-size:38px;font-weight:700;margin-top:8px;color:#2b70ef}
+.full{font-size:20px;color:#64748b;margin-top:4px;letter-spacing:.02em}
 p{font-size:25px;line-height:1.55;margin-top:26px}
 .chips{position:absolute;left:70px;bottom:56px;display:flex;gap:8px;flex-wrap:nowrap;width:620px}
-.chips span{font-size:15px;padding:6px 11px;white-space:nowrap;border-radius:999px;background:#fff;border:1.5px solid #dededa;color:#3a3a36}
-.view{position:absolute;right:46px;top:40px;width:520px;height:560px;background:#fff;border:1.5px solid #dededa;
+.chips span{font-size:15px;padding:6px 11px;white-space:nowrap;border-radius:999px;background:#fff;border:1.5px solid #e2e8f0;color:#334155}
+.view{position:absolute;right:46px;top:40px;width:520px;height:560px;background:#fff;border:1.5px solid #e2e8f0;
   border-radius:18px;overflow:hidden;box-shadow:0 14px 30px -18px rgba(0,0,0,.35)}
 .view img{width:520px;height:560px;display:block}
 .tag{position:absolute;left:16px;top:12px;font-size:15px;color:#8a8a84}
-</style><body><div class="bar"></div>
+</style><body>
 <div class="text"><img class="icon" src="data:image/png;base64,{icon}">
 <h1>立体人形装置</h1><h2>ODM Poser</h2><div class="full">Omni-Directional Mannequin Poser</div>
 <p>線と丸の全身アタリを、疑似3Dで動かす<br>ポーズエディタ。ブラウザだけで動きます。</p></div>

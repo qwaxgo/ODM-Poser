@@ -1,5 +1,5 @@
 """Draw the app icons (web/editor/icon-*.png, apple-touch-icon.png, favicon-32.png, icon.svg):
-the editor's stick-and-circle figure, white on its green. Run again after changing them.
+the editor's stick-and-circle figure, white on melta UI's primary blue. Run again after changing them.
 
     python tools/make_icons.py
 """
@@ -11,7 +11,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 OUT = Path(__file__).resolve().parent.parent / "web" / "editor"
-GREEN, WHITE = (47, 111, 79, 255), (255, 255, 255, 255)
+GREEN, WHITE = (43, 112, 239, 255), (255, 255, 255, 255)   # melta primary-500 #2b70ef (the name kept)
 # the figure on a 100 x 100 grid: circles (x, y, r) and bones
 JOINTS = [(50, 20, 9), (35, 38, 4), (65, 38, 4), (28, 55, 3.5), (74, 26, 3.5), (42, 64, 4.5), (58, 64, 4.5),
           (38, 80, 3.5), (63, 79, 3.5)]
@@ -47,10 +47,10 @@ def main():
     draw(512, 0.2, False).save(OUT / "icon-maskable-512.png")      # Android crops it to its own shape
     draw(180, 0.12, False).save(OUT / "apple-touch-icon.png")      # iOS rounds the corners itself
     draw(32, 0.04, True).save(OUT / "favicon-32.png")
-    circles = "".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#2f6f4f" stroke="#fff" stroke-width="4.2"/>' for x, y, r in JOINTS)
+    circles = "".join(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#2b70ef" stroke="#fff" stroke-width="4.2"/>' for x, y, r in JOINTS)
     lines = "".join(f'<line x1="{a[0]}" y1="{a[1]}" x2="{b[0]}" y2="{b[1]}"/>' for a, b in BONES)
     (OUT / "icon.svg").write_text(
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -8 116 116"><rect x="-8" y="-8" width="116" height="116" rx="25" fill="#2f6f4f"/>'
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -8 116 116"><rect x="-8" y="-8" width="116" height="116" rx="25" fill="#2b70ef"/>'
         f'<g stroke="#fff" stroke-width="4.2" stroke-linecap="round">{lines}</g>{circles}</svg>\n', encoding="utf-8")
     print("icons written to", OUT)
 

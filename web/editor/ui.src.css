@@ -1,0 +1,216 @@
+/* The editor's styles: Tailwind CSS 4 after melta UI (design/melta-ui: DESIGN.md, foundations/
+   theme.md; this project's overrides in design-system/foundations/theme.md). The controls take
+   melta's classes from ui.js; this file holds melta's tokens, the light and dark themes, and the
+   app's shell that utilities do not say well (the split screen, two-screen devices, the views,
+   the camera pad). Build: npm run css -> ui.css (committed: the editor needs no build). */
+@import "tailwindcss" source(none);
+@source "./index.html";
+@source "./*.js";
+
+/* dark: the theme switch (html[data-theme]) or, on "auto", the system's setting */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) { @slot; }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) { @slot; }
+  }
+}
+
+@theme {
+  --color-primary-50:  #f0f5ff;
+  --color-primary-100: #dde8ff;
+  --color-primary-200: #c0d4ff;
+  --color-primary-300: #95b6ff;
+  --color-primary-400: #6492ff;
+  --color-primary-500: #2b70ef;
+  --color-primary-600: #2250df;
+  --color-primary-700: #1a40b5;
+  --color-primary-800: #13318d;
+  --color-primary-900: #0e266a;
+  --color-primary-950: #07194e;
+  --color-body: var(--text-default);
+  /* semantic colours (they follow the theme) */
+  --color-bg-page:        var(--bg-page);
+  --color-bg-page-alt:    var(--bg-page-alt);
+  --color-bg-surface:     var(--bg-surface);
+  --color-text-heading:   var(--text-heading);
+  --color-text-default:   var(--text-default);
+  --color-text-muted:     var(--text-muted);
+  --color-border-default: var(--border-default);
+  --color-border-strong:  var(--border-strong);
+  --color-input-bg:       var(--input-bg);
+  --color-input-border:   var(--input-border);
+  --font-sans: "Inter", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Meiryo", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", monospace;
+  /* melta's type scale: every step differs from Tailwind's */
+  --text-xxs: 0.625rem;  --text-xxs--line-height: 1.4;
+  --text-xs: 0.8125rem;  --text-xs--line-height: 1.4;
+  --text-sm: 0.9375rem;  --text-sm--line-height: 1.7;
+  --text-base: 1.125rem; --text-base--line-height: 2;
+  --text-lg: 1.25rem;    --text-lg--line-height: 1.5;
+  --text-xl: 1.375rem;   --text-xl--line-height: 1.4;
+  --text-2xl: 1.625rem;  --text-2xl--line-height: 1.4;
+  --text-3xl: 2rem;      --text-3xl--line-height: 1.4;
+}
+
+/* ---- the themes: melta's light and dark values; the canvas reads the same through the
+   editor's own names (--figure, --sel, ... in cssVar()) ---------------------------------------- */
+:root {
+  --bg-page: #f9fafb; --bg-page-alt: #f3f4f6; --bg-surface: #ffffff;
+  --text-heading: #0f172a; --text-default: #3d4b5f; --text-muted: #64748b;
+  --border-default: #e2e8f0; --border-strong: #cbd5e1; --input-bg: #ffffff; --input-border: #cbd5e1;
+  --stage: #ffffff; --figure: #0f172a; --far: #94a3b8; --sel: #2b70ef; --warn: #dc2626;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-page: #161718; --bg-page-alt: #232525; --bg-surface: #1b1c1d;
+    --text-heading: #eeeeee; --text-default: #eeeeee; --text-muted: #a3a3a3;
+    --border-default: #373839; --border-strong: #777777; --input-bg: #161718; --input-border: #777777;
+    --stage: #1b1c1d; --figure: #eeeeee; --far: #777777; --sel: #6492ff; --warn: #f87171;
+  }
+}
+:root[data-theme="dark"] {
+  --bg-page: #161718; --bg-page-alt: #232525; --bg-surface: #1b1c1d;
+  --text-heading: #eeeeee; --text-default: #eeeeee; --text-muted: #a3a3a3;
+  --border-default: #373839; --border-strong: #777777; --input-bg: #161718; --input-border: #777777;
+  --stage: #1b1c1d; --figure: #eeeeee; --far: #777777; --sel: #6492ff; --warn: #f87171;
+}
+:root {
+  /* the editor's names for the canvas and older code */
+  --bg: var(--bg-page); --panel: var(--bg-surface); --ink: var(--text-default); --sub: var(--text-muted);
+  --line: var(--border-default); --field: var(--input-bg); --accent: #2b70ef; --accent-ink: #ffffff; --code: var(--bg-page-alt);
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    background: var(--bg-page); color: var(--text-default); font-family: var(--font-sans);
+    letter-spacing: 0.02em;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  h1, h2, h3 { letter-spacing: 0.01em; }
+  [hidden] { display: none !important; }
+}
+
+/* ---- the app's shell (outside the layers, so it wins over a utility where both set the same) -------- */
+  .app-header { position: relative; max-width: 1240px; margin: 0 auto; padding: 16px 16px 4px; }
+  #headTools { position: absolute; top: 14px; right: 16px; display: flex; gap: 8px; }
+  .app-main { max-width: 1240px; margin: 0 auto; padding: 8px 16px 32px;
+    display: grid; grid-template-columns: 1fr 320px; gap: 16px; align-items: start; }
+  /* the views stay on screen while the panels scroll (fitCanvas sizes them so they fit) */
+  #stage { position: sticky; top: calc(env(safe-area-inset-top) + 8px); align-self: start; z-index: 5; }
+  #stage > section { margin-bottom: 0; }
+  aside > section { margin-bottom: 16px; }
+  .views { display: grid; grid-template-columns: 1fr 34%; gap: 12px; }
+  .view { position: relative; background: var(--stage); border: 1px solid var(--border-default); border-radius: 0.75rem; overflow: hidden; }
+  .view canvas { display: block; width: 100%; height: auto; margin: 0 auto; touch-action: none; cursor: crosshair;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  .view .tag { position: absolute; left: 12px; top: 8px; pointer-events: none; }
+  /* what shows in which mode and on which device: hidden where it does not belong, so what shows
+     keeps the display its classes give it (flex, inline-flex, ...) */
+  body.mode-pose .only:not(.pose), body.mode-body .only:not(.body), body.mode-persp .only:not(.persp),
+  body.mode-place .only:not(.place) { display: none; }
+  .touchbar { display: none; }
+  body.touch .touchbar { display: flex; }
+  .touchbar .vside { display: none; }
+  body:not(.touch) .touchbar .touchkey { display: none; }
+  body:not(.touch) .touch-only { display: none; }
+  body:not(.split) .splitkey { display: none; }
+
+  /* one column: narrow windows, phones, tablets and monitors turned upright */
+  @media (max-width: 900px), (orientation: portrait) and (max-aspect-ratio: 4/5) {
+    .app-main { grid-template-columns: 1fr; }
+    aside { column-width: 320px; column-gap: 16px; }
+    aside > section { break-inside: avoid; display: inline-block; width: 100%; }
+  }
+  @media (orientation: portrait) and (min-width: 1000px) { .app-main { max-width: 1400px; } }
+  /* phones: the side view on request, the header's buttons in the flow */
+  @media (max-width: 700px) {
+    .app-main { padding: 8px 8px 24px; gap: 8px; }
+    .app-header { padding: 8px 8px 4px; }
+    #headTools { position: static; justify-content: flex-end; margin-bottom: 4px; flex-wrap: wrap; }
+    .views { grid-template-columns: 1fr !important; }
+    body:not(.show-side) .view.sideview { display: none; }
+    .touchbar { display: flex; }
+    .touchbar .vside { display: inline-flex; }
+  }
+  /* phones and short screens: the tabs, the switches and the keys as one row each (swipe for more) */
+  @media (max-width: 700px), (max-height: 520px) {
+    #stage .modes, #stage #viewOpts, #stage .touchbar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    #stage .modes > *, #stage #viewOpts > *, #stage .touchbar > * { flex: none; }
+  }
+  @media (horizontal-viewport-segments: 2), (vertical-viewport-segments: 2) { #stage { position: static; } }
+  /* short screens (phones held sideways): a compact header, the panels beside the views */
+  @media (max-height: 520px) {
+    .app-header p { display: none; }
+    .app-header { padding: 4px 12px 0; }
+    .app-main { padding: 4px 12px 16px; }
+  }
+  @media (max-height: 520px) and (min-width: 700px) {
+    .app-main { grid-template-columns: 1fr 280px; }
+    aside { columns: auto; max-height: calc(100dvh - 60px); overflow: auto; }
+    .views { grid-template-columns: 1fr 34% !important; }
+    body:not(.show-side) .view.sideview { display: block; }
+    .touchbar .vside { display: none !important; }
+  }
+  /* two screens (dual-screen phones, foldables that report their fold): views on one, panels on the other */
+  @media (horizontal-viewport-segments: 2) {
+    .app-main { max-width: none; padding: 0; gap: 0;
+      grid-template-columns: env(viewport-segment-width 0 0) env(viewport-segment-width 1 0);
+      column-gap: calc(env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0)); }
+    .app-main > div, aside { height: 100dvh; overflow: auto; padding: 8px; }
+    aside { columns: auto; }
+  }
+  @media (vertical-viewport-segments: 2) {
+    .app-main { grid-template-columns: 1fr; grid-template-rows: env(viewport-segment-height 0 0) env(viewport-segment-height 0 1);
+      row-gap: calc(env(viewport-segment-top 0 1) - env(viewport-segment-bottom 0 0)); padding: 0; }
+    .app-main > div, aside { overflow: auto; padding: 8px; }
+  }
+
+  /* the camera pad (touch): a stick turns the view, a stick moves it, the slider zooms */
+  body:not(.pad) .campad { display: none; }
+  .campad .stick, .campad .zoomer { position: absolute; bottom: 12px; touch-action: none; -webkit-user-select: none; user-select: none;
+    background: color-mix(in srgb, var(--text-muted) 14%, transparent); border: 1px solid color-mix(in srgb, var(--text-muted) 45%, transparent); }
+  .campad .stick { width: 84px; height: 84px; border-radius: 9999px; }
+  .campad .stick.l { left: 12px; }
+  .campad .stick.r { right: 48px; }
+  .campad .stick i { position: absolute; left: 50%; top: 50%; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 9999px;
+    background: color-mix(in srgb, var(--text-muted) 55%, transparent); pointer-events: none; }
+  .campad .stick b, .campad .zoomer b { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-size: 0.625rem; line-height: 1.4;
+    font-weight: 600; color: var(--text-default); pointer-events: none; }
+  .campad .zoomer { right: 12px; width: 28px; height: 152px; max-height: calc(100% - 48px); border-radius: 9999px; }
+  .campad .zoomer b { bottom: auto; top: -16px; left: -12px; right: -12px; }
+  .campad .zoomer i { position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 9999px;
+    background: color-mix(in srgb, var(--text-muted) 65%, transparent); pointer-events: none; }
+
+  /* split screen (phones and tablets): the views on one half, the panels scroll on the other
+     (upright: top and bottom, sideways: left and right); 「操作欄を隠す」 gives the views the whole screen */
+  body.split .touchbar { display: flex; }
+  body.split .touchbar .splitkey { display: inline-flex; }
+  body.split { padding-top: 50vh; padding-top: 50dvh; }
+  body.split #stage { position: fixed; z-index: 20; left: env(safe-area-inset-left); right: env(safe-area-inset-right);
+    top: env(safe-area-inset-top); height: calc(50vh - env(safe-area-inset-top)); height: calc(50dvh - env(safe-area-inset-top));
+    padding: 4px 8px 0; background: var(--bg-page); overflow: hidden; }
+  body.split #stage > section { margin: 0; padding: 8px; }
+  /* the views' half keeps room for the figure: a compact row of tabs, switches and keys */
+  body.split #stage #modes { margin-bottom: 4px; }
+  body.split #stage #modes button { padding: 4px 10px; font-size: 0.8125rem; }
+  body.split #stage #viewOpts { margin-bottom: 4px; column-gap: 12px; }
+  body.split #stage #viewOpts label { font-size: 0.8125rem; }
+  body.split #stage .touchbar { margin-bottom: 4px; gap: 6px; }
+  body.split #stage .touchbar button { height: 2rem; padding: 0 10px; font-size: 0.8125rem; }
+  body.split .app-main { grid-template-columns: 1fr !important; max-width: none; }
+  body.split aside { max-height: none; overflow: visible; }
+  body.split #viewHints, body.split #stage .hint.keep { display: none; }
+  @media (orientation: landscape) {
+    body.split { padding-top: env(safe-area-inset-top); padding-left: 50vw; }
+    body.split #stage { right: auto; width: 50vw; height: calc(100vh - env(safe-area-inset-top)); height: calc(100dvh - env(safe-area-inset-top)); }
+  }
+  body.split.full { overflow: hidden; }
+  body.split.full .app-header, body.split.full aside { display: none; }
+  body.split.full #stage { right: env(safe-area-inset-right); width: auto; height: calc(100vh - env(safe-area-inset-top));
+    height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+
+/* motion: melta asks for less when the system says so */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

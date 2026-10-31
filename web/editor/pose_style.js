@@ -129,7 +129,7 @@ function drawAura(ctx, a, idx, W, H, front){
 
 // ---- the panel ------------------------------------------------------------------------------------
 const colorRow = (id, label) => `<div class="row" style="margin-top:4px"><label style="margin:0;flex:1"><input type="checkbox" id="${id}On"> ${label}</label>
-  <input type="color" id="${id}" value="#e0605a" style="width:52px;height:24px;padding:0;border:none;background:none"></div>`;
+  <input type="color" id="${id}" value="#e0605a" ></div>`;
 function buildStylePanel(){
   const sec = document.createElement("section");
   sec.innerHTML = `<h2>線の色</h2>
@@ -142,7 +142,7 @@ function buildStylePanel(){
       <div><label>部位</label><select id="auPart">${Object.entries(AURA_PARTS).map(([k, [ja]]) => `<option value="${k}">${ja}</option>`).join("")}</select></div>
       <div><label>種類</label><select id="auKind">${Object.entries(AURA_KINDS).map(([k, [ja]]) => `<option value="${k}">${ja}</option>`).join("")}</select></div>
       <div><label>大きさ</label><div class="row"><input type="number" class="num" id="auSize" value="14" min="2" max="80" step="1"><span class="unit">cm</span></div></div>
-      <div><label>色</label><input type="color" id="auColor" value="#ffd84a" style="width:100%;height:28px;padding:0;border:none;background:none"></div>
+      <div><label>色</label><input type="color" id="auColor" value="#ffd84a" style="width:100%"></div>
     </div>
     <div class="btns" style="margin-top:6px"><button id="auAdd">まとう</button></div>
     <label style="margin-top:8px">まとっているオーラ</label>
