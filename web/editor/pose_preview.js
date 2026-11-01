@@ -98,7 +98,8 @@ const showing = el => { const s = el.closest("section"); return !!(s && s.classL
   new MutationObserver(list => { if (list.some(m => m.target.parentNode === aside && m.target.tagName === "SECTION")) draw(); })
     .observe(aside, {subtree: true, attributes: true, attributeFilter: ["class"]}); }
 
-if (window.ODMPoserI18n) window.ODMPoserI18n.add({"持つ・置く前にプレビュー": "Preview before holding / putting", "置く前にプレビュー": "Preview before putting",
+// i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
+(window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"持つ・置く前にプレビュー": "Preview before holding / putting", "置く前にプレビュー": "Preview before putting",
   "大きさ": "Size", "長さ（長い向き）": "Length (the long side)", "太さ": "Thickness", "幅": "Width", "高さ": "Height", "奥行き": "Depth"});
 draw();
 })();

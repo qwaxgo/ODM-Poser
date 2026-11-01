@@ -49,14 +49,17 @@ function placeSvg(kind, v){
   return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${inner}</svg>`;
 }
 const pickers = [];
+// the names in Japanese, as the page is written: in English the options are already translated
+// here, and i18n.js turns these back when the language is switched
+const NAME = {right: "右", left: "左", top: "上", bottom: "下", hide: "隠す"};
 function picker(id, kind){
   const sel = document.getElementById(id); if (!sel || sel.dataset.picker) return;
   sel.dataset.picker = "1"; sel.hidden = true;
   const box = document.createElement("span"); box.className = "place-pick"; box.setAttribute("role", "group");
-  box.setAttribute("aria-label", (sel.closest("label") || sel).title || id);
   for (const o of sel.options){
-    const b = document.createElement("button"); b.type = "button"; b.dataset.v = o.value; b.title = o.textContent;
-    b.setAttribute("aria-label", o.textContent); b.innerHTML = placeSvg(kind, o.value);
+    const name = NAME[o.value] || o.textContent;
+    const b = document.createElement("button"); b.type = "button"; b.dataset.v = o.value; b.title = name;
+    b.setAttribute("aria-label", name); b.innerHTML = placeSvg(kind, o.value);
     b.addEventListener("click", e => { e.preventDefault(); if (sel.value === o.value) return;
       sel.value = o.value; sel.dispatchEvent(new Event("change", {bubbles: true})); sync(); });
     box.appendChild(b);

@@ -207,7 +207,8 @@ DOWN_HOOKS.unshift((cv, x, y) => {
   }};
 });
 
-if (window.ODMPoserI18n) window.ODMPoserI18n.add({"3軸ハンドル": "3-axis handles",
+// i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
+(window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"3軸ハンドル": "3-axis handles",
   "選んだ関節・物体に、移動・回転・変形の3軸ハンドルを出す": "Show move / rotate / scale handles on the selected joint or object",
   "3軸ハンドルを出します。": "Showing the 3-axis handles.", "3軸ハンドルを隠しました。": "The 3-axis handles are hidden.",
   "移動": "Move", "回転": "Rotate", "変形": "Scale", "移動（Gキー）": "Move (G)", "回転（Rキー）": "Rotate (R)", "変形（Sキー）": "Scale (S)",

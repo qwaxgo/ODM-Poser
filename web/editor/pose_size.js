@@ -176,7 +176,8 @@ for (const g of ["head", "torso", "arms", "legs"]) $("szLock_" + g).addEventList
 { const d0 = draw; draw = function(){ d0.apply(this, arguments);
     if (parts.some(s => s.classList.contains("active"))) show(); }; }
 
-if (window.ODMPoserI18n) window.ODMPoserI18n.add({"身長と頭身": "Height and heads", "保つもの": "Keep",
+// i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
+(window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"身長と頭身": "Height and heads", "保つもの": "Keep",
   "なし（頭の大きさはそのまま）": "Nothing (the head keeps its size)", "頭身を保つ（全身が同じ割合で）": "The heads count (all alike)",
   "身長を保つ（残りの体で合わせる）": "The height (the rest of the body makes up)", "頭身": "Heads", "部位の固定": "Locked parts",
   "頭と首": "Head and neck", "胴体": "Torso", "腕": "Arms", "脚": "Legs", "頭と胴体（縦・横）": "Head and torso (lengths, widths)",

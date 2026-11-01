@@ -240,6 +240,18 @@
     "OpenPose 画像は ControlNet（OpenPose）に、アタリ画像は下描きのレイヤーに使えます。":
       "Use the OpenPose picture with a ControlNet (OpenPose), the rough as a sketch layer.",
     "← カメラ側": "← camera side",
+    "レンズ": "Lens", "保存する画像のプレビュー": "Preview of the picture to save",
+    "カメラの位置 上下": "Camera position: up / down", "カメラの位置 前後": "Camera position: forward / back",
+    "カメラの位置 左右": "Camera position: left / right", "見る点 上下": "Look-at point: up / down",
+    "見る点 前後": "Look-at point: forward / back", "見る点 左右": "Look-at point: left / right",
+    "サイトのリンク": "Site links", "シーンにある物": "Things in the scene", "元に戻す・やり直す": "Undo / redo",
+    "分類": "Categories", "大きな分類": "Main categories", "表示の切り替え": "View switches", "モード": "Modes",
+    "すべての部位が固定されています。": "Every part is locked.",
+    "頭を固定しているので、頭身は保てません。": "The head is locked, so the heads count cannot be kept.",
+    "頭を固定しているので、頭身は変えられません。": "The head is locked, so the heads count cannot change.",
+    "頭を固定しているので、頭身を保ったまま身長は変えられません（頭の固定を外してください）。":
+      "The head is locked, so the height cannot change with the heads count kept (unlock the head).",
+    "この文をコピーしてください": "Copy this text", "このリンクをコピーしてください": "Copy this link",
     // messages
     "固定できるのは腰・肘・手首・膝・足首です。": "Only the hips, elbows, wrists, knees and ankles can be pinned.",
     "女性の体格にしました。": "Female build applied.", "男性の体格にしました。": "Male build applied.",
@@ -349,8 +361,22 @@
     return null;
   };
   const joint = s => JOINT[s] || s;
+  const name = s => T[s] || propEn(s) || s;                     // a word of the tables, else a prop's English name
   const figEn = n => n.replace(/^(\d+)人目$/, "Figure $1").replace(/^カメラ(\d+)$/, "Camera $1");
   const RULES = [
+    [/^([A-Za-z][\w .]*)（([\w.-]+)）$/, m => `${m[1]} (${m[2]})`],                     // "Pawoo（pawoo.net）"
+    [/^カメラ(\d+)$/, m => `Camera ${m[1]}`],
+    [/^(.+)に体を合わせて、合わせた関節を固定しました。$/, m => `Fitted the body to the ${name(m[1]).toLowerCase()} and pinned the fitted joints.`],
+    [/^(.+)を(.+)に着けて固定しました。$/, m => SURFACE[m[2]] ? null : `Put the ${joint(m[1])} on the ${name(m[2]).toLowerCase()} and pinned it.`],
+    [/^(.+)を固定しました（身長・頭身を変えても、長さと太さはそのまま）。$/,
+      m => `Locked: ${name(m[1]).toLowerCase()} (changing the height or heads leaves their lengths and thickness).`],
+    [/^(.+)を固定から外しました。$/, m => `Unlocked: ${name(m[1]).toLowerCase()}.`],
+    [/^(選んだ小物|小物|物体|オーラ)：(.+)$/, m => ({"選んだ小物": "Selected prop", "小物": "Prop", "物体": "Object", "オーラ": "Aura"})[m[1]]
+      + ": " + m[2].split(/・(?![^（]*）)/).map(name).join(", ")],                       // "全身・気（炎…）": split outside the brackets
+    [/^(.*?)\s*「(.+)」の時点に戻しました。$/, m => `Back to "${tr(m[2]) || m[2]}"${m[1] ? " (" + m[1] + ")" : ""}.`],
+    [/^このアドレスの MOD を、エディタを開くたびに読み込んで実行します。信頼できるものだけを追加してください。\n\n([\s\S]+)$/,
+      m => `The mod at this address is loaded and run each time the editor opens. Add only mods you trust.\n\n${m[1]}`],
+    [/^「(.+)」をこの端末から外しますか？$/, m => `Remove "${m[1]}" from this device?`],
     [/^この端末では (\d+)×(\d+) を描けないため、(\d+)×(\d+) にしました。$/, m => `This device cannot draw ${m[1]} × ${m[2]}: saved at ${m[3]} × ${m[4]}.`],
     // posting and links (pose_share.js)
     [/^投稿の文をコピーしました。(.+)に貼り付けてください。$/, m => `Copied the post's text: paste it into ${m[1].replace("カカオトーク", "KakaoTalk")}.`],
@@ -418,6 +444,8 @@
       `Held in ${m[1] === "片手" ? "one hand" : "both hands"} (hand shape: ${HAND_JA[m[2]] || m[2]})` + (m[3] ? ". " + (T[m[3]] || m[3]) : "")],
     [/^(.+?)。(.+)$/, m => (T[m[1]] && T[m[2]] !== undefined) ? T[m[1]] + ". " + T[m[2]] : null],
   ];
+  // the tables of the files loaded before this one (pose_size.js, pose_style.js, ...)
+  (window.ODMPoserI18nEarly || []).forEach(t => Object.assign(T, t));
   const tr = s => {
     const t = s.trim();
     if (!t || !jp.test(t)) return null;
@@ -442,7 +470,7 @@
     }
   };
   const doAttrs = el => {
-    for (const a of ["placeholder", "title"]) {
+    for (const a of ["placeholder", "title", "aria-label", "alt"]) {
       if (!el.hasAttribute || !el.hasAttribute(a)) continue;
       const keep = "data-ja-" + a;
       if (lang === "en") {
@@ -478,6 +506,14 @@
     if (lang === "en" && typeof text === "string") { const r = tr(text); if (r !== null) text = r; }
     return fill.call(this, text, ...rest);
   };
+  // the browser's own dialogs (confirm, prompt, alert)
+  for (const f of ["alert", "confirm", "prompt"]) {
+    const o = window[f];
+    window[f] = function (msg, ...rest) {
+      if (lang === "en" && typeof msg === "string") { const r = tr(msg); if (r !== null) msg = r; }
+      return o.call(window, msg, ...rest);
+    };
+  }
   // the switch: among the view's switches (an icon and its name), else in the header
   const btn = document.createElement("button");
   btn.type = "button";

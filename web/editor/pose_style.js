@@ -291,7 +291,8 @@ syncStyle();
 { const d0 = draw; draw = function(){ d0.apply(this, arguments); syncThings(); }; }
 { const sync0 = syncUI; syncUI = function(){ sync0(); syncStyle(); }; }
 draw();
-if (window.ODMPoserI18n) window.ODMPoserI18n.add({"床": "Floor", "壁": "Wall", "天井": "Ceiling", "小物・物体・オーラ": "Things, objects, auras",
+// i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
+(window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"床": "Floor", "壁": "Wall", "天井": "Ceiling", "小物・物体・オーラ": "Things, objects, auras",
   "線の色はすべてここで変えます。チェックしたものだけ色が変わります（書き出すアタリ画像にも）。": "Every line colour is set here. Only what is ticked changes (in the exported rough too).",
   "線の色は「色」のタブで": "Line colour: in the Colours tab", "まだありません。": "None yet.",
   "全身を、どの角度から見ても同じ横幅に": "Whole body: as wide from every side",
