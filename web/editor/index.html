@@ -38,7 +38,8 @@
 <body class="mode-pose">
 <header class="app-header">
   <div id="headTools"><label title="操作欄（メニューと各欄）を画面のどこに置くか">操作欄
-      <select id="asidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option></select></label><button type="button" id="installBtn" hidden>アプリとして追加</button><button type="button" id="splitBtn">分割表示：オフ</button><button type="button" id="themeBtn">表示：自動</button></div>
+      <select id="asidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option></select></label><label id="menuSideLbl" title="操作欄を上・下に置いたとき、メニューとタブを縦に積む側">メニュー
+      <select id="menuSide"><option value="left">左</option><option value="right">右</option></select></label><button type="button" id="asideToggle" aria-pressed="false" title="操作欄をしまう・出す">操作欄をしまう</button><button type="button" id="installBtn" hidden>アプリとして追加</button><button type="button" id="splitBtn">分割表示：オフ</button><button type="button" id="themeBtn">表示：自動</button></div>
   <h1 class="text-xl font-bold text-text-heading m-0">立体人形装置 <span class="text-sm font-normal text-text-muted">ODM Poser — Omni-Directional Mannequin Poser</span></h1>
   <p class="text-xs text-text-muted mt-1 mb-0">線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。</p>
   <nav id="siteLinks" class="flex gap-4 text-xs mt-1" aria-label="サイトのリンク"><a href="https://github.com/qwaxgo/ODM-Poser" target="_blank" rel="noopener">GitHub リポジトリ</a>
@@ -79,6 +80,7 @@
           <div class="ov-stack">
             <button type="button" class="ov-fold" aria-expanded="true" aria-controls="viewOpts" title="表示の切り替えを隠す">›</button>
             <button type="button" class="ov-fold" id="helpBtn" data-icon="Question" title="操作のヒント（?キー）" aria-label="操作のヒント"></button>
+            <button type="button" class="ov-fold" id="ovAside" data-icon="Menu" title="操作欄をしまう・出す" aria-label="操作欄をしまう・出す"></button>
           </div>
           <div class="ov-body" id="viewOpts" role="group" aria-label="表示の切り替え">
             <label title="人間として無理な曲がり方をしない"><input type="checkbox" id="limits" checked> 関節の限界</label>
@@ -101,9 +103,12 @@
 
 <aside>
   <!-- the menu: built by ui-menu.js (groups, categories, tabs) -->
+  <!-- the menu column: above the sections, or beside them when the panel is above / below the views -->
+  <div id="asideHead">
   <nav id="menuBar" data-ui="skip" aria-label="メニュー"></nav>
   <div id="globalBar" class="flex flex-wrap items-center gap-2 mb-3"><button type="button" id="undo" title="Ctrl+Z">↶ 元に戻す</button><button type="button" id="redo" title="Ctrl+Y">↷ やり直す</button></div>
   <div id="status" class="mb-3"></div>
+  </div>
   <section data-menu="size">
     <h2>サイズ</h2>
     <div class="hint">部位ごとの縦幅・横幅、小物の長さ・太さはここに入ります（準備中）。今は、選んだ関節の太さ・長さを下の欄で変えられます。</div>
@@ -815,9 +820,13 @@ function fitCanvas(cv, aspect, fixedH){
   // the views stay on screen as the page scrolls: beside the panels they may take the window's
   // height, above them (one column) part of it, so the panels show underneath
   const short = innerHeight <= 520 && innerWidth >= 700;          // a phone held sideways: panels beside
-  // the panel above or below the views (操作欄の位置) keeps to 40 % of the height
-  const bc = document.body.classList, stackedPanel = !bc.contains("split") && (bc.contains("aside-top") || bc.contains("aside-bottom"));
-  const share = stackedPanel ? 0.58 : short || !matchMedia(ONE_COLUMN).matches ? 1 : innerWidth <= 700 ? 0.8 : 0.7;
+  // the panel above or below the views (操作欄の位置): a strip, the views take the rest; put away
+  // (しまう): the views take the whole height
+  const bc = document.body.classList, own = !bc.contains("split"), off = own && bc.contains("aside-off");
+  const stackedPanel = own && !off && (bc.contains("aside-top") || bc.contains("aside-bottom"));
+  const strip = stackedPanel ? document.querySelector("aside").offsetHeight + document.querySelector(".app-header").offsetHeight + 40 : 0;
+  const share = stackedPanel ? Math.max(0.3, 1 - strip / (innerHeight || 800))
+    : off || short || !matchMedia(ONE_COLUMN).matches ? 1 : innerWidth <= 700 ? 0.8 : 0.7;
   // split screen: the views' own half of the screen
   const st = document.body.classList.contains("split") ? document.getElementById("stage") : null;
   const maxH = fixedH || (st ? Math.max(120, st.clientHeight - viewChrome() - 10)
@@ -2177,12 +2186,24 @@ syncCams();
   set(["right", "left", "top", "bottom", "hide"].includes(p) ? p : "right");
 }
 // the panel (操作欄): right (the default), left, above or below the views; kept in this browser
-{ const el = $("asidePos"), all = ["right", "left", "top", "bottom"];
-  const set = p => { document.body.classList.remove("aside-left", "aside-top", "aside-bottom");
-    if (p !== "right") document.body.classList.add("aside-" + p); el.value = p; chromeKey = ""; draw(); chromeKey = ""; draw(); };
-  let p = "right"; try { p = localStorage.getItem(KEY + "-aside") || "right"; } catch (e) {}
-  el.addEventListener("change", () => { try { localStorage.setItem(KEY + "-aside", el.value); } catch (e) {} set(el.value); });
-  set(all.includes(p) ? p : "right");
+// Above or below, the menu and tabs stack in a column on the left or right (メニュー) and the
+// tab's controls run across, sliders upright. Any place: the panel can be put away (しまう).
+{ const el = $("asidePos"), side = $("menuSide"), all = ["right", "left", "top", "bottom"], bc = document.body.classList;
+  const get = (k, d) => { try { return localStorage.getItem(KEY + k) || d; } catch (e) { return d; } };
+  const put = (k, v) => { try { localStorage.setItem(KEY + k, v); } catch (e) {} };
+  const redraw = () => { chromeKey = ""; draw(); chromeKey = ""; draw(); };
+  const set = p => { bc.remove("aside-left", "aside-top", "aside-bottom");
+    if (p !== "right") bc.add("aside-" + p); el.value = p; redraw(); };
+  const setSide = s => { bc.toggle("menu-right", s === "right"); side.value = s; redraw(); };
+  const setOff = off => { bc.toggle("aside-off", off); $("asideToggle").setAttribute("aria-pressed", String(off));
+    $("asideToggle").textContent = off ? "操作欄を出す" : "操作欄をしまう"; $("ovAside").setAttribute("aria-pressed", String(off)); redraw(); };
+  el.addEventListener("change", () => { put("-aside", el.value); set(el.value); });
+  side.addEventListener("change", () => { put("-menuside", side.value); setSide(side.value); });
+  const flip = () => { const off = !bc.contains("aside-off"); put("-asideoff", off ? "1" : "0"); setOff(off); };
+  $("asideToggle").addEventListener("click", flip); $("ovAside").addEventListener("click", flip);
+  const p = get("-aside", "right"); set(all.includes(p) ? p : "right");
+  setSide(get("-menuside", "left") === "right" ? "right" : "left");
+  setOff(get("-asideoff", "0") === "1");
 }
 // a message from the view's own switches: shown for a moment in the view's corner, not in the panel
 let toastTimer = 0;
@@ -2225,16 +2246,24 @@ syncUI(); draw();
 <script src="pose_cast.js"></script>
 <!-- boxes, prisms, cylinders, pyramids, cones and poles to stand on and touch -->
 <script src="pose_solids.js"></script>
+<!-- サイズ: the parts' lengths and widths, keeping the height / the heads count, locked parts; a thing's length and thickness -->
+<script src="pose_size.js"></script>
 <!-- line colours and auras -->
 <script src="pose_style.js"></script>
+<!-- 置く前のプレビュー: the chosen thing / object drawn faintly before it is put, at the size set beside it -->
+<script src="pose_preview.js"></script>
 <!-- the perspective ruler and the box guide (uses the editor's camera) -->
 <script src="pose_ruler.js"></script>
+<!-- 3軸の操作ハンドル: move / stretch / turn the selected joint, object, thing or ruler box -->
+<script src="pose_gizmo.js"></script>
 <!-- Japanese / English -->
 <script src="i18n.js"></script>
 <!-- the menu: its icons (Charcoal Icons, THIRD_PARTY_LICENSES.md) and its groups, categories and tabs
      (before the MOD API, so a mod can add a tab) -->
 <script src="ui-icons.js"></script>
 <script src="ui-menu.js"></script>
+<!-- 全身図 and the touched part's menu, at the top of the panel -->
+<script src="ui-figure.js"></script>
 <!-- the 管理 tab's list of what is in the scene; the hints behind the ? button -->
 <script src="pose_tree.js"></script>
 <script src="ui-help.js"></script>
@@ -2246,5 +2275,7 @@ syncUI(); draw();
 <script src="pose_api.js"></script>
 <!-- posting to X, Bluesky, Misskey, Mastodon; links that open a pose -->
 <script src="pose_share.js"></script>
+<!-- the panel's labels and their sliders in pairs (for the panel above / below the views) -->
+<script src="ui-layout.js"></script>
 </body>
 </html>

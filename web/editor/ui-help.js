@@ -23,7 +23,8 @@ const PC = [
     [["ダブルクリック", "Double-click"], ["その骨の手前と奥を入れ替える", "Flip the bone toward / away"]],
     [["Alt＋クリック", "Alt + click"], ["関節を固定する（ピン）", "Pin the joint"]],
     [["腰の丸をドラッグ", "Drag the hips' circle"], ["人物全体を動かす", "Move the whole figure"]],
-    [["横の図でドラッグ", "Drag in the side view"], ["奥行きを直接動かす", "Move the depth directly"]]]},
+    [["横の図でドラッグ", "Drag in the side view"], ["奥行きを直接動かす", "Move the depth directly"]],
+    [["選んだ関節の矢印（X・Y・Z）をドラッグ", "Drag an arrow (X, Y, Z) on the selected joint"], ["その軸の向きにだけ動かす（3軸ハンドル）", "Move it along that axis only (3-axis handles)"]]]},
   {mode: "body", title: ["体格モード", "Body mode"], rows: [
     [["丸をドラッグ", "Drag a circle"], ["その骨を伸ばす・縮める（先の部分ごと）", "Lengthen / shorten the bone (with what lies beyond)"]],
     [["丸の上でホイール", "Wheel over a circle"], ["丸（太さ）を大きく・小さく", "Make the circle (thickness) bigger / smaller"]]]},
@@ -37,7 +38,8 @@ const PC = [
     [["Shift＋ドラッグ", "Shift + drag"], ["上下に動かす", "Move it up and down"]],
     [["物体の上でホイール", "Wheel over an object"], ["向きを回す（スナップ中は定規の向きへ 90°ずつ）", "Turn it (with snapping: 90° at a time, along the ruler)"]],
     [["消失点をドラッグ", "Drag a vanishing point"], ["定規の向きを変える", "Turn the ruler"]],
-    [["丸をクリック", "Click a circle"], ["関節を選ぶ（物体に着ける用）", "Select a joint (to put it on an object)"]]]}];
+    [["丸をクリック", "Click a circle"], ["関節を選ぶ（物体に着ける用）", "Select a joint (to put it on an object)"]],
+    [["矢印・先の四角・輪をドラッグ", "Drag an arrow, its square or the ring"], ["選んだ物体を軸に沿って動かす・伸ばす・回す（3軸ハンドル）", "Move, stretch or turn the selected object along an axis (3-axis handles)"]]]}];
 const TOUCH = [
   {title: ["人物と関節", "The figure and its joints"], rows: [
     [["1本指でタップ", "Tap with one finger"], ["丸", "A circle"], ["関節を選ぶ", "Select the joint"]],

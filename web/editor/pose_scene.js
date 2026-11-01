@@ -15,8 +15,20 @@ const PROPS_ = window.PROPS || {}, CATS_ = window.PROP_CATS || [];
 
 // ---- frames ------------------------------------------------------------------------------------
 function rotY(v, a){ const c = Math.cos(a), s = Math.sin(a); return [c*v[0] + s*v[2], v[1], -s*v[0] + c*v[2]]; }
+// it.len / it.thick (サイズ, pose_size.js): the long side stretched, the others thickened, about the
+// item's own origin (the grip of a held thing), so the root stays and the tip moves
+function longAxis(it){
+  const {lo, hi} = localExtent(partsOf(it)), e = [0, 1, 2].map(i => hi[i] - lo[i]);
+  return e.indexOf(Math.max(...e));
+}
+function stretchOf(it){
+  if (!(it.len && it.len !== 1) && !(it.thick && it.thick !== 1)) return null;
+  const a = longAxis(it), L = it.len || 1, T = it.thick || 1;
+  return [0, 1, 2].map(i => i === a ? L : T);
+}
 function itemLocal(it, p, k = 1){             // the item's own size and turn, before its frame
   let q = mul(p, (it.scale || 1) * k);
+  const st = stretchOf(it); if (st) q = [q[0] * st[0], q[1] * st[1], q[2] * st[2]];
   const r = it.rot || [0, 0, 0];
   q = rotAxis(q, [0, 0, 1], deg(r[2])); q = rotAxis(q, [1, 0, 0], deg(r[0])); q = rotAxis(q, [0, 1, 0], deg(r[1]));
   return add(q, it.off || [0, 0, 0]);
@@ -96,17 +108,21 @@ function localExtent(parts){
     for (let i = 0; i < 3; i++){ lo[i] = Math.min(lo[i], q[i] - r); hi[i] = Math.max(hi[i], q[i] + r); }
   return {lo, hi};
 }
-// carried on the back: the long side slants from the right hip up to the left shoulder, flat on the back
+// carried on the back: the long side slants from the right hip up to the left shoulder, flat on the
+// back. A second thing on the back slants the other way (two swords as an X), a little further out;
+// a third and more take turns, each further out again
 function backFrame(it){
   const def = PROPS_[it.key] || {}, cf = chestFrame(), out = mul(cf.z, -1);
-  const slant = v => rotAxis(v, out, deg(-28));
+  const k = Math.max(0, (S.items || []).filter(o => o.where === "back" && (PROPS_[o.key] || {}).place !== "body").indexOf(it));
+  const slant = v => rotAxis(v, out, deg(k % 2 ? 28 : -28));
+  const lift = 3 * k;
   if (def.place === "body") return {o: add(cf.o, mul(out, 26)), x: slant(mul(cf.x, -1)), y: slant(cf.y), z: out};
   const {lo, hi} = localExtent(partsOf(it)), sc = it.scale || 1;
   const ext = [0, 1, 2].map(i => hi[i] - lo[i]), mid = [0, 1, 2].map(i => (hi[i] + lo[i]) / 2 * sc);
   const d = slant(cf.y), x = out;
   let y, z;
   if (ext[1] >= ext[2]){ y = d; z = cross(x, y); } else { z = d; y = cross(z, x); }
-  const centre = add(cf.o, add(mul(out, 13 + ext[0] * sc / 2), mul(cf.y, -4)));
+  const centre = add(cf.o, add(mul(out, 13 + lift + ext[0] * sc / 2), mul(cf.y, -4)));
   return {o: sub(centre, add(add(mul(x, mid[0]), mul(y, mid[1])), mul(z, mid[2]))), x, y, z};
 }
 const dirToWorld = (f, it, v) => { const a = itemToWorld(it, [0, 0, 0], f), b = itemToWorld(it, v, f); return sub(b, a); };
@@ -120,7 +136,7 @@ function circle3(c, n, r, k = 24){            // points of a circle about the no
   return out;
 }
 function drawShape(ctx, sh, it, f, P, lw){
-  const W2 = q => itemToWorld(it, q, f), k = (it.scale || 1) * (f.k || 1);
+  const W2 = q => itemToWorld(it, q, f), k = (it.scale || 1) * (f.k || 1) * (it.thick || 1);
   const line = pts => {
     if (S.hiddenDashed && typeof strokeSeen === "function" && !sceneSide){      // dashed where a body or a solid hides it
       const W = ctx.canvas.width, H = ctx.canvas.height;
@@ -172,7 +188,7 @@ function drawShape(ctx, sh, it, f, P, lw){
 function worldSamples(it){
   const out = [];
   for (const {f, parts} of partSets(it)){
-    const k = (it.scale || 1) * (f.k || 1), W2 = q => itemToWorld(it, q, f);
+    const k = (it.scale || 1) * (f.k || 1) * (it.thick || 1), W2 = q => itemToWorld(it, q, f);
     for (const sh of parts){
       if (sh.c){ const a = W2(sh.c.slice(0, 3)), b = W2(sh.c.slice(3, 6)), ax = sub(b, a), r = sh.c[6] * k;
         out.push(...circle3(a, ax, r, 8), ...circle3(b, ax, r, 8)); }
@@ -188,22 +204,22 @@ function worldSamples(it){
   }
   return out;
 }
-function envLines(){                          // floor / wall / ceiling as 3D line segments
+function envLines(){                          // floor / wall / ceiling as 3D line segments [a, b, which]
   const E = S.env || {}, c = S.P[IX.pelvis], out = [];
-  const grid = (y, n = 4, step = 40) => {
+  const grid = (y, which, n = 4, step = 40) => {
     const x0 = Math.round(c[0] / step) * step, z0 = Math.round(c[2] / step) * step;
     for (let i = -n; i <= n; i++){
-      out.push([[x0 + i*step, y, z0 - n*step], [x0 + i*step, y, z0 + n*step]]);
-      out.push([[x0 - n*step, y, z0 + i*step], [x0 + n*step, y, z0 + i*step]]);
+      out.push([[x0 + i*step, y, z0 - n*step], [x0 + i*step, y, z0 + n*step], which]);
+      out.push([[x0 - n*step, y, z0 + i*step], [x0 + n*step, y, z0 + i*step], which]);
     }
   };
-  if (E.floor) grid(+E.floorY || 0);
-  if (E.ceiling) grid(+E.ceilingY || 230, 3);
+  if (E.floor) grid(+E.floorY || 0, "floor");
+  if (E.ceiling) grid(+E.ceilingY || 230, "ceiling", 3);
   if (E.wall){
     const a = deg(+E.wallYaw || 0), o = [+E.wallX || 0, 0, +E.wallZ || -40], y0 = +E.floorY || 0;
     const at = (u, h) => add(o, add(rotY([u, 0, 0], a), [0, y0 + h, 0]));
-    for (let u = -150; u <= 150; u += 50) out.push([at(u, 0), at(u, 250)]);
-    for (let h = 0; h <= 250; h += 50) out.push([at(-150, h), at(150, h)]);
+    for (let u = -150; u <= 150; u += 50) out.push([at(u, 0), at(u, 250), "wall"]);
+    for (let h = 0; h <= 250; h += 50) out.push([at(-150, h), at(150, h), "wall"]);
   }
   return out;
 }
@@ -213,10 +229,12 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
   const P = q => proj(q, W, H), E = S.env || {};
   ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
   if (!opts.noEnv && (!opts.export || E.show || opts.showEnv)){
-    const envCol = S.colors && S.colors.env;
-    ctx.strokeStyle = envCol || (opts.export ? "#b0b0b0" : far); ctx.lineWidth = Math.max(1, lw * 0.6);
+    // each surface its own colour (S.colors.floor / wall / ceiling), else the one for all (env)
+    const C = S.colors || {}, base = opts.export ? "#b0b0b0" : far;
+    ctx.lineWidth = Math.max(1, lw * 0.6);
     ctx.globalAlpha = opts.export ? 1 : 0.55;
-    for (const [a, b] of envLines()){ const p = P(a), q = P(b); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
+    for (const [a, b, which] of envLines()){ const p = P(a), q = P(b); ctx.strokeStyle = C[which] || C.env || base;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
     ctx.globalAlpha = 1;
   }
   // the wire
@@ -679,7 +697,7 @@ function buildScenePanel(){
     n.addEventListener("change", () => { remember(); r.value = n.value; apply(+n.value); });
   }
   $("scReset").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
-    it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.dims; if (it.grounded) groundItem(it);
+    it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.dims; delete it.len; delete it.thick; if (it.grounded) groundItem(it);
     afterEdit(); showItem(); draw(); say("小物の位置・向き・大きさを戻しました。"); });
   $("scEnvReset").addEventListener("click", () => { remember(); S.env = fresh().env;
     afterEdit(); syncScene(); draw(); say("床・壁・天井を初期値に戻しました。"); });

@@ -95,7 +95,7 @@
   /* the whole width of the window: the views take what the panel leaves */
   .app-header { position: relative; margin: 0 auto; padding: 16px 16px 4px; }
   #headTools { position: absolute; top: 14px; right: 16px; display: flex; gap: 8px; align-items: center; }
-  #headTools select { font: inherit; font-size: 0.8125rem; color: var(--text-default); background: var(--input-bg);
+  #headTools select { min-width: 4.5em; font: inherit; font-size: 0.8125rem; color: var(--text-default); background: var(--input-bg);
     border: 1px solid var(--input-border); border-radius: 6px; padding: 4px 6px; }
   #headTools label { display: inline-flex; align-items: center; gap: 4px; margin: 0; font-size: 0.8125rem; color: var(--text-muted); white-space: nowrap; }
   .app-main { --aside-w: 320px; margin: 0 auto; padding: 8px 16px 32px;
@@ -213,18 +213,41 @@
     .app-main > div, aside { overflow: auto; padding: 8px; }
   }
 
-  /* the panel's place (操作欄の位置, in the header): right (the default), left, above or below the views.
-     Above and below, it keeps to 40 % of the window's height and scrolls, so the views stay in sight. */
+  /* the panel's place (操作欄の位置, in the header): right (the default), left, above or below the views */
   @media (min-width: 901px) and (orientation: landscape), (max-height: 520px) and (min-width: 700px) {
     body:not(.split).aside-left .app-main { grid-template-columns: var(--aside-w) 1fr; }
     body:not(.split).aside-left aside { order: -1; }
   }
-  body:not(.split).aside-top .app-main, body:not(.split).aside-bottom .app-main { grid-template-columns: 1fr; }
-  body:not(.split).aside-top aside, body:not(.split).aside-bottom aside { max-height: 40vh; max-height: 40dvh; overflow: auto;
-    columns: auto; column-width: 320px; column-gap: 16px; }
-  body:not(.split).aside-top aside > section, body:not(.split).aside-bottom aside > section { break-inside: avoid; display: inline-block; width: 100%; }
-  body:not(.split).aside-top aside { order: -1; }
-  body:not(.split).aside-top #stage { top: env(safe-area-inset-top); }
+  /* put away (操作欄をしまう): the views alone */
+  body.aside-off:not(.split) .app-main { grid-template-columns: 1fr; }
+  body.aside-off:not(.split) aside { display: none !important; }
+  /* above or below: a strip under / over the views. The menu and its tabs stack in a column on the
+     left or the right (メニュー); the tab's sections and their controls run across, sliders upright,
+     so the strip stays low and the views get the height. It scrolls sideways when it is long. */
+  body:is(.aside-top, .aside-bottom):not(.split) .app-main { grid-template-columns: 1fr; }
+  body:is(.aside-top, .aside-bottom):not(.split) aside {
+    display: flex; align-items: stretch; gap: 12px; height: clamp(220px, 30vh, 300px); height: clamp(220px, 30dvh, 300px);
+    overflow-x: auto; overflow-y: hidden; columns: auto; padding-bottom: 4px;
+    #asideHead { flex: none; width: 272px; overflow-y: auto; position: sticky; left: 0; z-index: 2; background: var(--bg-page); padding-right: 4px; }
+    > section { flex: none; display: flex; flex-direction: row; align-items: flex-start; gap: 14px; margin: 0; width: auto;
+      max-height: 100%; overflow-y: auto; }
+    > section > * { flex: none; margin: 0; }
+    > section > h2 { max-width: 7em; font-size: 0.875rem; line-height: 1.4; }
+    > section > .hint, > section > p { max-width: 220px; white-space: normal; }
+    .btns { display: flex; flex-direction: column; align-items: stretch; gap: 4px; max-width: 220px; }
+    .ctl { display: flex; flex-direction: column; align-items: center; gap: 4px; max-width: 120px; }
+    .ctl > label { margin: 0; font-size: 0.75rem; line-height: 1.3; text-align: center; }
+    .row { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .row .num { width: 76px; }
+    input[type="range"] { writing-mode: vertical-lr; direction: rtl; width: 24px; min-width: 0; height: 112px; margin: 0; }
+    select[size], .tree { max-height: 180px; }
+  }
+  body.menu-right:is(.aside-top, .aside-bottom):not(.split) aside #asideHead { order: 99; left: auto; right: 0; padding: 0 0 0 4px; }
+  body.aside-top:not(.split) aside { order: -1; }
+  body.aside-top:not(.split) #stage { top: env(safe-area-inset-top); }
+  #menuSideLbl { display: none; }
+  body:is(.aside-top, .aside-bottom) #menuSideLbl { display: inline-flex; }
+  #ovAside[aria-pressed="true"] { color: var(--sel); border-color: var(--sel); }
 
   /* a message from the view's switches, for a moment in the view's bottom-left corner */
   .ov-toast { position: absolute; left: 8px; bottom: 8px; z-index: 4; max-width: min(360px, calc(100% - 16px)); padding: 6px 10px;
@@ -296,7 +319,7 @@
 .menu-leaf .menu-btn.active { color: var(--sel); border-bottom-color: var(--sel); font-weight: 600; }
 @media (pointer: coarse) { .menu-btn { min-height: 44px; } }
 /* the menu, the undo row and the messages span the panel's columns (one-column layout) */
-aside > nav, #globalBar, #status { column-span: all; }
+#asideHead { column-span: all; }
 /* phones and touch screens: the rows fold under ☰ (the burger shows the category › tab you are in) */
 #menuBar .menu-burger { display: none; }
 @media (max-width: 700px), (pointer: coarse) {
@@ -373,3 +396,32 @@ aside > section:not(.active) { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* a pair whose field row is hidden hides its label too (ui-layout.js) */
+.ctl:has(> .row[style*="display: none"]), .ctl:has(> .row[style*="display:none"]), .ctl:has(> [hidden]) { display: none; }
+
+/* 全身図 and the touched part's menu (ui-figure.js), at the top of the menu column */
+#figCtx { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 10px; padding: 6px 8px; border-radius: 10px;
+  border: 1px solid var(--border-default); background: var(--bg-surface); }
+#figMap { flex: none; width: 64px; height: 100px; }
+#figMap line { stroke: var(--text-muted); stroke-width: 1.3; stroke-linecap: round; opacity: 0.7; }
+#figMap line.part { stroke: var(--sel); stroke-width: 2.2; opacity: 1; }
+#figMap circle { fill: var(--bg-surface); stroke: var(--text-muted); stroke-width: 1; cursor: pointer; }
+#figMap circle.head { fill: transparent; }
+#figMap circle.part { stroke: var(--sel); }
+#figMap circle.on { fill: var(--sel); stroke: var(--sel); }
+#figMap circle.pin { stroke: var(--warn); stroke-width: 1.8; }
+#figMap circle:hover { stroke: var(--sel); stroke-width: 1.6; }
+.ctx-side { min-width: 0; flex: 1; }
+.ctx-name { font-size: 0.8125rem; font-weight: 600; color: var(--text-heading); margin-bottom: 6px; line-height: 1.4; }
+.ctx-btns { display: flex; flex-wrap: wrap; gap: 4px; }
+.ctx-btn { display: inline-flex; align-items: center; gap: 4px; min-height: 30px; padding: 2px 8px; border-radius: 8px; font: inherit;
+  font-size: 0.75rem; color: var(--text-default); background: var(--bg-page-alt); border: 1px solid var(--border-default); cursor: pointer; }
+.ctx-btn svg { width: 14px; height: 14px; flex: none; }
+.ctx-btn:hover { color: var(--sel); border-color: var(--sel); }
+.ctx-btn:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
+@media (pointer: coarse) { .ctx-btn { min-height: 40px; } }
+@media (max-width: 700px) { #figMap { width: 48px; height: 75px; } }
+
+/* the panel buttons' icons (ui-layout.js) */
+.btn-icon { width: 16px; height: 16px; flex: none; margin-right: 2px; }
