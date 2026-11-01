@@ -306,6 +306,11 @@
     "操作欄": "Panel", "操作欄をしまう": "Hide the panel", "操作欄を出す": "Show the panel", "操作欄をしまう・出す": "Hide / show the panel",
     "横から（奥行き）の図を出す・隠す": "Show / hide the side (depth) view", "横の図を出す・隠す": "Show / hide the side view",
     "横の図を出しました。": "The side view is shown.", "横の図を隠しました。": "The side view is hidden.",
+    "置き場所": "Place", "操作欄の位置": "Panel", "分割表示": "Split screen", "操作欄をしまいました。": "The panel is put away.", "操作欄を出しました。": "The panel is shown.",
+    "横から（奥行き）の図を出す・隠す（置き場所は横の図の右下で）": "Show / hide the side (depth) view (where it goes: on the side view, bottom right)",
+    "操作欄を出す・しまう（置き場所は操作欄の上で）": "Show / put away the panel (where it goes: at the top of the panel)",
+    "図と操作欄を画面の半分ずつに分ける（スマホ・タブレット）": "The views and the panel on half the screen each (phones, tablets)",
+    "表示の明るさ（押すたびに 自動 → ライト → ダーク）": "Light or dark (each press: auto → light → dark)", "操作欄を上・下に置いたとき、メニューを置く側": "With the panel above / below: the side the menu goes on",
     "画面の設定（操作欄の位置・分割表示・表示の色・言語）": "Screen settings (where the panel goes, split screen, theme, language)", "画面の設定": "Screen settings",
     "操作欄を上・下に置いたとき、メニューとタブを縦に積む側": "With the panel above / below: the side the menu and tabs stack on", "操作欄（メニューと各欄）を画面のどこに置くか": "Where the panel (the menu and its sections) goes",
     "人間として無理な曲がり方をしない": "No bending a human body cannot do",
@@ -473,12 +478,13 @@
     if (lang === "en" && typeof text === "string") { const r = tr(text); if (r !== null) text = r; }
     return fill.call(this, text, ...rest);
   };
-  // the switch
+  // the switch: among the view's switches (an icon and its name), else in the header
   const btn = document.createElement("button");
   btn.type = "button";
-  const tools = document.getElementById("headTools");
-  if (!tools) btn.style.cssText = "position:absolute;top:12px;right:16px";
-  const label = () => { btn.textContent = lang === "en" ? "日本語" : "English"; };
+  const opts = document.getElementById("viewOpts");
+  if (opts){ btn.className = "ov-item"; btn.dataset.icon = "lang"; btn.title = "日本語 / English"; btn.appendChild(document.createElement("span")); }
+  else btn.style.cssText = "position:absolute;top:12px;right:16px";
+  const label = () => { (btn.querySelector("span") || btn).textContent = lang === "en" ? "日本語" : "English"; };
   btn.addEventListener("click", () => {
     lang = lang === "en" ? "ja" : "en";
     try { localStorage.setItem(KEY, lang); } catch (e) {}
@@ -487,7 +493,7 @@
     if (typeof draw === "function") draw();
   });
   const header = document.querySelector("header");
-  if (tools) tools.appendChild(btn);
+  if (opts) opts.insertBefore(btn, document.getElementById("helpBtn"));
   else if (header) { header.style.position = "relative"; header.appendChild(btn); }
   label();
   document.documentElement.lang = lang;

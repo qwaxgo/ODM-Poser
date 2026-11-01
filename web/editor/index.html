@@ -73,39 +73,28 @@
           </div>
           <button type="button" class="ov-fold" aria-expanded="true" aria-controls="modes" title="モードを隠す">‹</button>
         </div>
+        <!-- the view's switches (top right): each an icon and its name, a click turns it on or off;
+             folded (›), only the icons show -->
         <div class="ov ov-tr" id="ovOpts" data-ui="skip">
-          <div class="ov-stack">
-            <button type="button" class="ov-fold" aria-expanded="true" aria-controls="viewOpts" title="表示の切り替えを隠す">›</button>
-            <button type="button" class="ov-fold" id="helpBtn" data-icon="Question" title="操作のヒント（?キー）" aria-label="操作のヒント"></button>
-            <button type="button" class="ov-fold" id="ovAside" data-icon="Menu" title="操作欄をしまう・出す" aria-label="操作欄をしまう・出す"></button>
-            <button type="button" class="ov-fold" id="ovSide" data-icon="sideView" aria-pressed="false" title="横から（奥行き）の図を出す・隠す" aria-label="横の図を出す・隠す"></button>
-            <button type="button" class="ov-fold" id="ovSet" data-icon="settings" aria-expanded="false" aria-controls="headTools" title="画面の設定（操作欄の位置・分割表示・表示の色・言語）" aria-label="画面の設定"></button>
-          </div>
-          <div class="ov-col">
+          <button type="button" class="ov-fold" aria-expanded="true" aria-controls="viewOpts" title="表示の切り替えを隠す">›</button>
           <div class="ov-body" id="viewOpts" role="group" aria-label="表示の切り替え">
-            <label title="人間として無理な曲がり方をしない"><input type="checkbox" id="limits" checked> 関節の限界</label>
-            <label title="物陰に隠れた線を破線で描く（書き出しにも）"><input type="checkbox" id="hiddenDashed"> 隠れ線を破線</label>
-            <label title="胴体を厚みのある台形で描く"><input type="checkbox" id="torso3d" checked> 胴体を立体</label>
-            <label title="横から（奥行き）の図の置き場所">横の図
-              <select id="sidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option><option value="hide">隠す</option></select></label>
-          </div>
-          <!-- 画面の設定 (the sliders button): where the panel goes, split screen, the theme, the language (i18n.js adds it) -->
-          <div class="ov-body" id="headTools" hidden role="group" aria-label="画面の設定">
-            <label title="操作欄（メニューと各欄）を画面のどこに置くか">操作欄
-              <select id="asidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option></select></label>
-            <label id="menuSideLbl" title="操作欄を上・下に置いたとき、メニューとタブを縦に積む側">メニュー
-              <select id="menuSide"><option value="left">左</option><option value="right">右</option></select></label>
-            <button type="button" id="asideToggle" aria-pressed="false" title="操作欄をしまう・出す">操作欄をしまう</button>
-            <button type="button" id="installBtn" hidden>アプリとして追加</button>
-            <button type="button" id="splitBtn">分割表示：オフ</button>
-            <button type="button" id="themeBtn">表示：自動</button>
-          </div>
+            <label class="ov-item" data-icon="Body" title="人間として無理な曲がり方をしない"><input type="checkbox" id="limits" checked><span>関節の限界</span></label>
+            <label class="ov-item" data-icon="dashed" title="物陰に隠れた線を破線で描く（書き出しにも）"><input type="checkbox" id="hiddenDashed"><span>隠れ線を破線</span></label>
+            <label class="ov-item" data-icon="cube" title="胴体を厚みのある台形で描く"><input type="checkbox" id="torso3d" checked><span>胴体を立体</span></label>
+            <button type="button" class="ov-item" id="ovSide" data-icon="sideView" aria-pressed="true" title="横から（奥行き）の図を出す・隠す（置き場所は横の図の右下で）"><span>横の図</span></button>
+            <button type="button" class="ov-item" id="ovAside" data-icon="Menu" aria-pressed="true" title="操作欄を出す・しまう（置き場所は操作欄の上で）"><span>操作欄</span></button>
+            <button type="button" class="ov-item" id="splitBtn" data-icon="split" aria-pressed="false" title="図と操作欄を画面の半分ずつに分ける（スマホ・タブレット）"><span>分割表示</span></button>
+            <button type="button" class="ov-item" id="themeBtn" data-icon="theme" title="表示の明るさ（押すたびに 自動 → ライト → ダーク）"><span>表示：自動</span></button>
+            <button type="button" class="ov-item" id="installBtn" data-icon="DownloadAlt" hidden><span>アプリとして追加</span></button>
+            <button type="button" class="ov-item" id="helpBtn" data-icon="Question" title="操作のヒント（?キー）"><span>操作のヒント</span></button>
           </div>
         </div>
         <div class="ov-toast" id="ovToast" role="status" aria-live="polite"></div>
         <div class="campad" id="camPad"><div class="stick l" id="stickOrbit"><i></i><b>回す</b></div>
           <div class="stick r" id="stickPan"><i></i><b>動かす</b></div><div class="zoomer" id="zoomer"><i></i><b>拡大</b></div></div></div>
-      <div class="view sideview"><span class="tag">横から（奥行き）</span><canvas id="side"></canvas></div>
+      <div class="view sideview"><span class="tag">横から（奥行き）</span><canvas id="side"></canvas>
+        <label class="view-place" data-ui="skip" title="横から（奥行き）の図の置き場所">置き場所
+          <select id="sidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option><option value="hide">隠す</option></select></label></div>
     </div>
     <div class="hint keep">身長 <span id="heightP">-</span>　<span id="pinInfo"></span></div>
   </section>
@@ -117,6 +106,13 @@
   <!-- the menu: built by ui-menu.js (groups, categories, tabs) -->
   <!-- the menu column: above the sections, or beside them when the panel is above / below the views -->
   <div id="asideHead">
+  <!-- where the panel goes (操作欄の位置), and above / below the views, the menu's side -->
+  <div id="panelPlace" data-ui="skip">
+    <label title="操作欄（メニューと各欄）を画面のどこに置くか">操作欄の位置
+      <select id="asidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option></select></label>
+    <label id="menuSideLbl" title="操作欄を上・下に置いたとき、メニューを置く側">メニュー
+      <select id="menuSide"><option value="left">左</option><option value="right">右</option></select></label>
+  </div>
   <nav id="menuBar" data-ui="skip" aria-label="メニュー"></nav>
   <div id="globalBar" class="flex flex-wrap items-center gap-2 mb-3" hidden><button type="button" id="undo" title="Ctrl+Z">↶ 元に戻す</button><button type="button" id="redo" title="Ctrl+Y">↷ やり直す</button></div>
   <div id="status" class="mb-3"></div>
@@ -2093,14 +2089,17 @@ function say(msg, warn){ $("status").textContent = msg; $("status").style.color 
 // (a mod hands it on with api.io.sceneJSON)
 function sceneOnly(){ return {items: S.items || [], env: S.env || {}, wire: S.wire || {}, solids: S.solids || []}; }
 const qs = new URLSearchParams(location.search);
-if (qs.get("w")) $("W").value = qs.get("w");
-if (qs.get("h")) $("H").value = qs.get("h");
+// the picture's size: from the link (?w= &h=), else this screen's own resolution (in device pixels)
+{ const px = v => Math.max(256, Math.min(8192, Math.round(v * (window.devicePixelRatio || 1))));
+  const sw = screen.width > 0 ? px(screen.width) : 1080, sh = screen.height > 0 ? px(screen.height) : 1920;
+  $("W").value = qs.get("w") || sw; $("H").value = qs.get("h") || sh;
+  $("longSide").value = Math.max(+$("W").value, +$("H").value); }
 
 // light / dark: auto follows the system; the choice is kept in this browser
 { const KEY_T = "odm-poser-theme", LABEL = {auto: "表示：自動", light: "表示：ライト", dark: "表示：ダーク"};
   const set = t => { if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
     else delete document.documentElement.dataset.theme;
-    $("themeBtn").textContent = LABEL[t] || LABEL.auto; draw(); };
+    $("themeBtn").querySelector("span").textContent = LABEL[t] || LABEL.auto; draw(); };
   let theme = "auto"; try { theme = localStorage.getItem(KEY_T) || "auto"; } catch (e) {}
   $("themeBtn").addEventListener("click", () => {
     theme = {auto: "light", light: "dark", dark: "auto"}[theme] || "auto";
@@ -2226,12 +2225,6 @@ syncCams();
   const p = get("-side", "right");
   set(["right", "left", "top", "bottom", "hide"].includes(p) ? p : "right");
 }
-// 画面の設定 (the sliders button on the view): opens the panel's place, split screen, theme and language
-{ const btn = $("ovSet"), box = $("headTools");
-  btn.addEventListener("click", () => { box.hidden = !box.hidden; btn.setAttribute("aria-expanded", String(!box.hidden)); });
-  document.addEventListener("pointerdown", e => { if (!box.hidden && !box.contains(e.target) && !btn.contains(e.target)){
-    box.hidden = true; btn.setAttribute("aria-expanded", "false"); } });
-}
 // the panel (操作欄): right (the default), left, above or below the views; kept in this browser
 // Above or below, the menu and tabs stack in a column on the left or right (メニュー) and the
 // tab's controls run across, sliders upright. Any place: the panel can be put away (しまう).
@@ -2242,12 +2235,11 @@ syncCams();
   const set = p => { bc.remove("aside-left", "aside-top", "aside-bottom");
     if (p !== "right") bc.add("aside-" + p); el.value = p; redraw(); };
   const setSide = s => { bc.toggle("menu-right", s === "right"); side.value = s; redraw(); };
-  const setOff = off => { bc.toggle("aside-off", off); $("asideToggle").setAttribute("aria-pressed", String(off));
-    $("asideToggle").textContent = off ? "操作欄を出す" : "操作欄をしまう"; $("ovAside").setAttribute("aria-pressed", String(off)); redraw(); };
+  const setOff = off => { bc.toggle("aside-off", off); $("ovAside").setAttribute("aria-pressed", String(!off)); redraw(); };
   el.addEventListener("change", () => { put("-aside", el.value); set(el.value); });
   side.addEventListener("change", () => { put("-menuside", side.value); setSide(side.value); });
   const flip = () => { const off = !bc.contains("aside-off"); put("-asideoff", off ? "1" : "0"); setOff(off); };
-  $("asideToggle").addEventListener("click", flip); $("ovAside").addEventListener("click", flip);
+  $("ovAside").addEventListener("click", () => { flip(); toast(bc.contains("aside-off") ? "操作欄をしまいました。" : "操作欄を出しました。"); });
   const p = get("-aside", "right"); set(all.includes(p) ? p : "right");
   setSide(get("-menuside", "left") === "right" ? "right" : "left");
   setOff(get("-asideoff", "0") === "1");
@@ -2262,7 +2254,7 @@ function toast(msg, warn){
 function setSplit(on){
   document.body.classList.toggle("split", on);
   if (!on){ document.body.classList.remove("full"); $("vPanels").textContent = "操作欄を隠す"; }
-  $("splitBtn").textContent = on ? "分割表示：オン" : "分割表示：オフ"; draw();
+  $("splitBtn").setAttribute("aria-pressed", String(on)); draw();
 }
 { let pref = null; try { pref = localStorage.getItem(KEY + "-split"); } catch (e) {}
   setSplit(pref ? pref === "1" : matchMedia("(pointer: coarse)").matches); }
