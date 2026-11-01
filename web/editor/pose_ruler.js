@@ -118,12 +118,13 @@ function drawRuler(ctx, W, H, opts = {}){
     const C = boxCorners(ax), D = camDist(W, H);
     const P = C.map(p => project(p, W, H)), ok = C.map(p => toCam(p)[2] < D - 1);
     // 辺を消失点まで延ばす: each edge's line across the picture (it runs through its vanishing point),
-    // stronger than the fan, under the box's own edges
+    // stronger than the fan, under the box's own edges. Only the edges whose direction has a
+    // vanishing point in this ruler (1点: depth, 2点: + left-right, 3点: + up), 4 lines each
     if (r.extend !== false){
-      const far = Math.hypot(W, H) * 4;
+      const far = Math.hypot(W, H) * 4, fams = rulerFamilies();
       ctx.lineWidth = lw * 1.5; ctx.globalAlpha = opts.export ? 0.9 : 0.75;
       for (let i = 0; i < 8; i++) for (const [bit, k] of [[4, 0], [2, 1], [1, 2]]){
-        if (i & bit) continue;
+        if (i & bit || !fams.includes(k)) continue;
         const j = i | bit; if (!ok[i] || !ok[j]) continue;
         const dx = P[j].x - P[i].x, dy = P[j].y - P[i].y, l = Math.hypot(dx, dy); if (l < 1e-6) continue;
         const ux = dx / l, uy = dy / l;

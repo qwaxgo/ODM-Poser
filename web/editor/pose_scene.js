@@ -269,14 +269,44 @@ function reachWith(i, target, pull){          // IK; when out of reach, optional
   preBend(i, target); solveIK(i, target);
   return dl <= L * 0.98 || pull;
 }
+// the other hand of a two-handed thing: its fist's middle on grip2, the hand pointing across the
+// handle, and turned about its length so its knuckle line lies along the handle (the thumb the same
+// way as the holding hand's). The handle runs along the thing's y (swords, poles), or its z when
+// grip2 lies ahead (guns: the hand under the barrel).
+function aimOtherHand(side, it, g){
+  const def = PROPS_[it.key], wi = IX[side + "_wrist"], hi = IX[side + "_hand"], f = frameOf(it);
+  const [gx, gy, gz] = def.grip2.map(Math.abs);
+  const a = norm(dirToWorld(f, it, gz > gy && gz > gx ? [0, 0, 1] : [0, 1, 0]));
+  let d = sub(g, S.P[IX[side + "_elbow"]]); d = sub(d, mul(a, dot(d, a)));
+  const z = len(d) > 1e-3 ? norm(d) : norm(sub(g, S.P[IX[side + "_elbow"]]));
+  const t = sub(g, mul(z, 7));                 // handFrame: the fist's middle is 7 cm past the wrist
+  solveIK(wi, t); solveIK(wi, t);
+  const wr = S.P[wi];
+  if (hi !== undefined && S.P[hi]) rotateSubtree(hi, add(wr, mul(norm(sub(g, wr)), len(sub(S.P[hi], wr)))));
+  if (hi === undefined) return;
+  const score = v => { S.twist[hi] = v; return dot(handFrame(side).y, a); };
+  let best = 0, bs = -2;
+  for (let v = -180; v < 180; v += 10){ const s = score(v); if (s > bs){ bs = s; best = v; } }
+  for (let v = best - 9; v <= best + 9; v++){ const s = score(v); if (s > bs){ bs = s; best = v; } }
+  S.twist[hi] = ((best + 540) % 360) - 180;
+}
 function followItems(moved){
   for (const it of S.items || []){
     const def = PROPS_[it.key]; if (!def || it.where) continue;
     if (def.place === "hand" && def.grip2 && it.both !== false){
-      const other = it.hand === "r" ? "l" : "r", wi = IX[other + "_wrist"];
+      const main = it.hand === "l" ? "l" : "r", other = main === "r" ? "l" : "r", wi = IX[other + "_wrist"];
       if (S.pins && S.pins[wi]) continue;
-      const g = itemToWorld(it, def.grip2);
-      solveIK(wi, wristTarget(other, g)); solveIK(wi, wristTarget(other, g));
+      // out of the other arm's reach (a thing held at the side): the holding hand comes in until
+      // the other one reaches its grip
+      const mw = IX[main + "_wrist"], sh = IX[other + "_shoulder"];
+      const arm = len(sub(S.P[IX[other + "_elbow"]], S.P[sh])) + len(sub(S.P[wi], S.P[IX[other + "_elbow"]]));
+      for (let k = 0; k < 8 && !(S.pins && S.pins[mw]); k++){
+        const g = itemToWorld(it, def.grip2), d = sub(g, S.P[sh]);
+        if (len(d) <= arm * 0.92) break;
+        const want = add(S.P[sh], mul(norm(d), arm * 0.85));
+        solveIK(mw, add(S.P[mw], sub(want, g)));
+      }
+      aimOtherHand(other, it, itemToWorld(it, def.grip2));
     }
     if (def.place === "body" && def.mount){
       const f = chestFrame();

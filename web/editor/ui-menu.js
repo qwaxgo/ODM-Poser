@@ -16,7 +16,8 @@
       {id: "things", title: "物と場所", icon: "Home", kids: [leaf("equip", "装備", "Fashion", "選んだ人物に持たせる・身に着ける・まとう"),
         leaf("objects", "設置", "AddModel", "人物から離れた物体を置く"), leaf("place", "配置", "Move1", "床・壁・天井、つかまる、ワイヤー")]}]},
     {id: "look", title: "見る", icon: "View", kids: [
-      {id: "scenes", title: "シーン", icon: "Users", kids: [leaf("scene", "管理", "ViewList", "出ている人物・物の管理")]},
+      {id: "scenes", title: "シーン", icon: "Users", kids: [leaf("scene", "管理", "ViewList", "出ている人物・物の管理"),
+        leaf("log", "作業ログ", "Undo", "した操作の一覧。どの時点にも戻せる")]},
       {id: "viewpoint", title: "視点", icon: "Fov", kids: [leaf("camera", "カメラ", "Camera", "カメラとパース"), leaf("ruler", "定規", "ruler", "パース定規")]}]},
     {id: "out", title: "出す", icon: "Send", kids: [
       {id: "file", title: "ファイル", icon: "File", kids: [leaf("import", "読込", "Upload", "保存したポーズを開く"),
@@ -37,7 +38,7 @@
     "人物から離れた物体を置く": "Put objects apart from the figure", "床・壁・天井、つかまる、ワイヤー": "Floor, wall, ceiling; grabbing; wire",
     "出ている人物・物の管理": "The figures and things in the scene", "カメラとパース": "Camera and perspective", "パース定規": "Perspective ruler",
     "保存したポーズを開く": "Open a saved pose", "画像・ポーズを書き出す": "Export pictures and poses", "SNS に投稿、リンクをコピー": "Post to social media, copy the link",
-    "MOD の管理": "Manage mods", "メニューを開く・閉じる": "Open / close the menu",
+    "MOD の管理": "Manage mods", "した操作の一覧。どの時点にも戻せる": "What you did, step by step; go back to any point", "メニューを開く・閉じる": "Open / close the menu",
     "骨の長さを保って関節を動かす": "Move the joints, keeping the bone lengths", "骨の長さ・丸の太さを変える": "Change the bone lengths and the circles' sizes",
     "カメラとレンズ（パース）を動かす": "Move the camera and the lens (perspective)", "定規・物体を動かす（カメラは動かない）": "Move the ruler and objects (the camera stays)",
     "モードを隠す": "Hide the modes", "モードを出す": "Show the modes", "表示の切り替えを隠す": "Hide the switches", "表示の切り替えを出す": "Show the switches"};
@@ -140,7 +141,7 @@
     const set = folded => { ov.classList.toggle("folded", folded); btn.setAttribute("aria-expanded", String(!folded));
       btn.textContent = folded === left ? "›" : "‹"; btn.title = `${name}を${folded ? "出す" : "隠す"}`; };
     // not chosen yet: on a phone the switches start folded, so the figure shows
-    let folded = ov.id === "ovOpts" && matchMedia("(max-width: 700px)").matches;
+    let folded = ov.id === "ovOpts" && matchMedia("(max-width: 700px), (max-height: 520px)").matches;
     try { const v = localStorage.getItem(key); if (v !== null) folded = v === "1"; } catch (e) {}
     set(folded);
     btn.addEventListener("click", () => { folded = !ov.classList.contains("folded"); set(folded);

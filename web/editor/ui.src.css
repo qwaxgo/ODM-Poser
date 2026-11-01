@@ -92,10 +92,14 @@
 }
 
 /* ---- the app's shell (outside the layers, so it wins over a utility where both set the same) -------- */
-  .app-header { position: relative; max-width: 1240px; margin: 0 auto; padding: 16px 16px 4px; }
-  #headTools { position: absolute; top: 14px; right: 16px; display: flex; gap: 8px; }
-  .app-main { max-width: 1240px; margin: 0 auto; padding: 8px 16px 32px;
-    display: grid; grid-template-columns: 1fr 320px; gap: 16px; align-items: start; }
+  /* the whole width of the window: the views take what the panel leaves */
+  .app-header { position: relative; margin: 0 auto; padding: 16px 16px 4px; }
+  #headTools { position: absolute; top: 14px; right: 16px; display: flex; gap: 8px; align-items: center; }
+  #headTools select { font: inherit; font-size: 0.8125rem; color: var(--text-default); background: var(--input-bg);
+    border: 1px solid var(--input-border); border-radius: 6px; padding: 4px 6px; }
+  #headTools label { display: inline-flex; align-items: center; gap: 4px; margin: 0; font-size: 0.8125rem; color: var(--text-muted); white-space: nowrap; }
+  .app-main { --aside-w: 320px; margin: 0 auto; padding: 8px 16px 32px;
+    display: grid; grid-template-columns: 1fr var(--aside-w); gap: 16px; align-items: start; }
   /* the views stay on screen while the panels scroll (fitCanvas sizes them so they fit) */
   #stage { position: sticky; top: calc(env(safe-area-inset-top) + 8px); align-self: start; z-index: 5; }
   #stage > section { margin-bottom: 0; }
@@ -143,8 +147,8 @@
   @media (pointer: coarse) {
     #modes button { min-height: 44px; } #viewOpts label { min-height: 44px; } .ov-fold, #ovUndoRow button { width: 44px; height: 44px; }
   }
-  /* phones: the modes as icons only (the name stays in the title and for screen readers) */
-  @media (max-width: 700px) {
+  /* phones (upright or sideways): the modes as icons only (the name stays in the title and for screen readers) */
+  @media (max-width: 700px), (max-height: 520px) {
     #modes button { font-size: 0; gap: 0; padding: 4px 8px; justify-content: center; }
     #modes button svg { width: 22px; height: 22px; }
     #viewOpts label { font-size: 0.75rem; }
@@ -166,7 +170,6 @@
     aside { column-width: 320px; column-gap: 16px; }
     aside > section { break-inside: avoid; display: inline-block; width: 100%; }
   }
-  @media (orientation: portrait) and (min-width: 1000px) { .app-main { max-width: 1400px; } }
   /* phones: the side view on request, the header's buttons in the flow */
   @media (max-width: 700px) {
     .app-main { padding: 8px 8px 24px; gap: 8px; }
@@ -190,7 +193,7 @@
     .app-main { padding: 4px 12px 16px; }
   }
   @media (max-height: 520px) and (min-width: 700px) {
-    .app-main { grid-template-columns: 1fr 280px; }
+    .app-main { --aside-w: 280px; grid-template-columns: 1fr var(--aside-w); }
     aside { columns: auto; max-height: calc(100dvh - 60px); overflow: auto; }
     .views { grid-template-columns: 1fr 34% !important; }
     body:not(.show-side) .view.sideview { display: block; }
@@ -209,6 +212,28 @@
       row-gap: calc(env(viewport-segment-top 0 1) - env(viewport-segment-bottom 0 0)); padding: 0; }
     .app-main > div, aside { overflow: auto; padding: 8px; }
   }
+
+  /* the panel's place (操作欄の位置, in the header): right (the default), left, above or below the views.
+     Above and below, it keeps to 40 % of the window's height and scrolls, so the views stay in sight. */
+  @media (min-width: 901px) and (orientation: landscape), (max-height: 520px) and (min-width: 700px) {
+    body:not(.split).aside-left .app-main { grid-template-columns: var(--aside-w) 1fr; }
+    body:not(.split).aside-left aside { order: -1; }
+  }
+  body:not(.split).aside-top .app-main, body:not(.split).aside-bottom .app-main { grid-template-columns: 1fr; }
+  body:not(.split).aside-top aside, body:not(.split).aside-bottom aside { max-height: 40vh; max-height: 40dvh; overflow: auto;
+    columns: auto; column-width: 320px; column-gap: 16px; }
+  body:not(.split).aside-top aside > section, body:not(.split).aside-bottom aside > section { break-inside: avoid; display: inline-block; width: 100%; }
+  body:not(.split).aside-top aside { order: -1; }
+  body:not(.split).aside-top #stage { top: env(safe-area-inset-top); }
+
+  /* a message from the view's switches, for a moment in the view's bottom-left corner */
+  .ov-toast { position: absolute; left: 8px; bottom: 8px; z-index: 4; max-width: min(360px, calc(100% - 16px)); padding: 6px 10px;
+    border-radius: 8px; font-size: 0.8125rem; line-height: 1.5; color: var(--text-default); pointer-events: none;
+    background: color-mix(in srgb, var(--bg-surface) 92%, transparent); border: 1px solid var(--border-default);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.15); opacity: 0; transform: translateY(4px); transition: opacity .2s, transform .2s; }
+  .ov-toast.show { opacity: 1; transform: none; }
+  .ov-toast.warn { color: var(--warn); }
+  body.pad .ov-toast { bottom: 108px; }
 
   /* the camera pad (touch): a stick turns the view, a stick moves it, the slider zooms */
   body:not(.pad) .campad { display: none; }
@@ -241,9 +266,10 @@
   body.split .app-main { grid-template-columns: 1fr !important; max-width: none; }
   body.split aside { max-height: none; overflow: visible; }
   body.split #stage .hint.keep { display: none; }
+  /* sideways: the views take most of the width, the panels a column beside them */
   @media (orientation: landscape) {
-    body.split { padding-top: env(safe-area-inset-top); padding-left: 50vw; }
-    body.split #stage { right: auto; width: 50vw; height: calc(100vh - env(safe-area-inset-top)); height: calc(100dvh - env(safe-area-inset-top)); }
+    body.split { --split-aside: clamp(260px, 34vw, 380px); padding-top: env(safe-area-inset-top); padding-left: calc(100vw - var(--split-aside)); }
+    body.split #stage { right: auto; width: calc(100vw - var(--split-aside)); height: calc(100vh - env(safe-area-inset-top)); height: calc(100dvh - env(safe-area-inset-top)); }
   }
   body.split.full { overflow: hidden; }
   body.split.full .app-header, body.split.full aside { display: none; }
@@ -298,6 +324,12 @@ aside > section:not(.active) { display: none !important; }
 .tree-row:focus-visible { outline: 2px solid var(--sel); outline-offset: -2px; }
 .tree-note { margin-left: auto; padding-left: 8px; font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
 @media (pointer: coarse) { .tree-row { min-height: 44px; } }
+/* 作業ログ (ui-log.js): the time, then what was done; the row that matches the state now is marked */
+.tree.log { max-height: 360px; }
+.tree.log .tree-row { cursor: pointer; font-size: 0.8125rem; }
+.log-time { flex: none; font-variant-numeric: tabular-nums; color: var(--text-muted); font-size: 0.75rem; }
+.log-what { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tree-row.now .log-time::after { content: "●"; margin-left: 4px; color: var(--sel); }
 
 /* the dialogs sit in the middle (the reset takes dialog's own margin away) */
 #helpDlg, #savePreview { margin: auto; }

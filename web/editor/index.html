@@ -37,7 +37,8 @@
 </head>
 <body class="mode-pose">
 <header class="app-header">
-  <div id="headTools"><button type="button" id="installBtn" hidden>アプリとして追加</button><button type="button" id="splitBtn">分割表示：オフ</button><button type="button" id="themeBtn">表示：自動</button></div>
+  <div id="headTools"><label title="操作欄（メニューと各欄）を画面のどこに置くか">操作欄
+      <select id="asidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option></select></label><button type="button" id="installBtn" hidden>アプリとして追加</button><button type="button" id="splitBtn">分割表示：オフ</button><button type="button" id="themeBtn">表示：自動</button></div>
   <h1 class="text-xl font-bold text-text-heading m-0">立体人形装置 <span class="text-sm font-normal text-text-muted">ODM Poser — Omni-Directional Mannequin Poser</span></h1>
   <p class="text-xs text-text-muted mt-1 mb-0">線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。</p>
   <nav id="siteLinks" class="flex gap-4 text-xs mt-1" aria-label="サイトのリンク"><a href="https://github.com/qwaxgo/ODM-Poser" target="_blank" rel="noopener">GitHub リポジトリ</a>
@@ -63,6 +64,7 @@
             <div class="ov-body ov-row ov-keep" id="ovUndoRow" role="group" aria-label="元に戻す・やり直す">
               <button type="button" id="ovUndo" data-icon="Undo" title="元に戻す（Ctrl+Z）" aria-label="元に戻す"></button>
               <button type="button" id="ovRedo" data-icon="Redo" title="やり直す（Ctrl+Y）" aria-label="やり直す"></button>
+              <button type="button" id="ovLog" data-icon="ViewList" title="作業ログ（どの時点にも戻せる）" aria-label="作業ログ"></button>
             </div>
             <div class="ov-body" id="modes" role="group" aria-label="編集モード">
               <button type="button" data-mode="pose" data-icon="Pose" class="on" title="骨の長さを保って関節を動かす">ポーズ</button>
@@ -86,6 +88,7 @@
               <select id="sidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option><option value="hide">隠す</option></select></label>
           </div>
         </div>
+        <div class="ov-toast" id="ovToast" role="status" aria-live="polite"></div>
         <div class="campad" id="camPad"><div class="stick l" id="stickOrbit"><i></i><b>回す</b></div>
           <div class="stick r" id="stickPan"><i></i><b>動かす</b></div><div class="zoomer" id="zoomer"><i></i><b>拡大</b></div></div></div>
       <div class="view sideview"><span class="tag">横から（奥行き）</span><canvas id="side"></canvas></div>
@@ -123,6 +126,12 @@
   <section data-menu="pose">
     <h2>左右</h2>
     <div class="btns"><button id="mirror">⇋ 左右反転</button><button id="symToL">右→左へ写す</button><button id="symToR">左→右へ写す</button></div>
+  </section>
+
+  <section data-menu="pose">
+    <h2>関節の限界</h2>
+    <label title="人間として無理な曲がり方をしない"><input type="checkbox" id="limitsSide" checked> 人間として無理な曲がり方をしない</label>
+    <div class="hint">画面右上の「関節の限界」と同じスイッチです。これからの操作に効きます。</div>
   </section>
 
   <section data-menu="pose">
@@ -520,7 +529,8 @@ function hiddenAt(q, W, H, skip){
   return false;
 }
 // a 3D segment: solid where it is seen, dashed where it is hidden (just solid when the switch is off)
-function strokeSeen(ctx, a, b, W, H, skip, proj = project){
+// (seenWH: the size of the view the hiding is judged in; the side view asks about the front one)
+function strokeSeen(ctx, a, b, W, H, skip, proj = project, seenWH = [W, H]){
   const pa = proj(a, W, H), pb = proj(b, W, H);
   if (!S.hiddenDashed){ ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke(); return; }
   const n = Math.max(1, Math.min(14, Math.ceil(Math.hypot(pb.x - pa.x, pb.y - pa.y) / (10 * (devicePixelRatio || 1)))));
@@ -531,7 +541,7 @@ function strokeSeen(ctx, a, b, W, H, skip, proj = project){
     ctx.setLineDash(hid ? dash : []); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
   };
   for (let k = 0; k < n; k++){
-    const hid = hiddenAt(add(a, mul(sub(b, a), (k + 0.5) / n)), W, H, skip);
+    const hid = hiddenAt(add(a, mul(sub(b, a), (k + 0.5) / n)), seenWH[0], seenWH[1], skip);
     if (prev !== null && hid !== prev){ flush(start, k, prev); start = k; }
     prev = hid;
   }
@@ -805,7 +815,9 @@ function fitCanvas(cv, aspect, fixedH){
   // the views stay on screen as the page scrolls: beside the panels they may take the window's
   // height, above them (one column) part of it, so the panels show underneath
   const short = innerHeight <= 520 && innerWidth >= 700;          // a phone held sideways: panels beside
-  const share = short || !matchMedia(ONE_COLUMN).matches ? 1 : innerWidth <= 700 ? 0.8 : 0.7;
+  // the panel above or below the views (操作欄の位置) keeps to 40 % of the height
+  const bc = document.body.classList, stackedPanel = !bc.contains("split") && (bc.contains("aside-top") || bc.contains("aside-bottom"));
+  const share = stackedPanel ? 0.58 : short || !matchMedia(ONE_COLUMN).matches ? 1 : innerWidth <= 700 ? 0.8 : 0.7;
   // split screen: the views' own half of the screen
   const st = document.body.classList.contains("split") ? document.getElementById("stage") : null;
   const maxH = fixedH || (st ? Math.max(120, st.clientHeight - viewChrome() - 10)
@@ -814,8 +826,11 @@ function fitCanvas(cv, aspect, fixedH){
   cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));
   cv.style.width = w + "px"; cv.style.height = h + "px";
 }
+// the side view looks from the camera's right but stays level: only the camera's direction (yaw)
+// turns it, not its height angle or tilt
+const sideRot = v => rotAxis(v, [0, 1, 0], deg(-S.cam.yaw)), sideRotInv = v => rotAxis(v, [0, 1, 0], deg(S.cam.yaw));
 function sideProject(p, W, H){                // orthographic, from the camera's right: depth across
-  const q = toCam(p), k = 0.86 * H / 190;
+  const q = sideRot(sub(p, S.center)), k = 0.86 * H / 190;
   return {x: W/2 - q[2] * k, y: H/2 - q[1] * k, s: k};
 }
 function draw(){
@@ -832,23 +847,29 @@ function draw(){
   ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
   ctx.fillStyle = cssVar("--sub"); ctx.font = `${Math.round(11 * (devicePixelRatio || 1))}px sans-serif`;
   ctx.fillText("← カメラ側", 6, H - 8);
+  // the parts' line colours, and the lines hidden from the camera dashed, as in the front view
+  const FW = front.width, FH = front.height, seen = [FW, FH];
   const sideFigure = (active, first) => {
     const P = S.P.map(p => sideProject(p, W, H)), ink = cssVar(active ? "--figure" : "--far");
-    ctx.strokeStyle = ink; ctx.lineWidth = Math.max(1.2, W / 260);
-    BONES.forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(P[a].x, P[a].y); ctx.lineTo(P[b].x, P[b].y); ctx.stroke(); });
+    const col = g => partColor(g) || ink;
+    ctx.lineWidth = Math.max(1.2, W / 260);
+    BONES.forEach(([a, b]) => { if (HAND_J.has(b)) return; ctx.strokeStyle = col(PART_OF[J[b]]);
+      strokeSeen(ctx, S.P[a], S.P[b], W, H, skipBone(b), sideProject, seen); });
     const tps = torsoParts();
-    if (S.torso3d) for (const c of torsoBoxes()){ const q = c.map(p => sideProject(p, W, H));
-      for (const [a, b] of BOX_EDGES){ ctx.beginPath(); ctx.moveTo(q[a].x, q[a].y); ctx.lineTo(q[b].x, q[b].y); ctx.stroke(); } }
-    else for (const poly of tps.blocks){ ctx.beginPath(); poly.map(q => sideProject(q, W, H)).forEach((q, k) =>
-        k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.closePath(); ctx.stroke(); }
-    ctx.beginPath(); tps.waistLine.map(q => sideProject(q, W, H)).forEach((q, k) =>
-      k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke();
-    P.forEach((p, i) => { ctx.strokeStyle = active && i === sel ? cssVar("--sel") : ink;
-      ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2, handleR(i) * p.s), 0, 2*Math.PI); ctx.stroke(); });
+    ctx.strokeStyle = col("torso");
+    if (S.torso3d) for (const c of torsoBoxes()) for (const [a, b] of BOX_EDGES) strokeSeen(ctx, c[a], c[b], W, H, skipTorso(), sideProject, seen);
+    else for (const poly of tps.blocks) poly.forEach((q, k) => strokeSeen(ctx, q, poly[(k + 1) % poly.length], W, H, skipTorso(), sideProject, seen));
+    for (let k = 1; k < tps.waistLine.length; k++) strokeSeen(ctx, tps.waistLine[k - 1], tps.waistLine[k], W, H, skipTorso(), sideProject, seen);
+    P.forEach((p, i) => {
+      ctx.strokeStyle = active && i === sel ? cssVar("--sel") : HANDLE.has(i) ? cssVar("--far") : col(PART_OF[J[i]]);
+      if (S.hiddenDashed && hiddenAt(S.P[i], FW, FH, skipJoint(i))) ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2.5]);
+      ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2, handleR(i) * p.s), 0, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]); });
     if (typeof drawScene === "function")
       drawScene(ctx, W, H, {side: true, noEnv: !first}, sideProject, ink, cssVar("--far"), Math.max(1, W / 360));
   };
-  if (typeof everyFigure === "function") everyFigure(sideFigure); else sideFigure(true, true);
+  occFrozen = S.hiddenDashed ? occluders(FW, FH) : null;
+  try { if (typeof everyFigure === "function") everyFigure(sideFigure); else sideFigure(true, true); }
+  finally { occFrozen = null; }
   const hgt = standingHeight();
   $("headsV").textContent = (hgt / (2 * S.R[IX.head])).toFixed(1) + " 頭身";
   if (document.activeElement !== $("heightN")) $("heightN").value = hgt.toFixed(1);
@@ -941,10 +962,10 @@ function dragIK(i, x, y, W, H){
 function dragSide(i, x, y, W, H){
   if (i === IX.pelvis) return;
   const par = PARENT[i], L = len(sub(S.P[i], S.P[par]));
-  const k = 0.86 * H / 190, pc = toCam(S.P[par]), ic = toCam(S.P[i]);
+  const k = 0.86 * H / 190, pc = sideRot(sub(S.P[par], S.center)), ic = sideRot(sub(S.P[i], S.center));
   const want = [ic[0], (H/2 - y) / k, (W/2 - x) / k];
   const v = norm(sub(want, pc));
-  rotateSubtree(i, add(camRotInv(add(pc, mul(v, L))), S.center));
+  rotateSubtree(i, add(sideRotInv(add(pc, mul(v, L))), S.center));
 }
 // body mode: stretch the bone parent->i toward the mouse (the rest of the limb comes along)
 function dragBody(i, x, y, W, H){
@@ -2155,6 +2176,20 @@ syncCams();
   el.addEventListener("change", () => { try { localStorage.setItem(KEY + "-side", el.value); } catch (e) {} set(el.value); });
   set(["right", "left", "top", "bottom", "hide"].includes(p) ? p : "right");
 }
+// the panel (操作欄): right (the default), left, above or below the views; kept in this browser
+{ const el = $("asidePos"), all = ["right", "left", "top", "bottom"];
+  const set = p => { document.body.classList.remove("aside-left", "aside-top", "aside-bottom");
+    if (p !== "right") document.body.classList.add("aside-" + p); el.value = p; chromeKey = ""; draw(); chromeKey = ""; draw(); };
+  let p = "right"; try { p = localStorage.getItem(KEY + "-aside") || "right"; } catch (e) {}
+  el.addEventListener("change", () => { try { localStorage.setItem(KEY + "-aside", el.value); } catch (e) {} set(el.value); });
+  set(all.includes(p) ? p : "right");
+}
+// a message from the view's own switches: shown for a moment in the view's corner, not in the panel
+let toastTimer = 0;
+function toast(msg, warn){
+  const t = $("ovToast"); t.textContent = msg; t.classList.toggle("warn", !!warn); t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+}
 // split screen: on by itself where a finger is the main pointer (phones, tablets), or as chosen
 function setSplit(on){
   document.body.classList.toggle("split", on);
@@ -2170,11 +2205,15 @@ $("vPanels").addEventListener("click", () => { const full = document.body.classL
 $("symPose").addEventListener("change", e => { try { localStorage.setItem(KEY + "-sympose", e.target.checked ? "1" : "0"); } catch (err) {}
   if (e.target.checked && sel >= 0 && MIRROR[sel] !== sel){ remember(); afterEdit(sel); draw(); say("反対側をそろえました。"); } });
 $("torso3d").addEventListener("change", e => { remember(); S.torso3d = e.target.checked; draw();
-  say(e.target.checked ? "胴体を立体（厚みのある台形）で描きます。" : "胴体を平らな台形で描きます。"); });
+  toast(e.target.checked ? "胴体を立体（厚みのある台形）で描きます。" : "胴体を平らな台形で描きます。"); });
 $("hiddenDashed").addEventListener("change", e => { remember(); S.hiddenDashed = e.target.checked; draw();
-  say(e.target.checked ? "物陰に隠れた線を破線で描きます（書き出しにも）。" : "隠れた線を破線にするのをやめました。"); });
+  toast(e.target.checked ? "物陰に隠れた線を破線で描きます（書き出しにも）。" : "隠れた線を破線にするのをやめました。"); });
 $("limits").addEventListener("change", e => { try { localStorage.setItem(KEY + "-limits", e.target.checked ? "1" : "0"); } catch (err) {}
-  say(e.target.checked ? "関節の限界を有効にしました（これからの操作に効きます）。" : "関節の限界を無効にしました。"); });
+  $("limitsSide").checked = e.target.checked;
+  (e.isTrusted ? toast : say)(e.target.checked ? "関節の限界を有効にしました（これからの操作に効きます）。" : "関節の限界を無効にしました。"); });
+// the same switch in the pose panel
+$("limitsSide").checked = $("limits").checked;
+$("limitsSide").addEventListener("change", e => { $("limits").checked = e.target.checked; $("limits").dispatchEvent(new Event("change")); });
 window.addEventListener("beforeunload", () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} });
 try { const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d && d.P){ migrate(d); if (d.P.length === J.length) S = Object.assign(fresh(), d); } } catch (e) {}
 for (const id of ["scaleAll", "scaleHead", "scaleThick"]) $(id + "V").value = 100;
@@ -2199,6 +2238,8 @@ syncUI(); draw();
 <!-- the 管理 tab's list of what is in the scene; the hints behind the ? button -->
 <script src="pose_tree.js"></script>
 <script src="ui-help.js"></script>
+<!-- 作業ログ: every edit with its time; any point can be brought back -->
+<script src="ui-log.js"></script>
 <!-- mods: the list of mods/*.js (web/mods.js written by tools/make_mods_list.py, or given by the page that hosts the editor) -->
 <script src="../mods.js"></script>
 <!-- the MOD API; it loads the mods (docs/MODDING.md) -->
