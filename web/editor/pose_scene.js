@@ -618,7 +618,7 @@ function buildScenePanel(){
       <div class="hint">置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。</div>
     </div>
     <div id="scItemCtl">${ITEM_CTL.map(rng).join("")}
-      <div class="btns" style="margin-top:6px"><button id="scReset">↺ 位置・向き・大きさを戻す</button></div></div>
+      <div class="btns" style="margin-top:6px"><button id="scReset" title="位置・向き・大きさを戻す">↺ 戻す</button></div></div>
     <h2 style="margin-top:14px">床・壁・天井</h2>
     <div class="grid2">
       <label><input type="checkbox" id="scFloor"> 床</label><div class="row"><input type="number" class="num" id="scFloorY" step="1"><span class="unit">cm</span></div>
@@ -628,13 +628,13 @@ function buildScenePanel(){
     </div>
     <label>接地</label><select id="scGround"><option value="off">しない（宙に浮ける）</option>
       <option value="nopen">床・物体の上にめり込まない</option><option value="stick">いつも床・物体の上に着ける（一番低い所）</option></select>
-    <label><input type="checkbox" id="scShow"> 書き出すアタリにも床・壁を描く</label>
-    <div class="btns" style="margin-top:6px"><button id="scEnvReset">↺ 床・壁・天井を初期値に</button></div>
+    <label title="書き出すアタリにも床・壁を描く"><input type="checkbox" id="scShow"> アタリにも描く</label>
+    <div class="btns" style="margin-top:6px"><button id="scEnvReset" title="床・壁・天井を初期値に">↺ 初期値に</button></div>
     <div class="btns" style="margin-top:6px"><button id="scToFloor">床に着ける</button><button id="scToWall">壁に着ける</button>
       <button id="scToCeil">天井に着ける</button></div>
     <div class="btns" style="margin-top:6px"><button id="scGrab">近くの物につかまる</button><button id="scHang">ぶら下がる</button>
       <button id="scView">人物を画面の中心に</button></div>
-    <label><input type="checkbox" id="scPull" checked> 届かないときは体ごと寄せる</label>
+    <label title="届かないときは体ごと寄せる"><input type="checkbox" id="scPull" checked> 体ごと寄せる</label>
     <div class="hint">関節（手首・足首・膝・肘・腰）を選んでから押します。着けた所・つかんだ所は固定（ピン）になり、ほかを動かしても離れません。</div>
     <h2 style="margin-top:14px">ワイヤーアクション</h2>
     <label><input type="checkbox" id="scWire"> ワイヤーで吊る</label>

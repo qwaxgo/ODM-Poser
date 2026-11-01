@@ -12,7 +12,7 @@ const linkRange = id => { $(id).addEventListener("input", () => { $(id + "N").va
 // ---- things (装備) ------------------------------------------------------------------------------------
 const scBox = document.createElement("div");
 scBox.className = "pv-box";
-scBox.innerHTML = `<label><input type="checkbox" id="scPrevOn" checked> 持つ・置く前にプレビュー</label>` +
+scBox.innerHTML = `<label title="持つ・置く前にプレビュー"><input type="checkbox" id="scPrevOn" checked> プレビュー</label>` +
   ctl("scPreSize", "大きさ", 30, 300, 1, "%", 100) + ctl("scPreLen", "長さ（長い向き）", 30, 300, 1, "%", 100) + ctl("scPreThick", "太さ", 30, 300, 1, "%", 100);
 $("scAddR").closest(".btns").before(scBox);
 for (const id of ["scPreSize", "scPreLen", "scPreThick"]) linkRange(id);
@@ -44,7 +44,7 @@ function ghostItem(hand){
 // ---- objects (設置) ---------------------------------------------------------------------------------
 const soBox = document.createElement("div");
 soBox.className = "pv-box";
-soBox.innerHTML = `<label><input type="checkbox" id="soPrevOn" checked> 置く前にプレビュー</label>` +
+soBox.innerHTML = `<label title="置く前にプレビュー"><input type="checkbox" id="soPrevOn" checked> プレビュー</label>` +
   ctl("soPreW", "幅", 5, 600, 1, "cm", 100) + ctl("soPreH", "高さ", 1, 400, 1, "cm", 100) + ctl("soPreD", "奥行き", 1, 600, 1, "cm", 100);
 $("soAdd").closest(".btns").before(soBox);
 const fillSolidSize = () => { const k = SOLID_KINDS[$("soKind").value]; if (!k) return;

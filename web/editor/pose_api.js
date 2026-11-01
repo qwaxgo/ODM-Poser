@@ -391,7 +391,7 @@ async function loadStored(){
     <div id="modBox" class="hint">読み込んだ MOD はありません。</div>
     <label style="margin-top:10px">この端末に入れた MOD</label>
     <div id="modStored" class="hint">まだありません。</div>
-    <div class="btns" style="margin-top:6px"><button id="modInstall">ファイルから入れる（この端末）</button>
+    <div class="btns" style="margin-top:6px"><button id="modInstall" title="ファイルから入れる（この端末）">ファイルから</button>
       <input type="file" id="modInstallFile" accept=".js,text/javascript" multiple hidden>
       <button id="modLoad">今回だけ読み込む</button>
       <input type="file" id="modFile" accept=".js,text/javascript" multiple hidden></div>

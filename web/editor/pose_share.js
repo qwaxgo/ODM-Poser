@@ -88,19 +88,19 @@ const sec = document.createElement("section");
 sec.innerHTML = `<h2>SNS に投稿</h2>
   <label style="margin-top:0">ひとこと（なくても可）</label>
   <textarea id="shText" rows="2" style="${field};resize:vertical"></textarea>
-  <label><input type="checkbox" id="shLink" checked> 編集データを入れたリンクにする（開くと同じ人物・小物・カメラになります）</label>
+  <label title="開くと同じ人物・小物・カメラになります"><input type="checkbox" id="shLink" checked> 編集データ入りのリンク</label>
   <div class="btns" id="shMain" style="margin-top:6px"></div>
   <details style="margin-top:6px"><summary class="hint" style="cursor:pointer">そのほかの SNS・チャット</summary>
     <div class="btns" id="shMore" style="margin-top:6px"></div></details>
-  <div class="btns" style="margin-top:6px"><button id="shOther">ほかのアプリ（共有メニュー）</button><button id="shCopy">リンクをコピー</button></div>
+  <div class="btns" style="margin-top:6px"><button id="shOther" title="ほかのアプリ（共有メニュー）">ほかのアプリ</button><button id="shCopy">リンクをコピー</button></div>
   <details style="margin-top:6px"><summary class="hint" style="cursor:pointer">Misskey・Mastodon のサーバー</summary>
     <div class="grid2"><div><label>Misskey</label><select id="shSrvMisskey"></select>
         <input type="text" id="shHostMisskey" placeholder="example.com" inputmode="url" style="${field};margin-top:4px;display:none"></div>
       <div><label>Mastodon</label><select id="shSrvMastodon"></select>
         <input type="text" id="shHostMastodon" placeholder="example.com" inputmode="url" style="${field};margin-top:4px;display:none"></div></div></details>
   <div id="shMods" style="display:none;margin-top:8px"><div id="shModList" class="hint" style="white-space:pre-wrap"></div>
-    <div class="btns" style="margin-top:4px"><button id="shModAdd">公式 MOD を追加して開き直す</button></div></div>
-  <div id="shBack" class="btns" style="display:none;margin-top:8px"><button id="shRestore">リンクを開く前の編集に戻す</button></div>
+    <div class="btns" style="margin-top:4px"><button id="shModAdd" title="公式 MOD を追加して開き直す">公式 MOD を追加</button></div></div>
+  <div id="shBack" class="btns" style="display:none;margin-top:8px"><button id="shRestore" title="リンクを開く前の編集に戻す">↶ 前の編集へ</button></div>
   <div class="hint">投稿には ${TAGS} とリンクが付き、リンクは「立体人形装置」の画像付きカードで表示されます。リンクに入る MOD は公式（GitHub の qwaxgo）のものだけで、ほかの MOD の小物・物体は単純な図形や棒になります。</div>`;
 const exportSec = $("saveAtari").closest("section");
 exportSec.parentNode.insertBefore(sec, exportSec.nextSibling);
@@ -245,7 +245,7 @@ function apply(d, first){
     try { localStorage.setItem(BACKUP, JSON.stringify({at: Date.now(), s: S})); } catch (e) {}
   }
   remember(); S = st; syncUI(); draw(); showBackup();
-  say("リンクの編集データを開きました。" + ($("shBack").style.display === "none" ? "" : "前の編集は「リンクを開く前の編集に戻す」で戻せます。"));
+  say("リンクの編集データを開きました。" + ($("shBack").style.display === "none" ? "" : "前の編集は「前の編集へ」で戻せます。"));
   return true;
 }
 $("shModAdd").addEventListener("click", async () => {

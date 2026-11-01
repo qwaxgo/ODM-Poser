@@ -252,6 +252,13 @@
     "頭を固定しているので、頭身を保ったまま身長は変えられません（頭の固定を外してください）。":
       "The head is locked, so the height cannot change with the heads count kept (unlock the head).",
     "この文をコピーしてください": "Copy this text", "このリンクをコピーしてください": "Copy this link",
+    // short button names (the longer wording is their title)
+    "編集データ入りのリンク": "Link with the editing data", "開くと同じ人物・小物・カメラになります": "Opening it gives the same figures, props and camera",
+    "どの角度でも同じ幅": "Same width from every side", "公式 MOD を追加": "Add the official mods", "アタリにも描く": "Also in the rough",
+    "ファイルから": "From a file", "↺ 戻す": "↺ Reset", "立方体に": "Cube", "ほかのアプリ": "Other apps", "↺ 初期値に": "↺ Defaults",
+    "体ごと寄せる": "Move the body", "↶ 前の編集へ": "↶ Previous editing", "プレビュー": "Preview", "壁を定規に": "Wall to the ruler",
+    "位置・向き・大きさを戻す": "Default place, turn and size", "床・壁・天井を初期値に": "Floor, wall and ceiling to the defaults",
+    "大きさ・向きを戻す": "Default size and turn",
     // messages
     "固定できるのは腰・肘・手首・膝・足首です。": "Only the hips, elbows, wrists, knees and ankles can be pinned.",
     "女性の体格にしました。": "Female build applied.", "男性の体格にしました。": "Male build applied.",
@@ -329,7 +336,7 @@
     "画面右上の「関節の限界」と同じスイッチです。これからの操作に効きます。": "The same switch as “Joint limits” at the view's top right. It works on what you do from now on.",
     "作業ログ（どの時点にも戻せる）": "History (go back to any point)",
     "元に戻す（Ctrl+Z）": "Undo (Ctrl+Z)", "やり直す（Ctrl+Y）": "Redo (Ctrl+Y)", "操作のヒント（?キー）": "Hints (? key)",
-    "辺を消失点まで延ばす": "Extend the edges to the vanishing points", "位置：左右": "Place: left-right", "位置：上下": "Place: up-down",
+    "辺を消失点まで延ばす": "Edges to the vanishing points", "位置：左右": "Place: left-right", "位置：上下": "Place: up-down",
     "位置：前後": "Place: front-back", "立方体にする（幅にそろえる）": "Make it a cube (the width)", "スナップ": "Snapping",
     "物体を定規にスナップ": "Snap objects to the ruler", "壁を定規の向きにそろえる": "Turn the wall like the ruler",
     "壁を定規の向きにそろえました。": "The wall now turns like the ruler.",
@@ -383,7 +390,7 @@
     [/^(.+)には、この文を貼り付けてください：([\s\S]+)$/, m => `Paste this into ${m[1].replace("カカオトーク", "KakaoTalk")}: ${m[2]}`],
     [/^(.+)は文字数の上限があるため、編集データの入らないサイトのリンクにしました。$/, m => `${m[1]} allows only so many characters: the post has the site's link without the editing data.`],
     [/^(.+)の投稿画面を開き、ひとことをコピーしました（貼り付けて使えます）。$/, m => `Opened ${m[1]}'s post page and copied your words (paste them there).`],
-    [/^リンクの編集データを開きました。(.*)$/, m => "Opened the link's editing data." + (m[1] ? " The editing before it: \"Back to the editing before the link\"." : "")],
+    [/^リンクの編集データを開きました。(.*)$/, m => "Opened the link's editing data." + (m[1] ? " The editing before it: \"Previous editing\"." : "")],
     [/^リンクをコピーしました（(\d+) 文字）。$/, m => `Copied the link (${m[1]} characters).`],
     [/^このポーズは公式 MOD（GitHub の qwaxgo）を使っています。[^：]*：\n([\s\S]*)$/,
       m => `This pose uses official mods (qwaxgo's on GitHub). Add them to see their props too (plain shapes for now):\n${m[1]}`],

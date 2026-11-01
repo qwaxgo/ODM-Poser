@@ -114,7 +114,7 @@ function target(){
     const a = deg(it.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)];
     return {c: it.base, ax, pivot: it.base, rings: [1], sc: [[ax[0], 0, "大きさ"]],
       save: () => ({base: it.base.slice(), scale: it.scale || 1, yaw: it.yaw || 0}),
-      move: (s0, d) => { it.base = add(s0.base, d); afterEdit(); },
+      move: (s0, d) => { it.base = add(s0.base, d); if (typeof snapItem === "function") snapItem(it); afterEdit(); },
       scale: (s0, f) => { it.scale = Math.max(0.1, s0.scale * f); afterEdit(); },
       turn: (s0, k, dg) => { it.yaw = ((s0.yaw + dg) + 540) % 360 - 180; afterEdit(); }};
   }

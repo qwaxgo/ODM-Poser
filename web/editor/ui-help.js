@@ -35,7 +35,9 @@ const PC = [
     [["ドラッグ", "Drag"], ["カメラを回す（左右＝向き、上下＝高さ）", "Turn the camera (sideways: direction, up-down: height)"]],
     [["Shift＋ドラッグ", "Shift + drag"], ["カメラを傾ける", "Tilt the camera"]],
     [["ホイール", "Wheel"], ["レンズ（広角ほどパースが強い）", "Lens (wider: stronger perspective)"]],
-    [["消失点・アイレベルをドラッグ", "Drag a vanishing point / the eye level"], ["そこに合うようにカメラが動く", "The camera moves to fit"]]]},
+    [["消失点・アイレベルをドラッグ", "Drag a vanishing point / the eye level"], ["そこに合うようにカメラが動く", "The camera moves to fit"]],
+    [["定規の太い線をドラッグ（立方体がないときは細い線）", "Drag a strong ruler line (the thin ones without the box)"],
+     ["その線の消失点がドラッグした分だけ動き、カメラの向きと高さが変わる（画面の外の消失点も）", "Its vanishing point moves as far as you drag, turning and raising the camera (also a point off the picture)"]]]},
   {mode: "place", title: ["配置モード", "Place mode"], rows: [
     [["物体・小物をドラッグ", "Drag an object / a thing"], ["床の上で動かす（カメラは動かない）", "Move it over the floor (the camera stays)"]],
     [["Shift＋ドラッグ", "Shift + drag"], ["上下に動かす", "Move it up and down"]],

@@ -9,7 +9,8 @@
 // A camera looking down or up really makes verticals meet (the figure and the box are drawn so);
 // for a strict 1- or 2-point picture the camera height is 0°, and the panel says so.
 // Handles: in the 配置 mode the camera stays and a vanishing point turns the ruler, the box guide
-// is dragged like a solid; in the パース mode a vanishing point or the eye level moves the camera.
+// is dragged like a solid; in the パース mode a vanishing point, the eye level or a ruler line (its
+// vanishing point follows the drag) moves the camera.
 // Shown in the editor only; "定規の画像" saves it as a transparent PNG at the export size.
 //
 // S.ruler: {on, n: 1 | 2 | 3, yaw (degrees, world), lines, cube (the box guide shown),
@@ -52,24 +53,28 @@ function horizonLine(up, W, H){
   const x = y => cx + (n[1]*(y - cy) + n[2]*f) / n[0];
   return [x(0), 0, x(H), H];
 }
-// the lines toward one vanishing point, spread evenly over the picture
-function fan(ctx, v, W, H, n){
-  const cx = W/2, cy = H/2, diag = Math.hypot(W, H), far = diag * 4;
-  const line = (x, y, dx, dy) => { ctx.moveTo(x - dx*far, y - dy*far); ctx.lineTo(x + dx*far, y + dy*far); };
+// the lines toward one vanishing point, spread evenly over the picture: [x, y, dx, dy] each
+function fanLines(v, W, H, n){
+  const cx = W/2, cy = H/2, diag = Math.hypot(W, H), out = [];
   const finite = v.x !== undefined;
-  ctx.beginPath();
   if (finite && Math.hypot(v.x - cx, v.y - cy) < diag * 0.5){          // a point in the picture: a star
-    for (let k = 0; k < n; k++){ const a = Math.PI * k / n; line(v.x, v.y, Math.cos(a), Math.sin(a)); }
+    for (let k = 0; k < n; k++){ const a = Math.PI * k / n; out.push([v.x, v.y, Math.cos(a), Math.sin(a)]); }
   } else {                                                             // far away: evenly across the picture
     let ux = v.dx, uy = v.dy;
     if (finite){ const l = Math.hypot(v.x - cx, v.y - cy); ux = (v.x - cx) / l; uy = (v.y - cy) / l; }
     const px = -uy, py = ux, span = diag * 0.75;
     for (let k = 0; k <= n; k++){
       const s = -span + 2 * span * k / n, ax = cx + px*s, ay = cy + py*s;
-      if (finite){ const dx = v.x - ax, dy = v.y - ay, l = Math.hypot(dx, dy) || 1; line(ax, ay, dx/l, dy/l); }
-      else line(ax, ay, ux, uy);
+      if (finite){ const dx = v.x - ax, dy = v.y - ay, l = Math.hypot(dx, dy) || 1; out.push([ax, ay, dx/l, dy/l]); }
+      else out.push([ax, ay, ux, uy]);
     }
   }
+  return out;
+}
+function fan(ctx, v, W, H, n){
+  const far = Math.hypot(W, H) * 4;
+  ctx.beginPath();
+  for (const [x, y, dx, dy] of fanLines(v, W, H, n)){ ctx.moveTo(x - dx*far, y - dy*far); ctx.lineTo(x + dx*far, y + dy*far); }
   ctx.stroke();
 }
 const rulerFamilies = () => { const n = rulerState().n; return n === 1 ? [2] : n === 2 ? [0, 2] : [0, 1, 2]; };
@@ -79,6 +84,18 @@ function boxCorners(ax){
   for (const sx of [-1, 1]) for (const sy of [0, 1]) for (const sz of [-1, 1])
     out.push(add(add(add(r.pos, mul(ax[0], sx*w/2)), mul(ax[1], sy*h)), mul(ax[2], sz*d/2)));
   return out;                                    // index = sx*4 + sy*2 + sz (0 = minus, 1 = plus)
+}
+// 辺を消失点まで延ばす: the box's edges as lines across the picture, [x, y, dx, dy, family] each
+function edgeLines(W, H){
+  const C = boxCorners(rulerAxes()), D = camDist(W, H), fams = rulerFamilies(), out = [];
+  const P = C.map(p => project(p, W, H)), ok = C.map(p => toCam(p)[2] < D - 1);
+  for (let i = 0; i < 8; i++) for (const [bit, k] of [[4, 0], [2, 1], [1, 2]]){
+    if (i & bit || !fams.includes(k)) continue;
+    const j = i | bit; if (!ok[i] || !ok[j]) continue;
+    const dx = P[j].x - P[i].x, dy = P[j].y - P[i].y, l = Math.hypot(dx, dy); if (l < 1e-6) continue;
+    out.push([P[i].x, P[i].y, dx / l, dy / l, k]);
+  }
+  return out;
 }
 function drawRuler(ctx, W, H, opts = {}){
   const r = rulerState();
@@ -121,15 +138,11 @@ function drawRuler(ctx, W, H, opts = {}){
     // stronger than the fan, under the box's own edges. Only the edges whose direction has a
     // vanishing point in this ruler (1点: depth, 2点: + left-right, 3点: + up), 4 lines each
     if (r.extend !== false){
-      const far = Math.hypot(W, H) * 4, fams = rulerFamilies();
+      const far = Math.hypot(W, H) * 4;
       ctx.lineWidth = lw * 1.5; ctx.globalAlpha = opts.export ? 0.9 : 0.75;
-      for (let i = 0; i < 8; i++) for (const [bit, k] of [[4, 0], [2, 1], [1, 2]]){
-        if (i & bit || !fams.includes(k)) continue;
-        const j = i | bit; if (!ok[i] || !ok[j]) continue;
-        const dx = P[j].x - P[i].x, dy = P[j].y - P[i].y, l = Math.hypot(dx, dy); if (l < 1e-6) continue;
-        const ux = dx / l, uy = dy / l;
+      for (const [x, y, ux, uy, k] of edgeLines(W, H)){
         ctx.strokeStyle = RULER_COLORS[k];
-        ctx.beginPath(); ctx.moveTo(P[i].x - ux * far, P[i].y - uy * far); ctx.lineTo(P[j].x + ux * far, P[j].y + uy * far); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x - ux * far, y - uy * far); ctx.lineTo(x + ux * far, y + uy * far); ctx.stroke();
       }
       ctx.globalAlpha = 1;
     }
@@ -195,7 +208,16 @@ DOWN_HOOKS.unshift((cv, x, y) => {
     const h = horizonLine(ax[1], W, H);
     if (h && h[0] === 0 && h[2] === W && Math.abs(h[1] + (h[3] - h[1]) * x / W - y) < reach * 0.6)
       return {move(mx, my){ cameraToHorizon(mx, my, W, H); syncUI(); }};
-    return null;
+    // a ruler line: its vanishing point moves as far as the line is dragged (also one off the picture).
+    // The strong lines (the box's edges carried on) when they show, else the thin ones: an empty
+    // place still turns the camera
+    if (camHeld()) return null;
+    const lines = r.cube && r.extend !== false ? edgeLines(W, H)
+      : rulerFamilies().flatMap(k => { const v = vanish(ax[k], W, H); return v.x === undefined ? [] : fanLines(v, W, H, r.lines).map(l => [...l, k]); });
+    const near = lines.find(([lx, ly, dx, dy]) => Math.abs((x - lx) * dy - (y - ly) * dx) < reach * 0.5);
+    if (!near) return null;
+    const k = near[4], v = vanish(ax[k], W, H); if (v.x === undefined) return null;
+    return {move(mx, my){ cameraToVanish(k, v.x + mx - x, v.y + my - y, W, H); syncUI(); }};
   }
   if (hit < 0) return null;
   if (mode === "persp") return {move(mx, my){ cameraToVanish(hit, mx, my, W, H); syncUI(); }};
@@ -276,7 +298,20 @@ function snapSolid(o){
     if (Math.abs(s) < SNAP_CM) o.pos = sub(o.pos, mul(pl.n, s));
   }
 }
-function snapItem(it){ if (snapOn() && it) it.yaw = alignedYaw(it.yaw); }
+// a thing put down: its turn, and it sticks to the upright planes (the wall, slabs' sides) by its
+// nearest point; the floor and the tops of solids are the grounding's (pose_scene.js)
+function snapItem(it){
+  if (!snapOn() || !it) return;
+  it.yaw = alignedYaw(it.yaw);
+  if (!it.base || typeof worldSamples !== "function") return;
+  const pts = worldSamples(it); if (!pts.length) return;
+  const c = mul(pts.reduce((a, q) => add(a, q), [0, 0, 0]), 1 / pts.length), dot0 = {size: [0, 0, 0], yaw: 0};
+  for (const pl of snapPlanes()){
+    if (Math.abs(pl.n[1]) > 0.5 || (pl.near && !pl.near(c, dot0))) continue;
+    const s = Math.min(...pts.map(q => dot(pl.n, sub(q, pl.p))));
+    if (Math.abs(s) < SNAP_CM){ const d = mul(pl.n, -s); it.base = add(it.base, d); pts.forEach((q, i) => { pts[i] = add(q, d); }); }
+  }
+}
 
 // ---- the panel ------------------------------------------------------------------------------------
 const RULER_HINTS = {

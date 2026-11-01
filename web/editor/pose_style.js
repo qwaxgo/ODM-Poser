@@ -202,7 +202,7 @@ function buildStylePanel(){
       <div><label>大きさ</label><div class="row"><input type="number" class="num" id="auSize" value="14" min="2" max="80" step="1"><span class="unit">cm</span></div></div>
       <div><label>色</label><input type="color" id="auColor" value="#ffd84a" style="width:100%"></div>
     </div>
-    <label title="全身のときだけ。体を囲む立った円柱の形で描くので、横から見ても正面から見ても幅が同じ"><input type="checkbox" id="auEven"> 全身を、どの角度から見ても同じ横幅に</label>
+    <label title="全身のときだけ。体を囲む立った円柱の形で描くので、横から見ても正面から見ても幅が同じ"><input type="checkbox" id="auEven"> どの角度でも同じ幅</label>
     ${AU_SHAPE.map(([id, ja, min, max, unit, , only]) => `<label${only ? ` data-au="${only}"` : ""}>${ja}</label>
       <div class="row"${only ? ` data-au="${only}"` : ""}><input type="range" id="${id}" min="${min}" max="${max}" step="1"><input type="number" class="num" id="${id}N" step="1"><span class="unit">${unit}</span></div>`).join("")}
     <div class="btns" style="margin-top:6px"><button id="auAdd">まとう</button></div>
