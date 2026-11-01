@@ -236,10 +236,24 @@ function makeApi(mod){
       lang: () => (i18n() ? i18n().lang : "ja"),
     },
     ui: {
-      // a section in the side panel (at: "top" puts it first); html is yours (ids: prefix them with the mod id)
-      addSection({title, html = "", titleEn, at}){
+      // a tab of the side panel's menu, in a big group and a category: an existing one by its id
+      // (groups: make 作る / look 見る / out 出す; categories: figure, things, scenes, viewpoint, file)
+      // or a new one {id, title, icon}. icon: an icon's name (ui-icons.js) or an <svg>. The tab's id
+      // is the mod's ("<mod id>:<id>"); addSection({menu: id}) puts a section under it.
+      addMenu({id, title, titleEn, icon, tip, top = "out", mid = "file"}){
+        const ui = window.ODMUI; if (!ui || !ui.addMenu || !id) return null;
+        const full = mod.id + ":" + id;
+        tr(title, titleEn);
+        for (const s of [top, mid]) if (s && typeof s === "object") tr(s.title, s.titleEn);
+        return ui.addMenu({id: full, title: title || id, icon, tip, top, mid}) ? full : null;
+      },
+      // a section in the side panel (at: "top" puts it first); html is yours (ids: prefix them with the
+      // mod id). menu: one of the editor's tabs (pose, equip, camera, ...) or a tab of this mod's
+      // (addMenu); without it the section goes under the MOD tab.
+      addSection({title, html = "", titleEn, at, menu}){
         const sec = document.createElement("section");
         sec.dataset.mod = mod.id;
+        if (menu){ const own = mod.id + ":" + menu; sec.dataset.menu = window.ODMUI && window.ODMUI.hasMenu && window.ODMUI.hasMenu(own) ? own : menu; }
         sec.innerHTML = `<h2></h2>${html}`;
         sec.querySelector("h2").textContent = title || mod.name;
         tr(title, titleEn);

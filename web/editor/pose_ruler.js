@@ -117,6 +117,21 @@ function drawRuler(ctx, W, H, opts = {}){
   if (r.cube){
     const C = boxCorners(ax), D = camDist(W, H);
     const P = C.map(p => project(p, W, H)), ok = C.map(p => toCam(p)[2] < D - 1);
+    // 辺を消失点まで延ばす: each edge's line across the picture (it runs through its vanishing point),
+    // stronger than the fan, under the box's own edges
+    if (r.extend !== false){
+      const far = Math.hypot(W, H) * 4;
+      ctx.lineWidth = lw * 1.5; ctx.globalAlpha = opts.export ? 0.9 : 0.75;
+      for (let i = 0; i < 8; i++) for (const [bit, k] of [[4, 0], [2, 1], [1, 2]]){
+        if (i & bit) continue;
+        const j = i | bit; if (!ok[i] || !ok[j]) continue;
+        const dx = P[j].x - P[i].x, dy = P[j].y - P[i].y, l = Math.hypot(dx, dy); if (l < 1e-6) continue;
+        const ux = dx / l, uy = dy / l;
+        ctx.strokeStyle = RULER_COLORS[k];
+        ctx.beginPath(); ctx.moveTo(P[i].x - ux * far, P[i].y - uy * far); ctx.lineTo(P[j].x + ux * far, P[j].y + uy * far); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
     ctx.lineWidth = lw * 2.2;
     for (let i = 0; i < 8; i++) for (const [bit, k] of [[4, 0], [2, 1], [1, 2]]){
       if (i & bit) continue;
@@ -212,6 +227,56 @@ WHEEL_HOOKS.push((x, y, step, e) => {
   remember(); r.yaw = wrap180(r.yaw + step * (e.shiftKey ? 15 : 5)); syncRuler(); return true;
 });
 
+// ---- snapping (S.ruler.snap, while the ruler shows) -------------------------------------------------
+// Objects and things dragged in the 配置 mode turn to the ruler's directions (the wheel then turns
+// them 90° at a time). A solid also sticks to the planes set to the ruler: the floor, the ceiling,
+// the wall when it is turned like the ruler, and the faces of floor / wall slabs turned like it.
+const SNAP_CM = 12;
+const snapOn = () => { const r = rulerState(); return !!(r.on && r.snap); };
+const yawOff = y => { const d = wrap180((y || 0) - rulerYaw()); return ((d % 90) + 135) % 90 - 45; };   // -45 .. 45
+const alignedYaw = y => wrap180((y || 0) - yawOff(y));
+const isAligned = y => Math.abs(yawOff(y)) < 0.5;
+function snapTurn(yaw, step, e){             // the wheel over an object
+  const y0 = yaw || 0;
+  if (!snapOn()) return wrap180(y0 + step * (e.shiftKey ? 15 : 5));
+  return isAligned(y0) ? wrap180(alignedYaw(y0) + Math.sign(step) * 90) : alignedYaw(y0);
+}
+// half of a box's size along the direction n (the box turned by yaw)
+function halfAlong(size, yaw, n){
+  const a = deg(yaw || 0), [w, h, d] = size;
+  return Math.abs(dot(n, rotY([1, 0, 0], a))) * w / 2 + Math.abs(n[1]) * h / 2 + Math.abs(dot(n, rotY([0, 0, 1], a))) * d / 2;
+}
+// planes {p, n (outward, toward where things stand), near(c, o): whether o at its middle c is beside it}
+function snapPlanes(except){
+  const E = S.env || {}, out = [];
+  if (E.floor) out.push({p: [0, +E.floorY || 0, 0], n: [0, 1, 0]});
+  if (E.ceiling) out.push({p: [0, +E.ceilingY || 230, 0], n: [0, -1, 0]});
+  if (E.wall && isAligned(+E.wallYaw || 0)) out.push({p: [+E.wallX || 0, 0, +E.wallZ || -40], n: rotY([0, 0, 1], deg(+E.wallYaw || 0))});
+  (S.solids || []).forEach(o => {
+    if (o === except || (o.kind !== "floor" && o.kind !== "wall") || !isAligned(o.yaw)) return;
+    const a = deg(o.yaw || 0), c = add(o.pos, [0, o.size[1] / 2, 0]);
+    const axes = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)], half = [o.size[0] / 2, o.size[1] / 2, o.size[2] / 2];
+    const thin = o.kind === "floor" ? 1 : 2;                // the slab's thin direction: its faces
+    for (const s of [1, -1]){
+      const n = mul(axes[thin], s);
+      out.push({p: add(c, mul(n, half[thin])), n, near: (q, x) => [0, 1, 2].every(i => i === thin ||
+        Math.abs(dot(sub(q, c), axes[i])) <= half[i] + halfAlong(x.size, x.yaw, axes[i]) + 1)});
+    }
+  });
+  return out;
+}
+function snapSolid(o){
+  if (!snapOn() || !o) return;
+  o.yaw = alignedYaw(o.yaw);
+  for (const pl of snapPlanes(o)){
+    const c = add(o.pos, [0, o.size[1] / 2, 0]);
+    if (pl.near && !pl.near(c, o)) continue;
+    const s = dot(pl.n, sub(c, pl.p)) - halfAlong(o.size, o.yaw, pl.n);
+    if (Math.abs(s) < SNAP_CM) o.pos = sub(o.pos, mul(pl.n, s));
+  }
+}
+function snapItem(it){ if (snapOn() && it) it.yaw = alignedYaw(it.yaw); }
+
 // ---- the panel ------------------------------------------------------------------------------------
 const RULER_HINTS = {
   1: "奥行きの線がアイレベル上の1点に集まります（カメラの正面に向けた定規）。",
@@ -227,7 +292,10 @@ function syncRuler(){
   $("rulerYaw").value = r.yaw; if (document.activeElement !== $("rulerYawV")) $("rulerYawV").value = Math.round(r.yaw);
   $("rulerLines").value = r.lines; $("rulerLinesV").textContent = r.lines;
   $("cubeOn").checked = !!r.cube; $("cubeCtl").style.display = r.cube ? "" : "none";
-  for (const [id, key, k] of BOX_CTL) if (document.activeElement !== $(id)) $(id).value = Math.round(r[key][k]);
+  $("cubeExtend").checked = r.extend !== false; $("rulerSnap").checked = !!r.snap;
+  for (const [id, key, k] of BOX_CTL){ const v = Math.round(r[key][k]);
+    if (document.activeElement !== $(id)) $(id).value = v;
+    const rg = $(id + "R"); if (rangeHeld !== rg){ rg.min = Math.min(+rg.min, v); rg.max = Math.max(+rg.max, v); rg.value = v; } }
   $("rulerHint").textContent = RULER_HINTS[r.n];
   const tilt = r.n < 3 && Math.abs(S.cam.pitch) >= 3;
   $("rulerWarn").textContent = tilt ? RULER_TILT : ""; $("rulerWarn").style.display = tilt ? "" : "none";
@@ -240,9 +308,18 @@ function syncRuler(){
   $("rulerYawV").addEventListener("change", set((r, t) => { if (isFinite(+t.value)) r.yaw = wrap180(+t.value); }));
   $("rulerLines").addEventListener("input", set((r, t) => { r.lines = +t.value; }));
   $("cubeOn").addEventListener("change", set((r, t) => { r.cube = t.checked; }));
-  for (const [id, key, k] of BOX_CTL)
-    $(id).addEventListener("change", set((r, t) => { const v = +t.value; if (!isFinite(v)) return;
-      r[key] = r[key].slice(); r[key][k] = key === "box" ? Math.max(1, Math.min(5000, v)) : v; }));
+  for (const [id, key, k] of BOX_CTL){
+    const put = set((r, t) => { const v = +t.value; if (!isFinite(v)) return;
+      r[key] = r[key].slice(); r[key][k] = key === "box" ? Math.max(1, Math.min(5000, v)) : v; });
+    $(id).addEventListener("change", put); $(id + "R").addEventListener("input", put);
+  }
+  $("cubeExtend").addEventListener("change", set((r, t) => { r.extend = t.checked; }));
+  $("rulerSnap").addEventListener("change", set((r, t) => { r.snap = t.checked; }));
+  $("wallToRuler").addEventListener("click", () => {
+    const E = S.env = Object.assign(fresh().env, S.env || {});
+    remember(); E.wall = true; E.wallYaw = Math.round(alignedYaw(+E.wallYaw || 0) * 10) / 10;
+    if (typeof syncScene === "function") syncScene(); draw(); say("壁を定規の向きにそろえました。");
+  });
   $("boxCube").addEventListener("click", set(r => { r.box = [r.box[0], r.box[0], r.box[0]]; }));
   $("saveRuler").addEventListener("click", () => {
     const [cv, W, H] = exportCanvas();

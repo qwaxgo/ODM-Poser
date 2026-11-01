@@ -46,17 +46,6 @@
 <main class="app-main">
 <div id="stage">
   <section>
-    <div class="modes" id="modes">
-      <button data-mode="pose" class="on">ポーズ（骨の長さを保つ）</button>
-      <button data-mode="body">体格（長さ・太さを変える）</button>
-      <button data-mode="persp">パース（カメラとレンズ）</button>
-      <button data-mode="place">配置（定規・物体）</button>
-    </div>
-    <div id="viewOpts" class="flex flex-wrap items-center gap-x-5 gap-y-1 mb-3">
-      <label class="!mt-0"><input type="checkbox" id="limits" checked> 人間の関節の限界</label>
-      <label class="!mt-0"><input type="checkbox" id="hiddenDashed"> 隠れた線を破線に</label>
-      <label class="!mt-0"><input type="checkbox" id="torso3d" checked> 胴体を立体に</label>
-    </div>
     <div class="touchbar" id="touchBar">
       <button type="button" id="vPanels" class="splitkey">操作欄を隠す</button>
       <button type="button" id="vShift" class="touchkey" aria-pressed="false">Shift（その骨だけ・上下）</button>
@@ -68,128 +57,198 @@
     </div>
     <div class="views">
       <div class="view"><span class="tag">正面（カメラ）</span><canvas id="front"></canvas>
+        <!-- on the view's corners: the editing modes (top left) and the drawing switches (top right); each folds away -->
+        <div class="ov ov-tl" id="ovModes" data-ui="skip">
+          <div class="ov-stack">
+            <div class="ov-body ov-row ov-keep" id="ovUndoRow" role="group" aria-label="元に戻す・やり直す">
+              <button type="button" id="ovUndo" data-icon="Undo" title="元に戻す（Ctrl+Z）" aria-label="元に戻す"></button>
+              <button type="button" id="ovRedo" data-icon="Redo" title="やり直す（Ctrl+Y）" aria-label="やり直す"></button>
+            </div>
+            <div class="ov-body" id="modes" role="group" aria-label="編集モード">
+              <button type="button" data-mode="pose" data-icon="Pose" class="on" title="骨の長さを保って関節を動かす">ポーズ</button>
+              <button type="button" data-mode="body" data-icon="Body" title="骨の長さ・丸の太さを変える">体格</button>
+              <button type="button" data-mode="persp" data-icon="Fov" title="カメラとレンズ（パース）を動かす">パース</button>
+              <button type="button" data-mode="place" data-icon="Move1" title="定規・物体を動かす（カメラは動かない）">配置</button>
+            </div>
+          </div>
+          <button type="button" class="ov-fold" aria-expanded="true" aria-controls="modes" title="モードを隠す">‹</button>
+        </div>
+        <div class="ov ov-tr" id="ovOpts" data-ui="skip">
+          <div class="ov-stack">
+            <button type="button" class="ov-fold" aria-expanded="true" aria-controls="viewOpts" title="表示の切り替えを隠す">›</button>
+            <button type="button" class="ov-fold" id="helpBtn" data-icon="Question" title="操作のヒント（?キー）" aria-label="操作のヒント"></button>
+          </div>
+          <div class="ov-body" id="viewOpts" role="group" aria-label="表示の切り替え">
+            <label title="人間として無理な曲がり方をしない"><input type="checkbox" id="limits" checked> 関節の限界</label>
+            <label title="物陰に隠れた線を破線で描く（書き出しにも）"><input type="checkbox" id="hiddenDashed"> 隠れ線を破線</label>
+            <label title="胴体を厚みのある台形で描く"><input type="checkbox" id="torso3d" checked> 胴体を立体</label>
+            <label title="横から（奥行き）の図の置き場所">横の図
+              <select id="sidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option><option value="hide">隠す</option></select></label>
+          </div>
+        </div>
         <div class="campad" id="camPad"><div class="stick l" id="stickOrbit"><i></i><b>回す</b></div>
           <div class="stick r" id="stickPan"><i></i><b>動かす</b></div><div class="zoomer" id="zoomer"><i></i><b>拡大</b></div></div></div>
       <div class="view sideview"><span class="tag">横から（奥行き）</span><canvas id="side"></canvas></div>
     </div>
     <div class="hint keep">身長 <span id="heightP">-</span>　<span id="pinInfo"></span></div>
-    <details id="viewHints" class="hint">
-      <summary>操作のヒント</summary>
-      <div class="hint touch-only">タッチ：丸をタップして選び、選んだ丸をドラッグして動かす。それ以外の所を1本指でスワイプ：カメラを回す。2本指：つまんで拡大縮小、そのまま動かして移動（パース・配置モードはレンズ・物体のまま）。カメラパッド：左のスティックで回す、右のスティックで動かす、右端のスライダーで拡大（上の「カメラパッド」で隠せます）。ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで。ペンはマウスと同じく丸を直接ドラッグ（サイドボタンは Shift、消しゴム側は固定）。</div>
-      <div class="hint">カメラ（どのモードでも。レンズはそのまま）：中ボタンでドラッグして回す、Shift＋中ボタンで動かす、Ctrl＋中ボタン（またはホイール）で拡大縮小。中ボタンのないマウスやトラックパッドは、何もない所を Alt＋ドラッグ。テンキー：1 正面、3 右から、7 上から（Ctrl で反対側）、2・4・6・8 で15°ずつ回す（Ctrl で動かす）、9 裏へ回る、＋－ 拡大縮小、. 選んだ関節を中心に、Home 人物を中心に。</div>
-      <div class="hint only pose">丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す、Ctrl+Y：やり直す。</div>
-      <div class="hint only body">丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。</div>
-      <div class="hint only persp">ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。Shift＋ドラッグ：カメラを傾ける（水平でなくする）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。パース定規の消失点やアイレベルをつかむと、そこに合うようにカメラが動きます。</div>
-      <div class="hint only place">ドラッグではカメラは動きません（中ボタン・テンキー・カメラパッドでは動きます）。消失点をドラッグ：定規の向きを変える。直方体のガイドや物体をドラッグ：床の上で動かす（Shift＋ドラッグで上下）。その上でホイール：向きを回す。丸をクリック：関節を選ぶ（「物体に着ける」用）。</div>
-    </details>
   </section>
+  <!-- 操作のヒント: opened with the ? button (ui-help.js fills it, for a mouse or for touch) -->
+  <dialog id="helpDlg" aria-labelledby="helpTitle" data-ui="skip"></dialog>
 </div>
 
 <aside>
-  <section>
+  <!-- the menu: built by ui-menu.js (groups, categories, tabs) -->
+  <nav id="menuBar" data-ui="skip" aria-label="メニュー"></nav>
+  <div id="globalBar" class="flex flex-wrap items-center gap-2 mb-3"><button type="button" id="undo" title="Ctrl+Z">↶ 元に戻す</button><button type="button" id="redo" title="Ctrl+Y">↷ やり直す</button></div>
+  <div id="status" class="mb-3"></div>
+  <section data-menu="size">
+    <h2>サイズ</h2>
+    <div class="hint">部位ごとの縦幅・横幅、小物の長さ・太さはここに入ります（準備中）。今は、選んだ関節の太さ・長さを下の欄で変えられます。</div>
+  </section>
+  <section data-menu="preset">
     <h2>プリセット</h2>
     <select id="preset"></select>
-    <div class="btns" style="margin-top:6px">
-      <button id="applyPreset">読み込む</button>
-      <button id="mirror">左右反転</button>
-      <button id="undo">元に戻す</button>
-      <button id="redo">やり直す</button>
-    </div>
-    <div class="btns" style="margin-top:6px">
-      <button id="symToL">右の手足を左へ写す</button>
-      <button id="symToR">左の手足を右へ写す</button>
-    </div>
+    <div class="btns"><button id="applyPreset">このポーズにする</button></div>
     <div id="tcBox">
-      <label style="margin-top:10px">ユーザープリセット（<span id="tcCount">0</span>）</label>
-      <div class="btns" style="margin-top:6px"><button id="tcLoadFile">ファイルから読込</button><input type="file" id="tcFile" accept=".json,application/json" multiple hidden></div>
+      <label>ユーザープリセット（<span id="tcCount">0</span>）</label>
+      <div class="btns"><button id="tcLoadFile">ファイルから読込</button><input type="file" id="tcFile" accept=".json,application/json" multiple hidden></div>
       <select id="tcGroup"></select>
-      <input type="text" id="tcSearch" placeholder="検索：日本語でも英語でも（例：キック / kick、座る / sit）" style="margin-top:6px">
-      <select id="tcList" size="9" style="margin-top:6px"></select>
-      <div class="btns" style="margin-top:6px"><button id="tcApply">このポーズにする</button><button id="tcRandom">ランダム</button></div>
-      <div class="hint">骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。ファイルから読むと、一覧は選んだファイルの内容に置き換わります（形式は README の「ユーザープリセット」）。</div>
+      <input type="text" id="tcSearch" placeholder="検索（例：キック / kick）">
+      <select id="tcList" size="6"></select>
+      <div class="btns"><button id="tcApply">このポーズにする</button><button id="tcRandom">ランダム</button></div>
+      <div class="hint">骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。</div>
     </div>
   </section>
 
-  <section class="only body">
-    <h2>体格</h2>
-    <div class="btns"><button id="sexF">女性の体格</button><button id="sexM">男性の体格</button></div>
-    <div class="hint">ポーズはそのままで、骨の長さ・肩幅・腰幅・ウエストを入れ替えます（女性 158cm／男性 171cm）。</div>
-    <label>身長（立ったとき）</label>
-    <div class="row"><input type="number" class="num" id="heightN" step="0.5" min="40" max="260"><span class="unit">cm</span>
-      <span class="val" id="headsV" style="flex:1">-</span></div>
-    <label><input type="checkbox" id="sym" checked> 左右対称</label>
-    <label>全体の大きさ</label>
-    <div class="row"><input type="range" id="scaleAll" min="60" max="140" value="100"><input type="number" class="num" id="scaleAllV"><span class="unit">%</span></div>
-    <label>頭の大きさ</label>
-    <div class="row"><input type="range" id="scaleHead" min="50" max="250" value="100"><input type="number" class="num" id="scaleHeadV"><span class="unit">%</span></div>
-    <label>太さ（丸の大きさ）</label>
-    <div class="row"><input type="range" id="scaleThick" min="50" max="200" value="100"><input type="number" class="num" id="scaleThickV"><span class="unit">%</span></div>
+  <section data-menu="pose">
+    <h2>左右</h2>
+    <div class="btns"><button id="mirror">⇋ 左右反転</button><button id="symToL">右→左へ写す</button><button id="symToR">左→右へ写す</button></div>
   </section>
 
-  <section class="only pose body">
+  <section data-menu="pose">
+    <h2>ポーズを戻す</h2>
+    <div class="btns"><button id="poseReset">↺ 立ちポーズに戻す</button></div>
+    <div class="hint">体格（骨の長さ・太さ）と位置はそのままです。</div>
+  </section>
+
+  <section data-menu="scene">
+    <h2>人物の位置と向き</h2>
+    <label>左右（＋人物の左）</label>
+    <div class="row"><input type="range" id="figX" min="-300" max="300" step="1"><input type="number" class="num" id="figXN" step="1"><span class="unit">cm</span></div>
+    <label>上下</label>
+    <div class="row"><input type="range" id="figY" min="-100" max="300" step="1"><input type="number" class="num" id="figYN" step="1"><span class="unit">cm</span></div>
+    <label>前後（＋前）</label>
+    <div class="row"><input type="range" id="figZ" min="-300" max="300" step="1"><input type="number" class="num" id="figZN" step="1"><span class="unit">cm</span></div>
+    <label>向き</label>
+    <div class="row"><input type="range" id="figYaw" min="-180" max="180" step="1"><input type="number" class="num" id="figYawN" step="1"><span class="unit">°</span></div>
+    <label>前後の傾き（＋前へ）</label>
+    <div class="row"><input type="range" id="figPitch" min="-90" max="90" step="1"><input type="number" class="num" id="figPitchN" step="1"><span class="unit">°</span></div>
+    <label>左右の傾き</label>
+    <div class="row"><input type="range" id="figRoll" min="-90" max="90" step="1"><input type="number" class="num" id="figRollN" step="1"><span class="unit">°</span></div>
+    <div class="btns"><button id="figResetPos">↺ 位置と向きを戻す</button></div>
+    <div class="hint">選んでいる人物を、ポーズを保ったまま動かし・回します（固定した関節も一緒に動きます）。床と関係なく傾けられます。「配置」タブの接地が「いつも床・物体の上に着ける」のときは、上下は床に戻ります。</div>
+  </section>
+
+  <section data-menu="scene">
+    <h2>初期状態に戻す</h2>
+    <div class="btns"><button id="resetFigure">↺ この人物を初期状態に</button><button id="resetAll">↺ すべて最初の状態に</button></div>
+    <div class="hint">「この人物」はポーズ・体格・位置を新しい人物と同じにします（持ち物とオーラはそのまま）。「すべて」は人物・小物・物体・床と壁・定規・カメラを最初の状態にします（記憶したカメラは残ります）。どちらも「元に戻す」で取り消せます。</div>
+  </section>
+
+  <section data-menu="pose body size">
     <h2>選んだ関節：<span id="selName">（丸をクリック）</span></h2>
-    <label class="only pose"><input type="checkbox" id="symPose"> 左右同時に動かす（片方の手足を動かすと、反対側も同じ形に）</label>
-    <label id="pinRow" style="display:none"><input type="checkbox" id="pin"> この関節を固定する（ピン。Alt＋クリックでも）</label>
+    <label class="only pose" title="関節の固定（ピン）とは同時に使えません"><input type="checkbox" id="symPose"> 左右同時に動かす</label>
+    <label id="pinRow" style="display:none" title="左右同時に動かすとは同時に使えません"><input type="checkbox" id="pin"> この関節を固定</label>
+    <div class="hint" id="symPinNote" style="display:none"></div>
     <div id="handRow" style="display:none"><label>この腕の手の形</label><select id="handSel"></select></div>
-    <div id="symRow" style="display:none"><label>反対側をこの形にそろえる</label>
-      <div class="btns"><button id="symJoint">この関節だけ</button><button id="symLimb">ここから先まとめて</button></div></div>
+    <div id="symRow" style="display:none"><label>反対側をこの形に</label>
+      <div class="btns"><button id="symJoint">この関節だけ</button><button id="symLimb">ここから先</button></div></div>
     <div id="jointCtl"></div>
-    <div class="hint" id="selHint">ドラッグした結果がここの数値になります。数値やバーで動かすこともできます。</div>
+    <div class="hint" id="selHint">ドラッグ結果がここに反映されます</div>
   </section>
 
-  <section class="only persp">
+  <section data-menu="body">
+    <h2>体格</h2>
+    <div class="btns"><button id="sexF">女性</button><button id="sexM">男性</button></div>
+    <label>身長</label>
+    <div class="row"><input type="number" class="num" id="heightN" step="0.5" min="40" max="260"><span class="unit">cm</span>
+      <span class="val" id="headsV">-</span></div>
+    <label><input type="checkbox" id="sym" checked> 左右対称</label>
+    <label>全体サイズ</label>
+    <div class="row"><input type="range" id="scaleAll" min="60" max="140" value="100"><input type="number" class="num" id="scaleAllV"><span class="unit">%</span></div>
+    <label>頭</label>
+    <div class="row"><input type="range" id="scaleHead" min="50" max="250" value="100"><input type="number" class="num" id="scaleHeadV"><span class="unit">%</span></div>
+    <label>太さ</label>
+    <div class="row"><input type="range" id="scaleThick" min="50" max="200" value="100"><input type="number" class="num" id="scaleThickV"><span class="unit">%</span></div>
+    <div class="btns"><button id="bodyReset">↺ 体格を初期値に</button></div>
+    <div class="hint">骨の長さ・丸の太さ・大きさを初期値にします。ポーズ（骨の向き）はそのままです。</div>
+  </section>
+
+  <section data-menu="camera">
     <h2>カメラ</h2>
-    <label>レンズ（mm、小さいほど広角）</label>
+    <label>レンズ</label>
     <div class="row"><input type="range" id="lens" min="14" max="200" value="50"><input type="number" class="num" id="lensV"><span class="unit">mm</span></div>
-    <label>向き（左右）</label>
+    <label>向き</label>
     <div class="row"><input type="range" id="yaw" min="-180" max="180" value="0"><input type="number" class="num" id="yawV"><span class="unit">°</span></div>
-    <label>高さ（俯瞰＋／あおり−）</label>
+    <label>高さ</label>
     <div class="row"><input type="range" id="pitch" min="-80" max="80" value="0"><input type="number" class="num" id="pitchV"><span class="unit">°</span></div>
     <label>傾き</label>
     <div class="row"><input type="range" id="roll" min="-90" max="90" value="0"><input type="number" class="num" id="rollV"><span class="unit">°</span></div>
-    <button id="camReset" style="margin-top:6px">カメラを戻す</button>
+    <label>カメラの位置（左右・上下・前後）</label>
+    <div class="row"><input type="number" class="num" id="camPX" step="5" aria-label="カメラの位置 左右"><input type="number" class="num" id="camPY" step="5" aria-label="カメラの位置 上下"><input type="number" class="num" id="camPZ" step="5" aria-label="カメラの位置 前後"><span class="unit">cm</span></div>
+    <label>見る点（左右・上下・前後）</label>
+    <div class="row"><input type="number" class="num" id="camTX" step="5" aria-label="見る点 左右"><input type="number" class="num" id="camTY" step="5" aria-label="見る点 上下"><input type="number" class="num" id="camTZ" step="5" aria-label="見る点 前後"><span class="unit">cm</span></div>
+    <div class="hint">床の中心が 0。前後は人物の正面側が＋。位置を変えると、見る点を向いたまま向き・高さ・拡大が決まります（傾きはそのまま）。</div>
+    <div class="btns"><button id="camReset">↺ リセット</button></div>
   </section>
 
-  <section>
-    <h2>カメラの固定と記憶</h2>
-    <label style="margin-top:0"><input type="checkbox" id="camLock"> カメラを固定する</label>
-    <label><input type="checkbox" id="padOn"> カメラパッドを表示</label>
+  <section data-menu="camera">
+    <h2>固定と記憶</h2>
+    <label><input type="checkbox" id="camLock"> カメラを固定</label>
+    <label><input type="checkbox" id="padOn"> パッドを表示</label>
     <label>記憶したカメラ（<span id="camCount">0</span>）</label>
     <select id="camList"></select>
-    <div class="btns" style="margin-top:6px"><button id="camSave">今のカメラを記憶</button><button id="camLoad">呼び出す</button><button id="camDel">削除</button></div>
-    <div class="hint">固定すると、ドラッグ・スワイプ・2本指・ホイール・テンキー・カメラパッドではカメラが動きません（パースのスライダーと「呼び出す」は効きます）。記憶するのは向き・高さ・傾き・レンズ・拡大・中心で、ポーズと一緒に保存されます。一覧はダブルクリックでも呼び出せます。</div>
+    <div class="btns"><button id="camSave">記憶</button><button id="camLoad">呼出</button><button id="camDel">削除</button></div>
   </section>
 
-  <section>
-    <h2>パース定規</h2>
-    <label style="margin-top:0"><input type="checkbox" id="rulerOn"> パース定規を表示</label>
+  <section data-menu="ruler">
+    <h2>定規</h2>
+    <label><input type="checkbox" id="rulerOn"> パース定規を表示</label>
     <div id="rulerCtl" style="display:none">
-      <label>透視の種類</label>
-      <select id="rulerN"><option value="1">1点透視</option><option value="2">2点透視</option><option value="3">3点透視</option></select>
-      <div id="rulerYawRow"><label>定規の向き</label>
+      <label>透視</label>
+      <select id="rulerN"><option value="1">1点</option><option value="2">2点</option><option value="3">3点</option></select>
+      <div id="rulerYawRow"><label>向き</label>
         <div class="row"><input type="range" id="rulerYaw" min="-180" max="180" value="30"><input type="number" class="num" id="rulerYawV"><span class="unit">°</span></div></div>
       <label>線の数</label>
       <div class="row"><input type="range" id="rulerLines" min="6" max="60" value="20"><span class="val" id="rulerLinesV"></span></div>
-      <label><input type="checkbox" id="cubeOn" checked> 直方体のガイド（向きは定規と同じ）</label>
+      <label><input type="checkbox" id="cubeOn" checked> ガイド立方体</label>
       <div id="cubeCtl">
-        <div class="grid2">
-          <div><label>幅</label><div class="row"><input type="number" id="boxW" min="1" step="5"><span class="unit">cm</span></div></div>
-          <div><label>位置（左右）</label><div class="row"><input type="number" id="boxX" step="5"><span class="unit">cm</span></div></div>
-          <div><label>高さ</label><div class="row"><input type="number" id="boxH" min="1" step="5"><span class="unit">cm</span></div></div>
-          <div><label>位置（上下）</label><div class="row"><input type="number" id="boxY" step="5"><span class="unit">cm</span></div></div>
-          <div><label>奥行き</label><div class="row"><input type="number" id="boxD" min="1" step="5"><span class="unit">cm</span></div></div>
-          <div><label>位置（前後）</label><div class="row"><input type="number" id="boxZ" step="5"><span class="unit">cm</span></div></div>
-        </div>
-        <div class="btns" style="margin-top:6px"><button id="boxCube">立方体にする（幅にそろえる）</button></div>
+        <label><input type="checkbox" id="cubeExtend" checked> 辺を消失点まで延ばす</label>
+        <label>幅</label><div class="row"><input type="range" id="boxWR" min="1" max="1000" step="1"><input type="number" class="num" id="boxW" min="1" step="5"><span class="unit">cm</span></div>
+        <label>高さ</label><div class="row"><input type="range" id="boxHR" min="1" max="1000" step="1"><input type="number" class="num" id="boxH" min="1" step="5"><span class="unit">cm</span></div>
+        <label>奥行</label><div class="row"><input type="range" id="boxDR" min="1" max="1000" step="1"><input type="number" class="num" id="boxD" min="1" step="5"><span class="unit">cm</span></div>
+        <label>位置：左右</label><div class="row"><input type="range" id="boxXR" min="-1000" max="1000" step="1"><input type="number" class="num" id="boxX" step="5"><span class="unit">cm</span></div>
+        <label>位置：上下</label><div class="row"><input type="range" id="boxYR" min="-200" max="1000" step="1"><input type="number" class="num" id="boxY" step="5"><span class="unit">cm</span></div>
+        <label>位置：前後</label><div class="row"><input type="range" id="boxZR" min="-1000" max="1000" step="1"><input type="number" class="num" id="boxZ" step="5"><span class="unit">cm</span></div>
+        <div class="btns"><button id="boxCube">立方体にする（幅にそろえる）</button></div>
       </div>
-      <div class="btns" style="margin-top:8px"><button id="saveRuler">定規の画像</button></div>
+      <h3>スナップ</h3>
+      <label><input type="checkbox" id="rulerSnap" checked> 物体を定規にスナップ</label>
+      <div class="btns"><button id="wallToRuler">壁を定規の向きにそろえる</button></div>
+      <div class="hint">配置モードで物体・小物を動かすと、向きが定規の向きにそろいます（ホイールで 90°ずつ回ります）。物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。</div>
+      <div class="btns"><button id="saveRuler">定規の画像</button><button id="rulerReset">↺ 定規を初期値に</button></div>
       <div class="hint" id="rulerHint"></div>
       <div class="hint" id="rulerWarn" style="color:var(--warn);display:none"></div>
-      <div class="hint">消失点はカメラ（パース）から決まるので、人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードで消失点をつかむとカメラはそのままで定規が回ります。直方体のガイドは配置モードでドラッグして動かせます。定規はアタリ画像には入りません（「定規の画像」で透明な PNG を保存）。</div>
     </div>
   </section>
 
-  <section>
+  <section data-menu="import">
+    <h2>読込</h2>
+    <div class="btns"><button id="loadJson">ポーズのファイルを開く</button><input type="file" id="file" accept=".json,application/json" hidden></div>
+    <div class="hint">「書き出し」で保存したポーズ（.json）を開きます。人物・小物・物体・カメラも戻ります。</div>
+  </section>
+
+  <section data-menu="export">
     <h2>書き出し</h2>
     <div class="grid2">
       <div><label>比率</label><select id="ratio">
@@ -198,7 +257,7 @@
         <option value="3:2">3:2（横）</option><option value="9:16">9:16（縦・スマホ）</option><option value="16:9">16:9（横・動画）</option>
         <option value="1:1.414">A判・B判（縦）</option><option value="1.414:1">A判・B判（横）</option>
         <option value="2.35:1">2.35:1（映画）</option><option value="custom">比率を指定</option></select></div>
-      <div><label>長い辺</label><div class="row"><input type="number" id="longSide" min="256" max="8192" step="64" value="1920"><span class="unit">px</span></div></div>
+      <div><label>長辺</label><input type="number" id="longSide" min="256" max="8192" step="64" value="1920"></div>
     </div>
     <div class="grid2" id="ratioCustom" style="display:none">
       <div><label>横の比</label><input type="number" id="ratioW" min="0.1" step="0.1" value="5"></div>
@@ -208,27 +267,29 @@
       <div><label>幅</label><input type="number" id="W" value="1080" min="256" max="8192"></div>
       <div><label>高さ</label><input type="number" id="H" value="1920" min="256" max="8192"></div>
     </div>
-    <div class="btns" style="margin-top:8px">
+    <div class="btns">
       <button id="saveAtari">アタリ画像</button>
       <button id="saveOpenpose">OpenPose 画像</button>
-      <button id="saveJson">ポーズ保存</button>
-      <button id="loadJson">ポーズ読込</button>
-      <input type="file" id="file" accept=".json,application/json" hidden>
+      <button id="saveJson">ポーズ（.json）</button>
     </div>
-    <div class="hint">OpenPose 画像は ControlNet（OpenPose）に、アタリ画像は下描きのレイヤーに使えます。</div>
-    <label style="margin-top:10px">構図の画像（この比率と大きさで）</label>
+    <div class="hint">画像は保存する前に全体を確認できます。</div>
+    <label style="margin-top:15px">構図の画像に含める</label>
     <div class="grid2">
       <label><input type="checkbox" id="cmFigure" checked> 人物</label><label><input type="checkbox" id="cmItems" checked> 小物</label>
-      <label><input type="checkbox" id="cmSolids" checked> 物体</label><label><input type="checkbox" id="cmEnv" checked> 床・壁・天井</label>
-      <label><input type="checkbox" id="cmRuler" checked> パース定規</label><label><input type="checkbox" id="cmAuras" checked> オーラ</label>
+      <label><input type="checkbox" id="cmSolids" checked> 物体</label><label><input type="checkbox" id="cmEnv" checked> 環境</label>
+      <label><input type="checkbox" id="cmRuler" checked> 定規</label><label><input type="checkbox" id="cmAuras" checked> オーラ</label>
     </div>
     <div class="grid2">
-      <div><label>背景</label><select id="cmBg"><option value="white">白（黒い線）</option><option value="clear">透明（黒い線）</option>
-        <option value="theme">画面と同じ色</option></select></div>
-      <div><label>&nbsp;</label><button id="saveComp" style="width:100%">構図を保存</button></div>
+      <div><label>背景</label><select id="cmBg"><option value="white">白</option><option value="clear">透明</option><option value="theme">テーマ</option></select></div>
+      <div><label>&nbsp;</label><button id="saveComp" style="width:100%">構図の画像</button></div>
     </div>
-    <div id="status"></div>
   </section>
+  <dialog id="savePreview" aria-labelledby="spTitle">
+    <h2 id="spTitle" class="text-sm font-semibold text-text-heading mt-0 mb-2">保存する画像</h2>
+    <div class="sp-frame"><img id="spImg" alt="保存する画像のプレビュー"></div>
+    <div class="hint" id="spInfo"></div>
+    <div class="btns" style="margin-top:12px;justify-content:flex-end"><button type="button" id="spCancel">やめる</button><button type="button" id="spSave" class="primary">保存する</button></div>
+  </dialog>
 </aside>
 </main>
 
@@ -303,7 +364,7 @@ function fresh(){
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
           center: [0, 90, 0], cams: [], camLock: false, scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, torso3d: true, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
-          ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, box: [60, 60, 60], pos: [70, 0, 0]}};
+          ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, box: [60, 60, 60], pos: [70, 0, 0], extend: true, snap: true}};
 }
 // undo / redo: remember() keeps the state before an edit. A step remembered when nothing changed
 // after it (a slider only touched) is skipped; an edit after an undo drops what could be redone.
@@ -731,12 +792,14 @@ function exportSize(){ return [Math.max(256, +$("W").value || 1080), Math.max(25
 // when the window, the mode or the layout changes
 let chromeKey = "", chromeH = 160;
 function viewChrome(){
-  const sec = front.closest("section"), key = [innerWidth, innerHeight, document.body.className].join("|");
+  const views = front.closest(".views");
+  const sec = front.closest("section"), key = [innerWidth, innerHeight, document.body.className, views.className, side.style.height].join("|");
   if (sec && key !== chromeKey){ chromeKey = key; chromeH = Math.max(0, sec.offsetHeight - front.offsetHeight); }
   return chromeH;
 }
 const ONE_COLUMN = "(max-width:900px), (orientation:portrait) and (max-aspect-ratio:4/5)";
-function fitCanvas(cv, aspect){
+// fixedH: the side view above or below the front one keeps to that height
+function fitCanvas(cv, aspect, fixedH){
   const dpr = window.devicePixelRatio || 1;
   let w = cv.parentElement.clientWidth, h = Math.round(w / aspect);
   // the views stay on screen as the page scrolls: beside the panels they may take the window's
@@ -745,8 +808,8 @@ function fitCanvas(cv, aspect){
   const share = short || !matchMedia(ONE_COLUMN).matches ? 1 : innerWidth <= 700 ? 0.8 : 0.7;
   // split screen: the views' own half of the screen
   const st = document.body.classList.contains("split") ? document.getElementById("stage") : null;
-  const maxH = st ? Math.max(120, st.clientHeight - viewChrome() - 10)
-    : Math.max(200, Math.round((window.innerHeight || 800) * share - viewChrome() - 18));
+  const maxH = fixedH || (st ? Math.max(120, st.clientHeight - viewChrome() - 10)
+    : Math.max(200, Math.round((window.innerHeight || 800) * share - viewChrome() - 18)));
   if (h > maxH){ h = maxH; w = Math.round(h * aspect); }
   cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));
   cv.style.width = w + "px"; cv.style.height = h + "px";
@@ -757,7 +820,8 @@ function sideProject(p, W, H){                // orthographic, from the camera's
 }
 function draw(){
   const [EW, EH] = exportSize();
-  fitCanvas(front, EW / EH); fitCanvas(side, EW / EH); zoomThumb();
+  const stacked = /\bside-(top|bottom)\b/.test(front.closest(".views").className);
+  fitCanvas(front, EW / EH); fitCanvas(side, EW / EH, stacked ? Math.max(100, Math.round((innerHeight || 800) * 0.26)) : 0); zoomThumb();
   let ctx = front.getContext("2d"), W = front.width, H = front.height;
   ctx.fillStyle = cssVar("--stage"); ctx.fillRect(0, 0, W, H);
   drawAtari(ctx, W, H, {sel});
@@ -789,7 +853,7 @@ function draw(){
   $("headsV").textContent = (hgt / (2 * S.R[IX.head])).toFixed(1) + " 頭身";
   if (document.activeElement !== $("heightN")) $("heightN").value = hgt.toFixed(1);
   $("heightP").textContent = `${hgt.toFixed(1)} cm（${(hgt / (2 * S.R[IX.head])).toFixed(1)} 頭身）`;
-  showSelected();
+  showSelected(); camCoords(); figCoords();
 }
 // standing height from the bone lengths (whatever the pose): crown to the floor
 const bl = (a, b) => len(sub(S.P[IX[a]], S.P[IX[b]]));
@@ -1003,6 +1067,31 @@ function camZoom(k){ const [a, b] = zoomSpan(); S.cam.zoom = Math.max(a, Math.mi
 function camSync(){
   for (const id of ["yaw", "pitch", "roll"]){ const v = Math.round(S.cam[id]); $(id).value = v;
     if (document.activeElement !== $(id + "V")) $(id + "V").value = v; }
+}
+// the camera as coordinates (cm): where it is and the point it looks at (S.center). Its distance
+// is camDist(), so the place sets the zoom too; pitch and zoom keep to their ranges.
+const CAM_P = ["camPX", "camPY", "camPZ"], CAM_T = ["camTX", "camTY", "camTZ"];
+function camDist1(){ const [W, H] = exportSize(); return camDist(W, H) * S.cam.zoom; }   // at zoom 1
+function camPos(){
+  const p = deg(S.cam.pitch), y = deg(S.cam.yaw), D = camDist1() / S.cam.zoom;
+  return add(S.center, mul([Math.cos(p) * Math.sin(y), Math.sin(p), Math.cos(p) * Math.cos(y)], D));
+}
+function setCamPos(pos){
+  const d = sub(pos, S.center), L = len(d); if (L < 1) return false;
+  const [a, b] = zoomSpan();
+  S.cam.pitch = Math.max(-80, Math.min(80, Math.asin(d[1] / L) * 180 / Math.PI));
+  if (Math.hypot(d[0], d[2]) > 1e-6) S.cam.yaw = Math.atan2(d[0], d[2]) * 180 / Math.PI;
+  S.cam.zoom = Math.max(a, Math.min(b, camDist1() / L));
+  return true;
+}
+function camCoords(){
+  const show = (ids, v) => ids.forEach((id, k) => { const el = $(id); if (el && document.activeElement !== el) el.value = Math.round(v[k]); });
+  show(CAM_P, camPos()); show(CAM_T, S.center);
+}
+function camLockUI(){
+  const on = !!S.camLock;
+  for (const id of ["lens", "yaw", "pitch", "roll"]) { $(id).disabled = on; $(id + "V").disabled = on; }
+  for (const id of [...CAM_P, ...CAM_T, "camReset"]) $(id).disabled = on;
 }
 function zoomThumb(){
   const z = document.getElementById("zoomer"); if (!z) return;
@@ -1435,6 +1524,8 @@ function afterEdit(moved){
 function togglePin(i){
   if (!PINNABLE.has(J[i])) { say("固定できるのは腰・肘・手首・膝・足首です。", true); return; }
   S.pins = S.pins || {};
+  // 左右同時に動かす moves the other limb after a pin is held, so the two are not on together
+  if (!S.pins[i] && $("symPose").checked){ say("「左右同時に動かす」がオンの間は固定できません。", true); return; }
   if (S.pins[i]) delete S.pins[i]; else S.pins[i] = S.P[i].slice();
   say(S.pins[i] ? `${J_JA[J[i]]}を固定しました。` : `${J_JA[J[i]]}の固定を外しました。`);
 }
@@ -1490,6 +1581,13 @@ function showSelected(){
     if (document.activeElement !== $("handSel")) $("handSel").value = S.hands[arm]; }
   const np = Object.keys(S.pins || {}).length;
   $("pinInfo").textContent = np ? `固定中の関節：${Object.keys(S.pins).map(k => J_JA[J[+k]]).join("・")}` : "";
+  // either 左右同時に動かす or pins: the one that is off cannot be switched on (what is on can be switched off)
+  const symOn = $("symPose").checked;
+  $("symPose").disabled = !symOn && np > 0;
+  $("pin").disabled = symOn && !$("pin").checked;
+  $("symPinNote").style.display = $("symPose").disabled || $("pin").disabled ? "" : "none";
+  $("symPinNote").textContent = symOn ? "「左右同時に動かす」がオンの間は関節を固定できません。"
+    : np ? "関節を固定している間は「左右同時に動かす」を使えません（固定をすべて外すと使えます）。" : "";
   for (const [id, , mn, mx, , , kind] of JOINT_CTL){
     // the wrist joint shows the elbow's bend and the forearm; its twist is the hand joint's
     const show = ok && (kind === "any" || (kind === "root") === root) && !(id === "jTwist" && /_wrist$/.test(J[sel]));
@@ -1536,8 +1634,6 @@ try { for (const k of ["theme", "lang", "editor-v1", "editor-v1-limits"]){
   if (o !== null && localStorage.getItem("odm-poser-" + k) === null) localStorage.setItem("odm-poser-" + k, o);
 } } catch (e) {}
 // the hints under the views: open where there is room (two columns, a tall window)
-if (!matchMedia(ONE_COLUMN).matches && innerHeight >= 760) $("viewHints").open = true;
-$("viewHints").addEventListener("toggle", () => draw());
 // the on-screen keys (shown on touch screens and narrow windows)
 for (const [id, key] of [["vShift", "shift"], ["vAlt", "alt"]])
   $(id).addEventListener("click", () => { VMOD[key] = !VMOD[key]; $(id).setAttribute("aria-pressed", String(VMOD[key])); $(id).classList.toggle("on", VMOD[key]); });
@@ -1718,6 +1814,73 @@ $("mirror").addEventListener("click", () => {
 });
 $("undo").addEventListener("click", undo);
 $("redo").addEventListener("click", redo);
+
+// ---- back to the defaults, and the figure moved / turned as a whole --------------------------------
+// the joints laid out along dirsFrom's bones with lengthsFrom's lengths (J: a parent comes before its child)
+function withBoneLengths(dirsFrom, lengthsFrom){
+  const out = [dirsFrom[0].slice()];
+  for (let i = 1; i < J.length; i++){ const p = PARENT[i];
+    out[i] = add(out[p], mul(norm(sub(dirsFrom[i], dirsFrom[p])), len(sub(lengthsFrom[i], lengthsFrom[p])))); }
+  return out;
+}
+const floorY = () => (S.env && S.env.floor ? +S.env.floorY || 0 : 0);
+function standOnFloor(x, z){                  // the pelvis over (x, z), the lowest point on the floor
+  const P = S.P, low = Math.min(...P.map(p => p[1])), c = P[IX.pelvis];
+  S.P = P.map(p => [p[0] - c[0] + x, p[1] - low + floorY() + 2, p[2] - c[2] + z]);
+}
+$("poseReset").addEventListener("click", () => {
+  remember();
+  const old = S.P.map(p => p.slice()), c = old[IX.pelvis];
+  applyPreset("立ち（標準）"); S.P = withBoneLengths(S.P, old); standOnFloor(c[0], c[2]); S.pins = {};
+  afterEdit(); syncUI(); draw(); say("立ちポーズに戻しました（体格はそのまま）。");
+});
+$("bodyReset").addEventListener("click", () => {
+  remember();
+  S.P = withBoneLengths(S.P, REST); S.R = REST_R.slice(); S.scale = fresh().scale;
+  afterEdit(); syncUI(); draw(); say("体格を初期値に戻しました（ポーズはそのまま）。");
+});
+// the 管理 tab's 位置と向き: the hips' own controls (setJointValue pX ... bRoll), pins carried along
+const FIG_CTL = [["figX", "pX"], ["figY", "pY"], ["figZ", "pZ"], ["figYaw", "bYaw"], ["figPitch", "bPitch"], ["figRoll", "bRoll"]];
+function setFigure(key, v){
+  setJointValue(key, v);
+  for (const k of Object.keys(S.pins || {})) S.pins[k] = S.P[+k].slice();
+  afterEdit(IX.pelvis);
+}
+function figCoords(){
+  for (const [id, key] of FIG_CTL){ const v = jointValue(key), r = $(id), n = $(id + "N");
+    if (rangeHeld !== r) r.value = v; if (document.activeElement !== n) n.value = Math.round(v); }
+}
+for (const [id, key] of FIG_CTL){
+  const r = $(id), n = $(id + "N");
+  r.addEventListener("input", () => { setFigure(key, +r.value); draw(); });
+  n.addEventListener("change", () => { const v = +n.value; if (!isFinite(v)) return; remember(); setFigure(key, v); draw(); });
+}
+$("figResetPos").addEventListener("click", () => {
+  remember();
+  for (const k of ["bYaw", "bPitch", "bRoll"]) setJointValue(k, 0);
+  standOnFloor(0, 0);
+  for (const k of Object.keys(S.pins || {})) S.pins[k] = S.P[+k].slice();
+  afterEdit(IX.pelvis); draw(); say("人物の位置と向きを戻しました。");
+});
+$("resetFigure").addEventListener("click", () => {
+  remember();
+  const f = fresh();
+  for (const k of ["P", "R", "hands", "head", "body", "twist", "pins", "scale"]) S[k] = f[k];
+  afterEdit(); syncUI(); draw(); say("この人物を初期状態に戻しました（持ち物とオーラはそのまま）。");
+});
+$("resetAll").addEventListener("click", () => {
+  if (!confirm("人物・小物・物体・床と壁・定規・カメラを、すべて最初の状態に戻します（「元に戻す」で取り消せます）。")) return;
+  remember();
+  const cams = S.cams;
+  S = fresh(); S.cams = Array.isArray(cams) ? cams : [];
+  syncUI(); draw(); say("すべて最初の状態に戻しました（記憶したカメラは残しました）。");
+});
+$("rulerReset").addEventListener("click", () => {
+  remember();
+  const on = !!(S.ruler && S.ruler.on);
+  S.ruler = Object.assign(JSON.parse(JSON.stringify(fresh().ruler)), {on});
+  syncUI(); draw(); say("定規を初期値に戻しました。");
+});
 $("symToL").addEventListener("click", () => symmetrizeLimbs("r"));
 $("symToR").addEventListener("click", () => symmetrizeLimbs("l"));
 for (const [id, whole] of [["symJoint", false], ["symLimb", true]])
@@ -1812,7 +1975,20 @@ function applyRatio(){
 for (const id of ["ratio", "longSide", "ratioW", "ratioH"]) $(id).addEventListener("change", applyRatio);
 for (const id of ["W", "H"]) $(id).addEventListener("input", () => { $("ratio").value = ""; $("ratioCustom").style.display = "none"; });
 // saving: a blob link (big data URLs fail in some browsers); iOS / iPadOS show it to save or share
+// a picture is shown whole first (#savePreview) and saved only when 保存する is pressed
 function download(url, name){
+  if (/\.png$/i.test(name) && !download.sure){
+    const dlg = $("savePreview"), img = $("spImg");
+    img.src = url; $("spInfo").textContent = name;
+    img.onload = () => { $("spInfo").textContent = `${name}（${img.naturalWidth}×${img.naturalHeight}）`; };
+    const done = save => { dlg.close(); $("spSave").onclick = $("spCancel").onclick = null;
+      if (save){ download.sure = true; try { download(url, name); } finally { download.sure = false; } }
+      else say("保存をやめました。"); };
+    $("spSave").onclick = () => done(true); $("spCancel").onclick = () => done(false);
+    dlg.oncancel = e => { e.preventDefault(); done(false); };
+    dlg.showModal(); $("spSave").focus();
+    return;
+  }
   const go = href => { const a = document.createElement("a"); a.href = href; a.download = name; a.rel = "noopener";
     document.body.appendChild(a); a.click(); a.remove(); };
   if (!url.startsWith("data:")){ go(url); setTimeout(() => URL.revokeObjectURL(url), 60000); return; }
@@ -1942,10 +2118,20 @@ function syncCams(){
   if (keep !== "" && +keep < list.length) el.value = keep;
   $("camCount").textContent = list.length; $("camLock").checked = !!S.camLock;
   for (const id of ["camLoad", "camDel"]) $(id).disabled = !list.length;
+  camLockUI();
 }
+for (const id of [...CAM_P, ...CAM_T]) $(id).addEventListener("change", () => {
+  if (camHeld()) return;
+  const v = ids => ids.map(k => +$(k).value);
+  if (![...v(CAM_P), ...v(CAM_T)].every(isFinite)) return;
+  remember();
+  if (CAM_T.includes(id)){ const pos = camPos(); S.center = v(CAM_T); setCamPos(pos); }
+  else if (!setCamPos(v(CAM_P))) say("カメラが見る点に近すぎます。", true);
+  syncUI(); draw();
+});
 { const sync0 = syncUI; syncUI = function(){ sync0(); syncCams(); }; }
-$("camLock").addEventListener("change", e => { remember(); S.camLock = e.target.checked;
-  say(S.camLock ? "カメラを固定しました。" : "カメラの固定を外しました。"); });
+$("camLock").addEventListener("change", e => { remember(); S.camLock = e.target.checked; camLockUI();
+  say(S.camLock ? "カメラを固定しました（スライダー・座標も動きません。「呼出」は使えます）。" : "カメラの固定を外しました。"); });
 $("camSave").addEventListener("click", () => {
   remember(); S.cams = Array.isArray(S.cams) ? S.cams : [];
   let n = S.cams.length + 1; while (S.cams.some(c => c.name === `カメラ${n}`)) n++;
@@ -1959,6 +2145,16 @@ $("camList").addEventListener("dblclick", camRecall);
 $("camDel").addEventListener("click", () => { const i = +$("camList").value; if (!(S.cams || [])[i]) return;
   remember(); const [c] = S.cams.splice(i, 1); syncCams(); say(`${c.name}を削除しました。`); });
 syncCams();
+// the side view (横から): right (the default), left, above, below or hidden; kept in this browser
+{ const views = document.querySelector(".views"), el = $("sidePos");
+  const set = p => { views.classList.remove("side-left", "side-top", "side-bottom", "side-hide");
+    if (p !== "right") views.classList.add("side-" + p); el.value = p;
+    // twice: the front view's room is measured with the side view already at its new size
+    chromeKey = ""; draw(); chromeKey = ""; draw(); };
+  let p = "right"; try { p = localStorage.getItem(KEY + "-side") || "right"; } catch (e) {}
+  el.addEventListener("change", () => { try { localStorage.setItem(KEY + "-side", el.value); } catch (e) {} set(el.value); });
+  set(["right", "left", "top", "bottom", "hide"].includes(p) ? p : "right");
+}
 // split screen: on by itself where a finger is the main pointer (phones, tablets), or as chosen
 function setSplit(on){
   document.body.classList.toggle("split", on);
@@ -1996,6 +2192,13 @@ syncUI(); draw();
 <script src="pose_ruler.js"></script>
 <!-- Japanese / English -->
 <script src="i18n.js"></script>
+<!-- the menu: its icons (Charcoal Icons, THIRD_PARTY_LICENSES.md) and its groups, categories and tabs
+     (before the MOD API, so a mod can add a tab) -->
+<script src="ui-icons.js"></script>
+<script src="ui-menu.js"></script>
+<!-- the 管理 tab's list of what is in the scene; the hints behind the ? button -->
+<script src="pose_tree.js"></script>
+<script src="ui-help.js"></script>
 <!-- mods: the list of mods/*.js (web/mods.js written by tools/make_mods_list.py, or given by the page that hosts the editor) -->
 <script src="../mods.js"></script>
 <!-- the MOD API; it loads the mods (docs/MODDING.md) -->

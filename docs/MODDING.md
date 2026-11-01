@@ -240,7 +240,15 @@ Most `add` calls take an `en` field (props, solids, auras, hands, poses) and reg
 ### Panels
 
 `api.ui.addSection({title, titleEn?, html, at?})` adds a section to the side bar (above the MOD panel;
-`at: "top"` puts it first, API 1.1) and returns it. Write the labels in Japanese and add their English with `api.i18n.add`, or write them in
+`at: "top"` puts it first, API 1.1) and returns it. The side bar's menu has three levels: a big group
+(`make` 作る / `look` 見る / `out` 出す), its categories (`figure`, `things`, `scenes`, `viewpoint`,
+`file`) and their tabs (`pose`, `preset`, `body`, `size`, `colors`, `equip`, `objects`, `place`, `scene`,
+`camera`, `ruler`, `import`, `export`, `share`, `mod`). `addSection({menu})` puts the section under a tab
+(without it: the MOD tab). `api.ui.addMenu({id, title, titleEn?, icon?, tip?, top, mid})` adds a tab of
+your own and returns its id; `top` and `mid` name an existing group and category, or make new ones with
+`{id, title, titleEn?, icon?}`. `icon` is a name from `web/editor/ui-icons.js` or an `<svg>` string.
+Then `addSection({menu: id})` with the `id` you gave (the tab's real id, also returned, is
+`"<mod id>:<id>"`). Write the labels in Japanese and add their English with `api.i18n.add`, or write them in
 English only. Prefix your element ids with your mod's id. `api.ui.$(id)` is `document.getElementById`.
 The editor gives your section's controls melta UI's look by what they are (`section > h2`, `label`,
 `button`, `class="primary"` for the main action, `select`, `input`, `class="hint"`, `"row"`, `"btns"`,

@@ -229,6 +229,8 @@ api.i18n.addRule(/^(.+)を投げました。$/, m => `Threw the ${m[1]}.`);   //
 ### 自分の欄
 
 `api.ui.addSection({title, titleEn?, html, at?})` で横の欄に自分の欄を追加します（MOD 欄の上。`at: "top"` でいちばん上、API 1.1）。戻り値はその要素です。
+横の欄のメニューは3段です。大分類（`make` 作る／`look` 見る／`out` 出す）、その中の分類（`figure` 人物・`things` 物と場所・`scenes` シーン・`viewpoint` 視点・`file` ファイル）、分類の中のタブ（`pose`・`preset`・`body`・`size`・`colors`・`equip`・`objects`・`place`・`scene`・`camera`・`ruler`・`import`・`export`・`share`・`mod`）。
+`addSection({menu})` で欄を置くタブを決めます（なければ MOD タブ）。自分のタブは `api.ui.addMenu({id, title, titleEn?, icon?, tip?, top, mid})` で足します。`top` と `mid` は既存の大分類・分類の id か、新しく作るなら `{id, title, titleEn?, icon?}`。`icon` は `web/editor/ui-icons.js` のアイコン名か `<svg>` の文字列です。足したタブには `addSection({menu: id})`（自分で付けた id）で欄を置きます（タブの実際の id は `"<MOD の id>:<id>"` で、戻り値もそれです）。
 表示は日本語で書いて `api.i18n.add` で英語を足すか、英語だけで書きます。要素の id には MOD の id を頭に付けてください。
 `api.ui.$(id)` は `document.getElementById` と同じです。
 欄の中の部品（`section > h2`・`label`・`button`（主な操作は `class="primary"`）・`select`・`input`・`class="hint"`・`"row"`・`"btns"`・`"grid2"`）には、エディタが melta UI の見た目をライト・ダークとも自動で付けます。素直なマークアップで書き、色・枠・文字の指定はしないでください。

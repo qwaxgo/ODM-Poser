@@ -101,10 +101,54 @@
   #stage > section { margin-bottom: 0; }
   aside > section { margin-bottom: 16px; }
   .views { display: grid; grid-template-columns: 1fr 34%; gap: 12px; }
+  /* the side view's place (横の図): left, above, below, hidden */
+  .views.side-left { grid-template-columns: 34% 1fr; }
+  .views.side-left .sideview, .views.side-top .sideview { order: -1; }
+  .views.side-top, .views.side-bottom, .views.side-hide { grid-template-columns: 1fr; }
+  .views.side-top .sideview, .views.side-bottom .sideview { justify-self: center; }
+  .views.side-hide .sideview { display: none !important; }
   .view { position: relative; background: var(--stage); border: 1px solid var(--border-default); border-radius: 0.75rem; overflow: hidden; }
   .view canvas { display: block; width: 100%; height: auto; margin: 0 auto; touch-action: none; cursor: crosshair;
     -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
-  .view .tag { position: absolute; left: 12px; top: 8px; pointer-events: none; }
+  .view .tag { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); pointer-events: none; white-space: nowrap; }
+  /* the front view's corners: modes (top left) and switches (top right), folded with ‹ › */
+  .ov { position: absolute; top: 8px; z-index: 3; display: flex; align-items: flex-start; gap: 4px; pointer-events: none; }
+  .ov > * { pointer-events: auto; }
+  .ov-tl { left: 8px; } .ov-tr { right: 8px; }
+  .ov-body { display: flex; flex-direction: column; gap: 2px; padding: 4px; border-radius: 10px;
+    background: color-mix(in srgb, var(--bg-surface) 88%, transparent); border: 1px solid var(--border-default); box-shadow: 0 1px 3px rgb(0 0 0 / 0.12); }
+  .ov.folded .ov-body:not(.ov-keep) { display: none; }
+  .ov-stack { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+  .ov-tr .ov-stack { align-items: flex-end; }
+  .ov-row { flex-direction: row; }
+  #ovUndoRow button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; border-radius: 8px;
+    background: transparent; color: var(--text-muted); cursor: pointer; }
+  #ovUndoRow button svg, .ov-fold svg { width: 20px; height: 20px; }
+  #ovUndoRow button:hover { color: var(--text-default); background: var(--bg-page-alt); }
+  #ovUndoRow button:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
+  #viewOpts select { font: inherit; font-size: 0.8125rem; color: var(--text-default); background: var(--input-bg);
+    border: 1px solid var(--input-border); border-radius: 6px; padding: 2px 4px; margin-left: 4px; }
+  #modes button { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 10px 4px 6px; border: 0; border-radius: 8px;
+    background: transparent; color: var(--text-muted); font: inherit; font-size: 0.8125rem; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  #modes button svg { width: 20px; height: 20px; flex: none; }
+  #modes button:hover:not(.on) { color: var(--text-default); background: var(--bg-page-alt); }
+  #modes button.on { background: var(--sel); color: #ffffff; }
+  #modes button:focus-visible, .ov-fold:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
+  #viewOpts label { display: flex; align-items: center; gap: 6px; min-height: 30px; padding: 0 6px; margin: 0;
+    font-size: 0.8125rem; color: var(--text-default); cursor: pointer; white-space: nowrap; }
+  #viewOpts input { width: 16px; height: 16px; accent-color: var(--sel); cursor: pointer; }
+  .ov-fold { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid var(--border-default); background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+    color: var(--text-muted); font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; }
+  @media (pointer: coarse) {
+    #modes button { min-height: 44px; } #viewOpts label { min-height: 44px; } .ov-fold, #ovUndoRow button { width: 44px; height: 44px; }
+  }
+  /* phones: the modes as icons only (the name stays in the title and for screen readers) */
+  @media (max-width: 700px) {
+    #modes button { font-size: 0; gap: 0; padding: 4px 8px; justify-content: center; }
+    #modes button svg { width: 22px; height: 22px; }
+    #viewOpts label { font-size: 0.75rem; }
+  }
   /* what shows in which mode and on which device: hidden where it does not belong, so what shows
      keeps the display its classes give it (flex, inline-flex, ...) */
   body.mode-pose .only:not(.pose), body.mode-body .only:not(.body), body.mode-persp .only:not(.persp),
@@ -135,8 +179,8 @@
   }
   /* phones and short screens: the tabs, the switches and the keys as one row each (swipe for more) */
   @media (max-width: 700px), (max-height: 520px) {
-    #stage .modes, #stage #viewOpts, #stage .touchbar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-    #stage .modes > *, #stage #viewOpts > *, #stage .touchbar > * { flex: none; }
+    #stage .touchbar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    #stage .touchbar > * { flex: none; }
   }
   @media (horizontal-viewport-segments: 2), (vertical-viewport-segments: 2) { #stage { position: static; } }
   /* short screens (phones held sideways): a compact header, the panels beside the views */
@@ -192,15 +236,11 @@
     padding: 4px 8px 0; background: var(--bg-page); overflow: hidden; }
   body.split #stage > section { margin: 0; padding: 8px; }
   /* the views' half keeps room for the figure: a compact row of tabs, switches and keys */
-  body.split #stage #modes { margin-bottom: 4px; }
-  body.split #stage #modes button { padding: 4px 10px; font-size: 0.8125rem; }
-  body.split #stage #viewOpts { margin-bottom: 4px; column-gap: 12px; }
-  body.split #stage #viewOpts label { font-size: 0.8125rem; }
   body.split #stage .touchbar { margin-bottom: 4px; gap: 6px; }
   body.split #stage .touchbar button { height: 2rem; padding: 0 10px; font-size: 0.8125rem; }
   body.split .app-main { grid-template-columns: 1fr !important; max-width: none; }
   body.split aside { max-height: none; overflow: visible; }
-  body.split #viewHints, body.split #stage .hint.keep { display: none; }
+  body.split #stage .hint.keep { display: none; }
   @media (orientation: landscape) {
     body.split { padding-top: env(safe-area-inset-top); padding-left: 50vw; }
     body.split #stage { right: auto; width: 50vw; height: calc(100vh - env(safe-area-inset-top)); height: calc(100dvh - env(safe-area-inset-top)); }
@@ -209,6 +249,93 @@
   body.split.full .app-header, body.split.full aside { display: none; }
   body.split.full #stage { right: env(safe-area-inset-right); width: auto; height: calc(100vh - env(safe-area-inset-top));
     height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+
+/* ---- the side panel's menu (ui-menu.js): three rows, the big group (a segmented control), its
+   categories (pills), the category's tabs (underlined); each with its icon ---- */
+#menuBar { margin-bottom: 12px; }
+#menuBar .menu-row { display: flex; flex-wrap: wrap; gap: 4px; }
+#menuBar .menu-top { padding: 4px; border-radius: 10px; background: var(--bg-page-alt); }
+#menuBar .menu-mid { margin-top: 8px; }
+#menuBar .menu-leaf { margin-top: 6px; border-bottom: 1px solid var(--border-default); }
+.menu-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 10px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--text-muted); font: inherit; font-size: 0.875rem; font-weight: 500; cursor: pointer;
+  transition: color .15s, background-color .15s; white-space: nowrap; }
+.menu-btn svg { width: 20px; height: 20px; flex: none; }
+.menu-btn:hover { color: var(--text-default); }
+.menu-btn:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
+.menu-top .menu-btn { flex: 1; justify-content: center; }
+.menu-top .menu-btn.active { background: var(--bg-surface); color: var(--text-heading); box-shadow: 0 1px 2px rgb(0 0 0 / 0.1); }
+.menu-mid .menu-btn.active { background: color-mix(in srgb, var(--sel) 12%, transparent); color: var(--sel); }
+.menu-leaf .menu-btn { padding: 6px 8px; border-radius: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.menu-leaf .menu-btn.active { color: var(--sel); border-bottom-color: var(--sel); font-weight: 600; }
+@media (pointer: coarse) { .menu-btn { min-height: 44px; } }
+/* the menu, the undo row and the messages span the panel's columns (one-column layout) */
+aside > nav, #globalBar, #status { column-span: all; }
+/* phones and touch screens: the rows fold under ☰ (the burger shows the category › tab you are in) */
+#menuBar .menu-burger { display: none; }
+@media (max-width: 700px), (pointer: coarse) {
+  #menuBar .menu-burger { display: flex; width: 100%; justify-content: flex-start; border: 1px solid var(--border-default);
+    background: var(--bg-surface); color: var(--text-default); }
+  #menuBar .menu-burger svg + svg { margin-left: 4px; color: var(--sel); }
+  #menuBar:not(.open) .menu-row { display: none; }
+  #menuBar.open .menu-top { margin-top: 8px; }
+}
+
+aside > section:not(.active) { display: none !important; }
+
+/* the 管理 tab's list (pose_tree.js) */
+.tree { list-style: none; margin: 0; padding: 4px 0; max-height: 300px; overflow: auto;
+  border: 1px solid var(--border-default); border-radius: 8px; background: var(--input-bg); }
+.tree-group { padding: 6px 10px 2px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+.tree-empty { padding: 4px 10px 6px 28px; font-size: 0.8125rem; color: var(--text-muted); }
+.tree-row { display: flex; align-items: center; gap: 6px; width: 100%; min-height: 30px; padding: 3px 10px; border: 0;
+  background: transparent; color: var(--text-default); font: inherit; font-size: 0.8125rem; text-align: left; cursor: pointer; }
+.tree-row.d1 { padding-left: 30px; }
+.tree-row svg { width: 16px; height: 16px; flex: none; color: var(--text-muted); }
+.tree-row:hover { background: var(--bg-page-alt); }
+.tree-row.on { background: color-mix(in srgb, var(--sel) 14%, transparent); color: var(--sel); }
+.tree-row.on svg { color: var(--sel); }
+.tree-row:focus-visible { outline: 2px solid var(--sel); outline-offset: -2px; }
+.tree-note { margin-left: auto; padding-left: 8px; font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+@media (pointer: coarse) { .tree-row { min-height: 44px; } }
+
+/* the dialogs sit in the middle (the reset takes dialog's own margin away) */
+#helpDlg, #savePreview { margin: auto; }
+/* 操作のヒント (ui-help.js) */
+#helpDlg { width: min(92vw, 760px); max-height: 86vh; padding: 0; border: 1px solid var(--border-default); border-radius: 12px;
+  background: var(--bg-surface); color: var(--text-default); }
+#helpDlg::backdrop { background: rgb(0 0 0 / 0.5); }
+.help-top { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 14px 16px 10px;
+  background: var(--bg-surface); border-bottom: 1px solid var(--border-default); }
+.help-top h2 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--text-heading); }
+.help-tabs { display: flex; gap: 4px; padding: 3px; border-radius: 9px; background: var(--bg-page-alt); }
+.help-tab { min-height: 32px; padding: 4px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--text-muted);
+  font: inherit; font-size: 0.8125rem; font-weight: 500; cursor: pointer; }
+.help-tab.on { background: var(--bg-surface); color: var(--text-heading); box-shadow: 0 1px 2px rgb(0 0 0 / 0.1); }
+.help-close { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--text-muted); cursor: pointer; }
+.help-close svg { width: 18px; height: 18px; }
+.help-close:hover { background: var(--bg-page-alt); color: var(--text-default); }
+.help-tab:focus-visible, .help-close:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
+.help-body { padding: 8px 16px 18px; }
+.help-note { margin: 8px 0 0; font-size: 0.8125rem; color: var(--text-muted); }
+.help-group h3 { display: flex; align-items: center; gap: 8px; margin: 16px 0 6px; font-size: 0.875rem; font-weight: 600; color: var(--text-heading); }
+.help-now { padding: 1px 8px; border-radius: 9999px; font-size: 0.6875rem; font-weight: 600; color: #ffffff; background: var(--sel); }
+.help-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.help-table th { text-align: left; font-weight: 600; color: var(--text-muted); font-size: 0.75rem; padding: 4px 8px; border-bottom: 1px solid var(--border-default); }
+.help-table td { padding: 6px 8px; border-bottom: 1px solid var(--border-default); vertical-align: top; line-height: 1.55; }
+.help-table td.help-key { width: 38%; }
+.help-table kbd { display: inline-block; padding: 1px 7px; border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 6px;
+  background: var(--bg-page-alt); font: inherit; font-size: 0.78rem; color: var(--text-heading); }
+@media (max-width: 560px) { .help-table td.help-key { width: auto; } .help-table td, .help-table th { padding: 5px 4px; } }
+
+/* the picture shown before it is saved */
+#savePreview { max-width: min(92vw, 900px); padding: 20px; border: 1px solid var(--border-default); border-radius: 12px;
+  background: var(--bg-surface); color: var(--text-default); }
+#savePreview::backdrop { background: rgb(0 0 0 / 0.5); }
+.sp-frame { display: flex; justify-content: center; border-radius: 8px; overflow: hidden;
+  background: repeating-conic-gradient(#d4d4d4 0 25%, #ffffff 0 50%) 0 0 / 16px 16px; }
+#spImg { display: block; max-width: 100%; max-height: 70vh; object-fit: contain; }
 
 /* motion: melta asks for less when the system says so */
 @media (prefers-reduced-motion: reduce) {

@@ -476,6 +476,7 @@ DOWN_HOOKS.push((cv, x, y) => {
   const it = S.items[u.n];
   return dragFrom(u.p, cv.width, cv.height, d => {
     it.base = add(it.base, d);
+    if (typeof snapItem === "function") snapItem(it);
     if (d[1]) it.grounded = false; else if (it.grounded) groundItem(it);
     afterEdit(); showItem(); });
 });
@@ -483,7 +484,7 @@ WHEEL_HOOKS.push((x, y, step, e) => {
   if (mode !== "place") return false;
   const u = itemUnder(x, y); if (!u) return false;
   remember(); scSel = u.n; const it = S.items[u.n];
-  it.yaw = ((it.yaw || 0) + step * (e.shiftKey ? 15 : 5) + 540) % 360 - 180;
+  it.yaw = typeof snapTurn === "function" ? snapTurn(it.yaw, step, e) : ((it.yaw || 0) + step * (e.shiftKey ? 15 : 5) + 540) % 360 - 180;
   if (it.grounded) groundItem(it);
   afterEdit(); fillItemList(); return true;
 });
@@ -568,7 +569,8 @@ function buildScenePanel(){
         <input type="color" id="scColor" value="#e0605a" ></div>
       <div class="hint">置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。</div>
     </div>
-    <div id="scItemCtl">${ITEM_CTL.map(rng).join("")}</div>
+    <div id="scItemCtl">${ITEM_CTL.map(rng).join("")}
+      <div class="btns" style="margin-top:6px"><button id="scReset">↺ 位置・向き・大きさを戻す</button></div></div>
     <h2 style="margin-top:14px">床・壁・天井</h2>
     <div class="grid2">
       <label><input type="checkbox" id="scFloor"> 床</label><div class="row"><input type="number" class="num" id="scFloorY" step="1"><span class="unit">cm</span></div>
@@ -579,6 +581,7 @@ function buildScenePanel(){
     <label>接地</label><select id="scGround"><option value="off">しない（宙に浮ける）</option>
       <option value="nopen">床・物体の上にめり込まない</option><option value="stick">いつも床・物体の上に着ける（一番低い所）</option></select>
     <label><input type="checkbox" id="scShow"> 書き出すアタリにも床・壁を描く</label>
+    <div class="btns" style="margin-top:6px"><button id="scEnvReset">↺ 床・壁・天井を初期値に</button></div>
     <div class="btns" style="margin-top:6px"><button id="scToFloor">床に着ける</button><button id="scToWall">壁に着ける</button>
       <button id="scToCeil">天井に着ける</button></div>
     <div class="btns" style="margin-top:6px"><button id="scGrab">近くの物につかまる</button><button id="scHang">ぶら下がる</button>
@@ -645,6 +648,11 @@ function buildScenePanel(){
     r.addEventListener("input", () => { n.value = r.value; apply(+r.value); });
     n.addEventListener("change", () => { remember(); r.value = n.value; apply(+n.value); });
   }
+  $("scReset").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
+    it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.dims; if (it.grounded) groundItem(it);
+    afterEdit(); showItem(); draw(); say("小物の位置・向き・大きさを戻しました。"); });
+  $("scEnvReset").addEventListener("click", () => { remember(); S.env = fresh().env;
+    afterEdit(); syncScene(); draw(); say("床・壁・天井を初期値に戻しました。"); });
   // environment
   const env = () => { S.env = Object.assign(fresh().env, S.env || {}); return S.env; };
   for (const [id, key, num] of [["scFloor", "floor"], ["scCeil", "ceiling"], ["scWall", "wall"], ["scShow", "show"],

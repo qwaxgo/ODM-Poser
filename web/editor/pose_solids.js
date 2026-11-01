@@ -197,13 +197,20 @@ DOWN_HOOKS.push((cv, x, y) => {
   const u = solidUnder(x, y); if (!u) return null;
   soSel = u.k; syncSolids();
   return dragFrom(u.hit, cv.width, cv.height, dlt => {
-    const o = S.solids[u.k]; o.pos = add(o.pos, dlt); afterEdit(); syncSolids(); });
+    // snapping (pose_ruler.js) moves the solid itself, so the drag keeps its own, unsnapped place
+    const o = S.solids[u.k]; soFree = add(soFree || o.pos, dlt); o.pos = soFree.slice();
+    if (typeof snapSolid === "function") snapSolid(o);
+    afterEdit(); syncSolids(); });
 });
+let soFree = null;
+DOWN_HOOKS.unshift(() => { soFree = null; return null; });
 WHEEL_HOOKS.push((x, y, step, e) => {
   if (mode !== "place") return false;
   const u = solidUnder(x, y); if (!u) return false;
   remember(); soSel = u.k;
-  const o = S.solids[u.k]; o.yaw = (((o.yaw || 0) + step * (e.shiftKey ? 15 : 5)) + 540) % 360 - 180;
+  const o = S.solids[u.k];
+  o.yaw = typeof snapTurn === "function" ? snapTurn(o.yaw, step, e) : (((o.yaw || 0) + step * (e.shiftKey ? 15 : 5)) + 540) % 360 - 180;
+  if (typeof snapSolid === "function") snapSolid(o);
   afterEdit(); syncSolids(); return true;
 });
 
@@ -215,6 +222,7 @@ function addSolid(kind){
   const c = S.P[IX.pelvis], fy = S.env && S.env.floor ? +S.env.floorY || 0 : 0;
   const o = {kind, pos: [Math.round(c[0] + k.at[0]), fy + k.at[1], Math.round(c[2] + k.at[2])], size: k.size.slice(), yaw: 0};
   if (k.sides) o.sides = k.sides;
+  if (typeof snapSolid === "function") snapSolid(o);
   S.solids = S.solids || []; S.solids.push(o); soSel = S.solids.length - 1;
   afterEdit(); syncSolids(); draw();
   say(`${k.ja}を置きました。配置モードでドラッグして動かせます。`);
@@ -271,6 +279,7 @@ function buildSolidPanel(){
       `<div id="${id}Box"><label>${label}</label><div class="row"><input type="number" id="${id}" step="${id === "soSides" ? 1 : 5}"><span class="unit">${unit(id)}</span></div></div>`).join("")}</div>
     <div class="row" id="soColorRow" style="margin-top:6px"><label style="margin:0;flex:1"><input type="checkbox" id="soColorOn"> 線の色を変える</label>
       <input type="color" id="soColor" value="#e0605a" ></div>
+    <div class="btns" id="soResetRow" style="margin-top:6px"><button id="soReset">↺ 大きさ・向きを戻す</button></div>
     <div class="btns" style="margin-top:8px"><button id="soTouch">選んだ関節を着ける</button><button id="soStand">この上に立つ</button></div>
     <div class="hint">配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、ホイールで向き）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。</div>`;
   const scene = $("scCat").closest("section");
@@ -298,6 +307,9 @@ function buildSolidPanel(){
   $("soColorOn").addEventListener("change", setColor);
   $("soColor").addEventListener("input", () => { $("soColorOn").checked = true; setColor(); });
   $("soTouch").addEventListener("click", touchSolid);
+  $("soReset").addEventListener("click", () => { const o = (S.solids || [])[soSel]; if (!o) return; remember();
+    const k = solidKind(o); o.size = k.size.slice(); o.yaw = 0; if (k.sides) o.sides = k.sides;
+    afterEdit(); syncSolids(); draw(); say(`${k.ja}の大きさ・向きを戻しました。`); });
   $("soStand").addEventListener("click", standOnSolid);
 }
 function syncSolids(){
@@ -306,7 +318,7 @@ function syncSolids(){
   $("soList").innerHTML = list.map((o, k) => `<option value="${k}">${k + 1}. ${solidKind(o).ja}</option>`).join("");
   if (soSel >= 0) $("soList").value = String(soSel);
   const o = list[soSel];
-  $("soCtl").style.display = $("soColorRow").style.display = o ? "" : "none";
+  $("soCtl").style.display = $("soColorRow").style.display = $("soResetRow").style.display = o ? "" : "none";
   if (!o) return;
   $("soColorOn").checked = !!o.color; $("soColor").value = o.color || $("soColor").defaultValue;
   const sh = solidKind(o).shape;
