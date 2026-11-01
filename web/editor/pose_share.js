@@ -15,7 +15,7 @@
 // Opening a link keeps what that browser had first (localStorage: a cookie is too small and goes
 // to the server) and can bring it back.
 (() => {
-const SITE = "https://qwaxgo.github.io/ODM-Poser/editor/";
+const SITE = "https://apps.qwaxgo.com/ODM-Poser/editor/";
 const TAGS = "#ODMPoser #立体人形装置";
 const BACKUP = KEY + "-before-link", HOSTS = KEY + "-share-hosts";
 const own = ODMPoser.builtin;
