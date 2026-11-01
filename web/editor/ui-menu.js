@@ -130,7 +130,8 @@
   function show(name){
     const w = where(name); if (!w) return;
     current = name; lastMid[w.t.id] = w.m.id; lastLeaf[w.m.id] = name;
-    aside.querySelectorAll(":scope > section").forEach(s => s.classList.toggle("active", (s.dataset.menu || "").split(" ").includes(name)));
+    aside.querySelectorAll(":scope > section").forEach(s => { const m = (s.dataset.menu || "").split(" ");
+      s.classList.toggle("active", m.includes(name) || m.includes("*")); });   // "*": in every tab (a mod's at: "top")
     render();
   }
   function choose(name){

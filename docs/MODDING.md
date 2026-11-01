@@ -244,7 +244,8 @@ Most `add` calls take an `en` field (props, solids, auras, hands, poses) and reg
 (`make` 作る / `look` 見る / `out` 出す), its categories (`figure`, `things`, `scenes`, `viewpoint`,
 `file`) and their tabs (`pose`, `preset`, `body`, `size`, `colors`, `equip`, `objects`, `place`, `scene`,
 `camera`, `ruler`, `import`, `export`, `share`, `mod`). `addSection({menu})` puts the section under a tab
-(without it: the MOD tab). `api.ui.addMenu({id, title, titleEn?, icon?, tip?, top, mid})` adds a tab of
+(without it: the MOD tab; with `at: "top"` and no `menu`, the section shows first in
+every tab). `api.ui.addMenu({id, title, titleEn?, icon?, tip?, top, mid})` adds a tab of
 your own and returns its id; `top` and `mid` name an existing group and category, or make new ones with
 `{id, title, titleEn?, icon?}`. `icon` is a name from `web/editor/ui-icons.js` or an `<svg>` string.
 Then `addSection({menu: id})` with the `id` you gave (the tab's real id, also returned, is

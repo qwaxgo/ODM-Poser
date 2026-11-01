@@ -249,11 +249,13 @@ function makeApi(mod){
       },
       // a section in the side panel (at: "top" puts it first); html is yours (ids: prefix them with the
       // mod id). menu: one of the editor's tabs (pose, equip, camera, ...) or a tab of this mod's
-      // (addMenu); without it the section goes under the MOD tab.
+      // (addMenu); without it the section goes under the MOD tab, and at: "top" without it is shown
+      // in every tab (as before the tabs: a host's own buttons, say)
       addSection({title, html = "", titleEn, at, menu}){
         const sec = document.createElement("section");
         sec.dataset.mod = mod.id;
         if (menu){ const own = mod.id + ":" + menu; sec.dataset.menu = window.ODMUI && window.ODMUI.hasMenu && window.ODMUI.hasMenu(own) ? own : menu; }
+        else if (at === "top") sec.dataset.menu = "*";
         sec.innerHTML = `<h2></h2>${html}`;
         sec.querySelector("h2").textContent = title || mod.name;
         tr(title, titleEn);
