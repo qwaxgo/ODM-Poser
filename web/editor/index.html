@@ -37,9 +37,6 @@
 </head>
 <body class="mode-pose">
 <header class="app-header">
-  <div id="headTools"><label title="操作欄（メニューと各欄）を画面のどこに置くか">操作欄
-      <select id="asidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option></select></label><label id="menuSideLbl" title="操作欄を上・下に置いたとき、メニューとタブを縦に積む側">メニュー
-      <select id="menuSide"><option value="left">左</option><option value="right">右</option></select></label><button type="button" id="asideToggle" aria-pressed="false" title="操作欄をしまう・出す">操作欄をしまう</button><button type="button" id="installBtn" hidden>アプリとして追加</button><button type="button" id="splitBtn">分割表示：オフ</button><button type="button" id="themeBtn">表示：自動</button></div>
   <h1 class="text-xl font-bold text-text-heading m-0">立体人形装置 <span class="text-sm font-normal text-text-muted">ODM Poser — Omni-Directional Mannequin Poser</span></h1>
   <p class="text-xs text-text-muted mt-1 mb-0">線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。</p>
   <nav id="siteLinks" class="flex gap-4 text-xs mt-1" aria-label="サイトのリンク"><a href="https://github.com/qwaxgo/ODM-Poser" target="_blank" rel="noopener">GitHub リポジトリ</a>
@@ -81,13 +78,28 @@
             <button type="button" class="ov-fold" aria-expanded="true" aria-controls="viewOpts" title="表示の切り替えを隠す">›</button>
             <button type="button" class="ov-fold" id="helpBtn" data-icon="Question" title="操作のヒント（?キー）" aria-label="操作のヒント"></button>
             <button type="button" class="ov-fold" id="ovAside" data-icon="Menu" title="操作欄をしまう・出す" aria-label="操作欄をしまう・出す"></button>
+            <button type="button" class="ov-fold" id="ovSide" data-icon="sideView" aria-pressed="false" title="横から（奥行き）の図を出す・隠す" aria-label="横の図を出す・隠す"></button>
+            <button type="button" class="ov-fold" id="ovSet" data-icon="settings" aria-expanded="false" aria-controls="headTools" title="画面の設定（操作欄の位置・分割表示・表示の色・言語）" aria-label="画面の設定"></button>
           </div>
+          <div class="ov-col">
           <div class="ov-body" id="viewOpts" role="group" aria-label="表示の切り替え">
             <label title="人間として無理な曲がり方をしない"><input type="checkbox" id="limits" checked> 関節の限界</label>
             <label title="物陰に隠れた線を破線で描く（書き出しにも）"><input type="checkbox" id="hiddenDashed"> 隠れ線を破線</label>
             <label title="胴体を厚みのある台形で描く"><input type="checkbox" id="torso3d" checked> 胴体を立体</label>
             <label title="横から（奥行き）の図の置き場所">横の図
               <select id="sidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option><option value="hide">隠す</option></select></label>
+          </div>
+          <!-- 画面の設定 (the sliders button): where the panel goes, split screen, the theme, the language (i18n.js adds it) -->
+          <div class="ov-body" id="headTools" hidden role="group" aria-label="画面の設定">
+            <label title="操作欄（メニューと各欄）を画面のどこに置くか">操作欄
+              <select id="asidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option></select></label>
+            <label id="menuSideLbl" title="操作欄を上・下に置いたとき、メニューとタブを縦に積む側">メニュー
+              <select id="menuSide"><option value="left">左</option><option value="right">右</option></select></label>
+            <button type="button" id="asideToggle" aria-pressed="false" title="操作欄をしまう・出す">操作欄をしまう</button>
+            <button type="button" id="installBtn" hidden>アプリとして追加</button>
+            <button type="button" id="splitBtn">分割表示：オフ</button>
+            <button type="button" id="themeBtn">表示：自動</button>
+          </div>
           </div>
         </div>
         <div class="ov-toast" id="ovToast" role="status" aria-live="polite"></div>
@@ -106,7 +118,7 @@
   <!-- the menu column: above the sections, or beside them when the panel is above / below the views -->
   <div id="asideHead">
   <nav id="menuBar" data-ui="skip" aria-label="メニュー"></nav>
-  <div id="globalBar" class="flex flex-wrap items-center gap-2 mb-3"><button type="button" id="undo" title="Ctrl+Z">↶ 元に戻す</button><button type="button" id="redo" title="Ctrl+Y">↷ やり直す</button></div>
+  <div id="globalBar" class="flex flex-wrap items-center gap-2 mb-3" hidden><button type="button" id="undo" title="Ctrl+Z">↶ 元に戻す</button><button type="button" id="redo" title="Ctrl+Y">↷ やり直す</button></div>
   <div id="status" class="mb-3"></div>
   </div>
   <section data-menu="size">
@@ -437,8 +449,16 @@ function camRotInv(v){
   p = rotAxis(p, [1, 0, 0], deg(-c.pitch));
   return rotAxis(p, [0, 1, 0], deg(c.yaw));
 }
-function lensF(W, H){ return S.cam.lens / 36 * Math.max(W, H); }
-function camDist(W, H){ return lensF(W, H) * 190 / (0.86 * H) / S.cam.zoom; }   // 190 cm fills 86 % of the height
+// the picture's frame in a canvas of W x H: the largest rectangle of the picture's shape (the
+// export's width and height), centred. The front view fills its box, wider or taller than the
+// picture; the camera frames the picture in it just as in the file, and the rest shows around it.
+let frameAspect = 0;
+function frameWH(W, H){
+  if (!frameAspect){ const [EW, EH] = exportSize(); frameAspect = EW / EH; }
+  return W / H > frameAspect ? [H * frameAspect, H] : [W, W / frameAspect];
+}
+function lensF(W, H){ const [w, h] = frameWH(W, H); return S.cam.lens / 36 * Math.max(w, h); }
+function camDist(W, H){ return lensF(W, H) * 190 / (0.86 * frameWH(W, H)[1]) / S.cam.zoom; }   // 190 cm fills 86 % of the picture's height
 function toCam(p){ return camRot(sub(p, S.center)); }
 function project(p, W, H){
   const q = toCam(p), f = lensF(W, H), D = camDist(W, H), d = Math.max(D - q[2], 1);
@@ -813,7 +833,10 @@ function viewChrome(){
   return chromeH;
 }
 const ONE_COLUMN = "(max-width:900px), (orientation:portrait) and (max-aspect-ratio:4/5)";
-// fixedH: the side view above or below the front one keeps to that height
+// fixedH: the side view above or below the front one keeps to that height. A view fills its box's
+// width; where the views have a room of their own (beside the panel, a strip, split screen, put
+// away) it fills the height too, else (one column, the page scrolls) it is as tall as the picture's
+// shape asks, up to its share of the window.
 function fitCanvas(cv, aspect, fixedH){
   const dpr = window.devicePixelRatio || 1;
   let w = cv.parentElement.clientWidth, h = Math.round(w / aspect);
@@ -831,7 +854,8 @@ function fitCanvas(cv, aspect, fixedH){
   const st = document.body.classList.contains("split") ? document.getElementById("stage") : null;
   const maxH = fixedH || (st ? Math.max(120, st.clientHeight - viewChrome() - 10)
     : Math.max(200, Math.round((window.innerHeight || 800) * share - viewChrome() - 18)));
-  if (h > maxH){ h = maxH; w = Math.round(h * aspect); }
+  const room = !!(fixedH || st || stackedPanel || off || short || !matchMedia(ONE_COLUMN).matches);
+  h = room ? maxH : Math.min(h, maxH);
   cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));
   cv.style.width = w + "px"; cv.style.height = h + "px";
 }
@@ -844,10 +868,17 @@ function sideProject(p, W, H){                // orthographic, from the camera's
 }
 function draw(){
   const [EW, EH] = exportSize();
+  frameAspect = EW / EH;
   const stacked = /\bside-(top|bottom)\b/.test(front.closest(".views").className);
   fitCanvas(front, EW / EH); fitCanvas(side, EW / EH, stacked ? Math.max(100, Math.round((innerHeight || 800) * 0.26)) : 0); zoomThumb();
   let ctx = front.getContext("2d"), W = front.width, H = front.height;
   ctx.fillStyle = cssVar("--stage"); ctx.fillRect(0, 0, W, H);
+  // outside the picture's frame: a light shade and the frame's edge (not in the file)
+  { const [fw, fh] = frameWH(W, H), fx = (W - fw) / 2, fy = (H - fh) / 2;
+    if (fx > 1 || fy > 1){ ctx.save(); ctx.fillStyle = cssVar("--far"); ctx.globalAlpha = 0.08;
+      ctx.fillRect(0, 0, W, fy); ctx.fillRect(0, fy + fh, W, H - fy - fh); ctx.fillRect(0, fy, fx, fh); ctx.fillRect(fx + fw, fy, W - fx - fw, fh);
+      ctx.globalAlpha = 0.7; ctx.strokeStyle = cssVar("--far"); ctx.lineWidth = devicePixelRatio || 1; ctx.setLineDash([6, 4].map(v => v * (devicePixelRatio || 1)));
+      ctx.strokeRect(fx + 0.5, fy + 0.5, fw - 1, fh - 1); ctx.restore(); } }
   drawAtari(ctx, W, H, {sel});
   // side view
   ctx = side.getContext("2d"); W = side.width; H = side.height;
@@ -1965,7 +1996,7 @@ function exportCanvas(){
       try { if (ctx.getImageData(W - 1, H - 1, 1, 1).data[3] === 255) break; } catch (e) {} }
     W = Math.floor(W * 0.8); H = Math.floor(H * 0.8);
   }
-  const [W0, H0] = exportSize();
+  const [W0, H0] = exportSize(); frameAspect = W0 / H0;
   if (W !== W0) setTimeout(() => say(`この端末では ${W0}×${H0} を描けないため、${W}×${H} にしました。`, true), 0);
   cv.getContext("2d").clearRect(0, 0, W, H);
   return [cv, W, H];
@@ -2176,14 +2207,30 @@ $("camDel").addEventListener("click", () => { const i = +$("camList").value; if 
   remember(); const [c] = S.cams.splice(i, 1); syncCams(); say(`${c.name}を削除しました。`); });
 syncCams();
 // the side view (横から): right (the default), left, above, below or hidden; kept in this browser
-{ const views = document.querySelector(".views"), el = $("sidePos");
+// The button on the view (two panes) hides it and brings it back where it was.
+{ const views = document.querySelector(".views"), el = $("sidePos"), btn = $("ovSide");
   const set = p => { views.classList.remove("side-left", "side-top", "side-bottom", "side-hide");
     if (p !== "right") views.classList.add("side-" + p); el.value = p;
+    btn.setAttribute("aria-pressed", String(p !== "hide"));
     // twice: the front view's room is measured with the side view already at its new size
     chromeKey = ""; draw(); chromeKey = ""; draw(); };
-  let p = "right"; try { p = localStorage.getItem(KEY + "-side") || "right"; } catch (e) {}
-  el.addEventListener("change", () => { try { localStorage.setItem(KEY + "-side", el.value); } catch (e) {} set(el.value); });
+  const get = (k, d) => { try { return localStorage.getItem(KEY + k) || d; } catch (e) { return d; } };
+  const put = (k, v) => { try { localStorage.setItem(KEY + k, v); } catch (e) {} };
+  const choose = v => { put("-side", v); if (v !== "hide") put("-sidelast", v); set(v); };
+  el.addEventListener("change", () => choose(el.value));
+  btn.addEventListener("click", () => {
+    // phones show it on request (the 横の図 key): the same here
+    if (matchMedia("(max-width: 700px)").matches){ $("vSide").click(); return; }
+    const show = el.value === "hide";
+    choose(show ? get("-sidelast", "right") : "hide"); toast(show ? "横の図を出しました。" : "横の図を隠しました。"); });
+  const p = get("-side", "right");
   set(["right", "left", "top", "bottom", "hide"].includes(p) ? p : "right");
+}
+// 画面の設定 (the sliders button on the view): opens the panel's place, split screen, theme and language
+{ const btn = $("ovSet"), box = $("headTools");
+  btn.addEventListener("click", () => { box.hidden = !box.hidden; btn.setAttribute("aria-expanded", String(!box.hidden)); });
+  document.addEventListener("pointerdown", e => { if (!box.hidden && !box.contains(e.target) && !btn.contains(e.target)){
+    box.hidden = true; btn.setAttribute("aria-expanded", "false"); } });
 }
 // the panel (操作欄): right (the default), left, above or below the views; kept in this browser
 // Above or below, the menu and tabs stack in a column on the left or right (メニュー) and the

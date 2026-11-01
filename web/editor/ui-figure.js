@@ -1,8 +1,8 @@
-// 全身図 and the menu for the touched part (index.html, loaded after ui-menu.js), at the top of the
-// panel's menu column: a small fixed figure (the rest pose, seen from the front) that shows which
-// joint is being edited and the part it belongs to, pinned joints, and a tap on a joint selects it.
-// Beside it, the selected part's name and the few things one does to that part, as buttons that
-// open their tab (or do it at once: pin, put the foot on the floor).
+// 全身図 and the menu for the touched part (index.html, loaded after ui-menu.js), in the menu while
+// 人物 is open (ui-menu.js puts it there): a small fixed figure (the rest pose, seen from the front)
+// that shows which joint is being edited and the part it belongs to, pinned joints, and a tap on a
+// joint selects it. Beside it, the selected part's name and the few things one does to that part,
+// as buttons that open their tab (or do it at once: pin, put the foot on the floor).
 (() => {
 const head = document.getElementById("asideHead"), status = document.getElementById("status");
 const box = document.createElement("div");
@@ -18,6 +18,7 @@ J.forEach((n, i) => { const [x, y] = at(i), r = i === IX.head ? 6.2 : HANDLE.has
 svg += `</svg>`;
 box.innerHTML = svg + `<div class="ctx-side"><div class="ctx-name" id="ctxName"></div><div class="ctx-btns" id="ctxBtns"></div></div>`;
 status.before(box);
+if (window.ODMUI && ODMUI.renderMenu) ODMUI.renderMenu();   // into the menu, under 人物
 const map = box.querySelector("#figMap"), nameEl = box.querySelector("#ctxName"), btns = box.querySelector("#ctxBtns");
 
 const PART_JA = {head: "頭", torso: "胴体", r_arm: "右腕", l_arm: "左腕", r_leg: "右脚", l_leg: "左脚", r_hand: "右手", l_hand: "左手"};

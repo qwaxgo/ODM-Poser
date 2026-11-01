@@ -1,6 +1,6 @@
 // The menu's icons: Charcoal Icons, Copyright 2022 pixiv Inc., Apache License 2.0
 // (https://github.com/pixiv/charcoal, taken from design/melta-ui/assets/icons; THIRD_PARTY_LICENSES.md
-// says what was changed). "ruler" is this project's own. Each: [viewBox, inner SVG], fill="currentColor".
+// says what was changed). "ruler", "sideView" and "settings" are this project's own. Each: [viewBox, inner SVG], fill="currentColor".
 window.ODMICONS = {
   PencilDraw: ["0 0 24 24", '<path d="M4.44 14.29l-.766 3.833a1 1 0 001.177 1.176l3.832-.766 7.248-7.248-4.242-4.242L4.44 14.29zM13.103 5.628l4.242 4.243 1.415-1.414a2 2 0 000-2.829l-1.415-1.414a2 2 0 00-2.828 0l-1.414 1.414zM11 18a1 1 0 000 2h10a1 1 0 100-2H11z" fill="currentColor"/>'],
   View: ["0 0 16 16", '<path d="M8 9.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M8 3C4 3 1 8 1 8s3 5 7 5 7-5 7-5-3-5-7-5zm0 7.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" fill="currentColor"/>'],
@@ -30,8 +30,10 @@ window.ODMICONS = {
   Question: ["0 0 24 24", '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.179 15.254a1.25 1.25 0 11-2.5 0 1.25 1.25 0 012.5 0zm.058-3.98c.01-.02.02-.04.03-.05.272-.4.651-.732 1.036-1.069.886-.777 1.8-1.579 1.494-3.281-.29-1.69-1.64-3.08-3.33-3.330-2.060-.3-3.880.97-4.430 2.790-.17.58.27 1.170.87 1.170h.2c.41 0 .74-.29.88-.65.32-.89 1.26-1.5 2.3-1.280.96.2 1.660 1.150 1.570 2.130-.068.763-.613 1.186-1.219 1.654-.377.293-.778.603-1.101 1.026l-.01-.01a.326.326 0 00-.046.066 1.302 1.302 0 01-.084.129 2.261 2.261 0 00-.27.515.156.156 0 01-.025.05c-.01.015-.02.03-.025.05-.01.01-.01.02-.01.03-.12.36-.2.79-.2 1.3h2.010a2.110 2.110 0 01.18-.89c.01-.04.02-.08.04-.11.04-.08.09-.16.14-.24z" fill="currentColor"/>'],
   Glow: ["0 0 24 24", '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zM3.44 3.44a1 1 0 011.414 0l.707.706a1 1 0 11-1.415 1.415l-.707-.707a1 1 0 010-1.415zm17.12 0a1 1 0 010 1.414l-.706.707a1 1 0 11-1.415-1.415l.707-.707a1 1 0 011.415 0zM5.107 7.552A1 1 0 016 7h12a1 1 0 01.895.553l2 4a1 1 0 01-.188 1.154l-8 8a1 1 0 01-1.414 0l-8-8a1 1 0 01-.187-1.154l2-4zM6.618 9l-1 2h12.764l-1-2H6.618zm10.968 4H6.414L12 18.586 17.586 13z" fill="currentColor"/>'],
   Close: ["0 0 24 24", '<path d="M8.414 5.586a2 2 0 10-2.828 2.828L9.172 12l-3.586 3.586a2 2 0 102.828 2.828L12 14.828l3.586 3.586a2 2 0 102.828-2.828L14.828 12l3.586-3.586a2 2 0 10-2.828-2.828L12 9.172 8.414 5.586z" fill="currentColor"/>'],
-  // this project's own: a set square with its marks
+  // this project's own: a set square with its marks; two panes (the side view); sliders (settings)
   ruler: ["0 0 24 24", '<path fill-rule="evenodd" d="M3 2.5L21.5 21H3V2.5zM7 12.2V17h4.8L7 12.2zM3 6h3v1.5H3zM3 10h2v1.5H3zM3 14h3v1.5H3zM3 18h2v1.5H3z" fill="currentColor"/>'],
+  sideView: ["0 0 24 24", '<path fill-rule="evenodd" d="M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm2 0v14h8V5H5zm10 0v14h4V5h-4z" fill="currentColor"/>'],
+  settings: ["0 0 24 24", '<path d="M3 5h10v2H3zM19 5h2v2h-2zM3 11h3v2H3zM12 11h9v2h-9zM3 17h8v2H3zM17 17h4v2h-4z" fill="currentColor"/><circle cx="16" cy="6" r="2.5" fill="currentColor"/><circle cx="9" cy="12" r="2.5" fill="currentColor"/><circle cx="14" cy="18" r="2.5" fill="currentColor"/>'],
 };
 // an icon as an element: ODMICONS.svg("Camera", "w-5 h-5")
 window.ODMICONS.svg = (name, cls = "") => {

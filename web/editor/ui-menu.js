@@ -73,14 +73,37 @@
     b.addEventListener("click", () => { nav.classList.toggle("open"); b.setAttribute("aria-expanded", String(nav.classList.contains("open"))); });
     return b;
   }
+  // the panel above or below the views: the menu is one column, a tree that opens under the
+  // group and the category you are in (作る › 人物 › ポーズ ...)
+  const strip = () => { const bc = document.body.classList; return !bc.contains("split") && (bc.contains("aside-top") || bc.contains("aside-bottom")); };
+  // 全身図 (ui-figure.js) shows only under 人物
+  const figure = () => document.getElementById("figCtx") || figure.el;
   function render(){
     const w = where(current); if (!w) return;
+    const fig = figure(); if (fig) figure.el = fig;
     const row = (cls, label, nodes, onId, kind) => { const d = document.createElement("div");
       d.className = "menu-row " + cls; d.setAttribute("role", "group"); d.setAttribute("aria-label", label);
       nodes.forEach(n => d.appendChild(button(n, kind, n.id === onId))); return d; };
-    nav.replaceChildren(burger(w), row("menu-top", "大きな分類", TREE, w.t.id, "top"), row("menu-mid", "分類", w.t.kids, w.m.id, "mid"),
-      row("menu-leaf", "メニュー", w.m.kids, w.l.id, "leaf"));
+    const withFig = w.m.id === "figure" && fig ? [fig] : [];
+    if (strip()){
+      const d = document.createElement("div"); d.className = "menu-tree"; d.setAttribute("role", "group"); d.setAttribute("aria-label", "メニュー");
+      for (const t of TREE){
+        d.appendChild(button(t, "top", t === w.t)).classList.add("lv0");
+        if (t !== w.t) continue;
+        for (const m of t.kids){
+          d.appendChild(button(m, "mid", m === w.m)).classList.add("lv1");
+          if (m !== w.m) continue;
+          for (const l of m.kids) d.appendChild(button(l, "leaf", l === w.l)).classList.add("lv2");
+          d.append(...withFig);
+        }
+      }
+      nav.replaceChildren(d);
+    }
+    else nav.replaceChildren(burger(w), row("menu-top", "大きな分類", TREE, w.t.id, "top"), row("menu-mid", "分類", w.t.kids, w.m.id, "mid"),
+      row("menu-leaf", "メニュー", w.m.kids, w.l.id, "leaf"), ...withFig);
   }
+  { let was = strip();                          // the panel moved: the menu takes its other shape
+    new MutationObserver(() => { if (strip() !== was){ was = strip(); render(); } }).observe(document.body, {attributes: true, attributeFilter: ["class"]}); }
   function menuFor(sec){
     if (sec.dataset.mod) return "mod";
     for (const [id, m] of BY_ID) if (sec.querySelector("#" + CSS.escape(id))) return m;
@@ -129,6 +152,7 @@
   }
   (window.ODMUI = window.ODMUI || {}).addMenu = addMenu;
   window.ODMUI.showMenu = choose;
+  window.ODMUI.renderMenu = render;
   window.ODMUI.hasMenu = id => !!where(id);
 
   // the mode buttons on the view: their icons; the corners fold away (kept in this browser)
