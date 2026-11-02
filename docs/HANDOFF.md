@@ -40,7 +40,7 @@ nothing third-party: keep it that way.
 - **ComfyUI**: the bridge is the owner's public repo `qwaxgo/ODM-Poser-ComfyUIBridge` (editor as
   its git submodule, served from `web/editor/`). It is reworked on its own branch, in another
   environment, to follow this branch; its outputs stay as they are. Here: keep what it relies on
-  (see Hosts) and give it a built editor to serve.
+  (see Hosts); how it builds or gets the editor is the bridge's own choice.
 - The owner commits and pushes. Do not commit unless asked; finish a batch with ready-to-paste
   commit / push commands. Reports to the owner are in Japanese.
 - **Patch notes with every commit** (owner, 2026-11-02): each change adds lines (Japanese and
@@ -164,9 +164,8 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
 - ComfyUI bridge (note for its rework, done in its own repo): since 2026-11-02 the editor's page
   is built (dist/editor/), not in the repo, so the bridge's submodule no longer has
   web/editor/index.html. Unchanged and still relied on: `../mods.js`, `../mods/`, the MOD API, the
-  state format. Ways to give it a built editor (not decided): (a) CI pushes the same build as the
-  HTML zip to a branch of this repo (e.g. `editor-build`) and the submodule follows that branch, so
-  the bridge needs no Node.js; (b) the bridge fetches the Release zip.
+  state format. The bridge keeps this repository as its git submodule; how it gets a built editor
+  is decided in the bridge's repository (owner, 2026-11-02), not here.
 - Docs pages: download, app, export, poses, props, modding, comfyui (2026-11-02). A new page = a
   docs/NAME.md + NAME-JA.md pair, in src/content.config.ts and src/lib/docs.ts PAGES. COMFYUI*.md
   follows the bridge's README: update it when the bridge's rework changes how it is installed.
