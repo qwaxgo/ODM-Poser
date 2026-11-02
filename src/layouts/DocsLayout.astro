@@ -1,0 +1,68 @@
+---
+// A docs page: the header (the editor, the other language), the pages' menu and the text. The look
+// is the editor's (ui.css, melta UI; the .doc rules in ui.src.css set the text), in the theme
+// chosen in the editor (its 表示 button, kept in this browser) or the system's.
+import { ROOT, WORDS, href, editorHref, pagesOf, type Lang } from "../lib/docs";
+
+interface Props {
+	lang: Lang;
+	title: string;
+	slug?: string;
+	description?: string;
+}
+const { lang, title, slug, description } = Astro.props;
+const w = WORDS[lang];
+const other: Lang = lang === "ja" ? "en" : "ja";
+const pages = await pagesOf(lang);
+const navBase = "flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors";
+---
+
+<!doctype html>
+<html lang={lang}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="color-scheme" content="light dark" />
+		<title>{`${title} — 立体人形装置 ODM Poser`}</title>
+		{description && <meta name="description" content={description} />}
+		<link rel="icon" href={`${ROOT}editor/icon.svg`} type="image/svg+xml" />
+		<link rel="icon" href={`${ROOT}editor/favicon-32.png`} sizes="32x32" type="image/png" />
+		<link rel="alternate" hreflang={other} href={href(other, slug)} />
+		<link rel="stylesheet" href={`${ROOT}editor/ui.css`} />
+		<script is:inline>try { const t = localStorage.getItem("odm-poser-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}</script>
+	</head>
+	<body>
+		<header class="bg-bg-surface border-b border-border-default">
+			<div class="max-w-[1042px] mx-auto px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+				<a href={href(lang)} class="text-lg font-bold text-text-heading no-underline">立体人形装置 <span class="text-sm font-normal text-text-muted">ODM Poser {w.docs}</span></a>
+				<nav class="flex items-center gap-4 text-sm ms-auto" aria-label={w.docs}>
+					<a href={editorHref(lang)} class="text-primary-600 dark:text-primary-400 underline underline-offset-2">{w.editor}</a>
+					<a href={href(other, slug)} hreflang={other} lang={other} class="text-primary-600 dark:text-primary-400 underline underline-offset-2">{w.other}</a>
+				</nav>
+			</div>
+		</header>
+		<div class="max-w-[1042px] mx-auto px-4 py-8 md:grid md:grid-cols-[13rem_minmax(0,1fr)] md:gap-10">
+			<nav class="mb-8 md:mb-0" aria-label={w.menu}>
+				<ul class="list-none m-0 p-0 flex flex-col gap-1">
+					<li>
+						<a href={href(lang)} class:list={[navBase, slug ? "text-body hover:bg-bg-page-alt" : "text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-bg-page-alt"]} aria-current={slug ? undefined : "page"}>{w.docs}</a>
+					</li>
+					{pages.map(p => (
+						<li>
+							<a href={href(lang, p.slug)} class:list={[navBase, p.slug === slug ? "text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-bg-page-alt" : "text-body hover:bg-bg-page-alt"]} aria-current={p.slug === slug ? "page" : undefined}>{p.title}</a>
+						</li>
+					))}
+				</ul>
+			</nav>
+			<main class="doc min-w-0">
+				<slot />
+			</main>
+		</div>
+		<footer class="border-t border-border-default">
+			<div class="max-w-[1042px] mx-auto px-4 py-6 text-xs text-text-muted flex flex-wrap gap-4">
+				<span>MIT License</span>
+				<a href="https://github.com/qwaxgo/ODM-Poser" target="_blank" rel="noopener" class="underline underline-offset-2">{w.repo}</a>
+			</div>
+		</footer>
+	</body>
+</html>

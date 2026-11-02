@@ -7,8 +7,10 @@ The editor's UI follows **melta UI** (`design/melta-ui`, a git submodule: run
 
 ## How the UI is built
 
-- No build is needed to run the editor (it opens from disk, GitHub Pages and the installed
-  app). The look is `web/editor/ui.css`, **generated** by Tailwind
+- The editor is a page of the Astro site: its markup is `src/pages/editor/index.astro` and
+  `src/components/editor/*.astro` (plain HTML, no props); its scripts, styles and pictures are plain
+  files in `web/editor/` (Astro's publicDir), loaded with `is:inline` as classic scripts sharing one
+  global scope (`pose_main.js` is the editor's own). `npm run dev` to see it. The look is `web/editor/ui.css`, **generated** by Tailwind
   CSS 4 from `web/editor/ui.src.css`; commit both. `npm install` once, then `npm run css`
   (`npm run css:watch` while working).
 - `web/editor/ui.js` holds melta's class strings, once, and gives every control its recipe by what
@@ -28,7 +30,9 @@ The editor's UI follows **melta UI** (`design/melta-ui`, a git submodule: run
 
 - `python tools/lint_ui.py` opens the editor in a browser (Playwright), takes the page as drawn
   (with every panel the modules build) and runs `melta-lint` on it: the same check as melta's MCP
-  `check_html` and CI. It must pass (0 errors). `npm run lint:ui` checks index.html as written.
+  `check_html` and CI. It must pass (0 errors). It builds the site first (`--no-build` uses dist/).
+  `npm run lint:ui` checks the built page as written. The docs pages (`src/pages/docs`, the text
+  styled by `.doc` in `ui.src.css`) are checked with `melta-lint dist/docs/**/index.html`.
 - After a UI change, also run the behaviour tests you have (panel / view sync, undo / redo, touch).
 
 ## What is this repository's own
@@ -36,3 +40,8 @@ The editor's UI follows **melta UI** (`design/melta-ui`, a git submodule: run
 - Brand: 立体人形装置 / ODM Poser; primary colour melta's standard blue `#2b70ef`.
 - Dark mode: ON (melta's dark tokens), switched by `html[data-theme]` or the system.
 - Japanese and English: `web/editor/i18n.js` translates text nodes; new strings need entries there.
+
+## Patch notes
+
+Every change adds a line in Japanese and one in English under the top version of `CHANGELOG.md`
+(the next release: `package.json`'s version, shown in the editor's header).

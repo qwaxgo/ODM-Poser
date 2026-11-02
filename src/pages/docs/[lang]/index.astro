@@ -1,0 +1,28 @@
+---
+// The docs' first page in one language: what there is to read.
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import { LANGS, WORDS, href, pagesOf, type Lang } from "../../../lib/docs";
+
+export function getStaticPaths() {
+	return LANGS.map(lang => ({ params: { lang }, props: { lang } }));
+}
+
+const { lang } = Astro.props as { lang: Lang };
+const w = WORDS[lang];
+const pages = await pagesOf(lang);
+---
+
+<DocsLayout lang={lang} title={w.docs} description={w.lead}>
+	<h1>{w.docs}</h1>
+	<p>{w.lead}</p>
+	<ul class="list-none p-0 grid gap-4 sm:grid-cols-2">
+		{pages.map(p => (
+			<li class="m-0">
+				<a href={href(lang, p.slug)} class="block h-full bg-bg-surface rounded-xl border border-border-default p-6 shadow-sm no-underline hover:border-border-strong transition-colors">
+					<span class="block text-lg font-bold text-text-heading">{p.title}</span>
+					<span class="block mt-2 text-sm text-body">{p.about}</span>
+				</a>
+			</li>
+		))}
+	</ul>
+</DocsLayout>

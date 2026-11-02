@@ -19,7 +19,7 @@ function pair(root){
 // the panel's buttons get an icon before their name (Charcoal, ui-icons.js); a name that starts
 // with its own sign (↺ ↶ ↷ ⇋) keeps that instead
 const DEL = "Close", OUT = "DownloadAlt", IN = "Upload";
-const ICON = {applyPreset: "Pose", tcApply: "Pose", tcRandom: "Collection", tcLoadFile: IN, loadJson: IN, modInstall: IN, modLoad: IN,
+const ICON = {applyPreset: "Pose", tcApply: "Pose", tcRandom: "Collection", tcLoadFile: IN, loadJson: IN, modInstall: IN, modFolder: IN, modLoad: IN,
   saveAtari: OUT, saveComp: OUT, saveJson: OUT, saveOpenpose: OUT, saveRuler: "ruler", spSave: OUT, spCancel: DEL,
   auAdd: "Glow", castAdd: "Users", castDup: "Users", camSave: "Camera", camLoad: "Camera", scAddR: "Fashion", scAddL: "Fashion",
   scHold: "Fashion", scBack: "Fashion", scGrab: "Fashion", scHang: "Fashion", scMount: "Body", scWorld: "Home", scView: "Fov",

@@ -1,0 +1,23 @@
+---
+// One docs page: a guide from docs/ (NAME.md, NAME-JA.md) as it is written. The guides link to
+// each other by file name (for reading them on GitHub); here those links go to the pages. A
+// Markdown table's <th> are its header row: scope="col", as melta asks.
+import type { InferGetStaticPropsType } from "astro";
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import { LANGS, pagesOf } from "../../../lib/docs";
+
+export async function getStaticPaths() {
+	const paths = [];
+	for (const lang of LANGS) for (const page of await pagesOf(lang)) paths.push({ params: { lang, slug: page.slug }, props: { lang, page } });
+	return paths;
+}
+
+const { lang, page } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const html = (page.entry.rendered?.html || "").replace(/href="([A-Z]+)(-JA)?\.md(#[^"]*)?"/g,
+	(_: string, name: string, ja?: string, hash?: string) => `href="../../${ja ? "ja" : "en"}/${name.toLowerCase()}/${hash || ""}"`)
+	.replace(/<th(?=[\s>])(?![^>]*\sscope=)/g, '<th scope="col"');
+---
+
+<DocsLayout lang={lang} title={page.title} slug={page.slug} description={page.about}>
+	<Fragment set:html={html} />
+</DocsLayout>

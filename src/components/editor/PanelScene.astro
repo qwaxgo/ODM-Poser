@@ -1,0 +1,27 @@
+---
+// The figure's place and turn in the scene, and going back to the start.
+---
+
+  <section data-menu="scene">
+    <h2>人物の位置と向き</h2>
+    <label>左右（＋人物の左）</label>
+    <div class="row"><input type="range" id="figX" min="-300" max="300" step="1"><input type="number" class="num" id="figXN" step="1"><span class="unit">cm</span></div>
+    <label>上下</label>
+    <div class="row"><input type="range" id="figY" min="-100" max="300" step="1"><input type="number" class="num" id="figYN" step="1"><span class="unit">cm</span></div>
+    <label>前後（＋前）</label>
+    <div class="row"><input type="range" id="figZ" min="-300" max="300" step="1"><input type="number" class="num" id="figZN" step="1"><span class="unit">cm</span></div>
+    <label>向き</label>
+    <div class="row"><input type="range" id="figYaw" min="-180" max="180" step="1"><input type="number" class="num" id="figYawN" step="1"><span class="unit">°</span></div>
+    <label>前後の傾き（＋前へ）</label>
+    <div class="row"><input type="range" id="figPitch" min="-90" max="90" step="1"><input type="number" class="num" id="figPitchN" step="1"><span class="unit">°</span></div>
+    <label>左右の傾き</label>
+    <div class="row"><input type="range" id="figRoll" min="-90" max="90" step="1"><input type="number" class="num" id="figRollN" step="1"><span class="unit">°</span></div>
+    <div class="btns"><button id="figResetPos">↺ 位置と向きを戻す</button></div>
+    <div class="hint">選んでいる人物を、ポーズを保ったまま動かし・回します（固定した関節も一緒に動きます）。床と関係なく傾けられます。「配置」タブの接地が「いつも床・物体の上に着ける」のときは、上下は床に戻ります。</div>
+  </section>
+
+  <section data-menu="scene">
+    <h2>初期状態に戻す</h2>
+    <div class="btns"><button id="resetFigure">↺ この人物を初期状態に</button><button id="resetAll">↺ すべて最初の状態に</button></div>
+    <div class="hint">「この人物」はポーズ・体格・位置を新しい人物と同じにします（持ち物とオーラはそのまま）。「すべて」は人物・小物・物体・床と壁・定規・カメラを最初の状態にします（記憶したカメラは残ります）。どちらも「元に戻す」で取り消せます。</div>
+  </section>

@@ -20,8 +20,9 @@ API version: **1.2.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
 
 1. Save the file under *A mod file* below as `mods/mymod.js` (or clone a repository of mods into
    `mods/`, see the end of this page).
-2. Opened from disk (`web/editor/index.html`): run `python tools/make_mods_list.py`, then reload.
-   (When the page that hosts the editor serves the list itself, reloading is enough.)
+2. Run `python tools/make_mods_list.py` (it writes the list, `web/mods.js`), then open the editor with
+   `npm run dev` or `python tools/serve.py`, or reload it. (When the page that hosts the editor
+   serves the list itself, reloading is enough.)
 3. The **MOD** panel at the bottom of the side bar lists every mod: ✓ loaded, ✗ with the error.
 
 The **MOD** panel also loads mods without a `mods/` folder (a site such as GitHub Pages, the
@@ -32,6 +33,11 @@ installed app, a phone or tablet):
 - **Add by URL**: the address is kept; the mod is read fresh at each start and its last copy is used
   offline. A GitHub file page (`github.com/…/blob/…`) is turned into its raw file. Use public
   addresses (a private repository's file cannot be read by the page).
+- **From a folder**: pick a mods folder; its mods load as if it were `mods/` (a file already loaded
+  is skipped). Chrome and Edge keep the folder and read it again at each start (if the browser asks
+  to allow reading it, press **Load** next to it in the list); other browsers load it this time only.
+  This is the way for the HTML release opened from disk, where the editor cannot look into `mods/`
+  by itself.
 - **Load for this session only**: runs the chosen `.js` now without keeping it; the quickest way to
   try a mod while writing it.
 
@@ -301,6 +307,6 @@ cd <the editor's folder>/mods
 git clone <your mods repository>
 ```
 
-Update it with `git pull` in that folder, then reload the editor (opened from disk: run
-`tools/make_mods_list.py` again when files were added or removed). Because `mods/` is git-ignored,
+Update it with `git pull` in that folder, then reload the editor (run `tools/make_mods_list.py`
+again when files were added or removed). Because `mods/` is git-ignored,
 the cloned repository does not mix with the editor's own.

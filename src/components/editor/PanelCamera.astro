@@ -1,0 +1,30 @@
+---
+// カメラ: lens, turn, place and target; locking and remembered cameras.
+---
+
+  <section data-menu="camera">
+    <h2>カメラ</h2>
+    <label>レンズ</label>
+    <div class="row"><input type="range" id="lens" min="14" max="200" value="50"><input type="number" class="num" id="lensV"><span class="unit">mm</span></div>
+    <label>向き</label>
+    <div class="row"><input type="range" id="yaw" min="-180" max="180" value="0"><input type="number" class="num" id="yawV"><span class="unit">°</span></div>
+    <label>高さ</label>
+    <div class="row"><input type="range" id="pitch" min="-80" max="80" value="0"><input type="number" class="num" id="pitchV"><span class="unit">°</span></div>
+    <label>傾き</label>
+    <div class="row"><input type="range" id="roll" min="-90" max="90" value="0"><input type="number" class="num" id="rollV"><span class="unit">°</span></div>
+    <label>カメラの位置（左右・上下・前後）</label>
+    <div class="row"><input type="number" class="num" id="camPX" step="5" aria-label="カメラの位置 左右"><input type="number" class="num" id="camPY" step="5" aria-label="カメラの位置 上下"><input type="number" class="num" id="camPZ" step="5" aria-label="カメラの位置 前後"><span class="unit">cm</span></div>
+    <label>見る点（左右・上下・前後）</label>
+    <div class="row"><input type="number" class="num" id="camTX" step="5" aria-label="見る点 左右"><input type="number" class="num" id="camTY" step="5" aria-label="見る点 上下"><input type="number" class="num" id="camTZ" step="5" aria-label="見る点 前後"><span class="unit">cm</span></div>
+    <div class="hint">床の中心が 0。前後は人物の正面側が＋。位置を変えると、見る点を向いたまま向き・高さ・拡大が決まります（傾きはそのまま）。</div>
+    <div class="btns"><button id="camReset">↺ リセット</button></div>
+  </section>
+
+  <section data-menu="camera">
+    <h2>固定と記憶</h2>
+    <label><input type="checkbox" id="camLock"> カメラを固定</label>
+    <label><input type="checkbox" id="padOn"> パッドを表示</label>
+    <label>記憶したカメラ（<span id="camCount">0</span>）</label>
+    <select id="camList"></select>
+    <div class="btns"><button id="camSave">記憶</button><button id="camLoad">呼出</button><button id="camDel">削除</button></div>
+  </section>
