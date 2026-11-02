@@ -1,12 +1,12 @@
 # Build the site with Astro and publish it to GitHub Pages.
-# Address: https://apps.qwaxgo.com/ODM-Poser/ (redirects to editor/index.html)
-# web/ goes out as it is (Astro's publicDir); src/pages makes the site root with the link card.
+# Address: https://apps.qwaxgo.com/ODM-Poser/ (editor/: the editor, docs/: the docs from docs/*.md)
+# web/ goes out as it is (Astro's publicDir); src/pages makes the pages.
 name: Deploy the editor to GitHub Pages
 
 on:
   push:
     branches: ["main"]
-    paths: ["web/**", "src/**", "astro.config.mjs", "package.json", "package-lock.json", ".github/workflows/static.yml"]
+    paths: ["web/**", "src/**", "docs/**", "astro.config.mjs", "package.json", "package-lock.json", ".github/workflows/static.yml"]
   workflow_dispatch:                                     # can also be run by hand from the Actions tab
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}editor/index.html
+      url: ${{ steps.deployment.outputs.page_url }}editor/
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
