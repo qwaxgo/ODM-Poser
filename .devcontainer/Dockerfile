@@ -66,6 +66,9 @@ RUN git clone --depth=1 https://github.com/mattmc3/antidote.git /home/node/.anti
 
 RUN mkdir -p /home/node/.ssh && chmod 700 /home/node/.ssh
 
+# ~/.config as node's: otherwise Docker makes it as root's when it mounts ~/.config/gh in it
+RUN mkdir -p /home/node/.config
+
 COPY --chown=node:node .devcontainer/setup_zsh.sh /tmp/setup_zsh.sh
 RUN chmod +x /tmp/setup_zsh.sh
 
