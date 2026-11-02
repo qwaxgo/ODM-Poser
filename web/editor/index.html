@@ -921,6 +921,12 @@ function standingHeight(){
   return upper + (leg("r") + leg("l")) / 2;
 }
 function headsCount(){ return standingHeight() / (2 * S.R[IX.head]); }
+// 座高: from the top of the head down to the thigh roots (where a seated body meets the seat), the
+// standing height's upper part; the measure for a body whose legs are not a human's (centaur, lamia)
+function sittingHeight(){
+  const upper = S.R[IX.head] + bl("head", "neck") + bl("neck", "chest") + bl("chest", "waist") + bl("waist", "pelvis");
+  return upper + (bl("r_hip", "pelvis") + bl("l_hip", "pelvis")) / 2 * 0.29;
+}
 
 // ---- picking and dragging ------------------------------------------------------------------
 function evPos(cv, e){ const r = cv.getBoundingClientRect(), k = cv.width / r.width;

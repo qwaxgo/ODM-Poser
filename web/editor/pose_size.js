@@ -26,7 +26,8 @@ const parts = [
   sec("身長と頭身", `<label>保つもの</label><select id="szKeep"><option value="none">なし（頭の大きさはそのまま）</option>
       <option value="heads">頭身を保つ（全身が同じ割合で）</option><option value="height">身長を保つ（残りの体で合わせる）</option></select>` +
     ctl("szHeight", "身長", 60, 240, 0.5, "cm") + ctl("szHeads", "頭身", 2, 10, 0.1, "頭身") +
-    `<div class="hint">「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。</div>`),
+    ctl("szSit", "座高（頭から股まで）", 30, 140, 0.5, "cm") +
+    `<div class="hint">「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。座高を変えると、頭（頭身を保つときだけ）と胴体の長さが変わり、腕と脚はそのままです。</div>`),
   sec("部位の固定", `<label><input type="checkbox" id="szLock_head"> 頭と首</label><label><input type="checkbox" id="szLock_torso"> 胴体</label>
     <label><input type="checkbox" id="szLock_arms"> 腕</label><label><input type="checkbox" id="szLock_legs"> 脚</label>
     <div class="hint">固定した部位は、身長・頭身を変えても長さと太さが変わりません。</div>`),
@@ -87,10 +88,10 @@ function scaleFree(base, k, fixed){
   }
   S.P = out; S.R = base.R.map((r, i) => fixed.has(R_GROUP[J[i]]) ? r : r * k);
 }
-// the k (bisection) for which the free parts make the height h
-function fitHeight(h, fixed){
+// the k (bisection) for which the free parts make the height h (or another measure: sittingHeight)
+function fitHeight(h, fixed, measure = standingHeight){
   const base = snap(); let lo = 0.2, hi = 5;
-  for (let n = 0; n < 40; n++){ const m = (lo + hi) / 2; scaleFree(base, m, fixed); if (standingHeight() < h) lo = m; else hi = m; }
+  for (let n = 0; n < 40; n++){ const m = (lo + hi) / 2; scaleFree(base, m, fixed); if (measure() < h) lo = m; else hi = m; }
   scaleFree(base, (lo + hi) / 2, fixed);
 }
 const locked = () => new Set(["head", "torso", "arms", "legs"].filter(g => $("szLock_" + g).checked));
@@ -116,6 +117,18 @@ function setHeight(h){
   // 頭身を保つ with some parts locked: the head and the free parts settle the height and the count together
   if (keep === "heads" && fix.size) for (let n = 0; n < 8; n++){ setHeads(n0); fitHeight(h, new Set([...fix, "head"])); }
 }
+// 座高: the head and the torso make it up (the head only when the heads count is kept); arms and legs stay
+function setSitting(h){
+  const keep = $("szKeep").value, fix = locked(); fix.add("arms"); fix.add("legs");
+  if (keep !== "heads") fix.add("head");
+  if (fix.has("torso") && fix.has("head")){ say("胴体と頭を固定しているので、座高は変えられません。", true); return; }
+  const h0 = standingHeight(), n0 = heads();
+  fitHeight(h, fix, sittingHeight);
+  // 頭身を保つ: the head follows the new height, the torso settles the sitting height again
+  if (keep === "heads") for (let n = 0; n < 8; n++){ setHeads(n0); fitHeight(h, new Set([...fix, "head"]), sittingHeight); }
+  // 身長を保つ: the legs make up the height (unless they are locked)
+  if (keep === "height" && !locked().has("legs")) fitHeight(h0, new Set([...locked(), "head", "torso", "arms"]));
+}
 function setHeadsTo(H){
   if (locked().has("head")){ say("頭を固定しているので、頭身は変えられません。", true); return; }
   const h0 = standingHeight();
@@ -132,7 +145,7 @@ const ITEM = {szLen: [it => Math.round((it.len || 1) * 100), (it, v) => { it.len
 // ---- wiring --------------------------------------------------------------------------------------
 const fmt = v => Math.round(v * 10) / 10;
 function show(){
-  const all = Object.assign({szHeight: [() => standingHeight()], szHeads: [heads]}, SIZE);
+  const all = Object.assign({szHeight: [() => standingHeight()], szHeads: [heads], szSit: [() => sittingHeight()]}, SIZE);
   for (const [id, [get]] of Object.entries(all)){
     const v = fmt(get()), r = $(id), n = $(id + "N");
     if (rangeHeld !== r) r.value = v;
@@ -154,12 +167,13 @@ function apply(id, v){
   const h0 = standingHeight(), n0 = heads();
   if (id === "szHeight") setHeight(v);
   else if (id === "szHeads") setHeadsTo(v);
+  else if (id === "szSit") setSitting(v);
   else if (ITEM[id]){ const it = curItem(); if (!it) return; ITEM[id][1](it, v); }
   else { SIZE[id][1](v); hold(h0, n0, SIZE[id][2]); }
   if (typeof afterEdit === "function") afterEdit();
   draw();
 }
-for (const id of ["szHeight", "szHeads", ...Object.keys(SIZE), ...Object.keys(ITEM)]){
+for (const id of ["szHeight", "szHeads", "szSit", ...Object.keys(SIZE), ...Object.keys(ITEM)]){
   const r = $(id), n = $(id + "N");
   r.addEventListener("pointerdown", () => remember());
   r.addEventListener("keydown", () => remember());
@@ -179,7 +193,8 @@ for (const g of ["head", "torso", "arms", "legs"]) $("szLock_" + g).addEventList
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
 (window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"身長と頭身": "Height and heads", "保つもの": "Keep",
   "なし（頭の大きさはそのまま）": "Nothing (the head keeps its size)", "頭身を保つ（全身が同じ割合で）": "The heads count (all alike)",
-  "身長を保つ（残りの体で合わせる）": "The height (the rest of the body makes up)", "頭身": "Heads", "部位の固定": "Locked parts",
+  "身長を保つ（残りの体で合わせる）": "The height (the rest of the body makes up)", "頭身": "Heads",
+  "座高（頭から股まで）": "Sitting height (head to the thigh roots)", "胴体と頭を固定しているので、座高は変えられません。": "The torso and the head are locked, so the sitting height cannot change.", "部位の固定": "Locked parts",
   "頭と首": "Head and neck", "胴体": "Torso", "腕": "Arms", "脚": "Legs", "頭と胴体（縦・横）": "Head and torso (lengths, widths)",
   "頭の大きさ（直径）": "Head size (diameter)", "首の長さ": "Neck length", "肩幅": "Shoulder width", "胸の長さ": "Chest length",
   "ウエスト幅": "Waist width", "腹の長さ": "Belly length", "腰幅（股の間）": "Hip width (between the thigh roots)",
@@ -190,7 +205,7 @@ for (const g of ["head", "torso", "arms", "legs"]) $("szLock_" + g).addEventList
   "装備のタブで小物を選ぶと、ここで変えられます。": "Select a thing in the Equip tab to change it here.",
   "持つ所（握り）はそのままで、先の方が伸び縮みします。全体の大きさは装備のタブで変えます。": "The grip stays where it is; the far end grows and shrinks. The whole size is in the Equip tab.",
   "固定した部位は、身長・頭身を変えても長さと太さが変わりません。": "Locked parts keep their lengths and thickness when the height or heads count changes.",
-  "「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。": "With “The height”, changing the head or a part makes the other unlocked parts make up the height.",
+  "「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。座高を変えると、頭（頭身を保つときだけ）と胴体の長さが変わり、腕と脚はそのままです。": "With “The height”, changing the head or a part makes the other unlocked parts make up the height. The sitting height changes the torso (and the head when the heads count is kept); the arms and legs stay.",
   "小物の長さ・太さを戻しました。": "The thing's length and thickness are back to default."});
 show();
 })();
