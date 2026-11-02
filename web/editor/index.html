@@ -824,18 +824,23 @@ function exportSize(){ return [Math.max(256, +$("W").value || 1080), Math.max(25
 let chromeKey = "", chromeH = 160;
 function viewChrome(){
   const views = front.closest(".views");
-  const sec = front.closest("section"), key = [innerWidth, innerHeight, document.body.className, views.className, side.style.height].join("|");
-  if (sec && key !== chromeKey){ chromeKey = key; chromeH = Math.max(0, sec.offsetHeight - front.offsetHeight); }
+  // the views' box as a whole is left out (with the side view under the front one it is part of it)
+  const sec = front.closest("section"), key = [innerWidth, innerHeight, document.body.className, views.className].join("|");
+  if (sec && key !== chromeKey){ chromeKey = key; chromeH = Math.max(0, sec.offsetHeight - views.offsetHeight); }
   return chromeH;
 }
+// the side view above or below the front one: placed so (横の図の置き場所), or on a phone held
+// upright, where it goes under the front one when asked for
+const PHONE = "(max-width:700px)";
+function sideStacked(){
+  if (!side.parentElement.getClientRects().length) return false;
+  return matchMedia(PHONE).matches || /\bside-(top|bottom)\b/.test(front.closest(".views").className);
+}
 const ONE_COLUMN = "(max-width:900px), (orientation:portrait) and (max-aspect-ratio:4/5)";
-// fixedH: the side view above or below the front one keeps to that height. A view fills its box's
-// width; where the views have a room of their own (beside the panel, a strip, split screen, put
-// away) it fills the height too, else (one column, the page scrolls) it is as tall as the picture's
-// shape asks, up to its share of the window.
-function fitCanvas(cv, aspect, fixedH){
-  const dpr = window.devicePixelRatio || 1;
-  let w = cv.parentElement.clientWidth, h = Math.round(w / aspect);
+// The views' height (maxH) and whether they have a room of their own (room: beside the panel, a
+// strip, split screen, put away), else (one column, the page scrolls) a view is as tall as the
+// picture's shape asks, up to its share of the window.
+function viewsRoom(){
   // the views stay on screen as the page scrolls: beside the panels they may take the window's
   // height, above them (one column) part of it, so the panels show underneath
   const short = innerHeight <= 520 && innerWidth >= 700;          // a phone held sideways: panels beside
@@ -848,10 +853,17 @@ function fitCanvas(cv, aspect, fixedH){
     : off || short || !matchMedia(ONE_COLUMN).matches ? 1 : innerWidth <= 700 ? 0.8 : 0.7;
   // split screen: the views' own half of the screen
   const st = document.body.classList.contains("split") ? document.getElementById("stage") : null;
-  const maxH = fixedH || (st ? Math.max(120, st.clientHeight - viewChrome() - 10)
-    : Math.max(200, Math.round((window.innerHeight || 800) * share - viewChrome() - 18)));
-  const room = !!(fixedH || st || stackedPanel || off || short || !matchMedia(ONE_COLUMN).matches);
-  h = room ? maxH : Math.min(h, maxH);
+  const maxH = st ? Math.max(120, st.clientHeight - viewChrome() - 10)
+    : Math.max(200, Math.round((window.innerHeight || 800) * share - viewChrome() - 18));
+  return {maxH, room: !!(st || stackedPanel || off || short || !matchMedia(ONE_COLUMN).matches)};
+}
+// A view fills its box's width. fixedH: the side view above or below the front one keeps to that
+// height; reserve: what that side view takes of the front one's height (with the gap).
+function fitCanvas(cv, aspect, fixedH, reserve = 0){
+  const dpr = window.devicePixelRatio || 1;
+  let w = cv.parentElement.clientWidth, h = Math.round(w / aspect);
+  const r = fixedH ? {maxH: fixedH, room: true} : viewsRoom(), maxH = Math.max(80, r.maxH - reserve);
+  h = r.room ? maxH : Math.min(h, maxH);
   cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));
   cv.style.width = w + "px"; cv.style.height = h + "px";
 }
@@ -865,8 +877,15 @@ function sideProject(p, W, H){                // orthographic, from the camera's
 function draw(){
   const [EW, EH] = exportSize();
   frameAspect = EW / EH;
-  const stacked = /\bside-(top|bottom)\b/.test(front.closest(".views").className);
-  fitCanvas(front, EW / EH); fitCanvas(side, EW / EH, stacked ? Math.max(100, Math.round((innerHeight || 800) * 0.26)) : 0); zoomThumb();
+  // the side view above or below: its own height, out of the views' (up to 4 parts of 10; on a
+  // wider screen also up to about a quarter of the window)
+  let sideH = 0, gap = 0;
+  if (sideStacked()){
+    gap = parseFloat(getComputedStyle(front.closest(".views")).rowGap) || 0;
+    const cap = matchMedia(PHONE).matches ? Infinity : Math.max(100, (innerHeight || 800) * 0.26);
+    sideH = Math.max(80, Math.round(Math.min(cap, (viewsRoom().maxH - gap) * 0.4)));
+  }
+  fitCanvas(front, EW / EH, 0, sideH ? sideH + gap : 0); fitCanvas(side, EW / EH, sideH); zoomThumb();
   let ctx = front.getContext("2d"), W = front.width, H = front.height;
   ctx.fillStyle = cssVar("--stage"); ctx.fillRect(0, 0, W, H);
   // outside the picture's frame: a light shade and the frame's edge (not in the file)
@@ -1390,6 +1409,16 @@ function symmetrizeLimbs(from){
   afterEdit(); draw();
   say(from === "r" ? "右の手足を左へ写しました。" : "左の手足を右へ写しました。");
 }
+// the whole figure turned about a world axis (the 3軸ハンドル's rings on the hips): S.body takes the
+// turn, as yaw / pitch / roll in bodyRot's order (M = Ry(yaw) Rx(pitch) Rz(roll)); the joints are turned by the caller
+function turnBody(axis, ang){
+  const f = v => rotAxis(bodyRot(v), axis, ang), ex = f([1, 0, 0]), ey = f([0, 1, 0]), ez = f([0, 0, 1]);
+  const pitch = Math.asin(Math.max(-1, Math.min(1, -ez[1]))), r2d = 180 / Math.PI;
+  let yaw, roll;
+  if (Math.cos(pitch) < 1e-6){ yaw = Math.atan2(-ex[2], ex[0]); roll = 0; }      // straight up or down
+  else { yaw = Math.atan2(ez[0], ez[2]); roll = Math.atan2(ex[1], ey[1]); }
+  S.body = Object.assign({}, S.body, {yaw: yaw * r2d, pitch: pitch * r2d, roll: roll * r2d});
+}
 function setBodyTurn(key, v){
   const c = S.P[IX.pelvis], old = S.P.map(q => bodyRot(sub(q, c), true));
   S.body[key] = v;
@@ -1696,7 +1725,8 @@ for (const [id, key] of [["vShift", "shift"], ["vAlt", "alt"]])
   $(id).addEventListener("click", () => { VMOD[key] = !VMOD[key]; $(id).setAttribute("aria-pressed", String(VMOD[key])); $(id).classList.toggle("on", VMOD[key]); });
 $("vUndo").addEventListener("click", undo);
 $("vRedo").addEventListener("click", redo);
-$("vSide").addEventListener("click", () => { document.body.classList.toggle("show-side"); draw(); });
+$("vSide").addEventListener("click", () => { const on = document.body.classList.toggle("show-side");
+  $("vSide").setAttribute("aria-pressed", String(on)); if (matchMedia(PHONE).matches) $("ovSide").setAttribute("aria-pressed", String(on)); draw(); });
 if (navigator.maxTouchPoints > 0 || "ontouchstart" in window || matchMedia("(any-pointer: coarse)").matches)
   document.body.classList.add("touch");
 const UNITS = {scaleAll: 1, scaleHead: 1, scaleThick: 1, lens: 1, yaw: 1, pitch: 1, roll: 1};
@@ -2210,7 +2240,8 @@ syncCams();
 { const views = document.querySelector(".views"), el = $("sidePos"), btn = $("ovSide");
   const set = p => { views.classList.remove("side-left", "side-top", "side-bottom", "side-hide");
     if (p !== "right") views.classList.add("side-" + p); el.value = p;
-    btn.setAttribute("aria-pressed", String(p !== "hide"));
+    // a phone shows it on request (show-side), wherever it is placed
+    btn.setAttribute("aria-pressed", String(matchMedia(PHONE).matches ? document.body.classList.contains("show-side") : p !== "hide"));
     // twice: the front view's room is measured with the side view already at its new size
     chromeKey = ""; draw(); chromeKey = ""; draw(); };
   const get = (k, d) => { try { return localStorage.getItem(KEY + k) || d; } catch (e) { return d; } };

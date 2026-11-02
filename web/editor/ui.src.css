@@ -98,6 +98,8 @@
     display: grid; grid-template-columns: 1fr var(--aside-w); gap: 16px; align-items: start; }
   /* the views stay on screen while the panels scroll (fitCanvas sizes them so they fit) */
   #stage { position: sticky; top: calc(env(safe-area-inset-top) + 8px); align-self: start; z-index: 5; }
+  /* the grid's columns keep to the window: a row that scrolls sideways (the keys) must not widen them */
+  #stage, aside { min-width: 0; }
   #stage > section { margin-bottom: 0; }
   aside > section { margin-bottom: 16px; }
   .views { display: grid; grid-template-columns: 1fr 34%; gap: 12px; }
@@ -112,7 +114,9 @@
     -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
   .view .tag { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); pointer-events: none; white-space: nowrap; }
   /* the front view's corners: modes (top left) and switches (top right), folded with ‹ › */
-  .ov { position: absolute; top: 8px; z-index: 3; display: flex; align-items: flex-start; gap: 4px; pointer-events: none; }
+  .ov { position: absolute; top: 8px; bottom: 8px; z-index: 3; display: flex; align-items: flex-start; gap: 4px; pointer-events: none; }
+  /* a low view (a phone with the side view under it): the columns keep to the view's height and scroll */
+  .ov > .ov-body, .ov-stack { max-height: 100%; overflow-y: auto; scrollbar-width: none; }
   .ov > * { pointer-events: auto; }
   .ov-tl { left: 8px; } .ov-tr { right: 8px; }
   .ov-body { display: flex; flex-direction: column; gap: 2px; padding: 4px; border-radius: 10px;
@@ -211,6 +215,10 @@
     .app-header { padding: 8px 8px 4px; }
     .views { grid-template-columns: 1fr !important; }
     body:not(.show-side) .view.sideview { display: none; }
+    /* shown on request, the side view goes under the front one (draw() shares the height): its places do not apply */
+    .view-place { display: none; }
+    #stage .views .sideview { order: 0; justify-self: stretch; }
+    body.show-side .views.side-hide .view.sideview { display: block !important; }
     .touchbar { display: flex; }
     .touchbar .vside { display: inline-flex; }
   }

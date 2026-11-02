@@ -80,7 +80,7 @@ function target(){
     const mirror = () => $("sym") && $("sym").checked && MIRROR[i] !== i ? [i, MIRROR[i]] : [i];
     return {c: S.P[i], ax: WORLD, joint: i, pivot, rings: [0, 1, 2],
       sc: root ? [[e1, 1, "太さ"]] : [[u, 0, "長さ"], [e1, 1, "太さ"]],
-      save: () => ({P: S.P.map(p => p.slice()), R: S.R.slice()}),
+      save: () => ({P: S.P.map(p => p.slice()), R: S.R.slice(), body: Object.assign({}, S.body)}),
       move: (s0, d) => { const t = add(s0.P[i], d);
         if (i === IX.pelvis) moveAll(sub(t, S.P[i]), false);
         else if (IK_END[J[i]]) solveIK(i, t);
@@ -89,6 +89,8 @@ function target(){
       turn: (s0, k, dg) => { S.P = s0.P.map(p => p.slice());
         const pv = root ? s0.P[i] : s0.P[par], who = root ? S.P.map((p, n) => n) : subtree(i);
         for (const n of who) S.P[n] = add(pv, rotAxis(sub(s0.P[n], pv), WORLD[k], deg(dg)));
+        // the hips: the body's turn goes with it, so the joints' angles and limits keep to the body
+        if (root && typeof turnBody === "function"){ S.body = Object.assign({}, s0.body); turnBody(WORLD[k], deg(dg)); }
         afterEdit(i); },
       scale: (s0, f, n) => { S.P = s0.P.map(p => p.slice()); S.R = s0.R.slice();
         for (const j of mirror()){
