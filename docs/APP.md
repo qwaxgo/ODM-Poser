@@ -5,12 +5,13 @@ Start menu, Dock), opens in its own window, opens offline after the first time (
 presets it last read), and updates itself the next time it opens online. 日本語: [APP-JA.md](APP-JA.md)
 
 **Condition**: the editor must be opened from an **https site** or from **this computer
-(localhost)**. Opened as a file (`web/editor/index.html`) it is not installable (it still works).
+(localhost)**.
 
 ## Computers (Windows, macOS, Linux)
 
-- Run `python tools/serve.py`, open `http://localhost:8765/web/editor/`, press
-  **Install as an app**. Once installed, the app opens without the server (run it again to update).
+- Run `python tools/serve.py` (it builds the site first: Node.js and `npm install` are needed),
+  open `http://localhost:8765/ODM-Poser/editor/`, press **Install as an app**. Once installed, the app opens
+  without the server (run it again to update).
 
 | browser | how |
 |---------|-----|
@@ -22,9 +23,10 @@ presets it last read), and updates itself the next time it opens online. 日本�
 
 They need the editor on an **https site**:
 
-1. Put the `web` folder (mods: install them from the MOD panel on each device, or upload `mods` too after `python tools/make_mods_list.py`) on an
-   https static host such as GitHub Pages, Cloudflare Pages or Netlify; the editor is at
-   `https://<site>/web/editor/`. What you upload is public on that site, private mods included.
+1. Build the site (`npm run build` makes `dist/`; set `site` and `base` in `astro.config.mjs` to
+   its address) and put `dist` on an https static host such as GitHub Pages, Cloudflare Pages or
+   Netlify; the editor is at `https://<site>/editor/`. Mods: install them from the MOD panel on each
+   device, or run `python tools/make_mods_list.py` before building and upload `mods` next to `editor`. What you upload is public on that site, private mods included.
    GitHub Pages serves private repositories only on paid plans.
 2. Open that address and install: **iPhone / iPad** (Safari): Share (□↑) → Add to Home Screen;
    **Android** (Chrome, Edge, Samsung Internet): the button, or menu → Install app / Add to Home
@@ -42,7 +44,7 @@ offline it opens with what it kept. A new version shows the next time it opens o
 
 | symptom | cause and fix |
 |---------|---------------|
-| no **Install as an app** button | opened as a file (use https or localhost), already installed, Firefox, or inside another page's frame |
+| no **Install as an app** button | not https or localhost, already installed, Firefox, or inside another page's frame |
 | cannot install on a phone | not https: put the editor on an https site |
 | no update | open the app again while online |
-| no mods | on a site, install them in the MOD panel (from a file, or by URL), or upload `mods/` and `web/mods.js` |
+| no mods | on a site, install them in the MOD panel (from a file, or by URL), or upload `mods/` next to `editor/` (with `mods.js` from `tools/make_mods_list.py`) |

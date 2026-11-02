@@ -11,15 +11,14 @@ English: [APP.md](APP.md)
 ## 条件
 
 アプリとして追加できるのは、エディタを **https のサイト** か **このパソコン（localhost）** から開いたときだけです。
-`web/editor/index.html` をファイルとして直接開いたときは追加できません（エディタとしてはそのまま使えます）。
 
 ## パソコン（Windows・Mac・Linux）
 
-1. エディタのフォルダで次を実行する：
+1. エディタのフォルダで次を実行する（先にサイトをビルドするので、Node.js と `npm install` が必要です）：
    ```
    python tools/serve.py
    ```
-2. 表示された `http://localhost:8765/web/editor/` をブラウザで開き、「アプリとして追加」を押す。
+2. 表示された `http://localhost:8765/ODM-Poser/editor/` をブラウザで開き、「アプリとして追加」を押す。
 
 追加したあとは、`tools/serve.py` を止めてもアプリは開けます（新しい版にしたいときだけ、もう一度起動して開きます）。
 
@@ -35,10 +34,11 @@ English: [APP.md](APP.md)
 
 スマホやタブレットでは **https のサイト** に置いたエディタが必要です。
 
-1. エディタの `web` フォルダを（MOD は各端末で MOD 欄から入れるか、`mods` フォルダも置く）、https の静的サイトに置く。
-   GitHub Pages・Cloudflare Pages・Netlify などで置けます。エディタの場所は `https://（サイト）/web/editor/` です。
+1. サイトをビルドし（`npm run build` で `dist/` ができます。`astro.config.mjs` の `site` と `base` を置き先に合わせる）、
+   `dist` を https の静的サイトに置く（MOD は各端末で MOD 欄から入れるか、`mods` フォルダも `editor` の隣に置く）。
+   GitHub Pages・Cloudflare Pages・Netlify などで置けます。エディタの場所は `https://（サイト）/editor/` です。
    - 置いたものはそのサイトで誰でも見られるようになります。非公開の MOD を置くときは注意してください。
-   - MOD を置くときは、置く前に `python tools/make_mods_list.py` を実行して `web/mods.js` を作ります。
+   - MOD を置くときは、ビルドの前に `python tools/make_mods_list.py` を実行して `web/mods.js` を作ります。
    - GitHub Pages は、非公開のリポジトリからは有料プランでのみ使えます。
 2. スマホ・タブレットでそのアドレスを開き、追加する：
 
@@ -61,7 +61,7 @@ English: [APP.md](APP.md)
 
 | 症状 | 原因と対処 |
 |------|-----------|
-| 「アプリとして追加」ボタンが出ない | ファイルとして開いている（https か localhost で開く）、すでに追加済み、Firefox、ほかのページの枠の中で開いている、のどれか |
+| 「アプリとして追加」ボタンが出ない | https でも localhost でもない、すでに追加済み、Firefox、ほかのページの枠の中で開いている、のどれか |
 | スマホで追加できない | https で開いていない。https のサイトに置く |
 | 新しい版にならない | ネットにつながった状態でアプリを開き直す。まだなら、アプリを閉じてもう一度開く |
-| MOD が出ない | サイトでは MOD 欄の「ファイルから入れる」「URLから追加」で入れる（または `mods` フォルダと `web/mods.js` も置く） |
+| MOD が出ない | サイトでは MOD 欄の「ファイルから入れる」「URLから追加」で入れる（または `mods` フォルダを `editor` の隣に置き、`tools/make_mods_list.py` で作った `mods.js` も置く） |

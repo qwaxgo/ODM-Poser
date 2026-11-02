@@ -18,8 +18,8 @@ API の版：**1.2.0**。English: [MODDING.md](MODDING.md)（こちらが正式�
 ## まず試す
 
 1. 下の「MOD のファイル」の例を `mods/mymod.js` として保存します（または MOD のリポジトリを `mods/` に clone。このページの最後）。
-2. `web/editor/index.html` を直接開くときは、`python tools/make_mods_list.py` を実行してから開き直します
-   （エディタを載せているページが一覧を用意する場合は、開き直すだけ）。
+2. `python tools/make_mods_list.py` を実行して一覧（`web/mods.js`）を作り、`npm run dev` か `python tools/serve.py` で
+   エディタを開きます（開いていれば開き直す。エディタを載せているページが一覧を用意する場合は、開き直すだけ）。
 3. 横の欄のいちばん下の **MOD** 欄に、読み込んだ MOD が並びます（✓ 読み込み済み、✗ はエラーの内容つき）。
 
 MOD 欄では、`mods/` フォルダがない場所（GitHub Pages などのサイト、アプリとして追加したもの、スマホ・タブレット）でも MOD を使えます。
@@ -276,5 +276,5 @@ cd <エディタのフォルダ>/mods
 git clone <MOD のリポジトリ>
 ```
 
-更新はそのフォルダで `git pull` して、エディタを開き直します（直接開くときは、ファイルを増やしたり減らしたりしたら
+更新はそのフォルダで `git pull` して、エディタを開き直します（ファイルを増やしたり減らしたりしたら
 `tools/make_mods_list.py` をもう一度実行）。`mods/` は git に入らないので、clone したリポジトリがエディタのリポジトリと混ざることはありません。

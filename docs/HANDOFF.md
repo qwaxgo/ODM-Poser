@@ -11,7 +11,7 @@ together, the owner's rules, and what is still open.
 ## What it is
 
 A pseudo-3D stick-and-circle pose editor ("atari" = a rough of lines and circles): a web page
-that runs from disk, from any static site (GitHub Pages) and as an installed app. The owner (qwaxgo, an illustrator) publishes it under MIT. It started
+on a static site (GitHub Pages, built with Astro) that also installs as an app (PWA). The owner (qwaxgo, an illustrator) publishes it under MIT. It started
 as a tool inside a private project and was split out on 2026-10-19 with no git history and
 nothing third-party: keep it that way.
 
@@ -21,11 +21,13 @@ nothing third-party: keep it that way.
   packs, names of those packs or their files, fonts, icons or code copied from elsewhere. Props
   and shapes are hand-made primitives. If you borrow an *idea* from another project, write the
   code yourself and do not copy text.
-- **Built-in poses**: only the 11 written by hand as joint turns (`PRESETS` in index.html:
+- **Built-in poses**: only the 11 written by hand as joint turns (`PRESETS` in pose_main.js:
   nothing traced from pictures). Other poses come from the user's own preset files (loaded in
   the editor, or added by a host through a mod). The public repos must not reveal
   what the owner keeps there: describe the feature generically.
-- **Standalone**: the editor must work as a plain HTML page opened from disk, with no server.
+- **Where it runs** (owner's decision, 2026-11-02): the editor is a page of the Astro site (no longer
+  a plain HTML file opened from disk). Use without a browser or server comes as a desktop app (an
+  executable) released on GitHub: planned, not built yet.
 - The owner commits and pushes. Do not commit unless asked; finish a batch with ready-to-paste
   commit / push commands. Reports to the owner are in Japanese.
 - Heavy GPU runs are not needed for this project.
@@ -33,7 +35,8 @@ nothing third-party: keep it that way.
 ## Layout
 
 ```
-web/editor/index.html            the editor core (plain JS, Canvas 2D)
+src/pages/editor/index.astro     the editor's page; its markup in src/components/editor/*.astro (plain HTML)
+web/editor/pose_main.js          the editor core (plain JS, Canvas 2D), loaded by the page as a classic script
 web/editor/ui.js, ui.src.css     the look after melta UI (design/melta-ui); ui.css is generated (npm run css); see AGENTS.md
 web/editor/pose_props*.js        window.PROP_CATS / window.PROPS: the props as primitives
 web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carrying, mounting, grabbing, wire
@@ -44,10 +47,12 @@ web/editor/pose_share.js         posting (X, Bluesky, Misskey, Mastodon, share m
                                  only the official mods (qwaxgo on GitHub) travel; opened links are sanitised
 mods/                            the user's mods and cloned mod repositories (README.md only is tracked),
                                  e.g. ODM-Poser-SampleMods
-tools/make_mods_list.py          web/mods.js for opening the editor from disk with mods
-tools/serve.py                   a local server (localhost / --lan) so the editor installs as an app
-astro.config.mjs, src/pages/    the site (Astro): web/ goes out as it is (publicDir), src/pages makes the site root
-                                 with the link card; npm run build -> dist/, which the Pages workflow publishes
+tools/make_mods_list.py          web/mods.js: the list of mods/ for npm run dev and tools/serve.py (both serve mods/ at <base>/mods/)
+tools/serve.py                   builds the site and serves dist/ (localhost / --lan) so the editor installs as an app
+tools/dist_server.py             builds and serves dist/ at /ODM-Poser/ for serve.py, lint_ui.py, make_card.py
+astro.config.mjs, src/pages/    the site (Astro): src/pages makes the editor, the docs and the site root (link card);
+                                 web/ goes out as it is (publicDir); npm run build -> dist/, which the Pages workflow publishes
+src/pages/docs/, src/lib/docs.ts the docs: docs/APP*.md and docs/MODDING*.md (src/content.config.ts) as pages, ja / en
 .devcontainer/, docker-compose*.yml   the development container (open it from WSL2); compose: dev, preview, serve;
                                  docker-compose.test.yml: lint-ui, syntax, build
 tools/make_icons.py              draws the app icons (web/editor/icon-*.png, apple-touch-icon, favicon, icon.svg)
@@ -61,7 +66,7 @@ A page that hosts the editor talks to it only through a mod (MOD API: `api.io`, 
 `api.presets`) and the list of mods it serves at `../mods.js`; keep the API stable for hosts:
 state format `version: 3`, `window.ODMPoser` (old alias `window.SymbolicPose`).
 
-## The editor in brief (web/editor/index.html)
+## The editor in brief (web/editor/pose_main.js)
 
 - State `S`: `P` 21 joints (the hands r_hand / l_hand last, so older 19-joint poses upgrade by appending) (cm, y up, the figure faces +z; order in `J`), `R` circle radii,
   `hands {r,l}`, `cam`, `body` (whole-body turn), `twist` per joint, `pins {joint: [x,y,z]}`,
@@ -92,7 +97,7 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
 
 ## Checking changes
 
-- JS syntax: `python -c "import esprima, re; [esprima.parseScript(m) for m in re.findall(r'<script>(.*?)</script>', open('web/editor/index.html', encoding='utf-8').read(), re.S)]"`
+- JS syntax: `python -c "import esprima, glob; [esprima.parseScript(open(f, encoding='utf-8').read()) for f in sorted(glob.glob('web/editor/*.js'))]"`
   (esprima knows no `?.` or `??`: keep those out of the editor files).
 - Browsers: Playwright (for Python) drives Edge (`channel="msedge"`),
   WebKit and Firefox, with device emulation for phones and tablets; the headless Edge command
@@ -100,6 +105,11 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
 
 ## Open items
 
+- Desktop app: an executable of the editor for use without a browser or server, released on
+  GitHub (owner's plan, 2026-11-02; Tauri is the likely wrapper of dist/). Not started.
+- Docs pages still to write (src/lib/docs.ts PAGES, a docs/NAME.md + NAME-JA.md pair each, added to
+  src/content.config.ts): exporting (pictures, OpenPose, the pose file), adding poses (user presets,
+  described generically), adding props / assets.
 - English UI done (2026-10-19). To find untranslated text: open the editor headless with
   `?lang=en`, step through the modes, joints and props, and list text nodes that still hold
   Japanese (only the "日本語" switch and the search example should remain).
