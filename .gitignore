@@ -9,3 +9,5 @@ node_modules/
 # the site's build (npm run build) and Astro's own files
 dist/
 .astro/
+# the releases made here (tools/make_release_html.py)
+release/

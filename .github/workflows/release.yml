@@ -1,0 +1,36 @@
+# A release draft on a pushed tag v<version>: the HTML release (tools/make_release_html.py), with
+# the CHANGELOG.md part of that version as its notes. The executables (Tauri) are built on the
+# owner's machine and added to the draft by hand; then the owner publishes it.
+name: Release draft
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: The HTML release (release/)
+        run: |
+          npm ci
+          python3 tools/make_release_html.py --tag "$GITHUB_REF_NAME"
+
+      - name: The draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/*-html.zip --draft \
+            --title "立体人形装置 ODM Poser $GITHUB_REF_NAME" --notes-file release/notes.md
