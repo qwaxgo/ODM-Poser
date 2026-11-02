@@ -16,6 +16,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 
 - HTML 版を配布：zip を展開して `index.html` を開くだけで、サーバーなしで使えます。MOD は隣の `mods` フォルダに入れます
 - MOD の欄に「フォルダから」：mods フォルダを選ぶと、中の MOD をまとめて読み込みます（Chrome と Edge はフォルダを覚えます）
+- アプリ版（Tauri）：Linux は AppImage、Windows は zip（インストール不要）。MOD は実行ファイルの隣の `mods` フォルダに入れ、書き出しは「名前を付けて保存」で保存します
 - エディタのヘッダーに版を表示
 - ドキュメントのページ（日本語・英語）：アプリとして使う・MOD の作り方。エディタの「使い方」から開けます
 - エディタのページを Astro で作るように変更（見た目と動きは同じです）
@@ -24,6 +25,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 
 - The HTML release: unzip it and open `index.html`, no server needed. Mods go in the `mods` folder next to it
 - "From a folder" in the MOD panel: pick the mods folder and every mod in it loads (Chrome and Edge remember the folder)
+- The app (Tauri): an AppImage for Linux, a zip for Windows (nothing to install). Mods go in the `mods` folder next to the executable; exports are saved through a "save as" dialog
 - The editor's header shows its version
 - Docs pages (Japanese, English): installing it as an app, writing mods. The editor's "Guide" link opens them
 - The editor's page is made with Astro (it looks and works the same)

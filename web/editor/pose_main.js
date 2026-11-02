@@ -1758,6 +1758,14 @@ function download(url, name){
     dlg.showModal(); $("spSave").focus();
     return;
   }
+  // the app (src-tauri) has no download links: it gives the bytes to its "save as" dialog (ODM_APP_SAVE)
+  if (window.ODM_APP_SAVE){
+    fetch(url).then(r => r.blob()).then(b => window.ODM_APP_SAVE(b, name))
+      .then(saved => { if (!saved) say("保存をやめました。"); })
+      .catch(err => say("保存できませんでした：" + (err && err.message || err), true))
+      .finally(() => { if (!url.startsWith("data:")) setTimeout(() => URL.revokeObjectURL(url), 60000); });
+    return;
+  }
   const go = href => { const a = document.createElement("a"); a.href = href; a.download = name; a.rel = "noopener";
     document.body.appendChild(a); a.click(); a.remove(); };
   if (!url.startsWith("data:")){ go(url); setTimeout(() => URL.revokeObjectURL(url), 60000); return; }

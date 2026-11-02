@@ -391,6 +391,7 @@
     [/^このアドレスの MOD を、エディタを開くたびに読み込んで実行します。信頼できるものだけを追加してください。\n\n([\s\S]+)$/,
       m => `The mod at this address is loaded and run each time the editor opens. Add only mods you trust.\n\n${m[1]}`],
     [/^「(.+)」をこの端末から外しますか？$/, m => `Remove "${m[1]}" from this device?`],
+    [/^保存できませんでした：(.*)$/, m => `Could not save: ${m[1]}`],
     [/^フォルダ: (.+)$/, m => `Folder: ${m[1]}`],
     [/^この端末では (\d+)×(\d+) を描けないため、(\d+)×(\d+) にしました。$/, m => `This device cannot draw ${m[1]} × ${m[2]}: saved at ${m[3]} × ${m[4]}.`],
     // posting and links (pose_share.js)
