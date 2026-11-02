@@ -1,0 +1,24 @@
+---
+// /docs/: on to the docs in the editor's language (the last choice in this browser, then the
+// browser's language), as i18n.js chooses it; the links stay for when scripts do not run.
+import { WORDS, href } from "../../lib/docs";
+const ja = href("ja"), en = href("en");
+---
+
+<!doctype html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>{`${WORDS.ja.docs} / ${WORDS.en.docs} — 立体人形装置 ODM Poser`}</title>
+		<script is:inline define:vars={{ ja, en }}>
+			let lang = null;
+			try { lang = localStorage.getItem("odm-poser-lang"); } catch (e) {}
+			if (lang !== "en" && lang !== "ja") lang = (navigator.language || "").toLowerCase().startsWith("ja") ? "ja" : "en";
+			location.replace(lang === "ja" ? ja : en);
+		</script>
+	</head>
+	<body>
+		<p><a href={ja}>{WORDS.ja.docs}</a> / <a href={en} lang="en">{WORDS.en.docs}</a></p>
+	</body>
+</html>
