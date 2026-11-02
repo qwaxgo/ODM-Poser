@@ -1,0 +1,48 @@
+# Checks in the container (as CI would run them):
+#   docker compose -f docker-compose.test.yml run --rm lint-ui     melta-lint on the editor as drawn (tools/lint_ui.py)
+#   docker compose -f docker-compose.test.yml run --rm syntax      the editor's scripts parse (docs/HANDOFF.md)
+#   docker compose -f docker-compose.test.yml run --rm build       the site builds (dist/)
+
+services:
+  lint-ui:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    image: odm-poser-dev
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+    environment:
+      - CI=true
+    working_dir: /workspace
+    command: sh -c "git submodule update --init 2>/dev/null; python tools/lint_ui.py"
+
+  syntax:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    image: odm-poser-dev
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: >
+      python -c "import esprima, re, glob;
+      [esprima.parseScript(m) for m in re.findall(r'<script>(.*?)</script>', open('web/editor/index.html', encoding='utf-8').read(), re.S)];
+      [esprima.parseScript(open(f, encoding='utf-8').read()) for f in sorted(glob.glob('web/editor/*.js'))];
+      print('syntax ok')"
+
+  build:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    image: odm-poser-dev
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+    environment:
+      - CI=true
+    working_dir: /workspace
+    command: npm run build
+
+volumes:
+  node_modules:

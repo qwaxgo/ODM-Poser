@@ -46,6 +46,10 @@ mods/                            the user's mods and cloned mod repositories (RE
                                  e.g. ODM-Poser-SampleMods
 tools/make_mods_list.py          web/mods.js for opening the editor from disk with mods
 tools/serve.py                   a local server (localhost / --lan) so the editor installs as an app
+astro.config.mjs, src/pages/    the site (Astro): web/ goes out as it is (publicDir), src/pages makes the site root
+                                 with the link card; npm run build -> dist/, which the Pages workflow publishes
+.devcontainer/, docker-compose*.yml   the development container (open it from WSL2); compose: dev, preview, serve;
+                                 docker-compose.test.yml: lint-ui, syntax, build
 tools/make_icons.py              draws the app icons (web/editor/icon-*.png, apple-touch-icon, favicon, icon.svg)
 web/editor/manifest.webmanifest, sw.js   the app (PWA): network first, the kept copy offline (docs/APP.md)
 docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API

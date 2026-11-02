@@ -1,0 +1,57 @@
+# The same container as the devcontainer, without VS Code:
+#   docker compose up dev        the site and the editor at http://localhost:4321/ODM-Poser/editor/index.html
+#   docker compose up preview    the built site (dist/) at http://localhost:4322/ODM-Poser/
+#   docker compose up serve      tools/serve.py (as the editor is opened locally) at http://localhost:8765/web/editor/
+# Checks: docker-compose.test.yml.
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    image: odm-poser-dev
+    container_name: odm-poser-dev
+    ports:
+      - "4321:4321"
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev -- --host 0.0.0.0
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+
+  preview:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    image: odm-poser-dev
+    container_name: odm-poser-preview
+    ports:
+      - "4322:4321"
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+    environment:
+      - NODE_ENV=production
+    command: sh -c "npm run build && npm run preview -- --host 0.0.0.0"
+    working_dir: /workspace
+
+  serve:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    image: odm-poser-dev
+    container_name: odm-poser-serve
+    ports:
+      - "8765:8765"
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+    command: python tools/serve.py --lan
+    working_dir: /workspace
+
+volumes:
+  node_modules:

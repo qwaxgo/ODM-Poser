@@ -1,0 +1,19 @@
+node_modules
+npm-debug.log
+dist
+.astro
+.git
+mods/*
+!mods/README.md
+web/mods.js
+__pycache__
+*.pyc
+.env
+.env.*
+.DS_Store
+*.log
+.vscode/settings.json
+# the devcontainer's own settings stay out; what the image is made from goes in
+.devcontainer/devcontainer.json
+!.devcontainer/setup_zsh.sh
+!.devcontainer/Dockerfile

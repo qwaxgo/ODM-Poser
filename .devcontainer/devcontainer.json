@@ -1,0 +1,46 @@
+{
+  "name": "ODM Poser Development",
+  "dockerFile": "Dockerfile",
+  "context": "..",
+  "workspaceFolder": "/workspace",
+  "forwardPorts": [4321, 8765],
+  "portsAttributes": {
+    "4321": {
+      "label": "Astro (dev / preview)",
+      "onAutoForward": "notify"
+    },
+    "8765": {
+      "label": "tools/serve.py",
+      "onAutoForward": "silent"
+    }
+  },
+  // open the folder from WSL2 (or Linux / macOS): this runs there, so the folders and files mounted below exist
+  "initializeCommand": "mkdir -p $HOME/.ssh $HOME/.claude && touch $HOME/.zshrc $HOME/.zsh_plugins.txt $HOME/.gitconfig",
+  "postCreateCommand": "/tmp/setup_zsh.sh && git submodule update --init && npm install",
+  "postStartCommand": "echo 'DevContainer is ready! npm run dev: the site and the editor (http://localhost:4321/ODM-Poser/editor/index.html); python tools/lint_ui.py: the UI check.'",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "remoteUser": "node",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "search.ripgrep.path": "/usr/bin/rg",
+        "todo-tree.ripgrep.ripgrep": "/usr/bin/rg",
+        "python.defaultInterpreterPath": "/opt/venv/bin/python"
+      }
+    }
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    // the container's own node_modules (Linux builds of Tailwind's native parts), apart from the host's
+    "source=odm-poser-node_modules,target=/workspace/node_modules,type=volume",
+    "source=${localEnv:HOME}/.ssh,target=/tmp/mounted_ssh,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.zshrc,target=/tmp/mounted_zshrc,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.zsh_plugins.txt,target=/tmp/mounted_zsh_plugins.txt,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/node/.gitconfig,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,consistency=cached"
+  ]
+}

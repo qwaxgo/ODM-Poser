@@ -6,3 +6,6 @@ mods/*
 web/mods.js
 # tools for working on the UI (package.json); the editor itself needs none
 node_modules/
+# the site's build (npm run build) and Astro's own files
+dist/
+.astro/

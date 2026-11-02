@@ -1,0 +1,29 @@
+{
+  "recommendations": [
+    // the site (Astro) and the editor's look (Tailwind CSS, melta UI)
+    "astro-build.astro-vscode",
+    "bradlc.vscode-tailwindcss",
+    "editorconfig.editorconfig",
+    "esbenp.prettier-vscode",
+    // tools/*.py
+    "ms-python.python",
+    // Git
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github",
+    // Claude Code
+    "Anthropic.claude-code",
+    // checking in a browser
+    "ms-playwright.playwright",
+    // containers (WSL2 / Docker / devcontainer)
+    "ms-vscode-remote.remote-containers",
+    "ms-vscode-remote.remote-wsl",
+    "ms-azuretools.vscode-containers",
+    // Markdown, YAML (docs/, workflows)
+    "redhat.vscode-yaml",
+    "davidanson.vscode-markdownlint",
+    // Japanese
+    "ms-ceintl.vscode-language-pack-ja",
+    "mosapride.zenkaku"
+  ],
+  "unwantedRecommendations": []
+}

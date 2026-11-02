@@ -1,11 +1,12 @@
-# Publish the editor (web/) to GitHub Pages.
-# Address: https://qwaxgo.github.io/ODM-Poser/ (redirects to editor/index.html)
+# Build the site with Astro and publish it to GitHub Pages.
+# Address: https://apps.qwaxgo.com/ODM-Poser/ (redirects to editor/index.html)
+# web/ goes out as it is (Astro's publicDir); src/pages makes the site root with the link card.
 name: Deploy the editor to GitHub Pages
 
 on:
   push:
     branches: ["main"]
-    paths: ["web/**", ".github/workflows/static.yml"]   # only when the editor changes
+    paths: ["web/**", "src/**", "astro.config.mjs", "package.json", "package-lock.json", ".github/workflows/static.yml"]
   workflow_dispatch:                                     # can also be run by hand from the Actions tab
 
 permissions:
@@ -27,27 +28,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Site root -> the editor (with the link card, since previews do not follow the redirect)
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Build the site (dist/)
         run: |
-          cat > web/index.html <<'HTML'
-          <!doctype html>
-          <html lang="ja"><head><meta charset="utf-8">
-          <title>立体人形装置 ODM Poser</title>
-          <meta name="description" content="線と丸の全身アタリを、疑似3Dで動かすポーズエディタ。ブラウザだけで動き、PC・スマホ・タブレットで使えます。アタリ画像・OpenPose 画像・ポーズを書き出せます。">
-          <meta property="og:type" content="website">
-          <meta property="og:site_name" content="立体人形装置 ODM Poser">
-          <meta property="og:title" content="立体人形装置 ODM Poser — Omni-Directional Mannequin Poser">
-          <meta property="og:description" content="線と丸の全身アタリを、疑似3Dで動かすポーズエディタ。ブラウザだけで動き、PC・スマホ・タブレットで使えます。アタリ画像・OpenPose 画像・ポーズを書き出せます。">
-          <meta property="og:url" content="https://apps.qwaxgo.com/ODM-Poser/">
-          <meta property="og:image" content="https://apps.qwaxgo.com/ODM-Poser/editor/og-card.png">
-          <meta property="og:image:width" content="1200">
-          <meta property="og:image:height" content="630">
-          <meta property="og:image:alt" content="立体人形装置 ODM Poser：線と丸の人形とパース定規">
-          <meta name="twitter:card" content="summary_large_image">
-          <script>location.replace("editor/index.html" + location.search + location.hash);</script>
-          <noscript><meta http-equiv="refresh" content="0; url=editor/index.html"></noscript>
-          </head><body><a href="editor/index.html">立体人形装置 ODM Poser</a></body></html>
-          HTML
+          npm ci
+          npm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -55,7 +45,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web
+          path: dist
 
       - name: Deploy to GitHub Pages
         id: deployment
