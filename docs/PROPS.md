@@ -1,0 +1,61 @@
+# Adding props and objects
+
+How to give a figure things to hold or wear, and how to put objects (boxes, walls, buildings, poles,
+...) on the floor. All are drawn as simple shapes in lines and circles, and go into the rough picture.
+
+日本語: [PROPS-JA.md](PROPS-JA.md)
+
+## Props (the Equip tab)
+
+1. Pick a group under **Kind** (one-handed weapons, firearms, instruments, tableware, hats, ...), then
+   the prop under it. With **Preview** on, where it would go is drawn faintly first.
+2. Press a button.
+
+| Button | What it does |
+|--------|--------------|
+| Hold in the right / left hand | That hand holds it, its shape set for the grip (a two-handed thing gets the other hand too) |
+| Wear | On the head, chest, back, waist, feet, ... |
+| Place | Chairs, rides and the like go on the floor; a seat or a ride fits the body to it |
+| Place on its own | On the floor in front of the figure, held by no one |
+
+**Where it is held.** A held thing goes to the grip point of the hand's shape: a handle (swords, bats,
+guns) inside the curled fingers, a cupped thing (cups, balls, phones) against the palm, a pinched thing
+(pens, chopsticks) between the fingertips. Change the hand's shape later and it moves to that shape's
+grip point.
+
+Pick it in **In the scene** to:
+
+- remove it, carry it on the back, put it down (floor / object), hold or wear it again, ground it
+- reverse the grip, turn **Both hands** on or off, fit the body (chairs, rides)
+- set its size, turn (forward / back, twist, sideways) and shift (across, up / down, forward / back),
+  give it its own line colour, **↺ Reset**
+
+### Size on three axes
+
+**A thing's size (3 axes)** in the **Sizes** tab stretches X, Y and Z each on its own (20–400 %). For a
+held thing, Y is the way the thumb points (a sword's blade), Z the way the arm points (a gun's
+barrel), X across both. The grip stays; the far end grows. The preview's fields set the size before
+it is placed, too.
+
+### Moving things put down
+
+Things on the floor (**Place**, **Place on its own**, **Put down (floor / object)**) are dragged in
+**Place** mode (Shift + drag: up / down, wheel: turn). The 3-axis handles move and turn them and set their
+X, Y and Z sizes. However many figures there are, things put down move whichever figure is being edited.
+
+## Objects (the Objects tab)
+
+Pick a kind under **Objects (floors, walls, buildings, poles ...)** and press **Place**: box, floor,
+wall, building, step, prism, cylinder, pyramid, cone and pole, each sized in cm (width, height, depth).
+With grounding on, figures stand on their tops too. Drag them in Place mode; the 3-axis handles set
+their width, height and depth.
+
+## Your own (mods)
+
+Props, object kinds, auras and hand shapes the editor lacks can come from a mod. A prop is made of
+cylinders, boxes, balls, discs, cones, rings, domes and lines in cm (not pictures or 3D models). See
+**Props** and **Adding things** in [MODDING.md](MODDING.md).
+
+- A held prop's origin is where it is held (a handle's middle); `grip` can say where instead
+- `api.props.add(key, def)` adds a prop, `api.solids.addKind(...)` an object kind
+- What a mod adds is saved in the pose file, and opens without breaking in an editor that lacks the mod

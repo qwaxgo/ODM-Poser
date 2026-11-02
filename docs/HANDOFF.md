@@ -27,14 +27,14 @@ nothing third-party: keep it that way.
   what the owner keeps there: describe the feature generically.
 - **Where it runs** (owner's decisions, 2026-11-02): the editor is a page of the Astro site; the
   repository has no plain HTML file to open from disk. Standalone use comes from GitHub Releases
-  (tags `v0.x.y`), none built yet:
+  (tags `v0.x.y`; v0.1.0 published 2026-11-02 with all three files below except the APK):
   - an HTML build: a zip whose editor opens from disk (file://), so *the editor's scripts must keep
     working from file://* (no ES modules, no fetch of its own files); the user's mods go in the
     `mods/` folder next to it, listed by a line in its `mods.js`, or the folder picked in the editor
     (both ways); the docs are a link to the site, not shipped;
-  - an executable (Tauri), for the platforms this machine can build: Linux, and Windows cross-built
-    in the build container (NSIS installer), or on the Windows host if that fails; mods in a `mods/` folder next to it; not code-signed (the docs explain
-    the Windows warning);
+  - an executable (Tauri): a Linux AppImage, and a Windows zip (the exe, no installer) cross-built
+    in the build container; mods in a `mods/` folder next to it; not code-signed (docs/DOWNLOAD.md
+    explains the Windows warning);
   - an APK (Tauri's Android build): a future plan, not now.
   The Tauri builds get their own build container, apart from the Astro one.
 - **ComfyUI**: the bridge is the owner's public repo `qwaxgo/ODM-Poser-ComfyUIBridge` (editor as
@@ -76,7 +76,8 @@ tools/make_release_html.py       release/: the HTML release zip (parts in tools/
 CHANGELOG.md                     patch notes (ja / en), the top version is the next release
 astro.config.mjs, src/pages/    the site (Astro): src/pages makes the editor, the docs and the site root (link card);
                                  web/ goes out as it is (publicDir); npm run build -> dist/, which the Pages workflow publishes
-src/pages/docs/, src/lib/docs.ts the docs: docs/APP*.md and docs/MODDING*.md (src/content.config.ts) as pages, ja / en
+src/pages/docs/, src/lib/docs.ts the docs: docs/{DOWNLOAD,APP,EXPORT,POSES,PROPS,MODDING,COMFYUI}(-JA).md
+                                 (listed in src/content.config.ts, ordered by PAGES in src/lib/docs.ts) as pages, ja / en
 .devcontainer/, docker-compose*.yml   the development container (open it from WSL2); compose: dev, preview, serve;
                                  docker-compose.test.yml: lint-ui, syntax, build
 tools/make_icons.py              draws the app icons (web/editor/icon-*.png, apple-touch-icon, favicon, icon.svg)
@@ -94,7 +95,12 @@ state format `version: 3`, `window.ODMPoser` (old alias `window.SymbolicPose`).
 
 - State `S`: `P` 21 joints (the hands r_hand / l_hand last, so older 19-joint poses upgrade by appending) (cm, y up, the figure faces +z; order in `J`), `R` circle radii,
   `hands {r,l}`, `cam`, `body` (whole-body turn), `twist` per joint, `pins {joint: [x,y,z]}`,
-  `items`, `env`, `wire`, `center` (view centre). Saved JSON has `version: 3`; `migrate()` reads
+  `items`, `env`, `wire`, `center` (view centre), `shape` (optional: the shoulders' and thigh
+  roots' own standing directions, kept by `keepTorsoShape()` when their width / height / depth is
+  changed, so 関節の限界 does not pull them back; `restDir(i)`).
+- The shoulders and thigh roots (`TORSO_PAIR`) are resized along the torso's own axes (`torsoAxes`,
+  `movePair`): body-mode drags lock to the axis first dragged along; サイズ and the 3-axis handles
+  set width, height and depth apart. Saved JSON has `version: 3`; `migrate()` reads
   older files (18 joints; `head.yaw`).
 - Classic scripts share one global scope: `pose_scene.js` (loaded after the main script) uses
   `S`, `J`, `IX`, `solveIK`, `rotateSubtree`, `afterEdit`, ... and defines `drawScene()` and
@@ -105,10 +111,21 @@ state format `version: 3`, `window.ODMPoser` (old alias `window.SymbolicPose`).
 - Search: `WORDS` (Japanese / English word groups) + `foldText` (kana, width and case folded),
   exact match first, then prefix.
 - OpenPose export is COCO-18 + 2 x 21 hand points drawn in 2D from the hand shape table.
-- Props: `place` = `hand` (fist frame: z along the forearm, y toward the thumb; `grip2` for the
-  other hand), `body` (in front of the chest; `mount` for both hands), `world` (on the floor;
-  `mount` seats the pelvis and puts hands / feet), `grab` (`grab` = the lines a hand or foot
-  takes hold of).
+- Props: `place` = `hand` (hand frame: z along the hand, y toward the thumb, x out of the palm;
+  `grip2` for the other hand), `body` (in front of the chest; `mount` for both hands), `world` (on
+  the floor; `mount` seats the pelvis and puts hands / feet), `grab` (`grab` = the lines a hand or
+  foot takes hold of).
+- Held things: `gripFrame(side)` puts the frame's origin on the hand shape's grip point
+  (`GRIP_AT` in pose_main.js: inside the curled fingers, at the palm, between the fingertips;
+  shapes not listed = fist); the thing's own grip point (`gripPoint` in pose_scene.js) goes there:
+  its origin, or by its `pose` (cup: the side toward the palm; pinch: nearest its origin), or
+  `def.grip`. `aimOtherHand` puts the other hand's grip point on `grip2` the same way.
+- Item sizes: `it.stretch [x, y, z]` along its own axes (`stretchOf` also reads the older
+  `len` / `thick`; `foldStretch` converts on edit); round parts' radii follow (`radK`).
+- More than one figure (pose_cast.js): things put down / placed on their own (`movable`) stay
+  with the figure being edited (`passLoose`), so 配置 mode reaches them; each figure has its own
+  position / direction controls (`placeFigure`); the pictures can show one figure
+  (`#castExport`, `onlyFigure`).
 
 ## Language (web/editor/i18n.js)
 
@@ -129,19 +146,18 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
 
 ## Open items
 
-- The app (src-tauri), written 2026-11-02, NOT built yet (this container has no Docker or Rust toolchain
-  for linking; the Rust type-checks against Tauri 2 for a macOS target with stubbed C tools, and
-  mods.rs's unit tests pass; the page side was tested with a simulated init script). Owner runs, in WSL2:
-  `HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose -f docker-compose.tauri.yml run --rm tauri [linux|windows|all]`
-  and pastes errors. Expected trouble: the image's llvm-rc link, cargo-xwin's first run, linuxdeploy in
-  the AppImage step, Windows needs WebView2. Design: mods = `mods/` next to the AppImage ($APPIMAGE) or the
-  exe, listed at start (restart to add), served by the odmmods:// protocol (plain *.js, `_`/`.` names
-  skipped, no `..`, no links out); saving = `window.ODM_APP_SAVE` (set by the app) -> `save_file` command
-  (asks where; the page cannot choose the path); links to other sites open in the browser (opener plugin).
-  Not tested on a real window: window.open for the share buttons (pose_share.js), dragging files.
+- The app (src-tauri), 2026-11-02. Built by the owner in WSL2 (not in this dev container, which has no
+  Docker): `HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose -f docker-compose.tauri.yml run --rm tauri [linux|windows|all]`
+  (the Windows link prints many harmless LNK4099 "PDB not found" warnings). Design: mods = `mods/` next to
+  the AppImage ($APPIMAGE) or the exe, listed at start (restart to add), served by the odmmods:// protocol
+  (plain *.js, `_`/`.` names skipped, no `..`, no links out); saving = `window.ODM_APP_SAVE` (set by the
+  app) -> `save_file` command (asks where; the page cannot choose the path); links to other sites open in
+  the browser (opener plugin). The bundle category must be one Tauri knows (`GraphicsAndDesign`).
+  Built and released as v0.1.0 (AppImage, Windows zip); the owner checked that it starts. Not checked:
+  window.open for the share buttons (pose_share.js), dragging files, mods/ next to the app.
   Tauri's version follows package.json; Cargo.toml's `version` is kept by hand.
-- Releases (see "Where it runs"): the HTML zip is made (v0.1.0 not tagged yet: merge astro into main
-  first); the MOD panel's "フォルダから" loads a picked mods folder (kept in Chrome / Edge; the
+- Releases (see "Where it runs"): v0.1.0 is out; the next is package.json's version (CHANGELOG's top);
+  the MOD panel's "フォルダから" loads a picked mods folder (kept in Chrome / Edge; the
   re-permission button "読み込む" was not tested by automation: it needs a real click). Tauri next. The site itself
   is deployed by .github/workflows/static.yml (GitHub Pages on push to main, shown at
   apps.qwaxgo.com/ODM-Poser/).
@@ -151,15 +167,15 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
   state format. Ways to give it a built editor (not decided): (a) CI pushes the same build as the
   HTML zip to a branch of this repo (e.g. `editor-build`) and the submodule follows that branch, so
   the bridge needs no Node.js; (b) the bridge fetches the Release zip.
-- Docs pages still to write (owner wants all of them; src/lib/docs.ts PAGES, a docs/NAME.md +
-  NAME-JA.md pair each, added to src/content.config.ts): exporting (pictures, OpenPose, the pose
-  file), adding poses (user presets, described generically), adding props / assets, download (the
-  Releases, the unsigned-app warning), using it in ComfyUI (the bridge).
+- Docs pages: download, app, export, poses, props, modding, comfyui (2026-11-02). A new page = a
+  docs/NAME.md + NAME-JA.md pair, in src/content.config.ts and src/lib/docs.ts PAGES. COMFYUI*.md
+  follows the bridge's README: update it when the bridge's rework changes how it is installed.
 - English UI done (2026-10-19). To find untranslated text: open the editor headless with
   `?lang=en`, step through the modes, joints and props, and list text nodes that still hold
   Japanese (only the "日本語" switch and the search example should remain).
 - Real mouse, touch and pen use has been checked by automation only.
-- Prop shapes and grip positions are estimates; the owner will report the ones that look off.
+- Prop shapes are estimates; grip positions now follow GRIP_AT (worked out from the finger
+  geometry, checked from above and the side); the owner will report the ones that look off.
 - The owner's private project keeps its own copy of the editor (it embeds it elsewhere).
   Changes made there are copied here with a sync script that lives in that project (it
   is now retired: this repository has moved far past that copy). Keep the state format readable

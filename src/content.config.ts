@@ -7,7 +7,8 @@ export const collections = {
 	docs: defineCollection({
 		loader: glob({
 			base: "./docs",
-			pattern: ["APP.md", "APP-JA.md", "MODDING.md", "MODDING-JA.md"],
+			pattern: ["APP.md", "APP-JA.md", "MODDING.md", "MODDING-JA.md", "DOWNLOAD.md", "DOWNLOAD-JA.md", "EXPORT.md", "EXPORT-JA.md",
+				"POSES.md", "POSES-JA.md", "PROPS.md", "PROPS-JA.md", "COMFYUI.md", "COMFYUI-JA.md"],
 			generateId: ({ entry }) => entry,
 		}),
 	}),

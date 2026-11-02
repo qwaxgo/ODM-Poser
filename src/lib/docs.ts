@@ -9,8 +9,13 @@ export const ROOT = import.meta.env.BASE_URL.replace(/\/?$/, "/");
 
 // the pages in the order of the menu; the title is the page's own first heading
 export const PAGES: { slug: string; about: Record<Lang, string> }[] = [
+	{ slug: "download", about: { ja: "サーバーなしで使う：HTML 版、Windows・Linux のアプリ版。署名のないアプリの警告。", en: "Use it without a server: the HTML build, the Windows and Linux apps, the unsigned-app warning." } },
 	{ slug: "app", about: { ja: "ブラウザから「アプリ」として追加する。オフラインで開く、スマホ・タブレットに入れる。", en: "Install it from the browser as an app: offline, on phones and tablets." } },
+	{ slug: "export", about: { ja: "アタリ画像・OpenPose 画像・構図の画像・ポーズのファイルを書き出す。大きさと書き出す人物。", en: "Export the rough, OpenPose and composition pictures and the pose file: sizes, which figures." } },
+	{ slug: "poses", about: { ja: "プリセットとユーザープリセット（自分のポーズ集）。ファイルの形。", en: "Presets and user presets (your own pose sets): the file." } },
+	{ slug: "props", about: { ja: "小物を持たせる・身に着ける・単体で置く、物体を置く。3軸の大きさ。", en: "Props held, worn or placed on their own, objects on the floor: sizes on three axes." } },
 	{ slug: "modding", about: { ja: "MOD で小物・物体・オーラ・手の形・ポーズ・欄を足す。MOD API の説明。", en: "Add props, objects, auras, hand shapes, poses and panels with a mod: the MOD API." } },
+	{ slug: "comfyui", about: { ja: "ComfyUI のノードとして使う（ODM-Poser-ComfyUIBridge）。出力とつなぎ方。", en: "Use it as a ComfyUI node (ODM-Poser-ComfyUIBridge): its outputs." } },
 ];
 
 export const WORDS = {

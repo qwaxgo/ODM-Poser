@@ -98,7 +98,7 @@ A prop is drawn from simple **shapes** in its own frame. The frame depends on `p
 
 | place   | where it is                      | its axes (origin) |
 |---------|----------------------------------|-------------------|
-| `hand`  | held in a hand                   | origin = the middle of the fist; **+y** along the grip toward the thumb (a sword's blade); **+z** the way the forearm points (a gun's barrel); **+x** out of the palm |
+| `hand`  | held in a hand                   | origin = where it is held (a handle's middle; it goes to the hand shape's grip point: inside the curled fingers, against the palm when cupped, between the fingertips when pinched); **+y** along the grip toward the thumb (a sword's blade); **+z** the way the forearm points (a gun's barrel); **+x** out of the palm |
 | `body`  | held in front of the chest (instruments) | origin = the chest joint; +x the figure's left, +y up, +z front |
 | `world` | stands on the floor (chairs, rides) | origin on the floor; +y up; +z where the figure faces when using it |
 | `grab`  | something to hang on (vines, bars) | as `world`; `grab` lists the lines a hand or foot takes hold of |
@@ -145,6 +145,7 @@ Each shape is an object with one key (helpers in `api.shapes`):
 | `parts` | the shapes (or `make` / `sets`) |
 | `pose` | the hand shape while held (`grip`, `trigger`, `pinch`, `cup`, `fist`, `open`, ... or one a mod added) |
 | `grip2`, `pose2` | two-handed: where the other hand holds ([x, y, z] in the prop's frame) and its shape |
+| `grip` | where a held prop is held ([x, y, z] in the prop's frame). Without it: the origin (with `pose: "cup"` the middle of its side toward the palm, with `pinch` the bit nearest the origin) |
 | `mount` | `world` / `body`: where joints go, `{pelvis: [x,y,z], r_wrist: [...], l_ankle: [...]}` (seats, handlebars, pedals) |
 | `hands` | the hand shapes it sets, `{r: "grip", l: "claw"}` (body, wear) |
 | `at`, `sets` | `wear`: where (see above) |
