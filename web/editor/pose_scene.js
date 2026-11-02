@@ -15,18 +15,51 @@ const PROPS_ = window.PROPS || {}, CATS_ = window.PROP_CATS || [];
 
 // ---- frames ------------------------------------------------------------------------------------
 function rotY(v, a){ const c = Math.cos(a), s = Math.sin(a); return [c*v[0] + s*v[2], v[1], -s*v[0] + c*v[2]]; }
-// it.len / it.thick (サイズ, pose_size.js): the long side stretched, the others thickened, about the
-// item's own origin (the grip of a held thing), so the root stays and the tip moves
+// it.stretch [x, y, z] (サイズ, pose_size.js): each of the item's own axes stretched on its own,
+// about the item's grip (a held thing's root stays, the tip moves). Older files have it.len (the
+// long side) and it.thick (the other two): they count as the same.
 function longAxis(it){
   const {lo, hi} = localExtent(partsOf(it)), e = [0, 1, 2].map(i => hi[i] - lo[i]);
   return e.indexOf(Math.max(...e));
 }
 function stretchOf(it){
-  if (!(it.len && it.len !== 1) && !(it.thick && it.thick !== 1)) return null;
-  const a = longAxis(it), L = it.len || 1, T = it.thick || 1;
-  return [0, 1, 2].map(i => i === a ? L : T);
+  let st = Array.isArray(it.stretch) ? [0, 1, 2].map(i => +it.stretch[i] || 1) : null;
+  if ((it.len && it.len !== 1) || (it.thick && it.thick !== 1)){
+    const a = longAxis(it), old = [0, 1, 2].map(i => i === a ? it.len || 1 : it.thick || 1);
+    st = st ? st.map((v, i) => v * old[i]) : old;
+  }
+  return st && st.some(v => v !== 1) ? st : null;
+}
+function foldStretch(it){ it.stretch = stretchOf(it) || [1, 1, 1]; delete it.len; delete it.thick; return it.stretch; }
+// a round part's radius under a stretch: the mean of the axes across its own axis d (a cylinder's,
+// a disc's normal); a ball (no d) the mean of all three
+function radK(it, d){
+  const st = stretchOf(it); if (!st) return 1;
+  if (!d) return (st[0] + st[1] + st[2]) / 3;
+  const l = len(d) || 1, w = d.map(v => 1 - (v / l) ** 2), sw = w[0] + w[1] + w[2] || 1;
+  return (st[0] * w[0] + st[1] * w[1] + st[2] * w[2]) / sw;
+}
+// a held thing's own grip point, which goes on the hand's (gripFrame, by the hand's shape): its
+// origin for handles (swords, guns, ...); for things held in a cupped hand the middle of its side
+// toward the palm; for things pinched the bit nearest its origin (across a thin part: its middle)
+const heldInHand = it => !it.where && (PROPS_[it.key] || {}).place === "hand";
+const gripMemo = new Map();
+function gripPoint(it){
+  const def = PROPS_[it.key] || {};
+  if (def.grip) return def.grip;
+  if (def.pose !== "cup" && def.pose !== "pinch") return [0, 0, 0];
+  const key = it.key + "|" + (it.dims || "") + "|" + !!it.bayonet;
+  let g = gripMemo.get(key);
+  if (!g){
+    const {lo, hi} = localExtent(partsOf(it)), mid = i => (lo[i] + hi[i]) / 2;
+    g = def.pose === "cup" ? [lo[0], mid(1), mid(2)]
+      : [0, 1, 2].map(i => hi[i] - lo[i] < 9 ? mid(i) : Math.max(lo[i], Math.min(hi[i], 0)));
+    gripMemo.set(key, g);
+  }
+  return g;
 }
 function itemLocal(it, p, k = 1){             // the item's own size and turn, before its frame
+  if (heldInHand(it)) p = sub(p, gripPoint(it));
   let q = mul(p, (it.scale || 1) * k);
   const st = stretchOf(it); if (st) q = [q[0] * st[0], q[1] * st[1], q[2] * st[2]];
   const r = it.rot || [0, 0, 0];
@@ -85,7 +118,7 @@ function partSets(it){
   }
   if (it.where === "back") return [{f: backFrame(it), parts: sets[0][1]}];
   if (def.place === "wear") return sets.map(([at, parts]) => ({f: wearFrame(at), parts}));
-  const f = def.place === "hand" ? handFrame(it.hand || "r") : def.place === "body" ? chestFrame() : worldFrame(it);
+  const f = def.place === "hand" ? gripFrame(it.hand || "r") : def.place === "body" ? chestFrame() : worldFrame(it);
   return [{f, parts: sets[0][1]}];
 }
 function frameOf(it){ return partSets(it)[0].f; }
@@ -136,7 +169,7 @@ function circle3(c, n, r, k = 24){            // points of a circle about the no
   return out;
 }
 function drawShape(ctx, sh, it, f, P, lw){
-  const W2 = q => itemToWorld(it, q, f), k = (it.scale || 1) * (f.k || 1) * (it.thick || 1);
+  const W2 = q => itemToWorld(it, q, f), k = (it.scale || 1) * (f.k || 1);
   const line = pts => {
     if (S.hiddenDashed && typeof strokeSeen === "function" && !sceneSide){      // dashed where a body or a solid hides it
       const W = ctx.canvas.width, H = ctx.canvas.height;
@@ -145,7 +178,7 @@ function drawShape(ctx, sh, it, f, P, lw){
     }
     ctx.beginPath(); pts.forEach((q, i) => { const s = P(q); i ? ctx.lineTo(s.x, s.y) : ctx.moveTo(s.x, s.y); }); ctx.stroke(); };
   if (sh.c){
-    const [x1, y1, z1, x2, y2, z2, r0] = sh.c, a = W2([x1, y1, z1]), b = W2([x2, y2, z2]), r = r0 * k;
+    const [x1, y1, z1, x2, y2, z2, r0] = sh.c, a = W2([x1, y1, z1]), b = W2([x2, y2, z2]), r = r0 * k * radK(it, [x2 - x1, y2 - y1, z2 - z1]);
     const pa = P(a), pb = P(b), wpx = 2 * r * Math.max(pa.s, pb.s);
     if (wpx < lw * 3){ ctx.save(); ctx.lineWidth = Math.max(lw, wpx); line([a, b]); ctx.restore(); return; }
     const ax = sub(b, a);
@@ -161,13 +194,13 @@ function drawShape(ctx, sh, it, f, P, lw){
     for (const [a, b] of [[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]]) line([V[a], V[b]]);
   } else if (sh.s){
     const [cx, cy, cz, r] = sh.s, c = P(W2([cx, cy, cz]));
-    ctx.beginPath(); ctx.arc(c.x, c.y, Math.max(1, r * k * c.s), 0, 2 * Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(c.x, c.y, Math.max(1, r * k * radK(it) * c.s), 0, 2 * Math.PI); ctx.stroke();
   } else if (sh.d){
     const [cx, cy, cz, nx, ny, nz, r] = sh.d, c = W2([cx, cy, cz]);
-    line(circle3(c, dirToWorld(f, it, [nx, ny, nz]), r * k));
+    line(circle3(c, dirToWorld(f, it, [nx, ny, nz]), r * k * radK(it, [nx, ny, nz])));
   } else if (sh.k){
     const [bx, by, bz, ax, ay, az, r] = sh.k, b = W2([bx, by, bz]), apex = W2([ax, ay, az]);
-    const ring = circle3(b, sub(apex, b), r * k), pa = P(apex), pr = ring.map(P);
+    const ring = circle3(b, sub(apex, b), r * k * radK(it, [ax - bx, ay - by, az - bz])), pa = P(apex), pr = ring.map(P);
     line(ring);
     let lo = 0, hi = 0, vlo = 1e9, vhi = -1e9;
     const pc = P(b), ux = pc.x - pa.x, uy = pc.y - pa.y;
@@ -175,9 +208,10 @@ function drawShape(ctx, sh, it, f, P, lw){
     for (const i of [lo, hi]){ ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pr[i].x, pr[i].y); ctx.stroke(); }
   } else if (sh.t){
     const [cx, cy, cz, nx, ny, nz, R, r] = sh.t, c = W2([cx, cy, cz]), n = dirToWorld(f, it, [nx, ny, nz]);
-    ctx.save(); ctx.lineWidth = Math.max(lw, 2 * r * k * P(c).s * 0.8); line(circle3(c, n, R * k)); ctx.restore();
+    const rk = k * radK(it, [nx, ny, nz]);
+    ctx.save(); ctx.lineWidth = Math.max(lw, 2 * r * rk * P(c).s * 0.8); line(circle3(c, n, R * rk)); ctx.restore();
   } else if (sh.h){                           // a dome: its rim and two arcs over the top
-    const [cx, cy, cz, nx, ny, nz, r0] = sh.h, c = W2([cx, cy, cz]), n = norm(dirToWorld(f, it, [nx, ny, nz])), r = r0 * k;
+    const [cx, cy, cz, nx, ny, nz, r0] = sh.h, c = W2([cx, cy, cz]), n = norm(dirToWorld(f, it, [nx, ny, nz])), r = r0 * k * radK(it, [nx, ny, nz]);
     line(circle3(c, n, r));
     const u = norm(cross(n, Math.abs(n[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0])), v = cross(n, u);
     for (const w of [u, v]) line([...Array(17)].map((_, i) => { const t = Math.PI * i / 16;
@@ -188,17 +222,17 @@ function drawShape(ctx, sh, it, f, P, lw){
 function worldSamples(it){
   const out = [];
   for (const {f, parts} of partSets(it)){
-    const k = (it.scale || 1) * (f.k || 1) * (it.thick || 1), W2 = q => itemToWorld(it, q, f);
+    const k = (it.scale || 1) * (f.k || 1), W2 = q => itemToWorld(it, q, f);
     for (const sh of parts){
-      if (sh.c){ const a = W2(sh.c.slice(0, 3)), b = W2(sh.c.slice(3, 6)), ax = sub(b, a), r = sh.c[6] * k;
+      if (sh.c){ const a = W2(sh.c.slice(0, 3)), b = W2(sh.c.slice(3, 6)), ax = sub(b, a), r = sh.c[6] * k * radK(it, sub(sh.c.slice(3, 6), sh.c.slice(0, 3)));
         out.push(...circle3(a, ax, r, 8), ...circle3(b, ax, r, 8)); }
       else if (sh.b){ const [cx, cy, cz, sx, sy, sz] = sh.b;
         for (const i of [-1, 1]) for (const j of [-1, 1]) for (const l of [-1, 1]) out.push(W2([cx + i*sx/2, cy + j*sy/2, cz + l*sz/2])); }
-      else if (sh.s){ const c = W2(sh.s.slice(0, 3)), r = sh.s[3] * k;
+      else if (sh.s){ const c = W2(sh.s.slice(0, 3)), r = sh.s[3] * k * radK(it);
         for (const d of [[0, -r, 0], [0, r, 0], [r, 0, 0], [-r, 0, 0], [0, 0, r], [0, 0, -r]]) out.push(add(c, d)); }
       else if (sh.d || sh.h || sh.t){ const a = sh.d || sh.h || sh.t, c = W2(a.slice(0, 3)), n = dirToWorld(f, it, a.slice(3, 6));
-        const r = (sh.t ? a[6] + a[7] : a[6]) * k; out.push(...circle3(c, n, r, 12)); if (sh.h) out.push(add(c, mul(norm(n), r))); }
-      else if (sh.k){ const b = W2(sh.k.slice(0, 3)), ap = W2(sh.k.slice(3, 6)); out.push(...circle3(b, sub(ap, b), sh.k[6] * k, 12), ap); }
+        const r = (sh.t ? a[6] + a[7] : a[6]) * k * radK(it, a.slice(3, 6)); out.push(...circle3(c, n, r, 12)); if (sh.h) out.push(add(c, mul(norm(n), r))); }
+      else if (sh.k){ const b = W2(sh.k.slice(0, 3)), ap = W2(sh.k.slice(3, 6)); out.push(...circle3(b, sub(ap, b), sh.k[6] * k * radK(it, sub(sh.k.slice(3, 6), sh.k.slice(0, 3))), 12), ap); }
       else if (sh.l) out.push(...sh.l.map(W2));
     }
   }
@@ -297,7 +331,7 @@ function aimOtherHand(side, it, g){
   const a = norm(dirToWorld(f, it, gz > gy && gz > gx ? [0, 0, 1] : [0, 1, 0]));
   let d = sub(g, S.P[IX[side + "_elbow"]]); d = sub(d, mul(a, dot(d, a)));
   const z = len(d) > 1e-3 ? norm(d) : norm(sub(g, S.P[IX[side + "_elbow"]]));
-  const t = sub(g, mul(z, 7));                 // handFrame: the fist's middle is 7 cm past the wrist
+  const t = sub(g, mul(z, 7));                 // first the hand's middle on it, then its grip point (gripFrame)
   solveIK(wi, t); solveIK(wi, t);
   const wr = S.P[wi];
   if (hi !== undefined && S.P[hi]) rotateSubtree(hi, add(wr, mul(norm(sub(g, wr)), len(sub(S.P[hi], wr)))));
@@ -307,6 +341,10 @@ function aimOtherHand(side, it, g){
   for (let v = -180; v < 180; v += 10){ const s = score(v); if (s > bs){ bs = s; best = v; } }
   for (let v = best - 9; v <= best + 9; v++){ const s = score(v); if (s > bs){ bs = s; best = v; } }
   S.twist[hi] = ((best + 540) % 360) - 180;
+  for (let n = 0; n < 2; n++){                 // the hand's grip point (by its shape) onto grip2
+    const d = sub(S.P[hi], S.P[wi]), w = add(S.P[wi], sub(g, gripFrame(side).o));
+    solveIK(wi, w); rotateSubtree(hi, add(S.P[wi], d));
+  }
 }
 function followItems(moved){
   for (const it of S.items || []){
@@ -539,6 +577,21 @@ WHEEL_HOOKS.push((x, y, step, e) => {
 
 // ---- adding things -----------------------------------------------------------------------------
 function facingYaw(){ const f = bodyFront(); return Math.atan2(f[0], f[2]) * 180 / Math.PI; }
+// a thing on its own, held and worn by no one: on the floor (or a solid) in front of the figure
+// being edited, a held thing lying flat as when put down. It stands apart from the figures
+// (pose_cast.js keeps it with whoever is edited), so 配置 mode moves it.
+function placeAlone(key){
+  const def = PROPS_[key]; if (!def) return;
+  remember();
+  const c = S.P[IX.pelvis], f = bodyFront(), fy = +(S.env && S.env.floorY) || 0;
+  const it = {key, off: [0, 0, 0], rot: [0, 0, 0], scale: 1, where: "world", grounded: true,
+    yaw: facingYaw(), base: [c[0] + f[0] * 60, fy, c[2] + f[2] * 60]};
+  if (def.place === "hand"){ const {lo, hi} = localExtent(partsOf(it)); if (hi[1] - lo[1] > hi[2] - lo[2]) it.rot = [0, 0, 90]; }
+  S.items = S.items || []; S.items.push(it); scSel = S.items.length - 1;
+  groundItem(it);
+  afterEdit(); fillItemList(); draw();
+  say("単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。");
+}
 function addItem(key, hand){
   const def = PROPS_[key]; if (!def) return;
   remember();
@@ -602,7 +655,8 @@ function buildScenePanel(){
   sec.innerHTML = `<h2>小物・環境（シミュレーション）</h2>
     <label>種類</label><select id="scCat">${CATS_.map(([k, ja, en]) => `<option value="${k}">${ja} / ${en}</option>`).join("")}</select>
     <select id="scKey" style="margin-top:6px"></select>
-    <div class="btns" style="margin-top:6px"><button id="scAddR">右手に持つ・置く</button><button id="scAddL">左手に持つ</button></div>
+    <div class="btns" style="margin-top:6px"><button id="scAddR">右手に持つ・置く</button><button id="scAddL">左手に持つ</button>
+      <button id="scAlone" title="誰にも持たせず、人物の前の床に置く">単体で置く</button></div>
     <div class="hint" id="scNote"></div>
     <label style="margin-top:10px">出ている物</label>
     <select id="scList" size="4"></select>
@@ -659,12 +713,14 @@ function buildScenePanel(){
       : d.mount && Object.keys(d.mount).length ? "置くと体を合わせる（座る・乗る・手を置く）" : "床に置く";
     $("scNote").textContent = how + (d.note ? "。" + d.note : "");
     $("scAddL").style.display = d.place === "hand" ? "" : "none";
+    $("scAlone").style.display = d.place === "hand" || d.place === "body" || d.place === "wear" ? "" : "none";
     $("scAddR").textContent = d.place === "hand" ? "右手に持つ" : d.place === "wear" ? "身に着ける" : "置く";
   };
   $("scCat").addEventListener("change", fillKeys);
   $("scKey").addEventListener("change", showNote);
   $("scAddR").addEventListener("click", () => addItem($("scKey").value, "r"));
   $("scAddL").addEventListener("click", () => addItem($("scKey").value, "l"));
+  $("scAlone").addEventListener("click", () => placeAlone($("scKey").value));
   $("scList").addEventListener("change", () => { scSel = +$("scList").value; showItem(); draw(); });
   $("scDel").addEventListener("click", () => { if (scSel < 0 || !S.items[scSel]) return; remember();
     freeHands(S.items[scSel]);
@@ -697,7 +753,7 @@ function buildScenePanel(){
     n.addEventListener("change", () => { remember(); r.value = n.value; apply(+n.value); });
   }
   $("scReset").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
-    it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.dims; delete it.len; delete it.thick; if (it.grounded) groundItem(it);
+    it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.dims; delete it.len; delete it.thick; delete it.stretch; if (it.grounded) groundItem(it);
     afterEdit(); showItem(); draw(); say("小物の位置・向き・大きさを戻しました。"); });
   $("scEnvReset").addEventListener("click", () => { remember(); S.env = fresh().env;
     afterEdit(); syncScene(); draw(); say("床・壁・天井を初期値に戻しました。"); });

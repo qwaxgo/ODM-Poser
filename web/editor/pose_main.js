@@ -418,6 +418,18 @@ function handFrame(side){
   const x = mul(norm(cross(y, z)), side === "r" ? 1 : -1);
   return {o: add(wr, mul(z, 7)), x, y, z};
 }
+// where a held thing sits in each hand shape, in the hand's frame from the wrist (cm for an 8 cm
+// hand; it grows with the hand): in the hole the curled fingers make (the middle of a handle),
+// against the palm (cup, open, relaxed) or between the thumb's and the index finger's tips (pinch,
+// ok). Shapes not listed curl the last fingers as a fist does. pose_scene.js puts the thing's own
+// grip point here (gripPoint).
+const GRIP_AT = {fist: [2.2, 0, 7.4], grip: [2.6, 0, 7.8], claw: [3, 0, 8.4],
+  cup: [1, 1, 7], relaxed: [1, 1, 6], open: [0.8, 1, 5.5], pinch: [7, 3.4, 8], ok: [7, 3.4, 8]};
+function gripFrame(side){
+  const f = handFrame(side), wr = S.P[IX[side + "_wrist"]], hd = S.P[IX[side + "_hand"]];
+  const k = (hd ? len(sub(hd, wr)) : HAND_LEN) / HAND_LEN, g = GRIP_AT[S.hands[side]] || GRIP_AT.fist;
+  return {o: add(wr, mul(add(add(mul(f.x, g[0]), mul(f.y, g[1])), mul(f.z, g[2])), k)), x: f.x, y: f.y, z: f.z};
+}
 // the fingers in the hand's frame, for an 8 cm hand (wrist -> knuckles): root [x, y, z] cm, the
 // direction it starts in (deg toward the thumb across the palm; the thumb also toward the palm),
 // its three segments, and how far each of its joints bends at a full curl (deg)
@@ -704,9 +716,45 @@ function dragSide(i, x, y, W, H){
   const v = norm(sub(want, pc));
   rotateSubtree(i, add(sideRotInv(add(pc, mul(v, L))), S.center));
 }
+// the shoulders and the thigh roots sit on the torso: they move along its own axes, one at a time
+// (x: apart / together, y: up / down, z: forward / back), so widening the shoulders does not lift
+// them along the bone from the chest. 左右対称: the other side too (mirrored across).
+const TORSO_PAIR = {r_shoulder: 1, l_shoulder: 1, r_hip: 1, l_hip: 1};
+function torsoAxes(i){
+  const n = J[i].slice(2), r = S.P[IX["r_" + n]], l = S.P[IX["l_" + n]], P = S.P;
+  const x = norm(sub(l, r));
+  let y = n === "shoulder" ? sub(P[IX.neck], P[IX.waist]) : sub(P[IX.waist], P[IX.pelvis]);
+  y = norm(sub(y, mul(x, dot(y, x))));
+  return [x, y, cross(x, y)];
+}
+// move a shoulder / thigh root by t cm along torso axis a (0 x, 1 y, 2 z); x: outward is +t
+function movePair(i, a, t, sym){
+  const ax = torsoAxes(i)[a], out = J[i].startsWith("l_") ? 1 : -1;
+  const d = mul(ax, a === 0 ? t * out : t);
+  moveSubtree(i, d);
+  if (sym) moveSubtree(MIRROR[i], a === 0 ? mul(d, -1) : d);
+  keepTorsoShape();
+}
+function dragPair(i, x, y, W, H){
+  const q = project(S.P[i], W, H), axes = torsoAxes(i);
+  const scr = axes.map(u => { const e = project(add(S.P[i], u), W, H); return [e.x - q.x, e.y - q.y]; });
+  if (drag && drag.axis === undefined){       // the axis: the one the drag first goes along
+    if (Math.hypot(x - q.x, y - q.y) < 6 * (devicePixelRatio || 1)) return;
+    let best = 0, bv = -1;
+    scr.forEach(([sx, sy], a) => { const l = Math.hypot(sx, sy) || 1, v = Math.abs(((x - q.x) * sx + (y - q.y) * sy) / l) * (l > 0.05 * q.s ? 1 : 0);
+      if (v > bv){ bv = v; best = a; } });
+    drag.axis = best;
+  }
+  const a = drag ? drag.axis : 0, [sx, sy] = scr[a], l2 = sx * sx + sy * sy;
+  if (l2 < 1e-6) return;
+  let t = ((x - q.x) * sx + (y - q.y) * sy) / l2;
+  if (a === 0) t *= J[i].startsWith("l_") ? 1 : -1;
+  movePair(i, a, t, $("sym").checked);
+}
 // body mode: stretch the bone parent->i toward the mouse (the rest of the limb comes along)
 function dragBody(i, x, y, W, H){
   if (i === IX.pelvis) return;
+  if (TORSO_PAIR[J[i]]) return dragPair(i, x, y, W, H);
   const par = PARENT[i], a = project(S.P[par], W, H), b = project(S.P[i], W, H);
   const sl = Math.hypot(b.x - a.x, b.y - a.y) || 1;
   const along = ((x - a.x) * (b.x - a.x) + (y - a.y) * (b.y - a.y)) / sl;
@@ -1031,8 +1079,24 @@ function bodyRot(v, inv){
   for (const st of steps) v = rotAxis(v, st[0], deg(st[1]));
   return v;
 }
+// a bone's direction standing: REST's, or for the shoulders and the thigh roots the figure's own
+// (S.shape, kept when its width, height or depth is changed), so 関節の限界 measures a shrug from
+// where this figure's shoulders sit and does not pull widened shoulders back up
+function restDir(i){
+  const own = S.shape && S.shape[J[i]];
+  return Array.isArray(own) && own.length === 3 ? norm(own) : norm(sub(REST[i], REST[PARENT[i]]));
+}
+function keepTorsoShape(){
+  S.shape = S.shape || {};
+  for (const n of Object.keys(TORSO_PAIR)){
+    const i = IX[n], p = PARENT[i], pp = PARENT[p];
+    let v = bodyRot(sub(S.P[i], S.P[p]), true);
+    if (pp >= 0) v = rotBetween(v, bodyRot(sub(S.P[p], S.P[pp]), true), sub(REST[p], REST[pp]));
+    S.shape[n] = norm(v).map(c => Math.round(c * 1e4) / 1e4);
+  }
+}
 function restFrame(i){
-  const e1 = norm(sub(REST[i], REST[PARENT[i]]));
+  const e1 = restDir(i);
   const ref = Math.abs(e1[2]) < 0.9 ? [0, 0, 1] : [0, 1, 0];
   const ef = norm(sub(ref, mul(e1, dot(ref, e1))));
   let es = cross(e1, ef);
@@ -1384,7 +1448,7 @@ const PRESETS = {
 };
 const AXES = {x: [1,0,0], y: [0,1,0], z: [0,0,1]};
 function applyPreset(name){
-  S.P = REST.map(p => p.slice()); S.body = {yaw: 0, pitch: 0, roll: 0}; S.twist = REST.map(() => 0);
+  S.P = REST.map(p => p.slice()); S.body = {yaw: 0, pitch: 0, roll: 0}; S.twist = REST.map(() => 0); delete S.shape;
   for (const [joint, ax, d] of PRESETS[name]){
     const i = IX[joint], par = PARENT[i], p = S.P[par];
     for (const k of subtree(i)) S.P[k] = add(p, rotAxis(sub(S.P[k], p), AXES[ax], deg(d)));
@@ -1600,12 +1664,17 @@ function standOnFloor(x, z){                  // the pelvis over (x, z), the low
 $("poseReset").addEventListener("click", () => {
   remember();
   const old = S.P.map(p => p.slice()), c = old[IX.pelvis];
-  applyPreset("立ち（標準）"); S.P = withBoneLengths(S.P, old); standOnFloor(c[0], c[2]); S.pins = {};
+  const shape = S.shape;
+  applyPreset("立ち（標準）"); S.shape = shape; S.P = withBoneLengths(S.P, old);
+  // the shoulders and the thigh roots where this figure's own sit (S.shape)
+  for (const n of Object.keys(TORSO_PAIR)){ const i = IX[n], p = PARENT[i];
+    moveSubtree(i, sub(add(S.P[p], mul(restDir(i), len(sub(old[i], old[p])))), S.P[i])); }
+  standOnFloor(c[0], c[2]); S.pins = {};
   afterEdit(); syncUI(); draw(); say("立ちポーズに戻しました（体格はそのまま）。");
 });
 $("bodyReset").addEventListener("click", () => {
   remember();
-  S.P = withBoneLengths(S.P, REST); S.R = REST_R.slice(); S.scale = fresh().scale;
+  S.P = withBoneLengths(S.P, REST); S.R = REST_R.slice(); S.scale = fresh().scale; delete S.shape;
   afterEdit(); syncUI(); draw(); say("体格を初期値に戻しました（ポーズはそのまま）。");
 });
 // the 管理 tab's 位置と向き: the hips' own controls (setJointValue pX ... bRoll), pins carried along

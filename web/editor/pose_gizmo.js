@@ -4,8 +4,10 @@
 //  - 移動: three arrows (X red, Y green, Z blue) move it along one axis.
 //  - 回転: rings turn it about an axis. A joint swings its bone about the joint before it (the hips:
 //    the whole figure), as dragging the joint does; objects, things and the ruler turn about up.
-//  - 変形: squares stretch it. An object: its width / height / depth; a joint: its bone's length
-//    (along the bone) and its circle's thickness, as in 体格 mode (左右対称 follows).
+//  - 変形: squares stretch it. An object or a thing put down: its width / height / depth (its own
+//    three axes); a shoulder or a thigh root: the width, height and how far forward along the
+//    torso's axes; another joint: its bone's length (along the bone) and its circle's thickness, as
+//    in 体格 mode (左右対称 follows).
 // ポーズ mode: the selected joint (関節の限界 applies). 配置 mode: the selected object, a thing put
 // down, or the ruler's box while the 定規 tab shows. The 3軸ハンドル switch hides them.
 (() => {
@@ -78,9 +80,16 @@ function target(){
     const i = sel, par = PARENT[i], root = i === IX.pelvis || par === undefined || par < 0;
     const pivot = root ? S.P[i] : S.P[par], u = root ? UP : norm(sub(S.P[i], S.P[par])), [e1] = across(u);
     const mirror = () => $("sym") && $("sym").checked && MIRROR[i] !== i ? [i, MIRROR[i]] : [i];
+    const save = () => ({P: S.P.map(p => p.slice()), R: S.R.slice(), body: Object.assign({}, S.body)});
+    if (TORSO_PAIR[J[i]] && tool === "scale"){
+      const ax = torsoAxes(i), out = J[i].startsWith("l_") ? 1 : -1;
+      return {c: S.P[i], ax: WORLD, pivot, rings: [], pair: true,
+        sc: [[mul(ax[0], out), 0, "幅"], [ax[1], 1, "高さ"], [ax[2], 2, "前後"]], save,
+        scale: (s0, f, n, d) => { S.P = s0.P.map(p => p.slice()); movePair(i, n, d, $("sym").checked); afterEdit(i); }};
+    }
     return {c: S.P[i], ax: WORLD, joint: i, pivot, rings: [0, 1, 2],
       sc: root ? [[e1, 1, "太さ"]] : [[u, 0, "長さ"], [e1, 1, "太さ"]],
-      save: () => ({P: S.P.map(p => p.slice()), R: S.R.slice(), body: Object.assign({}, S.body)}),
+      save,
       move: (s0, d) => { const t = add(s0.P[i], d);
         if (i === IX.pelvis) moveAll(sub(t, S.P[i]), false);
         else if (IK_END[J[i]]) solveIK(i, t);
@@ -113,11 +122,13 @@ function target(){
   }
   const it = S.items && S.items[scSel];
   if (it && it.base && (it.where === "world" || (PROPS_[it.key] || {}).place === "world" || (PROPS_[it.key] || {}).place === "grab")){
-    const a = deg(it.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)];
-    return {c: it.base, ax, pivot: it.base, rings: [1], sc: [[ax[0], 0, "大きさ"]],
-      save: () => ({base: it.base.slice(), scale: it.scale || 1, yaw: it.yaw || 0}),
+    const a = deg(it.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)], f0 = frameOf(it);
+    // stretched along its own axes (as turned), each on its own
+    const own = [0, 1, 2].map(n => { const e = [0, 0, 0]; e[n] = 1; const v = dirToWorld(f0, it, e); return len(v) > 1e-6 ? norm(v) : ax[n]; });
+    return {c: it.base, ax, pivot: it.base, rings: [1], sc: own.map((u, n) => [u, n, "XYZ"[n]]),
+      save: () => ({base: it.base.slice(), st: (stretchOf(it) || [1, 1, 1]).slice(), yaw: it.yaw || 0}),
       move: (s0, d) => { it.base = add(s0.base, d); if (typeof snapItem === "function") snapItem(it); afterEdit(); },
-      scale: (s0, f) => { it.scale = Math.max(0.1, s0.scale * f); afterEdit(); },
+      scale: (s0, f, n) => { foldStretch(it)[n] = Math.max(0.05, Math.round(s0.st[n] * f * 100) / 100); afterEdit(); },
       turn: (s0, k, dg) => { it.yaw = ((s0.yaw + dg) + 540) % 360 - 180; afterEdit(); }};
   }
   const r = typeof rulerState === "function" ? rulerState() : null;
@@ -204,7 +215,7 @@ DOWN_HOOKS.unshift((cv, x, y) => {
   const vx = hit.e.x - g.c.x, vy = hit.e.y - g.c.y, v2 = vx * vx + vy * vy || 1;
   return {move(mx, my){
     const f = ((mx - x0) * vx + (my - y0) * vy) / v2;            // in handle lengths
-    if (tool === "scale") t.scale(s0, Math.max(0.05, 1 + f), hit.n);
+    if (tool === "scale") t.scale(s0, Math.max(0.05, 1 + f), hit.n, f * g.L);
     else t.move(s0, mul(hit.u, f * g.L));
   }};
 });
@@ -215,6 +226,6 @@ DOWN_HOOKS.unshift((cv, x, y) => {
   "3軸ハンドルを出します。": "Showing the 3-axis handles.", "3軸ハンドルを隠しました。": "The 3-axis handles are hidden.",
   "移動": "Move", "回転": "Rotate", "変形": "Scale", "移動（Gキー）": "Move (G)", "回転（Rキー）": "Rotate (R)", "変形（Sキー）": "Scale (S)",
   "3軸ハンドルの操作": "3-axis handle tool", "3軸ハンドル：移動": "3-axis handles: move", "3軸ハンドル：回転": "3-axis handles: rotate",
-  "3軸ハンドル：変形": "3-axis handles: scale", "長さ": "Length", "太さ": "Thickness", "大きさ": "Size"});
+  "3軸ハンドル：変形": "3-axis handles: scale", "長さ": "Length", "太さ": "Thickness", "大きさ": "Size", "幅": "Width", "高さ": "Height", "前後": "Front / back"});
 draw();
 })();

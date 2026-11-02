@@ -191,8 +191,12 @@
     "透明（黒い線）": "Transparent (black lines)", "画面と同じ色": "As on screen", "構図を保存": "Save composition",
     "人物を追加": "Add a figure", "削除": "Delete", "名前": "Name",
     "人物が1人のときは削除できません。": "There is only one figure: nothing to delete.",
-    "ポーズ・体格・小物・オーラは、選んだ人物だけに効きます（ほかの人物は薄く表示）。ほかの人物の丸をクリックしても切り替わります。床・壁・物体・定規・カメラはみんなで共通です。":
-      "Pose, body, props and auras apply to the selected figure only (the others are drawn lighter). Clicking another figure's circle switches too. Floor, walls, objects, the ruler and the camera are shared.",
+    "ポーズ・体格・小物・オーラは、選んだ人物だけに効きます（ほかの人物は薄く表示）。ほかの人物の丸をクリックしても切り替わります。床・壁・物体・定規・カメラと、床に置いた物はみんなで共通です。位置と向きは編集中の人物を丸ごと動かします。":
+      "Pose, body, props and auras apply to the selected figure only (the others are drawn lighter). Clicking another figure's circle switches too. Floor, walls, objects, the ruler, the camera and things put down are shared. Position and direction move the whole figure being edited.",
+    "書き出す人物": "Figures in the picture", "全員": "Everyone",
+    "単体で置く": "Place on its own", "誰にも持たせず、人物の前の床に置く": "Held by no one: put on the floor in front of the figure",
+    "単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。":
+      "Placed on its own. Drag it in Place mode (Shift + drag: up / down, wheel: turn).",
     // touch, pens, phones (index.html)
     "Shift（その骨だけ・上下）": "Shift (that bone only / up-down)", "固定（ピン）": "Pin", "横の図": "Side view",
     "タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（パースモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。":

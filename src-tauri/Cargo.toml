@@ -3,7 +3,7 @@
 # through a "save as" dialog. Built in the container of docker-compose.tauri.yml (docs/HANDOFF.md).
 [package]
 name = "odm-poser"
-version = "0.1.0"          # keep as package.json's version (tauri.conf.json takes that one)
+version = "0.2.0"          # keep as package.json's version (tauri.conf.json takes that one)
 description = "ODM Poser (立体人形装置): the pose editor as an app"
 authors = ["qwaxgo"]
 license = "MIT"
