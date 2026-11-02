@@ -66,6 +66,11 @@ mods/                            the user's mods and cloned mod repositories (RE
 tools/make_mods_list.py          web/mods.js: the list of mods/ for npm run dev and tools/serve.py (both serve mods/ at <base>/mods/)
 tools/serve.py                   builds the site and serves dist/ (localhost / --lan) so the editor installs as an app
 tools/dist_server.py             builds and serves dist/ at /ODM-Poser/ for serve.py, lint_ui.py, make_card.py
+src-tauri/                       the app (Tauri 2): src/main.rs (window, odmmods:// protocol for the mods folder, save_file
+                                 dialog), src/mods.rs (listing / serving mods, unit-tested), tauri.conf.json, icons/
+tools/make_app_web.py            app/web: the editor for the app (docs link to the site, no mods.js script)
+tools/build_app.sh               builds the AppImage and the Windows zip inside docker-compose.tauri.yml's container
+                                 (build/tauri/Dockerfile: Ubuntu 22.04, Rust, Node, cargo-xwin); tools/make_app_zip.py zips the exe
 tools/make_release_html.py       release/: the HTML release zip (parts in tools/html_release/) and its notes;
                                  .github/workflows/release.yml runs it on a pushed tag v<version> (a draft)
 CHANGELOG.md                     patch notes (ja / en), the top version is the next release
@@ -124,6 +129,17 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
 
 ## Open items
 
+- The app (src-tauri), written 2026-11-02, NOT built yet (this container has no Docker or Rust toolchain
+  for linking; the Rust type-checks against Tauri 2 for a macOS target with stubbed C tools, and
+  mods.rs's unit tests pass; the page side was tested with a simulated init script). Owner runs, in WSL2:
+  `HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose -f docker-compose.tauri.yml run --rm tauri [linux|windows|all]`
+  and pastes errors. Expected trouble: the image's llvm-rc link, cargo-xwin's first run, linuxdeploy in
+  the AppImage step, Windows needs WebView2. Design: mods = `mods/` next to the AppImage ($APPIMAGE) or the
+  exe, listed at start (restart to add), served by the odmmods:// protocol (plain *.js, `_`/`.` names
+  skipped, no `..`, no links out); saving = `window.ODM_APP_SAVE` (set by the app) -> `save_file` command
+  (asks where; the page cannot choose the path); links to other sites open in the browser (opener plugin).
+  Not tested on a real window: window.open for the share buttons (pose_share.js), dragging files.
+  Tauri's version follows package.json; Cargo.toml's `version` is kept by hand.
 - Releases (see "Where it runs"): the HTML zip is made (v0.1.0 not tagged yet: merge astro into main
   first); the MOD panel's "フォルダから" loads a picked mods folder (kept in Chrome / Edge; the
   re-permission button "読み込む" was not tested by automation: it needs a real click). Tauri next. The site itself

@@ -18,7 +18,7 @@ https://apps.qwaxgo.com/ODM-Poser/docs/). The export buttons save the pictures a
 To install it as an app (PC, phone, tablet; works offline), see **[docs/APP.md](docs/APP.md)**
 (日本語: [docs/APP-JA.md](docs/APP-JA.md)); `python tools/serve.py` builds the site and serves it on this computer.
 Without a server: the [Releases](https://github.com/qwaxgo/ODM-Poser/releases) have an HTML zip (unzip it and
-open `index.html`; mods go in its `mods` folder), and executables are planned. What changed: [CHANGELOG.md](CHANGELOG.md).
+open `index.html`; mods go in its `mods` folder), and an app (an AppImage for Linux, a zip for Windows) is coming. What changed: [CHANGELOG.md](CHANGELOG.md).
 
 ## Editing
 
@@ -182,7 +182,10 @@ The site is built with [Astro](https://astro.build): the pages are `src/pages` (
 and pictures). `npm run dev` serves it at http://localhost:4321/ODM-Poser/editor/ (docs:
 /ODM-Poser/docs/), `npm run build` writes `dist/` (what GitHub Pages publishes). To use the editor
 without a server, `python tools/make_release_html.py` makes the HTML release (`release/`); pushing a tag
-`v<version>` makes a release draft with it (`.github/workflows/release.yml`). Executables (Tauri) are planned.
+`v<version>` makes a release draft with it (`.github/workflows/release.yml`). The app (Tauri, `src-tauri/`) is built
+in its own container, where Docker is (not in the dev container):
+`HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose -f docker-compose.tauri.yml run --rm tauri [linux|windows|all]`
+writes an AppImage and a Windows zip to `release/`; add them to the release draft by hand.
 
 A development container (`.devcontainer/`: Node 24, Python with Playwright, Claude Code, zsh) can be
 opened from WSL2 (or Linux / macOS) with VS Code's "Reopen in Container"; it mounts `~/.ssh`,
@@ -208,7 +211,7 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 
 - **使い方**：https://apps.qwaxgo.com/ODM-Poser/ を開く（書き出しボタンでファイルに保存、ユーザープリセットは「ファイルから読込」で選ぶ）。説明はヘッダーの「使い方」から（https://apps.qwaxgo.com/ODM-Poser/docs/）。
 - **アプリとして使う**：パソコン・スマホ・タブレットにアプリとして追加でき、オフラインでも開けます。方法は **[docs/APP-JA.md](docs/APP-JA.md)**（`python tools/serve.py` でサイトをビルドして、このパソコンから開けます）。
-- **サーバーなしで使う**：[Releases](https://github.com/qwaxgo/ODM-Poser/releases) の HTML 版（zip を展開して `index.html` を開く。MOD は中の `mods` フォルダへ）。実行ファイル版は予定です。変更点は [CHANGELOG.md](CHANGELOG.md)。
+- **サーバーなしで使う**：[Releases](https://github.com/qwaxgo/ODM-Poser/releases) の HTML 版（zip を展開して `index.html` を開く。MOD は中の `mods` フォルダへ）。アプリ版（Linux は AppImage、Windows は zip）も用意しています。変更点は [CHANGELOG.md](CHANGELOG.md)。
 - **操作**：丸をドラッグ（骨の長さは保たれる）。手首・足首は腕・脚ごと（Shift でその骨だけ）。ダブルクリックで
   手前と奥を入れ替え。横図で奥行き。すべての関節を3軸（前後・左右・ねじり。頭はうなずく・かしげる・左右を向く）で
   回せます。関節の固定（ピン、Alt＋クリック）、手の関節（指の付け根の小さな丸）で手首の曲げ・手のひらの向き・手の形（指は手のひら側へ曲がって描かれ、どの向きからも手の向きが分かります）、体格モード、パースモード、人間の関節の限界。
@@ -240,6 +243,6 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **ユーザープリセット**：自分のプリセット（JSON）を「ファイルから読込」で読むと一覧に出ます（形式は上の User presets）。MOD からも足せます。
 - **MOD**：`mods/` に `*.js` を置くと、小物・物体・オーラ・手の形・ポーズ・翻訳・自分の欄・描画やマウスのフックを追加できます（MOD のリポジトリを `mods/` に clone しても可。説明：`docs/MODDING-JA.md`）。`python tools/make_mods_list.py` を先に実行（`npm run dev` と `tools/serve.py` が `mods/` を配ります）。サイトやスマホでは MOD 欄の「ファイルから入れる」「URLから追加」で入れられます（ブラウザに保存）。信頼できる MOD だけを入れてください（`?nomods` で MOD なし）。
 - **画面の作り**：見た目は [melta UI](https://github.com/tsubotax/melta-ui)（サブモジュール `design/melta-ui`）に従います。エディタのマークアップは `src/pages/editor/index.astro` と `src/components/editor/`、CSS（`web/editor/ui.css`）は `web/editor/ui.src.css` から Tailwind CSS 4 で作ってコミットしています。変えるときは Node.js 22 で `npm install` のあと `npm run css`、確認は `python tools/lint_ui.py`（melta の lint）。AI 向けの注意は `AGENTS.md`。
-- **サイトと開発コンテナ**：サイトは [Astro](https://astro.build) で作ります。ページは `src/pages`（エディタ、`docs/` から作るドキュメント、サイトのトップ）、`web/` はそのまま出します（Astro の `publicDir`：エディタのスクリプト・スタイル・画像）。サーバーなしで使う HTML 版は `python tools/make_release_html.py` で作り（`release/`）、タグ `v<version>` を push するとそれを入れたリリースの下書きができます（`.github/workflows/release.yml`）。実行ファイル版（Tauri）は予定です。`npm run dev` で http://localhost:4321/ODM-Poser/editor/（ドキュメントは /ODM-Poser/docs/）、`npm run build` で `dist/`（GitHub Pages に出すもの）。開発コンテナ（`.devcontainer/`：Node 24、Playwright 入りの Python、Claude Code、zsh）は、WSL2（または Linux・macOS）から VS Code の「コンテナーで再度開く」で開きます（`~/.ssh`・`~/.gitconfig`・`~/.claude`・`~/.config/gh`（gh のログイン）・zsh の設定をマウント）。VS Code なしなら `docker compose up dev`（`preview`・`serve` も）、確認は `docker compose -f docker-compose.test.yml run --rm lint-ui`（`syntax`・`build` も）。
+- **サイトと開発コンテナ**：サイトは [Astro](https://astro.build) で作ります。ページは `src/pages`（エディタ、`docs/` から作るドキュメント、サイトのトップ）、`web/` はそのまま出します（Astro の `publicDir`：エディタのスクリプト・スタイル・画像）。サーバーなしで使う HTML 版は `python tools/make_release_html.py` で作り（`release/`）、タグ `v<version>` を push するとそれを入れたリリースの下書きができます（`.github/workflows/release.yml`）。アプリ版（Tauri、`src-tauri/`）は専用のコンテナで作ります（Docker のある所で実行。開発コンテナの中ではありません）：`HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose -f docker-compose.tauri.yml run --rm tauri [linux|windows|all]` で `release/` に AppImage と Windows の zip ができるので、リリースの下書きに手で足します。`npm run dev` で http://localhost:4321/ODM-Poser/editor/（ドキュメントは /ODM-Poser/docs/）、`npm run build` で `dist/`（GitHub Pages に出すもの）。開発コンテナ（`.devcontainer/`：Node 24、Playwright 入りの Python、Claude Code、zsh）は、WSL2（または Linux・macOS）から VS Code の「コンテナーで再度開く」で開きます（`~/.ssh`・`~/.gitconfig`・`~/.claude`・`~/.config/gh`（gh のログイン）・zsh の設定をマウント）。VS Code なしなら `docker compose up dev`（`preview`・`serve` も）、確認は `docker compose -f docker-compose.test.yml run --rm lint-ui`（`syntax`・`build` も）。
 - **Claude Code での実装**：このリポジトリのコードとドキュメントは、qwaxgo の設計と指示のもとで、Anthropic の AI コーディングツール [Claude Code](https://claude.com/claude-code) が実装しました。
 - **ライセンス**：MIT（c）2026 qwaxgo。
