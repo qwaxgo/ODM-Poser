@@ -15,7 +15,7 @@
     }
   },
   // open the folder from WSL2 (or Linux / macOS): this runs there, so the folders and files mounted below exist
-  "initializeCommand": "mkdir -p $HOME/.ssh $HOME/.claude && touch $HOME/.zshrc $HOME/.zsh_plugins.txt $HOME/.gitconfig",
+  "initializeCommand": "mkdir -p $HOME/.ssh $HOME/.claude $HOME/.config/gh && touch $HOME/.zshrc $HOME/.zsh_plugins.txt $HOME/.gitconfig",
   "postCreateCommand": "/tmp/setup_zsh.sh && git submodule update --init && npm install",
   "postStartCommand": "echo 'DevContainer is ready! npm run dev: the site and the editor (http://localhost:4321/ODM-Poser/editor/index.html); python tools/lint_ui.py: the UI check.'",
   "features": {
@@ -41,6 +41,7 @@
     "source=${localEnv:HOME}/.zshrc,target=/tmp/mounted_zshrc,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.zsh_plugins.txt,target=/tmp/mounted_zsh_plugins.txt,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.gitconfig,target=/home/node/.gitconfig,type=bind,consistency=cached",
-    "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,consistency=cached"
+    "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.config/gh,target=/home/node/.config/gh,type=bind,consistency=cached"
   ]
 }
