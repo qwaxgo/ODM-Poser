@@ -7,7 +7,8 @@
 // Mods are loaded from mods/*.js and mods/<folder>/*.js (a repository of mods cloned into mods/).
 // The list is window.ODM_POSER_MODS from ../mods.js: in npm run dev and tools/serve.py that is web/mods.js
 // (written by tools/make_mods_list.py); a page that hosts the editor may serve it instead.
-// The MOD panel can also run a file for this session only. ?nomods in the address starts without mods.
+// The MOD panel can also run a file for this session only, or a mods folder the person picks (opened
+// from disk the editor cannot list one itself). ?nomods in the address starts without mods.
 // A mod's own data lives in S.mods[id]: saved with the pose, undone with Ctrl+Z.
 (() => {
 const API_VERSION = "1.2.0", API_MAJOR = 1;
@@ -368,6 +369,11 @@ async function runSource(text, label){
   URL.revokeObjectURL(url);
 }
 async function runStored(rec){
+  if (rec.kind === "folder"){                 // read again once the person allows it (the button in the list)
+    try { if (await rec.handle.queryPermission({mode: "read"}) === "granted") await runFolder(await folderFiles(rec.handle)); }
+    catch (e) { folderFailed(rec.name, e); }
+    return;
+  }
   if (rec.kind === "url"){
     let text = null;
     try { const r = await fetch(rawUrl(rec.url), {cache: "no-cache"});
@@ -386,6 +392,29 @@ async function loadStored(){
   for (const rec of recs.sort((a, b) => a.key - b.key)) if (rec.enabled !== false) await runStored(rec);
 }
 
+// ---- a mods folder picked in the editor ------------------------------------------------------------
+// Its *.js and <folder>/*.js load as tools/make_mods_list.py would list them (a file already loaded is skipped), named
+// by their path in the folder, so a clone of an official repository stays official. Chrome and Edge
+// keep the folder in this browser ({kind: "folder", name, handle}); other browsers pick it each time.
+const MOD_PATH = /^([A-Za-z0-9-][\w.-]*\/)?[A-Za-z0-9-][\w.-]*\.js$/;   // names starting with _ or . stay out, as in mods/
+async function folderFiles(dir, path = ""){   // a folder -> [[path, File]]
+  const out = [];
+  for await (const [name, h] of dir.entries()){
+    if (h.kind === "file" && MOD_PATH.test(path + name)) out.push([path + name, await h.getFile()]);
+    else if (h.kind === "directory" && !path && MOD_PATH.test(name + "/x.js")) out.push(...await folderFiles(h, name + "/"));
+  }
+  return out;
+}
+async function runFolder(files){
+  const have = new Set(mods.filter(m => m.status === "ok").map(m => m.file));
+  for (const [path, f] of files.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+    if (!have.has(path)) await runSource(await f.text(), path);
+}
+function folderFailed(name, err){
+  const m = {id: "folder/" + name, name: "folder/" + name, file: "", status: "error", error: ""}; mods.push(m);
+  fail(m, "load", new Error(`the folder could not be read (${err && err.name || err})`));
+}
+
 // ---- the MOD panel ---------------------------------------------------------------------------------
 { const sec = document.createElement("section");
   const field = "flex:1;min-width:0";
@@ -395,17 +424,41 @@ async function loadStored(){
     <div id="modStored" class="hint">まだありません。</div>
     <div class="btns" style="margin-top:6px"><button id="modInstall" title="ファイルから入れる（この端末）">ファイルから</button>
       <input type="file" id="modInstallFile" accept=".js,text/javascript" multiple hidden>
+      <button id="modFolder" title="mods フォルダを選んで、中の MOD を読み込む">フォルダから</button>
+      <input type="file" id="modFolderFile" webkitdirectory hidden>
       <button id="modLoad">今回だけ読み込む</button>
       <input type="file" id="modFile" accept=".js,text/javascript" multiple hidden></div>
     <div class="row" style="margin-top:6px"><input type="text" id="modUrl" inputmode="url" placeholder="https://…/mod.js（GitHub のファイルのページでも可）" style="${field}">
       <button id="modUrlAdd">URLから追加</button></div>
-    <div class="hint">mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ブラウザで直接開くときは、tools/make_mods_list.py で一覧を作ります）。「ファイルから入れる」と「URLから追加」の MOD はこのブラウザに保存され、毎回読み込まれます（mods フォルダのないサイトやスマホでも使えます。URL の MOD は毎回新しい版を読み、オフラインでは前回のものを使います）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。</div>`;
+    <div class="hint">mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ディスクから開いたときは mods.js に書いたものだけです。「フォルダから」で mods フォルダを選ぶと中の MOD をまとめて読み込めて、Chrome と Edge ではそのフォルダを覚えます）。「ファイルから入れる」と「URLから追加」の MOD はこのブラウザに保存され、毎回読み込まれます（mods フォルダのないサイトやスマホでも使えます。URL の MOD は毎回新しい版を読み、オフラインでは前回のものを使います）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。</div>`;
   document.querySelector("aside").appendChild(sec);
   $("modLoad").addEventListener("click", () => $("modFile").click());
   $("modFile").addEventListener("change", async e => {
     const files = [...e.target.files]; e.target.value = "";
     for (const f of files) await runSource(await f.text(), f.name);
     refreshPanels();
+  });
+  // a mods folder: kept where the browser can (asked again for reading at a later start), run now
+  $("modFolder").addEventListener("click", async () => {
+    if (typeof window.showDirectoryPicker !== "function"){ $("modFolderFile").click(); return; }
+    let dir; try { dir = await window.showDirectoryPicker({id: "odm-poser-mods", mode: "read"}); } catch (e) { return; }   // cancelled
+    let recs = null; try { recs = await STORE.all(); } catch (e) {}
+    let kept = false;
+    if (recs){
+      let same = false;
+      for (const r of recs) if (r.kind === "folder" && await r.handle.isSameEntry(dir).catch(() => false)) same = true;
+      if (!same) try { await STORE.put({kind: "folder", name: dir.name, handle: dir, enabled: true, added: Date.now()}); kept = true; } catch (e) {}
+    }
+    try { await runFolder(await folderFiles(dir)); } catch (e) { folderFailed(dir.name, e); }
+    renderStored(); refreshPanels();
+    say(kept ? "フォルダの MOD を読み込みました。次からはこのフォルダも読み込みます（読み取りの許可を聞かれたら「読み込む」を押します）。"
+      : "フォルダの MOD を読み込みました。");
+  });
+  $("modFolderFile").addEventListener("change", async e => {
+    const files = [...e.target.files].map(f => [f.webkitRelativePath.split("/").slice(1).join("/"), f]).filter(([p]) => MOD_PATH.test(p));
+    e.target.value = "";
+    await runFolder(files); refreshPanels();
+    say("フォルダの MOD を読み込みました（このブラウザでは今回だけです）。");
   });
   // install: kept in this browser (a file of the same name is replaced), and run now
   $("modInstall").addEventListener("click", () => $("modInstallFile").click());
@@ -439,18 +492,32 @@ async function renderStored(){
   let recs = [];
   try { recs = await STORE.all(); } catch (e) { box.textContent = "このブラウザには保存できません。"; return; }
   if (!recs.length){ box.textContent = "まだありません。"; return; }
+  recs.sort((a, b) => a.key - b.key);
+  // a kept folder the browser has not let the editor read yet gets a button (asked before the list is
+  // emptied, so that two calls at once do not both fill it)
+  const asks = await Promise.all(recs.map(r => r.kind === "folder" && r.enabled !== false
+    && r.handle.queryPermission({mode: "read"}).then(p => p !== "granted", () => true)));
   box.innerHTML = "";
-  for (const rec of recs.sort((a, b) => a.key - b.key)){
+  for (const [i, rec] of recs.entries()){
     const row = document.createElement("div"); row.className = "row"; row.style.marginTop = "4px";
     const on = document.createElement("input"); on.type = "checkbox"; on.checked = rec.enabled !== false; on.title = "有効";
     const name = document.createElement("span"); name.style.cssText = "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
-    name.textContent = (rec.kind === "url" ? "URL: " : "") + rec.name; name.title = rec.url || rec.name;
+    name.textContent = (rec.kind === "url" ? "URL: " : rec.kind === "folder" ? "フォルダ: " : "") + rec.name; name.title = rec.url || rec.name;
     const del = document.createElement("button"); del.type = "button"; del.textContent = "外す";
+    let ask = null;
+    if (asks[i]){
+      ask = document.createElement("button"); ask.type = "button"; ask.textContent = "読み込む"; ask.title = "このフォルダの MOD を読み込む（読み取りの許可を聞かれます）";
+      ask.addEventListener("click", async () => {
+        if (await rec.handle.requestPermission({mode: "read"}).catch(() => "denied") !== "granted") return;
+        try { await runFolder(await folderFiles(rec.handle)); } catch (e) { folderFailed(rec.name, e); }
+        renderStored(); refreshPanels();
+      });
+    }
     on.addEventListener("change", async () => { rec.enabled = on.checked; await STORE.put(rec).catch(() => {});
       say(on.checked ? "有効にしました。開き直すと読み込みます。" : "無効にしました。開き直すと読み込まれません。"); });
     del.addEventListener("click", async () => { if (!confirm(`「${rec.name}」をこの端末から外しますか？`)) return;
       await STORE.del(rec.key).catch(() => {}); renderStored(); say("外しました。開き直すと読み込まれません。"); });
-    row.append(on, name, del); box.appendChild(row);
+    row.append(on, name, ...(ask ? [ask] : []), del); box.appendChild(row);
   }
 }
 function renderModList(){
@@ -488,7 +555,7 @@ async function loadMods(){
     : Array.isArray(window.SYMBOLIC_POSE_MODS) ? window.SYMBOLIC_POSE_MODS : [];       // a list written before the rename
   renderStored();
   if (new URLSearchParams(location.search).has("nomods")) return;
-  const base = window.ODM_POSER_MODS_BASE || window.SYMBOLIC_POSE_MODS_BASE || (location.protocol === "file:" ? "../../mods/" : "../mods/");
+  const base = window.ODM_POSER_MODS_BASE || window.SYMBOLIC_POSE_MODS_BASE || "../mods/";
   loading = true;
   for (const name of list) if (/^([\w.-]+\/)?[\w.-]+\.js$/.test(name))
     await runScript(base + name.split("/").map(encodeURIComponent).join("/"), name);

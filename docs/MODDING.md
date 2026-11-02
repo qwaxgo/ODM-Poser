@@ -33,6 +33,11 @@ installed app, a phone or tablet):
 - **Add by URL**: the address is kept; the mod is read fresh at each start and its last copy is used
   offline. A GitHub file page (`github.com/…/blob/…`) is turned into its raw file. Use public
   addresses (a private repository's file cannot be read by the page).
+- **From a folder**: pick a mods folder; its mods load as if it were `mods/` (a file already loaded
+  is skipped). Chrome and Edge keep the folder and read it again at each start (if the browser asks
+  to allow reading it, press **Load** next to it in the list); other browsers load it this time only.
+  This is the way for the HTML release opened from disk, where the editor cannot look into `mods/`
+  by itself.
 - **Load for this session only**: runs the chosen `.js` now without keeping it; the quickest way to
   try a mod while writing it.
 
