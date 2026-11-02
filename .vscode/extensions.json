@@ -23,7 +23,8 @@
     "davidanson.vscode-markdownlint",
     // Japanese
     "ms-ceintl.vscode-language-pack-ja",
-    "mosapride.zenkaku"
+    "mosapride.zenkaku",
+    "openai.chatgpt"
   ],
   "unwantedRecommendations": []
 }
