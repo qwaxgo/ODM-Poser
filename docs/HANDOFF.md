@@ -25,9 +25,20 @@ nothing third-party: keep it that way.
   nothing traced from pictures). Other poses come from the user's own preset files (loaded in
   the editor, or added by a host through a mod). The public repos must not reveal
   what the owner keeps there: describe the feature generically.
-- **Where it runs** (owner's decision, 2026-11-02): the editor is a page of the Astro site (no longer
-  a plain HTML file opened from disk). Use without a browser or server comes as a desktop app (an
-  executable) released on GitHub: planned, not built yet.
+- **Where it runs** (owner's decisions, 2026-11-02): the editor is a page of the Astro site; the
+  repository has no plain HTML file to open from disk. Standalone use comes from GitHub Releases
+  (tags `v0.x.y`), none built yet:
+  - an HTML build: a zip whose editor opens from disk (file://), so *the editor's scripts must keep
+    working from file://* (no ES modules, no fetch of its own files); the user's mods go in the
+    `mods/` folder next to it; the docs are a link to the site, not shipped;
+  - an executable (Tauri), for the platforms this machine can build (WSL2: Linux; Windows if the
+    cross build works); mods in a `mods/` folder next to it; signing depends on its cost;
+  - later, a provisional APK (Tauri's Android build).
+  The Tauri builds get their own build container, apart from the Astro one.
+- **ComfyUI**: the bridge is the owner's public repo `qwaxgo/ODM-Poser-ComfyUIBridge` (editor as
+  its git submodule, served from `web/editor/`). It is reworked on its own branch, in another
+  environment, to follow this branch; its outputs stay as they are. Here: keep what it relies on
+  (see Hosts) and give it a built editor to serve.
 - The owner commits and pushes. Do not commit unless asked; finish a batch with ready-to-paste
   commit / push commands. Reports to the owner are in Japanese.
 - Heavy GPU runs are not needed for this project.
@@ -105,8 +116,10 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
 
 ## Open items
 
-- Desktop app: an executable of the editor for use without a browser or server, released on
-  GitHub (owner's plan, 2026-11-02; Tauri is the likely wrapper of dist/). Not started.
+- Releases (see "Where it runs"): the HTML zip first, then Tauri, then the APK. Not started.
+- ComfyUI bridge: since 2026-11-02 the editor's page is built (dist/editor/), not in the repo, so
+  the bridge's submodule no longer has web/editor/index.html. It needs a built editor (from the
+  same build as the HTML zip). Its rework happens in the bridge's own repo.
 - Docs pages still to write (src/lib/docs.ts PAGES, a docs/NAME.md + NAME-JA.md pair each, added to
   src/content.config.ts): exporting (pictures, OpenPose, the pose file), adding poses (user presets,
   described generically), adding props / assets.
