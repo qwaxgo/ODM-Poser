@@ -1,0 +1,33 @@
+# Builds the app (src-tauri), apart from the Astro / dev container (docs/HANDOFF.md, "The app"):
+#   HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose -f docker-compose.tauri.yml run --rm tauri [linux|windows|all]
+# Run it where Docker is (the WSL2 host, not the dev container). It writes release/ODM-Poser-v<version>-
+# linux-x86_64.AppImage and -windows-x64.zip; the first run builds the image and downloads a lot
+# (Rust crates, the MSVC libraries): the volumes below keep them.
+
+services:
+  tauri:
+    build:
+      context: .
+      dockerfile: build/tauri/Dockerfile
+    image: odm-poser-tauri
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+      - cargo_registry:/opt/cargo/registry
+      - cache:/root/.cache
+      - target:/cache/target
+    environment:
+      - CARGO_TARGET_DIR=/cache/target
+      - APPIMAGE_EXTRACT_AND_RUN=1          # linuxdeploy is an AppImage itself; no FUSE in a container
+      - NO_STRIP=true
+      - HOST_UID
+      - HOST_GID
+    working_dir: /workspace
+    entrypoint: ["sh", "tools/build_app.sh"]
+    command: ["all"]
+
+volumes:
+  node_modules:
+  cargo_registry:
+  cache:
+  target:

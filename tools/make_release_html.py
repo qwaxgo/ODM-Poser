@@ -45,12 +45,23 @@ def notes(ver: str) -> str:
     return m.group(1).strip() + "\n"
 
 
-def editor_page() -> bytes:
+def editor_page(app: bool = False) -> bytes:
+    """dist/editor/index.html for use from disk: the guide link goes to the site's docs. In the app
+    (tools/make_app_web.py) the list of mods comes from the app itself, so its mods.js script goes."""
     page = (dist_server.DIST / "editor" / "index.html").read_text(encoding="utf-8")
     link = 'href="../docs/"'
     if page.count(link) != 1:
         sys.exit(f"dist/editor/index.html: expected one {link}")
-    return page.replace(link, f'href="{DOCS}" target="_blank" rel="noopener"').encode("utf-8")
+    page = page.replace(link, f'href="{DOCS}" target="_blank" rel="noopener"')
+    if app:
+        mods = '<script is:inline src="../mods.js"></script>'
+        for tag in (mods, '<script src="../mods.js"></script>'):
+            if tag in page:
+                page = page.replace(tag, "")
+                break
+        else:
+            sys.exit('dist/editor/index.html: no <script src="../mods.js">')
+    return page.encode("utf-8")
 
 
 def main() -> None:

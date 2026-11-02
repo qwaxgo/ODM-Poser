@@ -11,3 +11,7 @@ dist/
 .astro/
 # the releases made here (tools/make_release_html.py)
 release/
+# the app (Tauri): its build files and the web folder tools/make_app_web.py makes for it
+src-tauri/target/
+src-tauri/gen/
+app/
