@@ -43,6 +43,9 @@ nothing third-party: keep it that way.
   (see Hosts) and give it a built editor to serve.
 - The owner commits and pushes. Do not commit unless asked; finish a batch with ready-to-paste
   commit / push commands. Reports to the owner are in Japanese.
+- **Patch notes with every commit** (owner, 2026-11-02): each change adds lines (Japanese and
+  English) under the top version of CHANGELOG.md, which is the next release (= package.json's
+  version, shown in the editor's header). The release draft takes that part as its notes.
 - Heavy GPU runs are not needed for this project.
 
 ## Layout
@@ -63,6 +66,9 @@ mods/                            the user's mods and cloned mod repositories (RE
 tools/make_mods_list.py          web/mods.js: the list of mods/ for npm run dev and tools/serve.py (both serve mods/ at <base>/mods/)
 tools/serve.py                   builds the site and serves dist/ (localhost / --lan) so the editor installs as an app
 tools/dist_server.py             builds and serves dist/ at /ODM-Poser/ for serve.py, lint_ui.py, make_card.py
+tools/make_release_html.py       release/: the HTML release zip (parts in tools/html_release/) and its notes;
+                                 .github/workflows/release.yml runs it on a pushed tag v<version> (a draft)
+CHANGELOG.md                     patch notes (ja / en), the top version is the next release
 astro.config.mjs, src/pages/    the site (Astro): src/pages makes the editor, the docs and the site root (link card);
                                  web/ goes out as it is (publicDir); npm run build -> dist/, which the Pages workflow publishes
 src/pages/docs/, src/lib/docs.ts the docs: docs/APP*.md and docs/MODDING*.md (src/content.config.ts) as pages, ja / en
@@ -118,7 +124,9 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
 
 ## Open items
 
-- Releases (see "Where it runs"): the HTML zip first, then Tauri. Not started. The site itself
+- Releases (see "Where it runs"): the HTML zip is made (v0.1.0 not tagged yet: merge astro into main
+  first); the MOD panel's "フォルダから" loads a picked mods folder (kept in Chrome / Edge; the
+  re-permission button "読み込む" was not tested by automation: it needs a real click). Tauri next. The site itself
   is deployed by .github/workflows/static.yml (GitHub Pages on push to main, shown at
   apps.qwaxgo.com/ODM-Poser/).
 - ComfyUI bridge (note for its rework, done in its own repo): since 2026-11-02 the editor's page

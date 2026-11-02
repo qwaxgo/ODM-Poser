@@ -40,3 +40,8 @@ The editor's UI follows **melta UI** (`design/melta-ui`, a git submodule: run
 - Brand: 立体人形装置 / ODM Poser; primary colour melta's standard blue `#2b70ef`.
 - Dark mode: ON (melta's dark tokens), switched by `html[data-theme]` or the system.
 - Japanese and English: `web/editor/i18n.js` translates text nodes; new strings need entries there.
+
+## Patch notes
+
+Every change adds a line in Japanese and one in English under the top version of `CHANGELOG.md`
+(the next release: `package.json`'s version, shown in the editor's header).
