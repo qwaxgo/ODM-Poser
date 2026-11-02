@@ -1,6 +1,6 @@
 """Make the link card (web/editor/og-card.png, 1200 x 630): the picture shown when the GitHub Pages
-address is shared (Open Graph / X). The figure on it is drawn by the editor itself: this opens
-web/editor/index.html in a browser, poses the figure, exports the composition and lays it out
+address is shared (Open Graph / X). The figure on it is drawn by the editor itself: this builds
+the site, opens the editor in a browser, poses the figure, exports the composition and lays it out
 beside the name. Run again after changing the look of the editor or the words below.
 
     pip install playwright        (then: playwright install chromium, unless Microsoft Edge is installed)
@@ -10,11 +10,12 @@ beside the name. Run again after changing the look of the editor or the words be
 from __future__ import annotations
 
 import base64
-from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-ROOT = Path(__file__).resolve().parent.parent
+import dist_server
+from dist_server import ROOT
+
 EDITOR = ROOT / "web" / "editor"
 OUT = EDITOR / "og-card.png"
 
@@ -58,13 +59,13 @@ p{font-size:25px;line-height:1.55;margin-top:26px}
 
 def main() -> None:
     icon = base64.b64encode((EDITOR / "icon-192.png").read_bytes()).decode()
-    with sync_playwright() as p:
+    with dist_server.editor() as url, sync_playwright() as p:
         try:
             browser = p.chromium.launch(channel="msedge")
         except Exception:
             browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": 1400, "height": 1000})
-        page.goto((EDITOR / "index.html").as_uri() + "?nomods&lang=ja")
+        page.goto(url + "?nomods&lang=ja")
         page.wait_for_timeout(1200)
         figure = page.evaluate(POSE)
         card = browser.new_page(viewport={"width": 1200, "height": 630})

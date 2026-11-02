@@ -1,0 +1,39 @@
+---
+// サイズ, プリセット and the pose's own sections (左右, 関節の限界, ポーズを戻す).
+---
+
+  <section data-menu="size">
+    <h2>サイズ</h2>
+    <div class="hint">部位ごとの縦幅・横幅、小物の長さ・太さはここに入ります（準備中）。今は、選んだ関節の太さ・長さを下の欄で変えられます。</div>
+  </section>
+  <section data-menu="preset">
+    <h2>プリセット</h2>
+    <select id="preset"></select>
+    <div class="btns"><button id="applyPreset">このポーズにする</button></div>
+    <div id="tcBox">
+      <label>ユーザープリセット（<span id="tcCount">0</span>）</label>
+      <div class="btns"><button id="tcLoadFile">ファイルから読込</button><input type="file" id="tcFile" accept=".json,application/json" multiple hidden></div>
+      <select id="tcGroup"></select>
+      <input type="text" id="tcSearch" placeholder="検索（例：キック / kick）">
+      <select id="tcList" size="6"></select>
+      <div class="btns"><button id="tcApply">このポーズにする</button><button id="tcRandom">ランダム</button></div>
+      <div class="hint">骨の向きだけを取り込み、体格はそのままです。一覧はダブルクリックでも読み込めます。</div>
+    </div>
+  </section>
+
+  <section data-menu="pose">
+    <h2>左右</h2>
+    <div class="btns"><button id="mirror">⇋ 左右反転</button><button id="symToL">右→左へ写す</button><button id="symToR">左→右へ写す</button></div>
+  </section>
+
+  <section data-menu="pose">
+    <h2>関節の限界</h2>
+    <label title="人間として無理な曲がり方をしない"><input type="checkbox" id="limitsSide" checked> 関節の限界</label>
+    <div class="hint">画面右上の「関節の限界」と同じスイッチです。これからの操作に効きます。</div>
+  </section>
+
+  <section data-menu="pose">
+    <h2>ポーズを戻す</h2>
+    <div class="btns"><button id="poseReset">↺ 立ちポーズに戻す</button></div>
+    <div class="hint">体格（骨の長さ・太さ）と位置はそのままです。</div>
+  </section>

@@ -45,7 +45,8 @@
     "右手": "Right hand", "左手": "Left hand",
     "手首の曲げ（＋前へ）": "Bend the wrist (+ forward)", "手首の左右（＋外へ）": "Wrist sideways (+ outward)",
     "手のひらの向き（前腕のひねり）": "Palm direction (the forearm's twist)",
-    "GitHub リポジトリ": "GitHub repository", "意見箱": "Feedback",
+    "GitHub リポジトリ": "GitHub repository", "意見箱": "Feedback", "使い方": "Guide",
+    "使い方・アプリとして使う・MOD の作り方": "How to use it, install it as an app, write mods",
     "不具合の報告・要望・感想を GitHub の Issues に書けます（GitHub のアカウントが要ります）":
       "Report a bug, ask for a feature or say what you think, in the GitHub Issues (a GitHub account is needed)",
     "カメラの固定と記憶": "Camera lock and memory", "カメラを固定する": "Lock the camera", "カメラパッドを表示": "Show the camera pad",

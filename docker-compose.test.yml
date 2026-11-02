@@ -26,8 +26,7 @@ services:
       - .:/workspace
     working_dir: /workspace
     command: >
-      python -c "import esprima, re, glob;
-      [esprima.parseScript(m) for m in re.findall(r'<script>(.*?)</script>', open('web/editor/index.html', encoding='utf-8').read(), re.S)];
+      python -c "import esprima, glob;
       [esprima.parseScript(open(f, encoding='utf-8').read()) for f in sorted(glob.glob('web/editor/*.js'))];
       print('syntax ok')"
 

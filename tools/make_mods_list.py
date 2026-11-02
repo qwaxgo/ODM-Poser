@@ -1,5 +1,6 @@
 """Write web/mods.js, the list of mods/*.js and mods/<folder>/*.js (a repository of mods cloned
-into mods/), so the editor opened from disk (or from tools/serve.py) loads the mods too.
+into mods/), so the editor loads your mods in npm run dev and tools/serve.py (both serve mods/ next to the
+editor's folder, at ../mods/ from it).
 
     python tools/make_mods_list.py
 
@@ -26,10 +27,10 @@ def main():
         if len(parts) <= 2 and all(MOD_PART.match(p) and not p.startswith(("_", ".")) for p in parts):
             names.append("/".join(parts))
     names.sort()
-    OUT.write_text("// written by tools/make_mods_list.py: the mods the editor loads when opened from disk\n"
-                   "// or from tools/serve.py (mods/ is two folders up from web/editor/)\n"
+    OUT.write_text("// written by tools/make_mods_list.py: the mods the editor loads in npm run dev and\n"
+                   "// tools/serve.py (both serve mods/ next to the editor's folder)\n"
                    "window.ODM_POSER_MODS = " + json.dumps(names) + ";\n"
-                   'window.ODM_POSER_MODS_BASE = "../../mods/";\n', encoding="utf-8")
+                   'window.ODM_POSER_MODS_BASE = "../mods/";\n', encoding="utf-8")
     print(f"{OUT.relative_to(ROOT)}: {len(names)} mod(s)" + (": " + ", ".join(names) if names else ""))
 
 

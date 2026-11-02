@@ -33,7 +33,7 @@ function itemLocal(it, p, k = 1){             // the item's own size and turn, b
   q = rotAxis(q, [0, 0, 1], deg(r[2])); q = rotAxis(q, [1, 0, 0], deg(r[0])); q = rotAxis(q, [0, 1, 0], deg(r[1]));
   return add(q, it.off || [0, 0, 0]);
 }
-// handFrame(side): the hand's frame, in index.html (the fingers are drawn from it too)
+// handFrame(side): the hand's frame, in pose_main.js (the fingers are drawn from it too)
 function chestFrame(){
   const P = S.P, x = norm(sub(P[IX.l_shoulder], P[IX.r_shoulder]));
   let y = sub(P[IX.neck], P[IX.waist]); y = norm(sub(y, mul(x, dot(y, x))));

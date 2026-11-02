@@ -1,0 +1,63 @@
+---
+// The views: the touch bar, the front and side canvases with the controls on their corners,
+// the camera pad, the height line, and the hints dialog (ui-help.js fills it).
+---
+
+<div id="stage">
+  <section>
+    <div class="touchbar" id="touchBar">
+      <button type="button" id="vPanels" class="splitkey">操作欄を隠す</button>
+      <button type="button" id="vShift" class="touchkey" aria-pressed="false">Shift（その骨だけ・上下）</button>
+      <button type="button" id="vAlt" class="touchkey" aria-pressed="false">固定（ピン）</button>
+      <button type="button" id="vUndo" class="touchkey">元に戻す</button>
+      <button type="button" id="vRedo" class="touchkey">やり直す</button>
+      <button type="button" id="vSide" class="vside">横の図</button>
+      <button type="button" id="vPad" class="touchkey" aria-pressed="true">カメラパッド</button>
+    </div>
+    <div class="views">
+      <div class="view"><span class="tag">正面（カメラ）</span><canvas id="front"></canvas>
+        <!-- on the view's corners: the editing modes (top left) and the drawing switches (top right); each folds away -->
+        <div class="ov ov-tl" id="ovModes" data-ui="skip">
+          <div class="ov-stack">
+            <div class="ov-body ov-row ov-keep" id="ovUndoRow" role="group" aria-label="元に戻す・やり直す">
+              <button type="button" id="ovUndo" data-icon="Undo" title="元に戻す（Ctrl+Z）" aria-label="元に戻す"></button>
+              <button type="button" id="ovRedo" data-icon="Redo" title="やり直す（Ctrl+Y）" aria-label="やり直す"></button>
+              <button type="button" id="ovLog" data-icon="ViewList" title="作業ログ（どの時点にも戻せる）" aria-label="作業ログ"></button>
+            </div>
+            <div class="ov-body" id="modes" role="group" aria-label="編集モード">
+              <button type="button" data-mode="pose" data-icon="Pose" class="on" title="骨の長さを保って関節を動かす">ポーズ</button>
+              <button type="button" data-mode="body" data-icon="Body" title="骨の長さ・丸の太さを変える">体格</button>
+              <button type="button" data-mode="persp" data-icon="Fov" title="カメラとレンズ（パース）を動かす">パース</button>
+              <button type="button" data-mode="place" data-icon="Move1" title="定規・物体を動かす（カメラは動かない）">配置</button>
+            </div>
+          </div>
+          <button type="button" class="ov-fold" aria-expanded="true" aria-controls="modes" title="モードを隠す">‹</button>
+        </div>
+        <!-- the view's switches (top right): each an icon and its name, a click turns it on or off;
+             folded (›), only the icons show -->
+        <div class="ov ov-tr" id="ovOpts" data-ui="skip">
+          <button type="button" class="ov-fold" aria-expanded="true" aria-controls="viewOpts" title="表示の切り替えを隠す">›</button>
+          <div class="ov-body" id="viewOpts" role="group" aria-label="表示の切り替え">
+            <label class="ov-item" data-icon="Body" title="人間として無理な曲がり方をしない"><input type="checkbox" id="limits" checked><span>関節の限界</span></label>
+            <label class="ov-item" data-icon="dashed" title="物陰に隠れた線を破線で描く（書き出しにも）"><input type="checkbox" id="hiddenDashed"><span>隠れ線を破線</span></label>
+            <label class="ov-item" data-icon="cube" title="胴体を厚みのある台形で描く"><input type="checkbox" id="torso3d" checked><span>胴体を立体</span></label>
+            <button type="button" class="ov-item" id="ovSide" data-icon="sideView" aria-pressed="true" title="横から（奥行き）の図を出す・隠す（置き場所は横の図の右下で）"><span>横の図</span></button>
+            <button type="button" class="ov-item" id="ovAside" data-icon="Menu" aria-pressed="true" title="操作欄を出す・しまう（置き場所は操作欄の上で）"><span>操作欄</span></button>
+            <button type="button" class="ov-item" id="splitBtn" data-icon="split" aria-pressed="false" title="図と操作欄を画面の半分ずつに分ける（スマホ・タブレット）"><span>分割表示</span></button>
+            <button type="button" class="ov-item" id="themeBtn" data-icon="theme" title="表示の明るさ（押すたびに 自動 → ライト → ダーク）"><span>表示：自動</span></button>
+            <button type="button" class="ov-item" id="installBtn" data-icon="DownloadAlt" hidden><span>アプリとして追加</span></button>
+            <button type="button" class="ov-item" id="helpBtn" data-icon="Question" title="操作のヒント（?キー）"><span>操作のヒント</span></button>
+          </div>
+        </div>
+        <div class="ov-toast" id="ovToast" role="status" aria-live="polite"></div>
+        <div class="campad" id="camPad"><div class="stick l" id="stickOrbit"><i></i><b>回す</b></div>
+          <div class="stick r" id="stickPan"><i></i><b>動かす</b></div><div class="zoomer" id="zoomer"><i></i><b>拡大</b></div></div></div>
+      <div class="view sideview"><span class="tag">横から（奥行き）</span><canvas id="side"></canvas>
+        <label class="view-place" data-ui="skip" title="横から（奥行き）の図の置き場所">置き場所
+          <select id="sidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option><option value="hide">隠す</option></select></label></div>
+    </div>
+    <div class="hint keep">身長 <span id="heightP">-</span>　<span id="pinInfo"></span></div>
+  </section>
+  <!-- 操作のヒント: opened with the ? button (ui-help.js fills it, for a mouse or for touch) -->
+  <dialog id="helpDlg" aria-labelledby="helpTitle" data-ui="skip"></dialog>
+</div>

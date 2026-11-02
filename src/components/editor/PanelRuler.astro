@@ -1,0 +1,34 @@
+---
+// 定規: the perspective ruler and the box guide.
+---
+
+  <section data-menu="ruler">
+    <h2>定規</h2>
+    <label><input type="checkbox" id="rulerOn"> パース定規を表示</label>
+    <div id="rulerCtl" style="display:none">
+      <label>透視</label>
+      <select id="rulerN"><option value="1">1点</option><option value="2">2点</option><option value="3">3点</option></select>
+      <div id="rulerYawRow"><label>向き</label>
+        <div class="row"><input type="range" id="rulerYaw" min="-180" max="180" value="30"><input type="number" class="num" id="rulerYawV"><span class="unit">°</span></div></div>
+      <label>線の数</label>
+      <div class="row"><input type="range" id="rulerLines" min="6" max="60" value="20"><span class="val" id="rulerLinesV"></span></div>
+      <label><input type="checkbox" id="cubeOn" checked> ガイド立方体</label>
+      <div id="cubeCtl">
+        <label><input type="checkbox" id="cubeExtend" checked> 辺を消失点まで延ばす</label>
+        <label>幅</label><div class="row"><input type="range" id="boxWR" min="1" max="1000" step="1"><input type="number" class="num" id="boxW" min="1" step="5"><span class="unit">cm</span></div>
+        <label>高さ</label><div class="row"><input type="range" id="boxHR" min="1" max="1000" step="1"><input type="number" class="num" id="boxH" min="1" step="5"><span class="unit">cm</span></div>
+        <label>奥行</label><div class="row"><input type="range" id="boxDR" min="1" max="1000" step="1"><input type="number" class="num" id="boxD" min="1" step="5"><span class="unit">cm</span></div>
+        <label>位置：左右</label><div class="row"><input type="range" id="boxXR" min="-1000" max="1000" step="1"><input type="number" class="num" id="boxX" step="5"><span class="unit">cm</span></div>
+        <label>位置：上下</label><div class="row"><input type="range" id="boxYR" min="-200" max="1000" step="1"><input type="number" class="num" id="boxY" step="5"><span class="unit">cm</span></div>
+        <label>位置：前後</label><div class="row"><input type="range" id="boxZR" min="-1000" max="1000" step="1"><input type="number" class="num" id="boxZ" step="5"><span class="unit">cm</span></div>
+        <div class="btns"><button id="boxCube" title="立方体にする（幅にそろえる）">立方体に</button></div>
+      </div>
+      <h3>スナップ</h3>
+      <label><input type="checkbox" id="rulerSnap" checked> 物体を定規にスナップ</label>
+      <div class="btns"><button id="wallToRuler" title="壁を定規の向きにそろえる">壁を定規に</button></div>
+      <div class="hint">配置モードで物体・小物を動かすと、向きが定規の向きにそろいます（ホイールで 90°ずつ回ります）。物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。</div>
+      <div class="btns"><button id="saveRuler">定規の画像</button><button id="rulerReset">↺ 定規を初期値に</button></div>
+      <div class="hint" id="rulerHint"></div>
+      <div class="hint" id="rulerWarn" style="color:var(--warn);display:none"></div>
+    </div>
+  </section>

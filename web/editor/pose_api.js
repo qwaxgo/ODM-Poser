@@ -5,7 +5,7 @@
 // hooks into drawing, editing and the mouse. See docs/MODDING.md.
 //
 // Mods are loaded from mods/*.js and mods/<folder>/*.js (a repository of mods cloned into mods/).
-// The list is window.ODM_POSER_MODS from ../mods.js: opened from disk that is web/mods.js
+// The list is window.ODM_POSER_MODS from ../mods.js: in npm run dev and tools/serve.py that is web/mods.js
 // (written by tools/make_mods_list.py); a page that hosts the editor may serve it instead.
 // The MOD panel can also run a file for this session only. ?nomods in the address starts without mods.
 // A mod's own data lives in S.mods[id]: saved with the pose, undone with Ctrl+Z.
@@ -200,7 +200,7 @@ function makeApi(mod){
       shapes: () => Object.keys(HANDS),
     },
     poses: {
-      // turns: [[joint, "x" | "y" | "z", degrees], ...] from the standing pose (as PRESETS in index.html)
+      // turns: [[joint, "x" | "y" | "z", degrees], ...] from the standing pose (as PRESETS in pose_main.js)
       add(name, def){
         if (!Array.isArray(def.turns) || !def.turns.every(t => IX[t[0]] !== undefined && "xyz".includes(t[1]) && isNum(t[2])))
           throw new Error(`pose ${name}: turns [[joint, axis, degrees], ...]`);
