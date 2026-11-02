@@ -30,10 +30,12 @@ nothing third-party: keep it that way.
   (tags `v0.x.y`), none built yet:
   - an HTML build: a zip whose editor opens from disk (file://), so *the editor's scripts must keep
     working from file://* (no ES modules, no fetch of its own files); the user's mods go in the
-    `mods/` folder next to it; the docs are a link to the site, not shipped;
-  - an executable (Tauri), for the platforms this machine can build (WSL2: Linux; Windows if the
-    cross build works); mods in a `mods/` folder next to it; signing depends on its cost;
-  - later, a provisional APK (Tauri's Android build).
+    `mods/` folder next to it, listed by a line in its `mods.js`, or the folder picked in the editor
+    (both ways); the docs are a link to the site, not shipped;
+  - an executable (Tauri), for the platforms this machine can build: Linux, and Windows cross-built
+    in the build container (NSIS installer), or on the Windows host if that fails; mods in a `mods/` folder next to it; not code-signed (the docs explain
+    the Windows warning);
+  - an APK (Tauri's Android build): a future plan, not now.
   The Tauri builds get their own build container, apart from the Astro one.
 - **ComfyUI**: the bridge is the owner's public repo `qwaxgo/ODM-Poser-ComfyUIBridge` (editor as
   its git submodule, served from `web/editor/`). It is reworked on its own branch, in another
@@ -116,13 +118,19 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
 
 ## Open items
 
-- Releases (see "Where it runs"): the HTML zip first, then Tauri, then the APK. Not started.
-- ComfyUI bridge: since 2026-11-02 the editor's page is built (dist/editor/), not in the repo, so
-  the bridge's submodule no longer has web/editor/index.html. It needs a built editor (from the
-  same build as the HTML zip). Its rework happens in the bridge's own repo.
-- Docs pages still to write (src/lib/docs.ts PAGES, a docs/NAME.md + NAME-JA.md pair each, added to
-  src/content.config.ts): exporting (pictures, OpenPose, the pose file), adding poses (user presets,
-  described generically), adding props / assets.
+- Releases (see "Where it runs"): the HTML zip first, then Tauri. Not started. The site itself
+  is deployed by .github/workflows/static.yml (GitHub Pages on push to main, shown at
+  apps.qwaxgo.com/ODM-Poser/).
+- ComfyUI bridge (note for its rework, done in its own repo): since 2026-11-02 the editor's page
+  is built (dist/editor/), not in the repo, so the bridge's submodule no longer has
+  web/editor/index.html. Unchanged and still relied on: `../mods.js`, `../mods/`, the MOD API, the
+  state format. Ways to give it a built editor (not decided): (a) CI pushes the same build as the
+  HTML zip to a branch of this repo (e.g. `editor-build`) and the submodule follows that branch, so
+  the bridge needs no Node.js; (b) the bridge fetches the Release zip.
+- Docs pages still to write (owner wants all of them; src/lib/docs.ts PAGES, a docs/NAME.md +
+  NAME-JA.md pair each, added to src/content.config.ts): exporting (pictures, OpenPose, the pose
+  file), adding poses (user presets, described generically), adding props / assets, download (the
+  Releases, the unsigned-app warning), using it in ComfyUI (the bridge).
 - English UI done (2026-10-19). To find untranslated text: open the editor headless with
   `?lang=en`, step through the modes, joints and props, and list text nodes that still hold
   Japanese (only the "日本語" switch and the search example should remain).
