@@ -151,10 +151,16 @@ Each shape is an object with one key (helpers in `api.shapes`):
 | `at`, `sets` | `wear`: where (see above) |
 | `grab` | `grab`: the lines to take hold of, `[[[x,y,z], [x,y,z]], ...]` |
 | `bayonet` | the muzzle [x, y, z]: offers "fix a bayonet" (the blade goes along +z) |
+| `segs` | sections whose lengths change one by one: `[["grip", -7, 7], ["blade", 9.5, 90]]` ([id, from, to] in cm). `grip`, `blade`, `head`, `stock`, `barrel`, `claw`, `tip` and `tube` come with a name; others take one as `["hilt", 7, 9, "鍔", "Guard"]` or `{id, from, to, ja, en}`. Sections must not overlap |
+| `segAxis`, `segAnchor` | the axis the sections lie along (`"x"`, `"y"` or `"z"`; `"y"` if not given) and the point that stays (cm on that axis; 0 if not given: a held thing's fist) |
 | `glow`, `color` | drawn glowing in this colour (effects) |
 | `dims`, `make` | a size set in cm: `dims: [["幅", 20], ["高さ", 30]]`, `make: ([w, h]) => [shapes]` |
 | `scalable` | the size slider is meant for it |
 | `note`, `noteEn` | a hint shown under the list, and its English |
+
+The `segs` sections are lengthened one by one under **A thing's sections, each its length** in the Sizes tab. A longer
+section takes what lies beyond it along (the blade, for the grip); round shapes (balls, discs, rings) keep their size.
+The `grip`, `grip2`, `bayonet`, `mount` and `grab` points move with them.
 
 Holding, wearing or mounting a prop sets the hand shapes it asks for; letting go gives them back.
 Every prop can be carried on the back (hand and body props) and put down on the floor or an object.

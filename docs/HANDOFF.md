@@ -124,6 +124,10 @@ state format `version: 3`, `window.ODMPoser` (old alias `window.SymbolicPose`).
   `def.grip`. `aimOtherHand` puts the other hand's grip point on `grip2` the same way.
 - Item sizes: `it.stretch [x, y, z]` along its own axes (`stretchOf` also reads the older
   `len` / `thick`; `foldStretch` converts on edit); round parts' radii follow (`radK`).
+- Item sections: `def.segs` ([id, from, to] along `segAxis`, about `segAnchor`) and `it.segs {id: factor}`;
+  pose_scene.js `segMap` stretches the axis piece by piece, `segParts` (in `partsOf` / `partSets`) and `segPoint`
+  (grip, grip2, bayonet, mount, grab) apply it before the stretch. Built-in sections: `SEGS` at the end of
+  pose_props.js; the panel is in pose_size.js (`segSel` draws the chosen one heavier).
 - Modes and tools: ポーズ rotates (3-axis rotate turns what lies beyond the selected joint about it)
   and moves only arm / leg joints (`LIMB` in pose_gizmo.js); 体格 only scales; 配置 moves objects,
   things, the ruler box and the whole figure by its hips. `tools()` greys out the rest and the tool in
