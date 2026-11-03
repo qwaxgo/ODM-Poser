@@ -38,6 +38,13 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 「ComfyUI で使う」のページを新しいブリッジに合わせて更新：エディタ本体（HTML 版）がブリッジに同梱されるので、入れるときと更新するときにサブモジュールの手順は要りません
 - 書き出したファイル（画像・ポーズのファイル）の利用条件を CC0 1.0 に：商用・加工・AI の学習や生成への利用も自由で、クレジットは任意です。ドキュメントに「ライセンス・利用条件」のページを追加し、書き出しのタブ・ドキュメントの下・README・リリースの zip にも載せました（ツール自体は今までどおり MIT）
 - 小物の部位ごとの長さ：剣の柄と刀身、斧の柄と頭、銃の銃床と銃身など、部位を選んでその長さだけを変えられます（「サイズ」のタブの「小物の部位ごとの長さ」。選んだ部位は図で太く表示）。部位を伸ばすとその先も一緒に動き、持つ所・両手持ちのもう片方の手・銃剣も合わせて動きます。組み込みの武器 32 種に部位を付け、MOD の小物も `segs`・`segAxis`・`segAnchor` で部位を持てます
+- スマホの図の上にあった「Shift・固定・元に戻す・やり直す・側面図・カメラパッド」の列をなくし、PC と同じ場所に：元に戻す・やり直すは図の左上、側面図・カメラパッドは図の右上の切り替え、Shift・固定は図の左（3軸ハンドルの下）のアイコンに
+- 図の左の列が図の高さに入りきらないとき（スマホの分割表示など）、3軸ハンドルの切り替えと Shift・固定を2列目に並べるように
+- 図の右上の切り替えがスクロールするとき、上下の端に ▲ ▼ を出すように（押すとスクロール）
+- 図の左上・右上のボタンを、正面の図だけでなく側面図も含めた図全体の角に置くように（PC・スマホとも）
+- 図と操作欄の境目のつまみをドラッグして、広さを変えられるように（PC の横並び、スマホの分割表示の縦・横。ダブルクリックで戻す。このブラウザに残ります）
+- スマホでも側面図を上・下・左・右に置けるように（幅が狭いときは置き場所のボタンを1つにまとめ、押すとほかが開く）
+- 「操作欄」「分割表示」のアイコンを、いまの画面で操作欄が出る場所（縦のスマホなら下）・分ける向きの絵に
 
 ### English
 
@@ -67,6 +74,13 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The "Using it in ComfyUI" page follows the reworked bridge: the editor (its HTML build) comes inside the bridge, so installing and updating need no submodule steps
 - Exported files (pictures and pose files) are under CC0 1.0: use them commercially, change them, use them with AI for training or generation; credit is optional. A "License and terms of use" docs page, linked from the Export tab, the docs' footer, the README and the release zips (the tool itself stays MIT)
 - A thing's sections, each its length: a sword's grip and blade, an axe's grip and head, a gun's stock and barrel ... choose a section and change its length alone (Sizes › A thing's sections, each its length; the chosen one is drawn heavier). What lies beyond moves along, and so do the grip, the other hand of a two-handed thing and a bayonet. 32 built-in weapons have sections; a mod's props can have them with `segs`, `segAxis` and `segAnchor`
+- The row of keys above the view on phones (Shift, Pin, Undo, Redo, Side view, Camera pad) is gone, each where the computer has it: Undo and Redo at the view's top left, Side view and Camera pad among the switches at the top right, Shift and Pin as icons on the left under the 3-axis handles' tools
+- When the left column does not fit the view's height (a phone's split screen ...), the handles' tools and Shift / Pin go to a second column
+- When the switches at the top right scroll, ▲ ▼ show at their ends (a tap scrolls)
+- The buttons on the top corners sit on the corners of the views as a whole, the side view included (computers and phones)
+- Drag the grip on the edge between the views and the panel to give either more room (side by side on a computer, a phone's split screen upright or sideways; a double click puts it back; kept in this browser)
+- The side view can go above, below, left or right on a phone too (narrow, its place buttons fold into one that opens the others)
+- The "Panel" and "Split screen" icons picture where the panel comes out on this screen (below on an upright phone) and the way the screen splits
 
 ## v0.1.0
 

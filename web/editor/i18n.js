@@ -220,7 +220,7 @@
     "単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。":
       "Placed on its own. Drag it in Place mode (Shift + drag: up / down, wheel: turn).",
     // touch, pens, phones (index.html)
-    "Shift（その骨だけ・上下）": "Shift (that bone only / up-down)", "固定（ピン）": "Pin", "側面図": "Side view",
+    "固定": "Pin", "タッチ用のキー": "Touch keys", "その骨だけ・上下に動かす（もう一度押すまで）": "Only that bone / up and down (till pressed again)", "丸をタップして関節を固定する（もう一度押すまで）": "Tap a circle to pin its joint (till pressed again)", "カメラを回す・動かすスティックと拡大のスライダー": "Sticks to orbit and pan the camera, a slider to zoom", "側面図": "Side view",
     "タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（カメラモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。":
       "Touch and pen: drag with one finger (or the pen), pinch with two to zoom (the lens in the Camera mode), double-tap to flip a bone toward / away. Shift and Pin are the buttons above (a pen's side button is Shift, its eraser end pins).",
     // the app (PWA, index.html)
@@ -359,9 +359,9 @@
     "側面図の置き場所": "Where the side (depth) view goes",
     "操作欄": "Panel", "操作欄をしまう": "Hide the panel", "操作欄を出す": "Show the panel", "操作欄をしまう・出す": "Hide / show the panel",
     "側面図を出す・隠す": "Show / hide the side view",
-    "側面図を出しました。": "The side view is shown.", "側面図を隠しました。": "The side view is hidden.",
+    "側面図を出しました（置き場所は側面図の隅で）。": "The side view is shown (where it goes: on the side view's corner).", "側面図を隠しました。": "The side view is hidden.",
     "置き場所": "Place", "操作欄の位置": "Panel", "分割表示": "Split screen", "操作欄をしまいました。": "The panel is put away.", "操作欄を出しました。": "The panel is shown.",
-    "側面図を出す・隠す（置き場所は側面図の右下で）": "Show / hide the side (depth) view (where it goes: on the side view, bottom right)",
+    "側面図を出す・隠す（置き場所は側面図の隅で）": "Show / hide the side (depth) view (where it goes: on the side view's corner)",
     "操作欄を出す・しまう（置き場所は操作欄の上で）": "Show / put away the panel (where it goes: at the top of the panel)",
     "図と操作欄を画面の半分ずつに分ける（スマホ・タブレット）": "The views and the panel on half the screen each (phones, tablets)",
     "表示の明るさ（押すたびに 自動 → ライト → ダーク）": "Light or dark (each press: auto → light → dark)", "操作欄を上・下に置いたとき、メニューを置く側": "With the panel above / below: the side the menu goes on",

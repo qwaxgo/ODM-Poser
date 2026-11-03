@@ -42,6 +42,10 @@ window.ODMICONS = {
   lang: ["0 0 24 24", '<path d="M3 5h9M7.5 3v2M10 5c-.8 4-3.4 7-6.5 8.5M5.5 8.5c1.2 2.4 3 4 5 5M13 21l4-10 4 10M14.5 17.5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'],
   axes: ["0 0 24 24", '<path d="M5 19V4M5 19h15M5 19l-3 3M5 4L3 6.5M5 4l2 2.5M20 19l-2.5-2M20 19l-2.5 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'],
   rotate: ["0 0 24 24", '<path d="M20 12a8 8 0 11-2.34-5.66M20 4v4.5h-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'],
+  // the touch keys (Shift: the key's up arrow; 固定: a pin) and the camera pad (two sticks)
+  shiftKey: ["0 0 24 24", '<path d="M12 3.5l8 8.5h-4.5v7.5h-7V12H4l8-8.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'],
+  pin: ["0 0 24 24", '<path d="M9 3.5h6M10 3.5v6L6.5 13h11L14 9.5v-6M12 13v7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'],
+  pad: ["0 0 24 24", '<rect x="2.5" y="6" width="19" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'],
 };
 // an icon as an element: ODMICONS.svg("Camera", "w-5 h-5")
 window.ODMICONS.svg = (name, cls = "") => {

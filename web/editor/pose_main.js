@@ -524,12 +524,11 @@ function viewChrome(){
   if (sec && key !== chromeKey){ chromeKey = key; chromeH = Math.max(0, sec.offsetHeight - views.offsetHeight); }
   return chromeH;
 }
-// the side view above or below the front one: placed so (側面図の置き場所), or on a phone held
-// upright, where it goes under the front one when asked for
+// the side view above or below the front one (側面図の置き場所; on a phone too)
 const PHONE = "(max-width:700px)";
 function sideStacked(){
   if (!side.parentElement.getClientRects().length) return false;
-  return matchMedia(PHONE).matches || /\bside-(top|bottom)\b/.test(front.closest(".views").className);
+  return /\bside-(top|bottom)\b/.test(front.closest(".views").className);
 }
 const ONE_COLUMN = "(max-width:900px), (orientation:portrait) and (max-aspect-ratio:4/5)";
 // The views' height (maxH) and whether they have a room of their own (room: beside the panel, a
@@ -1520,13 +1519,9 @@ try { for (const k of ["theme", "lang", "editor-v1", "editor-v1-limits"]){
   if (o !== null && localStorage.getItem("odm-poser-" + k) === null) localStorage.setItem("odm-poser-" + k, o);
 } } catch (e) {}
 // the hints under the views: open where there is room (two columns, a tall window)
-// the on-screen keys (shown on touch screens and narrow windows)
+// the keys a keyboard would give (touch screens: on the view under the modes), on until pressed again
 for (const [id, key] of [["vShift", "shift"], ["vAlt", "alt"]])
   $(id).addEventListener("click", () => { VMOD[key] = !VMOD[key]; $(id).setAttribute("aria-pressed", String(VMOD[key])); $(id).classList.toggle("on", VMOD[key]); });
-$("vUndo").addEventListener("click", undo);
-$("vRedo").addEventListener("click", redo);
-$("vSide").addEventListener("click", () => { const on = document.body.classList.toggle("show-side");
-  $("vSide").setAttribute("aria-pressed", String(on)); if (matchMedia(PHONE).matches) $("ovSide").setAttribute("aria-pressed", String(on)); draw(); });
 if (navigator.maxTouchPoints > 0 || "ontouchstart" in window || matchMedia("(any-pointer: coarse)").matches)
   document.body.classList.add("touch");
 const UNITS = {scaleAll: 1, scaleHead: 1, scaleThick: 1, lens: 1, yaw: 1, pitch: 1, roll: 1};
@@ -2067,13 +2062,13 @@ $("camList").addEventListener("dblclick", camRecall);
 $("camDel").addEventListener("click", () => { const i = +$("camList").value; if (!(S.cams || [])[i]) return;
   remember(); const [c] = S.cams.splice(i, 1); syncCams(); say(`${c.name}を削除しました。`); });
 syncCams();
-// the side view (横から): right (the default), left, above, below or hidden; kept in this browser
-// The button on the view (two panes) hides it and brings it back where it was.
+// the side view (横から): right (the default; hidden on a phone till asked for), left, above, below
+// or hidden; kept in this browser. The button on the view (two panes) hides it and brings it back
+// where it was.
 { const views = document.querySelector(".views"), el = $("sidePos"), btn = $("ovSide");
   const set = p => { views.classList.remove("side-left", "side-top", "side-bottom", "side-hide");
     if (p !== "right") views.classList.add("side-" + p); el.value = p;
-    // a phone shows it on request (show-side), wherever it is placed
-    btn.setAttribute("aria-pressed", String(matchMedia(PHONE).matches ? document.body.classList.contains("show-side") : p !== "hide"));
+    btn.setAttribute("aria-pressed", String(p !== "hide"));
     // twice: the front view's room is measured with the side view already at its new size
     chromeKey = ""; draw(); chromeKey = ""; draw(); };
   const get = (k, d) => { try { return localStorage.getItem(KEY + k) || d; } catch (e) { return d; } };
@@ -2081,11 +2076,11 @@ syncCams();
   const choose = v => { put("-side", v); if (v !== "hide") put("-sidelast", v); set(v); };
   el.addEventListener("change", () => choose(el.value));
   btn.addEventListener("click", () => {
-    // phones show it on request (the 側面図 key): the same here
-    if (matchMedia("(max-width: 700px)").matches){ $("vSide").click(); return; }
     const show = el.value === "hide";
-    choose(show ? get("-sidelast", "right") : "hide"); toast(show ? "側面図を出しました。" : "側面図を隠しました。"); });
-  const p = get("-side", "right");
+    // shown again where it was; a phone, the first time: under the front view
+    choose(show ? get("-sidelast", matchMedia(PHONE).matches ? "bottom" : "right") : "hide");
+    toast(show ? "側面図を出しました（置き場所は側面図の隅で）。" : "側面図を隠しました。"); });
+  const p = get("-side", matchMedia(PHONE).matches ? "hide" : "right");
   set(["right", "left", "top", "bottom", "hide"].includes(p) ? p : "right");
 }
 // the panel (操作欄): right (the default), left, above or below the views; kept in this browser

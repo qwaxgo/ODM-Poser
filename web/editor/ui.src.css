@@ -105,7 +105,8 @@
   #stage, aside { min-width: 0; }
   #stage > section { margin-bottom: 0; }
   aside > section { margin-bottom: 16px; }
-  .views { display: grid; grid-template-columns: 1fr 34%; gap: 12px; }
+  /* the views' box: the controls on its corners lie over both views (the front and the side one) */
+  .views { position: relative; display: grid; grid-template-columns: 1fr 34%; gap: 12px; }
   /* the side view's place (横の図): left, above, below, hidden */
   .views.side-left { grid-template-columns: 34% 1fr; }
   .views.side-left .sideview, .views.side-top .sideview { order: -1; }
@@ -116,7 +117,7 @@
   .view canvas { display: block; width: 100%; height: auto; margin: 0 auto; touch-action: none; cursor: crosshair;
     -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
   .view .tag { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); pointer-events: none; white-space: nowrap; }
-  /* the front view's corners: modes (top left) and switches (top right), folded with ‹ › */
+  /* the views' corners: modes (top left) and switches (top right), folded with ‹ › */
   .ov { position: absolute; top: 8px; bottom: 8px; z-index: 3; display: flex; align-items: flex-start; gap: 4px; pointer-events: none; }
   /* a low view (a phone with the side view under it): the columns keep to the view's height and scroll */
   .ov > .ov-body, .ov-stack { max-height: 100%; overflow-y: auto; scrollbar-width: none; }
@@ -127,6 +128,19 @@
   .ov.folded .ov-body:not(.ov-keep) { display: none; }
   .ov-stack { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
   .ov-row { flex-direction: row; }
+  /* not enough height for one column (a phone's split screen): the handles' tools and the touch keys
+     go to a second column beside the modes (ui-pane.js measures) */
+  .ov-stack.two { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto 1fr; gap: 4px;
+    grid-template-areas: "undo undo" "modes gz" "modes touch"; align-items: start; justify-items: start; }
+  .ov-stack.two > #ovUndoRow { grid-area: undo; } .ov-stack.two > #modes { grid-area: modes; }
+  .ov-stack.two > #ovGizmo { grid-area: gz; } .ov-stack.two > #ovTouch { grid-area: touch; }
+  /* more switches than the height shows: ▲ ▼ at the ends (a tap scrolls), the edge fading out */
+  .ov-more { position: sticky; z-index: 1; display: none; flex: none; align-items: center; justify-content: center; height: 24px;
+    margin: 0 -4px; padding: 0; border: 0; color: var(--sel); font-size: 0.625rem; line-height: 1; cursor: pointer; }
+  .ov-more.up { top: -4px; margin-top: -4px; background: linear-gradient(var(--bg-surface) 55%, transparent); }
+  .ov-more.down { bottom: -4px; margin-bottom: -4px; background: linear-gradient(transparent, var(--bg-surface) 45%); }
+  #viewOpts.more-up .ov-more.up, #viewOpts.more-down .ov-more.down { display: flex; }
+  #viewOpts.more-down { box-shadow: 0 1px 3px rgb(0 0 0 / 0.12), inset 0 -10px 8px -8px color-mix(in srgb, var(--sel) 40%, transparent); }
   #ovUndoRow button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; border-radius: 8px;
     background: transparent; color: var(--text-muted); cursor: pointer; }
   #ovUndoRow button svg, .ov-fold svg { width: 20px; height: 20px; }
@@ -138,6 +152,14 @@
   .view-place { position: absolute; bottom: 6px; right: 6px; z-index: 3; display: flex; align-items: center; margin: 0; padding: 2px 2px 2px 8px;
     border-radius: 8px; font-size: 0.75rem; color: var(--text-muted); white-space: nowrap;
     background: color-mix(in srgb, var(--bg-surface) 88%, transparent); border: 1px solid var(--border-default); }
+  /* on the side view's corner away from the switches (they lie over the views' right edge) */
+  .views:not(.side-left) .view-place { right: auto; left: 6px; }
+  .views:is(.side-top, .side-bottom) .view-place { left: 50%; transform: translateX(-50%); }
+  /* a narrow side view (a phone): only the place chosen shows; a tap on it opens the others, upward */
+  .view-place.narrow { padding: 2px; }
+  .view-place.narrow .vp-name { display: none; }
+  .view-place.narrow .place-pick { flex-direction: column-reverse; margin: 0; }
+  .view-place.narrow:not(.open) .place-pick button:not(.on) { display: none; }
   #panelPlace { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; margin: 0 0 8px; }
   #panelPlace label { display: flex; align-items: center; margin: 0; font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
   body.split #panelPlace { display: none; }
@@ -150,11 +172,12 @@
   .place-pick button.on { color: var(--sel); background: color-mix(in srgb, var(--sel) 14%, transparent); }
   .place-pick button:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
   @media (pointer: coarse) { .place-pick button { width: 40px; height: 40px; } }
-  #modes button { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 10px 4px 6px; border: 0; border-radius: 8px;
+  :is(#modes, #ovTouch) button { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 10px 4px 6px; border: 0; border-radius: 8px;
     background: transparent; color: var(--text-muted); font: inherit; font-size: 0.8125rem; font-weight: 500; cursor: pointer; white-space: nowrap; }
-  #modes button svg { width: 20px; height: 20px; flex: none; }
-  #modes button:hover:not(.on) { color: var(--text-default); background: var(--bg-page-alt); }
-  #modes button.on { background: var(--sel); color: #ffffff; }
+  :is(#modes, #ovTouch) button svg { width: 20px; height: 20px; flex: none; }
+  :is(#modes, #ovTouch) button:hover:not(.on) { color: var(--text-default); background: var(--bg-page-alt); }
+  :is(#modes, #ovTouch) button.on { background: var(--sel); color: #ffffff; }
+  #ovTouch button:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
   #modes button:focus-visible, .ov-fold:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
   /* the view's switches: an icon and its name, the whole row turns it on (tinted) or off; the
      checkbox inside stays for the keyboard and screen readers, out of sight */
@@ -188,12 +211,12 @@
     border: 1px solid var(--border-default); background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
     color: var(--text-muted); font: inherit; font-size: 1rem; line-height: 1; cursor: pointer; }
   @media (pointer: coarse) {
-    #modes button, .ov-item, .gz-tools button { min-height: 44px; } .ov-fold, #ovUndoRow button { width: 44px; height: 44px; }
+    :is(#modes, #ovTouch) button, .ov-item, .gz-tools button { min-height: 44px; } .ov-fold, #ovUndoRow button { width: 44px; height: 44px; }
   }
   /* phones (upright or sideways): the modes as icons only (the name stays in the title and for screen readers) */
   @media (max-width: 700px), (max-height: 520px) {
-    #modes button { font-size: 0; gap: 0; padding: 4px 8px; justify-content: center; }
-    #modes button svg { width: 22px; height: 22px; }
+    :is(#modes, #ovTouch) button { font-size: 0; gap: 0; padding: 4px 8px; justify-content: center; }
+    :is(#modes, #ovTouch) button svg { width: 22px; height: 22px; }
     .ov-item { font-size: 0.75rem; }
     .gz-tools button span { display: none; }
   }
@@ -201,10 +224,6 @@
      keeps the display its classes give it (flex, inline-flex, ...) */
   body.mode-pose .only:not(.pose), body.mode-body .only:not(.body), body.mode-persp .only:not(.persp),
   body.mode-place .only:not(.place) { display: none; }
-  .touchbar { display: none; }
-  body.touch .touchbar { display: flex; }
-  .touchbar .vside { display: none; }
-  body:not(.touch) .touchbar .touchkey { display: none; }
   body:not(.touch) .touch-only { display: none; }
 
   /* one column: narrow windows, phones, tablets and monitors turned upright */
@@ -213,23 +232,16 @@
     aside { column-width: 320px; column-gap: 16px; }
     aside > section { break-inside: avoid; display: inline-block; width: 100%; }
   }
-  /* phones: the side view on request, the header's buttons in the flow */
+  /* phones: the header's buttons in the flow; the side view in any of its places, as on a computer
+     (hidden till asked for), above or below as wide as the front one */
   @media (max-width: 700px) {
     .app-main { padding: 8px 8px 24px; gap: 8px; }
     .app-header { padding: 8px 8px 4px; }
-    .views { grid-template-columns: 1fr !important; }
-    body:not(.show-side) .view.sideview { display: none; }
-    /* shown on request, the side view goes under the front one (draw() shares the height): its places do not apply */
-    .view-place { display: none; }
-    #stage .views .sideview { order: 0; justify-self: stretch; }
-    body.show-side .views.side-hide .view.sideview { display: block !important; }
-    .touchbar { display: flex; }
-    .touchbar .vside { display: inline-flex; }
-  }
-  /* phones and short screens: the tabs, the switches and the keys as one row each (swipe for more) */
-  @media (max-width: 700px), (max-height: 520px) {
-    #stage .touchbar { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-    #stage .touchbar > * { flex: none; }
+    .views { gap: 6px; }
+    .views:is(.side-top, .side-bottom) .sideview { justify-self: stretch; }
+    /* the side view beside the front one: a narrow front view, smaller sticks */
+    .views:not(.side-hide, .side-top, .side-bottom) .campad .stick { width: 64px; height: 64px; }
+    .views:not(.side-hide, .side-top, .side-bottom) .campad .stick.r { right: 44px; }
   }
   @media (horizontal-viewport-segments: 2), (vertical-viewport-segments: 2) { #stage { position: static; } }
   /* short screens (phones held sideways): a compact header, the panels beside the views */
@@ -242,8 +254,6 @@
     .app-main { --aside-w: 280px; grid-template-columns: 1fr var(--aside-w); }
     aside { columns: auto; max-height: calc(100dvh - 60px); overflow: auto; }
     .views { grid-template-columns: 1fr 34% !important; }
-    body:not(.show-side) .view.sideview { display: block; }
-    .touchbar .vside { display: none !important; }
   }
   /* two screens (dual-screen phones, foldables that report their fold): views on one, panels on the other */
   @media (horizontal-viewport-segments: 2) {
@@ -337,23 +347,34 @@
 
   /* split screen (phones and tablets): the views on one half, the panels scroll on the other
      (upright: top and bottom, sideways: left and right); 「操作欄を隠す」 gives the views the whole screen */
-  body.split .touchbar { display: flex; }
-  body.split { padding-top: 50vh; padding-top: 50dvh; }
+  /* --split-k: the views' share of the height (upright), --split-aside: the panel's width (sideways);
+     the grip on the edge between them changes them (ui-pane.js) */
+  body.split { padding-top: calc(var(--split-k, 0.5) * 100vh); padding-top: calc(var(--split-k, 0.5) * 100dvh); }
   body.split #stage { position: fixed; z-index: 20; left: env(safe-area-inset-left); right: env(safe-area-inset-right);
-    top: env(safe-area-inset-top); height: calc(50vh - env(safe-area-inset-top)); height: calc(50dvh - env(safe-area-inset-top));
+    top: env(safe-area-inset-top); height: calc(var(--split-k, 0.5) * 100vh - env(safe-area-inset-top));
+    height: calc(var(--split-k, 0.5) * 100dvh - env(safe-area-inset-top));
     padding: 4px 8px 0; background: var(--bg-page); overflow: hidden; }
   body.split #stage > section { margin: 0; padding: 8px; }
-  /* the views' half keeps room for the figure: a compact row of tabs, switches and keys */
-  body.split #stage .touchbar { margin-bottom: 4px; gap: 6px; }
-  body.split #stage .touchbar button { height: 2rem; padding: 0 10px; font-size: 0.8125rem; }
   body.split .app-main { grid-template-columns: 1fr !important; max-width: none; }
   body.split aside { max-height: none; overflow: visible; }
   body.split #stage .hint.keep { display: none; }
   /* sideways: the views take most of the width, the panels a column beside them */
   @media (orientation: landscape) {
-    body.split { --split-aside: clamp(260px, 34vw, 380px); padding-top: env(safe-area-inset-top); padding-left: calc(100vw - var(--split-aside)); }
+    body.split { --split-aside: var(--split-aside-user, clamp(260px, 34vw, 380px)); padding-top: env(safe-area-inset-top); padding-left: calc(100vw - var(--split-aside)); }
     body.split #stage { right: auto; width: calc(100vw - var(--split-aside)); height: calc(100vh - env(safe-area-inset-top)); height: calc(100dvh - env(safe-area-inset-top)); }
   }
+  /* the edge between the views and the panel (ui-pane.js gives it its side: r, l or b) */
+  .pane-grip { display: none; position: absolute; z-index: 25; align-items: center; justify-content: center; touch-action: none;
+    -webkit-user-select: none; user-select: none; }
+  .pane-grip.r, .pane-grip.l { display: flex; top: 0; bottom: 0; width: 16px; cursor: col-resize; }
+  .pane-grip.r { right: -16px; } .pane-grip.l { left: -16px; }
+  body.split .pane-grip.r { right: 0; }
+  .pane-grip.b { display: flex; left: 0; right: 0; bottom: 0; height: 18px; cursor: row-resize; }
+  .pane-grip i { display: block; width: 4px; height: 44px; border-radius: 9999px; background: var(--border-default); transition: background .15s; }
+  .pane-grip.b i { width: 44px; height: 4px; }
+  .pane-grip:is(:hover, .held, :focus-visible) i { background: var(--sel); }
+  .pane-grip:focus-visible { outline: none; }
+  @media (pointer: coarse) { .pane-grip.r, .pane-grip.l { width: 22px; } .pane-grip.b { height: 24px; } .pane-grip i { width: 5px; height: 56px; } .pane-grip.b i { width: 56px; height: 5px; } }
   body.split.full { overflow: hidden; }
   body.split.full .app-header, body.split.full aside { display: none; }
   body.split.full #stage { right: env(safe-area-inset-right); width: auto; height: calc(100vh - env(safe-area-inset-top));

@@ -60,14 +60,37 @@ function picker(id, kind){
     const name = NAME[o.value] || o.textContent;
     const b = document.createElement("button"); b.type = "button"; b.dataset.v = o.value; b.title = name;
     b.setAttribute("aria-label", name); b.innerHTML = placeSvg(kind, o.value);
-    b.addEventListener("click", e => { e.preventDefault(); if (sel.value === o.value) return;
+    // a narrow side view shows the chosen place only: a tap on it opens the others
+    b.addEventListener("click", e => { e.preventDefault(); const lab = box.closest(".view-place");
+      if (sel.value === o.value){ if (lab) lab.classList.toggle("open"); return; }
+      if (lab) lab.classList.remove("open");
       sel.value = o.value; sel.dispatchEvent(new Event("change", {bubbles: true})); sync(); });
     box.appendChild(b);
   }
   sel.after(box); pickers.push([sel, box]);
 }
-function sync(){ for (const [sel, box] of pickers) box.querySelectorAll("button").forEach(b => {
-  const on = b.dataset.v === sel.value; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }); }
+function sync(){
+  for (const [sel, box] of pickers) box.querySelectorAll("button").forEach(b => {
+    const on = b.dataset.v === sel.value; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
+  const vp = document.querySelector(".view-place"), sv = vp && vp.closest(".view");
+  if (sv) vp.classList.toggle("narrow", sv.clientWidth < 420);
+  shownIcons();
+}
+// the switches 操作欄 and 分割表示: a picture of where things are on this screen now (the panel
+// below on a phone held upright, beside it held sideways, or where 操作欄の位置 puts it; split
+// screen into top and bottom halves, or left and right)
+const ONE_COL = "(max-width:900px), (orientation:portrait) and (max-aspect-ratio:4/5)";
+let iconKey = "";
+function shownIcons(){
+  const bc = document.body.classList, wide = innerWidth > innerHeight;
+  const where = bc.contains("split") ? (wide ? "right" : "bottom")
+    : matchMedia(ONE_COL).matches ? "bottom" : (document.getElementById("asidePos") || {}).value || "right";
+  const k = where + "|" + wide; if (k === iconKey) return; iconKey = k;
+  const half = wide ? '<path d="M12 4.5v15" stroke="currentColor" stroke-width="1.6"/>' : '<path d="M2.5 12h19" stroke="currentColor" stroke-width="1.6"/>';
+  const put = (id, svg) => { const b = document.getElementById(id), old = b && b.querySelector("svg"); if (old) old.outerHTML = svg; };
+  put("ovAside", placeSvg("place", where));
+  put("splitBtn", `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${FRAME}${half}</svg>`);
+}
 picker("sidePos", "place"); picker("asidePos", "place"); picker("menuSide", "menu"); sync();
 // the code also sets them itself (the 側面図 switch, a saved choice): the pictures follow at each drawing
 { const d0 = draw; draw = function(){ d0.apply(this, arguments); sync(); }; }
