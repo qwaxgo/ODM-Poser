@@ -19,7 +19,10 @@ How to give a figure things to hold or wear, and how to put objects (boxes, wall
 
 To put a thing on the floor held by no one, use **Things on their own** in the **Objects** tab (see
 Objects below). What a figure holds and wears also shows under the body map in the **Figure** menu
-(Figures), where it can be taken off.
+(Figures), where it can be taken off. Below it, **Reset what the figure has** works on the kinds ticked
+(held and worn things, auras, the wire, pinned joints): **Take off** removes them all, **Size, colour ... back**
+keeps them and puts their size, colour, turn, place and the wire's height back. Things put on the floor on
+their own are left alone.
 
 **Where it is held.** A held thing goes to the grip point of the hand's shape: a handle (swords, bats,
 guns) inside the curled fingers, a cupped thing (cups, balls, phones) against the palm, a pinched thing
