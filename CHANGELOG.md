@@ -37,6 +37,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 「人物の管理」に「付随物のリセット」：持ち物・身に着けた物、オーラ、ワイヤー、関節の固定のうちチェックしたものを、まとめて外すか、付けたまま大きさ・色・向き・位置・ワイヤーの高さを初期値に戻せます
 - 「ComfyUI で使う」のページを新しいブリッジに合わせて更新：エディタ本体（HTML 版）がブリッジに同梱されるので、入れるときと更新するときにサブモジュールの手順は要りません
 - 書き出したファイル（画像・ポーズのファイル）の利用条件を CC0 1.0 に：商用・加工・AI の学習や生成への利用も自由で、クレジットは任意です。ドキュメントに「ライセンス・利用条件」のページを追加し、書き出しのタブ・ドキュメントの下・README・リリースの zip にも載せました（ツール自体は今までどおり MIT）
+- 小物の部位ごとの長さ：剣の柄と刀身、斧の柄と頭、銃の銃床と銃身など、部位を選んでその長さだけを変えられます（「サイズ」のタブの「小物の部位ごとの長さ」。選んだ部位は図で太く表示）。部位を伸ばすとその先も一緒に動き、持つ所・両手持ちのもう片方の手・銃剣も合わせて動きます。組み込みの武器 32 種に部位を付け、MOD の小物も `segs`・`segAxis`・`segAnchor` で部位を持てます
 
 ### English
 
@@ -65,6 +66,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - "Reset what the figure has" in Figures: for the kinds ticked (held and worn things, auras, the wire, pinned joints), take them all off, or keep them and put their size, colour, turn, place and the wire's height back
 - The "Using it in ComfyUI" page follows the reworked bridge: the editor (its HTML build) comes inside the bridge, so installing and updating need no submodule steps
 - Exported files (pictures and pose files) are under CC0 1.0: use them commercially, change them, use them with AI for training or generation; credit is optional. A "License and terms of use" docs page, linked from the Export tab, the docs' footer, the README and the release zips (the tool itself stays MIT)
+- A thing's sections, each its length: a sword's grip and blade, an axe's grip and head, a gun's stock and barrel ... choose a section and change its length alone (Sizes › A thing's sections, each its length; the chosen one is drawn heavier). What lies beyond moves along, and so do the grip, the other hand of a two-handed thing and a bayonet. 32 built-in weapons have sections; a mod's props can have them with `segs`, `segAxis` and `segAnchor`
 
 ## v0.1.0
 

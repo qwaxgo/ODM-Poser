@@ -103,7 +103,7 @@ function tuneFigure(){
   const k = picked(); if (!hasExtra(k, true)) return;
   remember();
   if (k.items) mineOf().forEach(([it]) => { it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.color;
-    delete it.dims; delete it.len; delete it.thick; delete it.stretch; });
+    delete it.dims; delete it.len; delete it.thick; delete it.stretch; delete it.segs; });
   if (k.auras) (S.auras || []).forEach(a => { a.size = 14; a.color = (AURA_KINDS[a.kind] || AURA_KINDS.flame)[1];
     for (const kk of ["even", "sharp", "round", "angle", "height", "thick", "fine", "spread", "density"]) delete a[kk]; });
   if (k.wire && S.wire && S.wire.on){ S.wire.height = 300; if (typeof syncScene === "function") syncScene(); setWire(false); }

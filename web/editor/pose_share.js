@@ -34,7 +34,7 @@ function plainFigure(f, ids){
     const placed = it.where === "world" || (d && (d.place === "world" || d.place === "grab"));
     if (!d || (!placed && d.place !== "hand")) return null;
     const out = Object.assign({}, it, {key: placed ? "prim_box" : "prim_cylinder"});
-    delete out.dims; delete out.bayonet;
+    delete out.dims; delete out.bayonet; delete out.segs;
     if (placed) out.where = "world";
     return out;
   }).filter(Boolean);
