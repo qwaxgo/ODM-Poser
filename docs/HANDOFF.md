@@ -60,6 +60,7 @@ web/editor/pose_solids.js        solids; pose_style.js line colours and auras; p
 web/editor/pose_cast.js          more than one figure; pose_sets.js the saved poses (pose + things + place) and bodies
 web/editor/pose_gizmo.js         the 3-axis handles (tools per mode); ui-figure.js the body map and 人物の管理 under it; its 付随物 block is in the リセット tab (PanelReset.astro holds the other resets)
 web/editor/ui-pane.js            the grip between the views and the panel (--aside-w, --split-k, --split-aside-user), the modes' two columns, the switches' ▲ ▼
+web/editor/ui-sheet.js           the phone and upright tablet: full-screen views, the category bar, the translucent sheets (aside.sheet-panel), the simplified view (#sheetMini), the About sheet (#aboutSheet). Upright and narrow only (`(max-width: 900px) and (orientation: portrait)`); sideways and computers keep the panel as before
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
 web/editor/pose_share.js         posting (X, Bluesky, Misskey, Mastodon, share menu) and #pose= links;
@@ -125,6 +126,8 @@ state format `version: 3`, `window.ODMPoser` (old alias `window.SymbolicPose`).
   `def.grip`. `aimOtherHand` puts the other hand's grip point on `grip2` the same way.
 - Item sizes: `it.stretch [x, y, z]` along its own axes (`stretchOf` also reads the older
   `len` / `thick`; `foldStretch` converts on edit); round parts' radii follow (`radK`).
+- Checking the phone view from VS Code's browser (which does not emulate devices): `npm run dev`, then open
+  http://localhost:4321/ODM-Poser/dev/phone/ (or /dev/tablet/); src/pages/dev/[device].astro, dev only (no pages in the build).
 - Views' corners: #ovModes / #ovOpts are children of .views (over the front and the side view together); the touch keys
   (#vShift, #vAlt) sit in #ovTouch under the handles' tools, #vPad among the switches; the old #touchBar is gone. On a
   phone the side view takes sidePos like a computer (hidden until asked for); a side view under 420px folds its picker.
