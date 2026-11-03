@@ -30,6 +30,71 @@ function stretchOf(it){
   }
   return st && st.some(v => v !== 1) ? st : null;
 }
+// it.segs {id: factor} (サイズ › 部位ごとの長さ): a prop's sections along one of its axes
+// (def.segs: a sword's grip and blade, a gun's stock and barrel ...) each lengthened on its own. The
+// axis is stretched piece by piece: inside a section by its factor, elsewhere not at all, about
+// def.segAnchor (0: a held thing's fist), so what lies beyond a section moves along (the blade
+// rides on a longer grip) and round parts keep their size. Points the prop names (grip, grip2,
+// bayonet, mount, grab) go the same way.
+const SEG_NAMES = {grip: ["柄", "Grip"], blade: ["刀身", "Blade"], head: ["頭", "Head"], stock: ["銃床", "Stock"],
+  barrel: ["銃身", "Barrel"], claw: ["爪", "Claws"], tip: ["穂先", "Tip"], tube: ["筒", "Tube"]};
+const SEG_AXES = {x: 0, y: 1, z: 2};
+const segMemo = new WeakMap();
+// def.segs as [{id, ja, en, lo, hi}] and the axis (an index); [id, from, to(, ja, en)] or {id, from, to, ja, en}
+function segsOf(def){
+  if (!def || !Array.isArray(def.segs) || !def.segs.length) return null;
+  let s = segMemo.get(def);
+  if (!s){
+    const list = def.segs.map(g => Array.isArray(g) ? {id: g[0], from: g[1], to: g[2], ja: g[3], en: g[4]} : g)
+      .map(g => { const n = SEG_NAMES[g.id] || [g.id, g.id]; return {id: String(g.id), ja: g.ja || n[0], en: g.en || g.ja || n[1],
+        lo: Math.min(+g.from, +g.to), hi: Math.max(+g.from, +g.to)}; });
+    s = {axis: SEG_AXES[def.segAxis] !== undefined ? SEG_AXES[def.segAxis] : 1, anchor: +def.segAnchor || 0, list};
+    segMemo.set(def, s);
+  }
+  return s;
+}
+// the axis's new place for t, or null when no section is changed
+function segMap(it){
+  const sg = segsOf(PROPS_[it.key]); if (!sg || !it.segs) return null;
+  const k = sg.list.map(g => Math.max(0.05, +it.segs[g.id] || 1));
+  if (k.every(v => v === 1)) return null;
+  const t0 = sg.anchor;
+  return t => { let out = t;                   // t + the extra length of each section between t0 and t
+    sg.list.forEach((g, i) => { const a = Math.max(g.lo, Math.min(t0, t)), b = Math.min(g.hi, Math.max(t0, t));
+      if (b > a) out += (k[i] - 1) * (b - a) * (t >= t0 ? 1 : -1); });
+    return out; };
+}
+function segPoint(it, p){
+  const m = segMap(it); if (!m || !p) return p;
+  const a = segsOf(PROPS_[it.key]).axis, q = p.slice(); q[a] = m(p[a]); return q;
+}
+function segParts(it, parts){
+  const m = segMap(it); if (!m) return parts;
+  const a = segsOf(PROPS_[it.key]).axis, P = (arr, at) => { const q = arr.slice(); q[at + a] = m(arr[at + a]); return q; };
+  return parts.map(sh => {
+    if (sh.c) return {c: P(P(sh.c, 0), 3)};
+    if (sh.k) return {k: P(P(sh.k, 0), 3)};
+    if (sh.b){ const q = sh.b.slice(), lo = m(q[a] - q[3 + a] / 2), hi = m(q[a] + q[3 + a] / 2);
+      q[a] = (lo + hi) / 2; q[3 + a] = hi - lo; return {b: q}; }
+    for (const t of ["s", "d", "t", "h"]) if (sh[t]) return {[t]: P(sh[t], 0)};
+    if (sh.l) return {l: sh.l.map(q => P(q, 0))};
+    return sh;
+  });
+}
+// a section's length now (cm, before the item's own size) and as made
+function segLength(it, id){
+  const sg = segsOf(PROPS_[it.key]), g = sg && sg.list.find(x => x.id === id); if (!g) return null;
+  return {base: g.hi - g.lo, now: (g.hi - g.lo) * Math.max(0.05, +(it.segs || {})[id] || 1)};
+}
+// the section a shape (as drawn, sections lengthened) lies in, by its middle along the axis
+let segSel = "";                              // the section chosen in サイズ (of the selected thing), drawn heavier
+function segOfShape(it, sh){
+  const sg = segsOf(PROPS_[it.key]); if (!sg) return null;
+  const pts = shapePoints(sh); if (!pts.length) return null;
+  const m = segMap(it) || (t => t), t = pts.reduce((v, [q]) => v + q[sg.axis], 0) / pts.length;
+  const g = sg.list.find(x => t >= m(x.lo) - 0.01 && t <= m(x.hi) + 0.01);
+  return g ? g.id : null;
+}
 function foldStretch(it){ it.stretch = stretchOf(it) || [1, 1, 1]; delete it.len; delete it.thick; return it.stretch; }
 // a round part's radius under a stretch: the mean of the axes across its own axis d (a cylinder's,
 // a disc's normal); a ball (no d) the mean of all three
@@ -46,9 +111,9 @@ const heldInHand = it => !it.where && (PROPS_[it.key] || {}).place === "hand";
 const gripMemo = new Map();
 function gripPoint(it){
   const def = PROPS_[it.key] || {};
-  if (def.grip) return def.grip;
+  if (def.grip) return segPoint(it, def.grip);
   if (def.pose !== "cup" && def.pose !== "pinch") return [0, 0, 0];
-  const key = it.key + "|" + (it.dims || "") + "|" + !!it.bayonet;
+  const key = it.key + "|" + (it.dims || "") + "|" + !!it.bayonet + "|" + JSON.stringify(it.segs || {});
   let g = gripMemo.get(key);
   if (!g){
     const {lo, hi} = localExtent(partsOf(it)), mid = i => (lo[i] + hi[i]) / 2;
@@ -101,16 +166,16 @@ function worldFrame(it, k = 1, dx = 0){
 }
 const itemDims = it => { const d = PROPS_[it.key] || {}; return (d.dims || []).map(([, v], i) => (it.dims && +it.dims[i]) || v); };
 function partsOf(it){                         // the shapes, with a simple solid's sizes and a bayonet
-  const def = PROPS_[it.key] || {}, parts = def.make ? def.make(itemDims(it)) : def.parts || [];
+  const def = PROPS_[it.key] || {}, parts = segParts(it, def.make ? def.make(itemDims(it)) : def.parts || []);
   if (!(it.bayonet && def.bayonet)) return parts;
-  const [x, y, z] = def.bayonet;
+  const [x, y, z] = segPoint(it, def.bayonet);
   return [...parts, {t: [x, y, z - 3, 0, 0, 1, 1.6, 0.4]}, {b: [x, y - 1.2, z + 12, 0.5, 2.6, 24]},
           {k: [x, y - 1.2, z + 24, x, y - 1.2, z + 31, 1.3]}];
 }
 // every place an item is drawn: [{f: frame, parts}] (a pair of skates is two)
 function partSets(it){
   const def = PROPS_[it.key] || {};
-  const sets = (def.sets || [[def.at, partsOf(it)]]).flatMap(([at, parts]) =>
+  const sets = (def.sets ? def.sets.map(([at, parts]) => [at, segParts(it, parts)]) : [[def.at, partsOf(it)]]).flatMap(([at, parts]) =>
     at === "feet" ? [["r_foot", parts], ["l_foot", parts]] : at === "hands" ? [["r_hand", parts], ["l_hand", parts]] : [[at, parts]]);
   if (it.where === "world"){
     const k = def.at === "head" ? S.R[IX.head] : 1;
@@ -293,7 +358,11 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
     for (const glow of def.glow ? [true, false] : [false]){
       ctx.strokeStyle = stroke; ctx.globalAlpha = glow ? 0.22 : 1;
       ctx.lineWidth = lw * (opts.side ? 0.9 : 1.1) * (glow ? 5 : 1);
-      for (const {f, parts} of sets) for (const sh of parts) drawShape(ctx, sh, it, f, P, lw * (glow ? 5 : 1));
+      const lw0 = ctx.lineWidth, chosen = !opts.export && n === scSel && segSel;
+      for (const {f, parts} of sets) for (const sh of parts){
+        ctx.lineWidth = chosen && segOfShape(it, sh) === segSel ? lw0 * 2.4 : lw0;
+        drawShape(ctx, sh, it, f, P, lw * (glow ? 5 : 1));
+      }
     }
     ctx.globalAlpha = 1;
   });
@@ -363,18 +432,18 @@ function followItems(moved){
       const mw = IX[main + "_wrist"], sh = IX[other + "_shoulder"];
       const arm = len(sub(S.P[IX[other + "_elbow"]], S.P[sh])) + len(sub(S.P[wi], S.P[IX[other + "_elbow"]]));
       for (let k = 0; k < 8 && !(S.pins && S.pins[mw]); k++){
-        const g = itemToWorld(it, def.grip2), d = sub(g, S.P[sh]);
+        const g = itemToWorld(it, segPoint(it, def.grip2)), d = sub(g, S.P[sh]);
         if (len(d) <= arm * 0.92) break;
         const want = add(S.P[sh], mul(norm(d), arm * 0.85));
         solveIK(mw, add(S.P[mw], sub(want, g)));
       }
-      aimOtherHand(other, it, itemToWorld(it, def.grip2));
+      aimOtherHand(other, it, itemToWorld(it, segPoint(it, def.grip2)));
     }
     if (def.place === "body" && def.mount){
       const f = chestFrame();
       for (const [jn, p] of Object.entries(def.mount)){
         const wi = IX[jn]; if (wi === undefined || (S.pins && S.pins[wi])) continue;
-        solveIK(wi, itemToWorld(it, p, f));
+        solveIK(wi, itemToWorld(it, segPoint(it, p), f));
       }
     }
   }
@@ -450,7 +519,7 @@ function toSurface(which){
 // ---- grab the nearest thing (vine, branch, bar, ladder, chair back, handlebar ...) ----------------
 function nearestOn(it, q){
   const def = PROPS_[it.key]; let best = null, bd = 1e9;
-  for (const {f, parts} of partSets(it)) for (const sh of def.grab ? def.grab.map(([a, b]) => ({c: [...a, ...b, 0]})) : parts){
+  for (const {f, parts} of partSets(it)) for (const sh of def.grab ? def.grab.map(([a, b]) => ({c: [...segPoint(it, a), ...segPoint(it, b), 0]})) : parts){
     let p = null;
     if (sh.c){ const a = itemToWorld(it, sh.c.slice(0, 3), f), b = itemToWorld(it, sh.c.slice(3, 6), f), ab = sub(b, a);
       const t = Math.max(0, Math.min(1, dot(sub(q, a), ab) / (dot(ab, ab) || 1))); p = add(a, mul(ab, t)); }
@@ -700,7 +769,8 @@ function addItem(key, hand){
 function mountOn(it, quiet){                  // seat the pelvis, put the hands and feet on the mounts
   const def = PROPS_[it.key]; if (!def || !def.mount) return;
   if (!quiet) remember();
-  const f = frameOf(it), m = def.mount;
+  const f = frameOf(it), m = {};
+  for (const [jn, p] of Object.entries(def.mount)) m[jn] = segPoint(it, p);
   S.pins = S.pins || {};
   for (const jn of Object.keys(m)) delete S.pins[IX[jn]];
   if (m.pelvis) moveAll(sub(itemToWorld(it, m.pelvis, f), S.P[IX.pelvis]), true);
@@ -823,7 +893,7 @@ function buildScenePanel(){
     n.addEventListener("change", () => { remember(); r.value = n.value; apply(+n.value); });
   }
   $("scReset").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
-    it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.dims; delete it.len; delete it.thick; delete it.stretch; if (it.grounded) groundItem(it);
+    it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.dims; delete it.len; delete it.thick; delete it.stretch; delete it.segs; if (it.grounded) groundItem(it);
     afterEdit(); showItem(); draw(); say("小物の位置・向き・大きさを戻しました。"); });
   $("scEnvReset").addEventListener("click", () => { remember(); S.env = fresh().env;
     afterEdit(); syncScene(); draw(); say("床・壁・天井を初期値に戻しました。"); });

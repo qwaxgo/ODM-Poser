@@ -11,10 +11,11 @@ You need ComfyUI and git; no extra Python packages.
 
 ```
 cd ComfyUI/custom_nodes
-git clone --recursive https://github.com/qwaxgo/ODM-Poser-ComfyUIBridge
+git clone https://github.com/qwaxgo/ODM-Poser-ComfyUIBridge
 ```
 
 Then restart ComfyUI. ComfyUI-Manager's **Install via Git URL** with the same URL works too. The
+editor comes with the bridge (a release of it, the HTML build); nothing else to fetch. The
 bridge's own README has the steps in full and what to do when something goes wrong.
 
 ## Using it
@@ -45,7 +46,6 @@ Open it again and you go on from the pose last confirmed (it is saved in the wor
 ```
 cd ComfyUI/custom_nodes/ODM-Poser-ComfyUIBridge
 git pull
-git submodule update --init --recursive
 ```
 
 Then restart ComfyUI. Until the bridge catches up with a new version of the editor, the editor inside

@@ -51,8 +51,9 @@ const TOUCH = [
     [["1本指でタップ", "Tap with one finger"], ["丸", "A circle"], ["関節を選ぶ", "Select the joint"]],
     [["1本指でドラッグ", "Drag with one finger"], ["選んだ丸", "The selected circle"], ["関節を動かす（モードに合わせて）", "Move the joint (as the mode does)"]],
     [["ダブルタップ", "Double-tap"], ["丸", "A circle"], ["骨の手前と奥を入れ替える", "Flip the bone toward / away"]],
-    [["「Shift」を押してから操作", "Press “Shift”, then work"], ["上のボタン", "The keys above"], ["その骨だけ・上下に動かす", "Only that bone / up and down"]],
-    [["「固定」を押してから丸をタップ", "Press “Pin”, then tap a circle"], ["上のボタン", "The keys above"], ["関節を固定する（ピン）", "Pin the joint"]]]},
+    [["「Shift」を押してから操作", "Press “Shift”, then work"], ["図の左（モードの下）", "The view's left (under the modes)"], ["その骨だけ・上下に動かす", "Only that bone / up and down"]],
+    [["「固定」を押してから丸をタップ", "Press “Pin”, then tap a circle"], ["図の左（モードの下）", "The view's left (under the modes)"], ["関節を固定する（ピン）", "Pin the joint"]],
+    [["境目のつまみをドラッグ", "Drag the grip on the edge"], ["図と操作欄の間", "Between the views and the panel"], ["図と操作欄の広さを変える（ダブルタップで戻す）", "Give the views or the panel more room (double-tap: back)"]]]},
   {title: ["カメラ", "Camera"], rows: [
     [["1本指でスワイプ", "Swipe with one finger"], ["丸のない所", "Where there is no circle"], ["カメラを回す", "Orbit the camera"]],
     [["2本指でつまむ・広げる", "Pinch / spread two fingers"], ["画面のどこでも", "Anywhere on the view"], ["拡大・縮小（カメラモードではレンズ）", "Zoom (the lens in the perspective mode)"]],

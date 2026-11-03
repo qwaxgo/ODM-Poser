@@ -1,4 +1,5 @@
-"""The Windows app's zip: the exe, a mods/ folder with its README, the notes and the licence.
+"""The Windows app's zip: the exe, a mods/ folder with its README, the notes, the licence and the
+terms of the exported files.
 
     python tools/make_app_zip.py <path to ODM-Poser.exe>
 
@@ -27,7 +28,7 @@ def main() -> None:
         z.write(sys.argv[1], f"{top}/ODM-Poser.exe")
         z.write(PARTS / "README-windows.txt", f"{top}/README.txt")
         z.write(PARTS / "mods" / "README.txt", f"{top}/mods/README.txt")
-        z.write(rel.ROOT / "LICENSE", f"{top}/LICENSE")
+        rel.write_licences(z, top)
     print(f"{zpath.relative_to(rel.ROOT)}  ({zpath.stat().st_size // 1024} KB)")
 
 

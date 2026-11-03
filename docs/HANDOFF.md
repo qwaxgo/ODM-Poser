@@ -11,7 +11,7 @@ together, the owner's rules, and what is still open.
 ## What it is
 
 A pseudo-3D stick-and-circle pose editor ("atari" = a rough of lines and circles): a web page
-on a static site (GitHub Pages, built with Astro) that also installs as an app (PWA). The owner (qwaxgo, an illustrator) publishes it under MIT. It started
+on a static site (GitHub Pages, built with Astro) that also installs as an app (PWA). The owner (qwaxgo, an illustrator) publishes it under MIT; what it exports is CC0 1.0 (docs/LICENSE*.md: commercial and AI use, credit optional). It started
 as a tool inside a private project and was split out on 2026-10-19 with no git history and
 nothing third-party: keep it that way.
 
@@ -37,10 +37,10 @@ nothing third-party: keep it that way.
     explains the Windows warning);
   - an APK (Tauri's Android build): a future plan, not now.
   The Tauri builds get their own build container, apart from the Astro one.
-- **ComfyUI**: the bridge is the owner's public repo `qwaxgo/ODM-Poser-ComfyUIBridge` (editor as
-  its git submodule, served from `web/editor/`). It is reworked on its own branch, in another
-  environment, to follow this branch; its outputs stay as they are. Here: keep what it relies on
-  (see Hosts); how it builds or gets the editor is the bridge's own choice.
+- **ComfyUI**: the bridge is the owner's public repo `qwaxgo/ODM-Poser-ComfyUIBridge` (a release's
+  HTML build in its `editor_html/`, since 2026-11-03; see Open items). It is worked on in another
+  environment; its outputs stay as they are. Here: keep what it relies on (see Hosts); how it
+  builds or gets the editor is the bridge's own choice.
 - The owner commits and pushes. Do not commit unless asked; finish a batch with ready-to-paste
   commit / push commands. Reports to the owner are in Japanese.
 - **Patch notes with every commit** (owner, 2026-11-02): each change adds lines (Japanese and
@@ -59,6 +59,7 @@ web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carr
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
 web/editor/pose_cast.js          more than one figure; pose_sets.js the saved poses (pose + things + place) and bodies
 web/editor/pose_gizmo.js         the 3-axis handles (tools per mode); ui-figure.js the body map and 人物の管理 under it (with 付随物のリセット)
+web/editor/ui-pane.js            the grip between the views and the panel (--aside-w, --split-k, --split-aside-user), the modes' two columns, the switches' ▲ ▼
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
 web/editor/pose_share.js         posting (X, Bluesky, Misskey, Mastodon, share menu) and #pose= links;
@@ -124,6 +125,13 @@ state format `version: 3`, `window.ODMPoser` (old alias `window.SymbolicPose`).
   `def.grip`. `aimOtherHand` puts the other hand's grip point on `grip2` the same way.
 - Item sizes: `it.stretch [x, y, z]` along its own axes (`stretchOf` also reads the older
   `len` / `thick`; `foldStretch` converts on edit); round parts' radii follow (`radK`).
+- Views' corners: #ovModes / #ovOpts are children of .views (over the front and the side view together); the touch keys
+  (#vShift, #vAlt) sit in #ovTouch under the handles' tools, #vPad among the switches; the old #touchBar is gone. On a
+  phone the side view takes sidePos like a computer (hidden until asked for); a side view under 420px folds its picker.
+- Item sections: `def.segs` ([id, from, to] along `segAxis`, about `segAnchor`) and `it.segs {id: factor}`;
+  pose_scene.js `segMap` stretches the axis piece by piece, `segParts` (in `partsOf` / `partSets`) and `segPoint`
+  (grip, grip2, bayonet, mount, grab) apply it before the stretch. Built-in sections: `SEGS` at the end of
+  pose_props.js; the panel is in pose_size.js (`segSel` draws the chosen one heavier).
 - Modes and tools: ポーズ rotates (3-axis rotate turns what lies beyond the selected joint about it)
   and moves only arm / leg joints (`LIMB` in pose_gizmo.js); 体格 only scales; 配置 moves objects,
   things, the ruler box and the whole figure by its hips. `tools()` greys out the rest and the tool in
@@ -178,11 +186,11 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
   re-permission button "読み込む" was not tested by automation: it needs a real click). Tauri next. The site itself
   is deployed by .github/workflows/static.yml (GitHub Pages on push to main, shown at
   apps.qwaxgo.com/ODM-Poser/).
-- ComfyUI bridge (note for its rework, done in its own repo): since 2026-11-02 the editor's page
-  is built (dist/editor/), not in the repo, so the bridge's submodule no longer has
-  web/editor/index.html. Unchanged and still relied on: `../mods.js`, `../mods/`, the MOD API, the
-  state format. The bridge keeps this repository as its git submodule; how it gets a built editor
-  is decided in the bridge's repository (owner, 2026-11-02), not here.
+- ComfyUI bridge (reworked in its own repo, 2026-11-03): it no longer has this repository as a
+  submodule. It carries a release's HTML build in `editor_html/` (its `tools/update_editor.py
+  <version>`), and its config.json can name a built editor (a checkout's `dist`). Still relied on:
+  the HTML release's layout (`editor/` beside `mods.js`), relative links in the page, `../mods.js`,
+  `../mods/`, the MOD API, the state format.
 - Docs pages: download, app, export, poses, props, modding, comfyui (2026-11-02). A new page = a
   docs/NAME.md + NAME-JA.md pair, in src/content.config.ts and src/lib/docs.ts PAGES. COMFYUI*.md
   follows the bridge's README: update it when the bridge's rework changes how it is installed.

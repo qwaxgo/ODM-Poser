@@ -11,10 +11,11 @@ English: [COMFYUI.md](COMFYUI.md)
 
 ```
 cd ComfyUI/custom_nodes
-git clone --recursive https://github.com/qwaxgo/ODM-Poser-ComfyUIBridge
+git clone https://github.com/qwaxgo/ODM-Poser-ComfyUIBridge
 ```
 
 そのあと ComfyUI を再起動します。ComfyUI-Manager の「Install via Git URL」に同じ URL を入れても入ります。
+エディタ本体（リリース版の HTML 版）もブリッジと一緒に入るので、ほかに取ってくるものはありません。
 くわしい手順と、うまくいかないときの対処は、ブリッジのリポジトリの説明にあります。
 
 ## 使い方
@@ -46,7 +47,6 @@ git clone --recursive https://github.com/qwaxgo/ODM-Poser-ComfyUIBridge
 ```
 cd ComfyUI/custom_nodes/ODM-Poser-ComfyUIBridge
 git pull
-git submodule update --init --recursive
 ```
 
 そのあと ComfyUI を再起動します。エディタの新しい版に追いつくまで、ブリッジの中のエディタは少し前の版のことがあります。

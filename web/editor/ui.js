@@ -46,7 +46,6 @@ const UI = window.ODMUI = {
   summary: "cursor-pointer text-sm font-medium text-text-muted hover:text-text-default select-none",
   link: "text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:underline underline-offset-2",
   viewTag: "text-xs text-text-muted",
-  touchbar: "flex-wrap gap-2 mb-3",
   status: "text-sm text-text-default min-h-6 mt-2",
 };
 const CHEVRON = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>';
@@ -96,12 +95,11 @@ function one(el){
   if (cls.contains("unit")) add(el, UI.unit);
   if (cls.contains("val")) add(el, UI.value);
   if (cls.contains("tag") && el.closest(".view")) add(el, UI.viewTag);
-  if (cls.contains("touchbar")) add(el, UI.touchbar);
   if (el.id === "modes") add(el, UI.tabs);
   if (el.id === "status") add(el, UI.status);
   if (tag === "A" && el.closest(".app-header")) add(el, UI.link);
 }
-const TARGET = "section, h2, button, select, textarea, input, label, summary, .hint, .row, .btns, .grid2, .unit, .val, .tag, .touchbar, #modes, #status, a";
+const TARGET = "section, h2, button, select, textarea, input, label, summary, .hint, .row, .btns, .grid2, .unit, .val, .tag, #modes, #status, a";
 function decorate(root){
   if (!root || root.nodeType !== 1) return;
   if (root.matches(TARGET)) one(root);

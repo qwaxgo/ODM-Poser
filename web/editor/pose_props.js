@@ -18,6 +18,8 @@
 //   x = outward); sets = [[frame, parts], ...] for things on more than one place (skis and poles).
 // scalable: the size slider is meant for it (a ball). bayonet: the muzzle, where a bayonet goes.
 // glow, color: drawn glowing in that colour (effects). dims + make(dims): the size is set in cm.
+// segs: sections whose lengths change one by one (a grip and a blade), along segAxis ("y" unless
+//   said), about segAnchor (0): see SEGS at the end and pose_scene.js segsOf.
 // Names are Japanese and English; cat is a category key of PROP_CATS.
 (() => {
 window.PROP_CATS = [
@@ -423,4 +425,26 @@ window.PROPS = {
   wire_anchor: {ja: "フック（ワイヤーの支点）", en: "Hook (wire anchor)", cat: "grab", place: "grab", grab: [[[0, 300, 0], [0, 300, 0]]],
     parts: [SP(0, 300, 0, 4)]},
 };
+// sections whose lengths change one by one (サイズ › 部位ごとの長さ): [id, from, to] along y (or
+// segAxis), in cm; ids with a name of their own (pose_scene.js SEG_NAMES) or [id, from, to, ja, en]
+const SEGS = {
+  dagger: [["grip", -5, 5], ["blade", 6.5, 27]], knife: [["grip", -5, 5], ["blade", 5.5, 18.5]],
+  sword: [["grip", -7, 7], ["blade", 9.5, 90]], katana: [["grip", -22, 6], ["blade", 7.5, 82.5]],
+  axe: [["grip", -8, 30.5], ["head", 30.5, 43.5]], hammer: [["grip", -8, 36], ["head", 36, 44]],
+  rapier: [["grip", -6, 6], ["blade", 7, 100]], big_longsword: [["grip", -10, 9], ["blade", 13, 146]],
+  greatsword: [["grip", -24, 7], ["blade", 10.5, 145.5]], huge_sword: [["grip", -30, 8], ["blade", 14, 200]],
+  big_axe: [["grip", -75, 37], ["head", 37, 122]], greataxe: [["grip", -60, 47], ["head", 47, 73]],
+  warhammer: [["grip", -60, 64], ["head", 64, 80]], naginata: [["grip", -110, 92.5], ["blade", 92.5, 147.5]],
+  halberd: [["grip", -110, 89], ["head", 89, 135]], spear: [["grip", -110, 100], ["tip", 100, 130]],
+  doublesword: [["grip", -28, 10], ["blade", 12, 97.5, "上の刃", "Upper blade"], ["blade2", -115.5, -30, "下の刃", "Lower blade"]],
+  kunai: [["grip", -5, 5], ["blade", 5, 18]], wand: [["grip", -4, 27.5]], staff: [["grip", -100, 60]],
+  revolver: [["barrel", 8, 22]], rifle: [["stock", -39, -9], ["barrel", 47, 80]], sniper: [["stock", -46, -10], ["barrel", 43, 112]],
+  shotgun: [["stock", -38, -10], ["barrel", 29, 75]], minigun: [["barrel", 22, 110]], bazooka: [["tube", -55, 75]],
+  light_crossgun: [["stock", -32, -8], ["barrel", 34, 64]], heavy_crossgun: [["stock", -41, -11], ["barrel", 47, 100]],
+  big_lance: [["grip", -45, 8], ["tip", 10, 210, "槍身", "Lance"]], gunlance: [["grip", -40, 8], ["tip", 10, 205, "槍身", "Lance"]],
+  claws: [["claw", 9, 37]], big_claws: [["grip", -26, 4], ["claw", 5.5, 96]],
+};
+const ALONG_Z = new Set(["revolver", "rifle", "sniper", "shotgun", "minigun", "bazooka", "light_crossgun", "heavy_crossgun",
+  "big_lance", "gunlance", "claws", "big_claws"]);
+for (const [k, segs] of Object.entries(SEGS)) if (PROPS[k]){ PROPS[k].segs = segs; if (ALONG_Z.has(k)) PROPS[k].segAxis = "z"; }
 })();

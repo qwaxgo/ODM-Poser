@@ -43,6 +43,23 @@ held thing, Y is the way the thumb points (a sword's blade), Z the way the arm p
 barrel), X across both. The grip stays; the far end grows. The preview's fields set the size before
 it is placed, too.
 
+### Section lengths (grip and blade ...)
+
+A thing made of sections, such as a weapon, has **A thing's sections, each its length** in the **Sizes** tab: choose a
+section and change its length alone. The chosen section is drawn heavier. A longer grip moves the blade out along
+it while the hand's hold stays; the other hand of a two-handed thing and a bayonet move along too.
+
+| Things | Sections |
+|--------|----------|
+| Swords, katana, knives, kunai | Grip, Blade |
+| Axes, hammers, halberd | Grip, Head |
+| Spears, lances | Grip, Tip (Lance) |
+| Double-bladed sword | Grip, Upper blade, Lower blade |
+| Guns (rifle, shotgun ...) | Stock, Barrel |
+| Claws | (Grip), Claws |
+
+**↺ This section back** and **↺ All sections back** restore the lengths. A mod's props can have sections too (`segs` in the mod docs).
+
 ### Moving things put down
 
 Things on the floor (**Place**, **Place on its own**, **Put down (floor / object)**) are dragged in
