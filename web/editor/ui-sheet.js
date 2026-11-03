@@ -12,7 +12,7 @@ const IC = window.ODMICONS || {svg: () => ""};
 // the sheet's parts, in the panel: a grip (drag it down to close, up to open wider) and the simplified view
 const grab = document.createElement("div");
 grab.className = "sheet-grab";
-grab.innerHTML = `<button type="button" id="sheetGrab" aria-label="操作欄を閉じる・広げる（下へドラッグで閉じる）" title="下へドラッグで閉じる・タップで広げる"><i></i></button>`;
+grab.innerHTML = `<button type="button" id="sheetGrab" aria-label="操作欄を閉じる（下へドラッグでも閉じられます）" title="下へドラッグ・タップで閉じる"><i></i></button>`;
 const view = document.createElement("div");
 view.id = "sheetView";
 view.innerHTML = `<canvas id="sheetMini" aria-label="人物の簡略表示" role="img"></canvas>`;
@@ -40,10 +40,9 @@ document.body.appendChild(about);
 function open(on){
   body.classList.toggle("sheet-open", on);
   if (on) body.classList.remove("about-open");
-  $("sheetGrab").setAttribute("aria-expanded", String(on && body.classList.contains("sheet-full")));
+  $("sheetGrab").setAttribute("aria-expanded", String(on));
   syncBar(); draw();
 }
-function expand(on){ body.classList.toggle("sheet-full", on); }
 function syncBar(){
   const g = body.classList.contains("sheet-open") && !body.classList.contains("about-open") ? ODMUI.groupOf() : "";
   const ab = body.classList.contains("about-open");
@@ -65,7 +64,7 @@ bar.addEventListener("click", e => {
   syncBar();
 });
 
-// the grip: a tap goes wider, then closes; a drag down closes, a drag up widens
+// the grip: a drag down or a tap closes the sheet (the sheet fills the screen above the bar)
 let g0 = null;
 grab.addEventListener("pointerdown", e => {
   const b = e.target.closest("button"); if (!b) return;
@@ -74,9 +73,7 @@ grab.addEventListener("pointerdown", e => {
 grab.addEventListener("pointermove", e => { if (g0) g0.moved = g0.moved || Math.abs(e.clientY - g0.y) > 8; });
 grab.addEventListener("pointerup", e => {
   if (!g0) return; const d = e.clientY - g0.y, moved = g0.moved; g0 = null;
-  if (moved && d > 40){ if (body.classList.contains("sheet-full")) expand(false); else open(false); return; }
-  if (moved && d < -40){ expand(true); return; }
-  if (!moved){ if (body.classList.contains("sheet-full")){ open(false); expand(false); } else expand(true); }
+  if (!moved || d > 40) open(false);
 });
 grab.addEventListener("pointercancel", () => { g0 = null; });
 about.querySelector(".sheet-close").addEventListener("click", () => aboutOpen(false));
@@ -97,7 +94,7 @@ function sync(){
   const on = SHEET.matches;
   body.classList.toggle("sheet", on);
   if (on){ body.classList.remove("split", "full"); }
-  if (!on){ body.classList.remove("sheet-open", "about-open", "sheet-full"); }
+  if (!on){ body.classList.remove("sheet-open", "about-open"); }
   syncBar(); draw();
 }
 SHEET.addEventListener("change", sync);

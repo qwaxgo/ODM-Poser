@@ -34,7 +34,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - カメラが時々動かなくなる不具合を修正：タッチの指が離れたことが伝わらないと、それ以後のタッチがすべて2本指の操作になっていました。マウスでも、何もない所をドラッグするとカメラが回るように（Shift＋ドラッグで動かす）
 - 図の右上の「操作欄」ボタンが分割表示で効かなかったのを修正し、左上の「操作欄を隠す」ボタンを削除
 - 「人物」のメニューの全身図の下に「人物の管理」：人物の切り替え・追加・複製・削除と、持ち物・身に着けた物の一覧（装備のタブを開く・外す）
-- スマホ・縦のタブレットの画面を作り直し：キャンバスを画面いっぱいに出し、下の分類バー（作る・見る・出す・ODM-Poser について）から、タブを選ぶと操作の欄が半透明のシートで立ち上がり、その上に人物の簡略表示が出ます。シートは下へドラッグすると閉じ、タップで広がります。タイトル・版・リンクは「ODM-Poser について」へ。横画面とPCは今のまま
+- 色を初期状態に戻すボタン（「色」のタブの上）と、色の記憶（名前をつけて保存・呼び出し・削除。このブラウザに残ります）を追加。記憶するのは線・床・壁・天井・ワイヤーの色で、小物・物体・オーラの色は含みません
+- スマホ・縦のタブレットの画面を作り直し：キャンバスを画面いっぱいに出し、下の分類バー（作る・見る・出す・ODM-Poser について）から、タブを選ぶと操作の欄が画面いっぱいのシートで立ち上がり、その上に人物の簡略表示が固定されて出ます（操作の欄だけがスクロールします）。つまみを下へドラッグするかタップすると閉じます。タイトル・版・リンクは「ODM-Poser について」へ。横画面とPCは今のまま
 - 開発用の端末表示（`npm run dev` の /ODM-Poser/dev/phone/ と /dev/tablet/）：VS Code のブラウザの中で、スマホ・タブレットの枠に編集画面を入れて確かめられます（本番サイトには出ません）
 - 人体のリセットを「作る › 人物 › リセット」に一箇所にまとめました：この人物を全部・性別の初期値・ポーズだけ・体格だけ・位置と向きだけ、付随物、すべて。ポーズ・体格・位置・性別の各タブの同じボタンは外しました
 - 「人物の管理」に「付随物のリセット」：持ち物・身に着けた物、オーラ、ワイヤー、関節の固定のうちチェックしたものを、まとめて外すか、付けたまま大きさ・色・向き・位置・ワイヤーの高さを初期値に戻せます
@@ -73,7 +74,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The camera sometimes stopped responding: a finger whose lifting was never told made every later touch a two-finger gesture. A mouse drag on empty space now turns the camera too (Shift: pans)
 - The "Panel" button at the view's top right works in split screen; the "Hide the panel" key at the top left is gone
 - "Figures" under the body map in the Figure menu: switch, add, copy and delete figures, and what the figure holds and wears (open it in Equip, take it off)
-- Phones and upright tablets get a new layout: the views fill the screen, a bar at the bottom (Make, View, Output, About ODM-Poser) opens a tab's controls as a translucent sheet with a simplified view of the figure on top. Drag the sheet's grip down to close it, tap to widen it. The title, version and links are under About ODM-Poser. Sideways and on computers, the layout is as before
+- A "Colours to the start" button at the top of the Colours tab, and saved colours (save under a name, load, delete; kept in this browser). They keep the lines, floor, walls, ceiling and wire; things, solids and auras keep their own colours out of them
+- Phones and upright tablets get a new layout: the views fill the screen, a bar at the bottom (Make, View, Output, About ODM-Poser) opens a tab's controls as a full-screen sheet with a simplified view of the figure fixed at its top (only the controls scroll). Drag the grip down or tap it to close. The title, version and links are under About ODM-Poser. Sideways and on computers, the layout is as before
 - A development device frame (`npm run dev`, /ODM-Poser/dev/phone/ and /dev/tablet/): the editor in a phone or tablet frame, to look at the phone layout in VS Code's browser (not in the site)
 - All the figure's resets are in one tab, Reset (Figure menu): the whole figure, its sex's default, its pose only, its body only, its place and turn only, the attached things, and everything. The same buttons in the Pose, Body and Place tabs are gone
 - "Reset what the figure has" in Figures: for the kinds ticked (held and worn things, auras, the wire, pinned joints), take them all off, or keep them and put their size, colour, turn, place and the wire's height back

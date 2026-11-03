@@ -607,25 +607,23 @@ body.sheet #sheetBar { display: flex; position: fixed; left: 0; right: 0; bottom
 #sheetBar button.on { color: var(--sel); background: color-mix(in srgb, var(--sel) 14%, transparent); }
 #sheetBar button:focus-visible { outline: 2px solid var(--sel); outline-offset: -2px; }
 /* the sheets: the controls (aside) and the about sheet, both rising from the bar */
-body.sheet aside.sheet-panel, #aboutSheet { position: fixed; left: 0; right: 0; bottom: calc(var(--bar-h) + env(safe-area-inset-bottom)); z-index: 30;
-  max-height: 58dvh; margin: 0; padding: 0 12px 12px; overflow-y: auto; overscroll-behavior: contain; columns: auto; display: block !important;
-  border-radius: 16px 16px 0 0; background: color-mix(in srgb, var(--bg-surface) 78%, transparent); backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px); box-shadow: 0 -4px 18px rgb(0 0 0 / 0.18); transform: translateY(calc(100% + 1.5rem));
-  transition: transform 0.22s ease; visibility: hidden; }
+body.sheet aside.sheet-panel, #aboutSheet { position: fixed; left: 0; right: 0; top: 0; bottom: calc(var(--bar-h) + env(safe-area-inset-bottom)); z-index: 30;
+  margin: 0; padding: 0 12px 12px; overflow-y: auto; overscroll-behavior: contain; columns: auto; display: block !important;
+  background: var(--bg-page); transform: translateY(calc(100% + 1.5rem)); transition: transform 0.22s ease; visibility: hidden; }
 body.sheet.sheet-open aside.sheet-panel { transform: none; visibility: visible; }
-body.sheet.sheet-open.sheet-full aside.sheet-panel { max-height: 86dvh; }
 body.sheet.about-open #aboutSheet { transform: none; visibility: visible; }
 #aboutSheet { display: none; }
 body.sheet #aboutSheet { display: block; }
 #aboutSheet .app-header { display: block !important; padding: 0 0 12px; }
 body.sheet aside.sheet-panel > section { break-inside: auto; }
 .sheet-grab { display: none; }
-body.sheet .sheet-grab { display: flex; justify-content: center; position: sticky; top: -12px; z-index: 2; margin: 0 -12px; padding: 0 0 2px;
-  background: transparent; }
+body.sheet .sheet-grab { display: flex; justify-content: center; position: sticky; top: 0; z-index: 4; margin: 0 -12px; padding: 0 0 2px;
+  background: var(--bg-page); }
 .sheet-grab button { width: 100%; min-height: 28px; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .sheet-grab i { display: block; width: 44px; height: 5px; border-radius: 9999px; background: var(--border-default); }
-body.sheet #sheetView { display: block; height: 30dvh; min-height: 120px; margin: 4px 0 10px; border-radius: 12px; overflow: hidden;
-  background: var(--stage); border: 1px solid var(--border-default); }
+/* the simplified view stays where it is while the controls under it scroll */
+body.sheet #sheetView { display: block; position: sticky; top: 28px; z-index: 3; height: 34dvh; min-height: 140px; margin: 0 0 10px; border-radius: 12px;
+  overflow: hidden; background: var(--stage); border: 1px solid var(--border-default); }
 #sheetView { display: none; }
 #sheetView canvas { display: block; width: 100%; height: 100%; }
 body.sheet .ov-toast { bottom: calc(var(--bar-h) + 12px); }
