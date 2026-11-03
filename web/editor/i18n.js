@@ -4,6 +4,9 @@
 (() => {
   const KEY = "odm-poser-lang";
   const T = {
+    "ODM-Poserについて": "About ODM-Poser", "ODM-Poser について": "About ODM-Poser", "分類": "Categories",
+    "人物の簡略表示": "The figure, simplified", "操作欄を閉じる・広げる（下へドラッグで閉じる）": "Close or widen the panel (drag down to close)",
+    "下へドラッグで閉じる・タップで広げる": "Drag down to close, tap to widen", "閉じる": "Close",
     "リセット": "Reset", "人体のリセットを一箇所に（全部・ポーズ・体格・性別・位置・付随物）": "All resets for the figure in one place (all, pose, body, sex, place, attached things)",
     "この人物を戻す": "Put this figure back", "↺ 全部を初期状態に": "↺ All to the start",
     "ポーズ・体格・位置・向き・手の形を、新しい人物と同じにします（持ち物・オーラはそのまま）。": "Pose, body, place, turn and hands go to a new figure's (things and auras stay).",

@@ -137,6 +137,8 @@
   }
   function choose(name){
     show(name);
+    // the phone's sheet (ui-sheet.js): a tab chosen shows its sheet over the full-screen views
+    if (document.body.classList.contains("sheet")) document.body.classList.add("sheet-open");
     const mode = MODE_OF[name], btn = mode && document.querySelector(`#modes [data-mode="${mode}"]`);
     if (btn && !btn.classList.contains("on")){ busy = true; btn.click(); busy = false; }
   }
@@ -154,6 +156,10 @@
   }
   (window.ODMUI = window.ODMUI || {}).addMenu = addMenu;
   window.ODMUI.showMenu = choose;
+  // a group (作る / 見る / 出す): the tab it was last on, else its first
+  window.ODMUI.showGroup = gid => { const t = TREE.find(x => x.id === gid); if (!t) return;
+    const m = t.kids.find(k => k.id === lastMid[t.id]) || t.kids[0]; choose(lastLeaf[m.id] || m.kids[0].id); };
+  window.ODMUI.groupOf = () => { const w = where(current); return w ? w.t.id : ""; };
   window.ODMUI.renderMenu = render;
   window.ODMUI.hasMenu = id => !!where(id);
 
