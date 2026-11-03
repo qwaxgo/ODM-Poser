@@ -6,8 +6,21 @@ Besides dragging the joints, a pose can start from a preset.
 
 ## Built-in presets
 
-**Presets** in the menu lists basic poses made by hand: standing, A pose, T pose and more. Pick one and
-press **Use this pose**. The body (bone lengths, thickness) and where the figure stands stay as they are.
+**Pose presets** under **Presets** in the menu lists basic poses made by hand: standing, A pose, T pose,
+holding a rope (Tarzan) and more. Pick one and press **Use this pose**. The body (bone lengths,
+thickness) and where the figure stands stay as they are.
+
+## Saved poses and body presets
+
+Poses and bodies are saved and loaded apart: loading one never changes the other. Both are kept in this
+browser.
+
+- **Pose, things and place: saved** keeps the figure's pose (its bones' directions, its turn, its hands),
+  what it holds and wears, and where it stands, under a name. Loaded on a figure with another body, that
+  figure keeps its own body.
+- **Body presets** keep the bone lengths, thickness, the shoulders' and thigh roots' places and the sex,
+  besides the built-in Standard, Female and Male. Loaded, the pose, things and place stay, and so do the
+  feet (the lowest point).
 
 ## User presets (your own pose sets)
 

@@ -16,7 +16,10 @@ How to give a figure things to hold or wear, and how to put objects (boxes, wall
 | Hold in the right / left hand | That hand holds it, its shape set for the grip (a two-handed thing gets the other hand too) |
 | Wear | On the head, chest, back, waist, feet, ... |
 | Place | Chairs, rides and the like go on the floor; a seat or a ride fits the body to it |
-| Place on its own | On the floor in front of the figure, held by no one |
+
+To put a thing on the floor held by no one, use **Things on their own** in the **Objects** tab (see
+Objects below). What a figure holds and wears also shows under the body map in the **Figure** menu
+(Figures), where it can be taken off.
 
 **Where it is held.** A held thing goes to the grip point of the hand's shape: a handle (swords, bats,
 guns) inside the curled fingers, a cupped thing (cups, balls, phones) against the palm, a pinched thing
@@ -41,7 +44,8 @@ it is placed, too.
 
 Things on the floor (**Place**, **Place on its own**, **Put down (floor / object)**) are dragged in
 **Place** mode (Shift + drag: up / down, wheel: turn). The 3-axis handles move and turn them and set their
-X, Y and Z sizes. However many figures there are, things put down move whichever figure is being edited.
+X, Y and Z sizes. While the handles show, a drag only selects; the handles do the moving (hide them to
+drag things). However many figures there are, things put down move whichever figure is being edited.
 
 ## Objects (the Objects tab)
 
@@ -49,6 +53,13 @@ Pick a kind under **Objects (floors, walls, buildings, poles ...)** and press **
 wall, building, step, prism, cylinder, pyramid, cone and pole, each sized in cm (width, height, depth).
 With grounding on, figures stand on their tops too. Drag them in Place mode; the 3-axis handles set
 their width, height and depth.
+
+### Things on their own
+
+Under **Things on their own** in the **Objects** tab, pick a weapon, tool, hat or the like (anything held
+or worn) and press **Place on its own**: it goes on the floor (or an object) in front of the figure being
+edited, held by no one; a held thing lies flat. **Things put on their own** lists them, to take one away
+or give it to the figure being edited. Move them in Place mode.
 
 ## Your own (mods)
 

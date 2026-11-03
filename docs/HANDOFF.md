@@ -57,6 +57,8 @@ web/editor/ui.js, ui.src.css     the look after melta UI (design/melta-ui); ui.c
 web/editor/pose_props*.js        window.PROP_CATS / window.PROPS: the props as primitives
 web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carrying, mounting, grabbing, wire
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
+web/editor/pose_cast.js          more than one figure; pose_sets.js the saved poses (pose + things + place) and bodies
+web/editor/pose_gizmo.js         the 3-axis handles (tools per mode); ui-figure.js the body map and 人物の管理 under it
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
 web/editor/pose_share.js         posting (X, Bluesky, Misskey, Mastodon, share menu) and #pose= links;
@@ -122,6 +124,21 @@ state format `version: 3`, `window.ODMPoser` (old alias `window.SymbolicPose`).
   `def.grip`. `aimOtherHand` puts the other hand's grip point on `grip2` the same way.
 - Item sizes: `it.stretch [x, y, z]` along its own axes (`stretchOf` also reads the older
   `len` / `thick`; `foldStretch` converts on edit); round parts' radii follow (`radK`).
+- Modes and tools: ポーズ rotates (3-axis rotate turns what lies beyond the selected joint about it)
+  and moves only arm / leg joints (`LIMB` in pose_gizmo.js); 体格 only scales; 配置 moves objects,
+  things, the ruler box and the whole figure by its hips. `tools()` greys out the rest and the tool in
+  use falls back to one the mode has (the chosen one, `pref`, comes back). While the handles show,
+  `gizmoHolds()` makes a direct drag select only. A drag on empty space turns the camera (mouse too).
+- Body sizes: `fromBottom(fn)` keeps the lowest point where it was (height, legs, sex, body presets);
+  `withNeck(fn)` takes the neck and head along when the shoulders' middle goes up or down (the neck
+  is drawn from there); `thickJoints(j)` gives an arm's / leg's circles together unless
+  `#thickLink` is off. `S.sex` remembers 女性 / 男性 for `resetToSex()`.
+- Presets: pose presets keep the body (`posePreset`); pose_sets.js keeps saved poses and bodies in
+  localStorage (`KEY-posesets`, `KEY-bodysets`), apart from each other.
+- Hanging (pose_scene.js): `hangFrom(joint)` straightens the holding arm (or leg), turns the body
+  about the hold until its centre is under it and lets the free arms hang; the wire does it when a
+  wrist / ankle / the rope is chosen (`#scWirePose`), and 「ぶら下がる」 with one hand or one foot
+  pinned. `wire.joint === "rope"`: the right wrist is held, the left one kept 14 cm down the rope.
 - More than one figure (pose_cast.js): things put down / placed on their own (`movable`) stay
   with the figure being edited (`passLoose`), so 配置 mode reaches them; each figure has its own
   position / direction controls (`placeFigure`); the pictures can show one figure

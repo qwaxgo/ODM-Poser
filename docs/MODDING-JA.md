@@ -173,7 +173,7 @@ MOD が読める（`api.edit` の中で変えてよい）`S` の項目：`P`（2
 | `api.math.add / sub / mul / dot / cross / len / norm` | `[x, y, z]` の 3D ベクトル計算 |
 | `api.math.rotAxis(v, 軸, ラジアン)`、`api.math.deg(度)` | ベクトルを回す、度→ラジアン |
 | `api.view.project(p, W, H)` | 世界の点 → 正面の図のピクセル `{x, y, s（1 cm あたりのピクセル）, z}`（W × H のキャンバス） |
-| `api.view.sideProject(p, W, H)` | 横の図で同じこと |
+| `api.view.sideProject(p, W, H)` | 側面図で同じこと |
 | `api.view.ray(x, y, W, H)` | 正面の図のピクセル → カメラからの光線 `{o, dir}`（世界の座標） |
 | `api.view.camera()` | カメラの設定のコピー |
 | `api.view.front()`、`api.view.side()` | 二つのキャンバス |
@@ -245,7 +245,7 @@ api.i18n.addRule(/^(.+)を投げました。$/, m => `Threw the ${m[1]}.`);   //
 |---------|-----------------|------|
 | `drawBehind` | `ctx, W, H, opts` | 正面の図と書き出しで、すべての前（いちばん下）に描く |
 | `draw` | `ctx, W, H, opts` | すべての後（人物の上）に描く。アタリ画像の書き出し中は `opts.export` が true |
-| `drawSide` | `ctx, W, H, opts` | 横の図。環境のあとに描く |
+| `drawSide` | `ctx, W, H, opts` | 側面図。環境のあとに描く |
 | `afterEdit` | `moved`（関節の番号か −1） | 編集のたび、シミュレーションのあと |
 | `sync` | なし | 元に戻す・ポーズの読み込み・プリセットのあと：ここで `api.data()` から自分の欄を更新する |
 | `mode` | 新しいモード | モードのボタン |
