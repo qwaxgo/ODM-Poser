@@ -65,19 +65,62 @@ cast.id = "figCast";
 cast.innerHTML = `<div class="ctx-name">人物の管理</div><div class="ctx-btns" id="fcList" role="group" aria-label="人物の一覧"></div>
   <div class="ctx-btns"><button type="button" class="ctx-btn" id="fcAdd">＋ 人物を追加</button><button type="button" class="ctx-btn" id="fcDup">複製</button>
     <button type="button" class="ctx-btn" id="fcDel" title="編集している人物を削除">削除</button></div>
-  <div class="ctx-name">持ち物・身に着けた物</div><div class="ctx-btns" id="fcItems"></div>`;
+  <div class="ctx-name">持ち物・身に着けた物</div><div class="ctx-btns" id="fcItems"></div>
+  <div class="ctx-name">付随物のリセット</div>
+  <div class="ctx-btns fc-pick" role="group" aria-label="リセットするもの"><label><input type="checkbox" data-fr="items" checked> 持ち物・身に着けた物</label>
+    <label><input type="checkbox" data-fr="auras" checked> オーラ</label><label><input type="checkbox" data-fr="wire" checked> ワイヤー</label>
+    <label><input type="checkbox" data-fr="pins" checked> 関節の固定</label></div>
+  <div class="ctx-btns"><button type="button" class="ctx-btn" id="frStrip" title="チェックしたものを、この人物からすべて外す">↺ 外す</button>
+    <button type="button" class="ctx-btn" id="frTune" title="付けたまま、大きさ・色・向き・位置・ワイヤーの高さを初期値に戻す">↺ 大きさ・色などを戻す</button></div>
+  <div class="hint">チェックしたものだけに効きます（関節の固定は「外す」だけ）。床に単体で置いた物は含みません。</div>`;
 box.appendChild(cast);
 const fcBtn = (label, cls, fn, title) => { const b = document.createElement("button"); b.type = "button"; b.className = "ctx-btn" + (cls ? " " + cls : "");
   b.textContent = label; if (title){ b.title = title; b.setAttribute("aria-label", title); } b.addEventListener("click", fn); return b; };
 cast.querySelector("#fcAdd").addEventListener("click", () => addFigure(false));
 cast.querySelector("#fcDup").addEventListener("click", () => addFigure(true));
 cast.querySelector("#fcDel").addEventListener("click", () => removeFigure());
+// 付随物のリセット: what the figure has besides its body (held / worn things, auras, the wire, pins),
+// the kinds ticked: take them all off, or keep them and put their size, colour, turn, place and the
+// wire's height back
+const mineOf = () => (S.items || []).map((it, n) => [it, n]).filter(([it]) => !(typeof loose === "function" && loose(it)));
+const picked = () => { const o = {}; cast.querySelectorAll("[data-fr]").forEach(c => { o[c.dataset.fr] = c.checked; }); return o; };
+function hasExtra(k, tune){
+  return k.items && mineOf().length > 0 || k.auras && (S.auras || []).length > 0 || k.wire && !!(S.wire && S.wire.on) ||
+    !tune && k.pins && Object.keys(S.pins || {}).length > 0;
+}
+function stripFigure(){
+  const k = picked(); if (!hasExtra(k, false)) return;
+  remember();
+  if (k.items){ const mine = mineOf().map(([it]) => it); mine.forEach(freeHands);
+    S.items = S.items.filter(it => mine.indexOf(it) < 0); scSel = -1; }
+  if (k.auras) S.auras = [];
+  if (k.wire && S.wire) S.wire.on = false;
+  if (k.pins) S.pins = {};
+  afterEdit(); fillItemList(); if (typeof syncStyle === "function") syncStyle(); if (typeof syncScene === "function") syncScene(); draw();
+  say("この人物の付随物を外しました（元に戻すで戻せます）。");
+}
+function tuneFigure(){
+  const k = picked(); if (!hasExtra(k, true)) return;
+  remember();
+  if (k.items) mineOf().forEach(([it]) => { it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.color;
+    delete it.dims; delete it.len; delete it.thick; delete it.stretch; });
+  if (k.auras) (S.auras || []).forEach(a => { a.size = 14; a.color = (AURA_KINDS[a.kind] || AURA_KINDS.flame)[1];
+    for (const kk of ["even", "sharp", "round", "angle", "height", "thick", "fine", "spread", "density"]) delete a[kk]; });
+  if (k.wire && S.wire && S.wire.on){ S.wire.height = 300; if (typeof syncScene === "function") syncScene(); setWire(false); }
+  afterEdit(); fillItemList(); if (typeof syncStyle === "function") syncStyle(); draw();
+  say("この人物の付随物の大きさ・色などを初期値に戻しました。");
+}
+cast.querySelector("#frStrip").addEventListener("click", stripFigure);
+cast.querySelector("#frTune").addEventListener("click", tuneFigure);
+cast.querySelectorAll("[data-fr]").forEach(c => c.addEventListener("change", () => { castKey = ""; updateCast(); }));
 let castKey = "";
 function updateCast(){
   if (typeof takeFigure !== "function") return;
   const figs = [{k: -1, id: S.figId || 1, name: S.figName || "1人目"}, ...(S.others || []).map((f, k) => ({k, id: f.figId || k + 2, name: f.figName || `${f.figId || k + 2}人目`}))]
     .sort((a, b) => a.id - b.id);
-  const mine = (S.items || []).map((it, n) => [it, n]).filter(([it]) => !(typeof loose === "function" && loose(it)));
+  const mine = mineOf(), pk = picked();
+  cast.querySelector("#frStrip").disabled = !hasExtra(pk, false);
+  cast.querySelector("#frTune").disabled = !hasExtra(pk, true);
   const k = JSON.stringify([figs, mine.map(([it, n]) => [it.key, n, it.where || "", it.hand || ""]), typeof scSel === "number" ? scSel : -1]);
   if (k === castKey) return; castKey = k;
   const list = cast.querySelector("#fcList"), items = cast.querySelector("#fcItems");
@@ -98,6 +141,12 @@ if (window.ODMPoserI18n) window.ODMPoserI18n.add({"全身図（どこを編集�
   "人物の管理": "Figures", "人物の一覧": "The figures", "＋ 人物を追加": "+ Add a figure", "複製": "Copy", "削除": "Delete",
   "編集している人物を削除": "Delete the figure being edited", "持ち物・身に着けた物": "Held and worn", "＋ 持たせる・着ける": "+ Hold / wear",
   "背中": "back", "着用": "worn", "構え": "held ready",
+  "付随物のリセット": "Reset what the figure has", "リセットするもの": "What to reset", "関節の固定": "Pinned joints",
+  "↺ 外す": "↺ Take off", "↺ 大きさ・色などを戻す": "↺ Size, colour ... back",
+  "チェックしたものを、この人物からすべて外す": "Take everything ticked off this figure",
+  "付けたまま、大きさ・色・向き・位置・ワイヤーの高さを初期値に戻す": "Keep them on; put their size, colour, turn, place and the wire's height back",
+  "チェックしたものだけに効きます（関節の固定は「外す」だけ）。床に単体で置いた物は含みません。":
+    "Works on what is ticked (pinned joints: Take off only). Things put on the floor on their own are left alone.",
   "頭": "Head", "胴体": "Torso", "右腕": "Right arm", "左腕": "Left arm", "右脚": "Right leg", "左脚": "Left leg", "右手": "Right hand", "左手": "Left hand"});
 update(); updateCast();
 })();

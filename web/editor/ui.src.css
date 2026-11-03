@@ -498,6 +498,8 @@ aside > section:not(.active) { display: none !important; }
 #figCast { flex: 1 0 100%; padding-top: 6px; border-top: 1px solid var(--border-default); }
 #figCast .ctx-btns + .ctx-name { margin-top: 8px; }
 #figCast .ctx-btns { margin-bottom: 4px; }
+#figCast .fc-pick label { display: inline-flex; align-items: center; gap: 4px; margin: 0 8px 0 0; font-size: 0.75rem; color: var(--text-default); }
+#figCast .hint { margin-top: 2px; font-size: 0.75rem; line-height: 1.5; color: var(--text-muted); }
 .ctx-btn.on { color: #ffffff; background: var(--sel); border-color: var(--sel); }
 .ctx-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .ctx-btn.x { padding: 2px 6px; margin-left: -6px; border-top-left-radius: 0; border-bottom-left-radius: 0; }
