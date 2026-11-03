@@ -4,6 +4,19 @@
 (() => {
   const KEY = "odm-poser-lang";
   const T = {
+    "リセット": "Reset", "人体のリセットを一箇所に（全部・ポーズ・体格・性別・位置・付随物）": "All resets for the figure in one place (all, pose, body, sex, place, attached things)",
+    "この人物を戻す": "Put this figure back", "↺ 全部を初期状態に": "↺ All to the start",
+    "ポーズ・体格・位置・向き・手の形を、新しい人物と同じにします（持ち物・オーラはそのまま）。": "Pose, body, place, turn and hands go to a new figure's (things and auras stay).",
+    "↺ 性別の初期値に": "↺ To the sex's default",
+    "女性・男性（最後に選んだ方）の初期状態に戻します。位置と持ち物はそのままです。": "Back to the female or male start (the one chosen last). Place and things stay.",
+    "↺ ポーズだけ": "↺ Pose only", "立ちポーズに戻します。体格（骨の長さ・太さ）と位置はそのままです。": "Back to the standing pose. Body (bone lengths, thickness) and place stay.",
+    "↺ 体格だけ": "↺ Body only", "骨の長さ・丸の太さ・大きさを初期値にします。ポーズ（骨の向き）と位置はそのままです。身長や脚の長さを変えても、足元は動きません。":
+      "Bone lengths, circle thickness and size go to the start. Pose (bone directions) and place stay. The feet stay on the floor when height or leg length changes.",
+    "↺ 位置と向きだけ": "↺ Place and turn only", "人物を床の中央に立て、向きと傾きを0に戻します。ポーズと体格はそのままです。": "Stands the figure at the floor's centre, turn and tilt to 0. Pose and body stay.",
+    "すべて": "All", "↺ すべて最初の状態に": "↺ Everything to the start",
+    "人物・小物・物体・床と壁・定規・カメラを、最初の状態に戻します（記憶したカメラは残ります）。「元に戻す」で取り消せます。":
+      "Figures, things, objects, floor and walls, ruler and camera go to the start (saved cameras stay). Undo reverts it.",
+    "付随物（持ち物・オーラ・ワイヤー・固定）": "Attached (things, auras, wire, pins)",
     // header, modes, views
     "立体人形装置": "",                         // the header shows "ODM Poser — Omni-Directional Mannequin Poser" after it
     "線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。":

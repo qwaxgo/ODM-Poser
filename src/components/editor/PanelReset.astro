@@ -1,0 +1,21 @@
+---
+// リセット: every reset of the selected figure in one place (作る › 人物 › リセット). The buttons keep
+// their ids (pose_main.js does the work); the 付随物 block is added by ui-figure.js.
+---
+
+<section data-menu="reset">
+  <h2>この人物を戻す</h2>
+  <div class="rs-list">
+    <div class="rs-row"><button id="resetFigure">↺ 全部を初期状態に</button><span class="hint">ポーズ・体格・位置・向き・手の形を、新しい人物と同じにします（持ち物・オーラはそのまま）。</span></div>
+    <div class="rs-row"><button id="sexReset" title="選んでいる人物のポーズ・体格・手の形・向きを、女性・男性（最後に選んだ方）の初期状態に戻す">↺ 性別の初期値に</button><span class="hint">女性・男性（最後に選んだ方）の初期状態に戻します。位置と持ち物はそのままです。</span></div>
+    <div class="rs-row"><button id="poseReset">↺ ポーズだけ</button><span class="hint">立ちポーズに戻します。体格（骨の長さ・太さ）と位置はそのままです。</span></div>
+    <div class="rs-row"><button id="bodyReset">↺ 体格だけ</button><span class="hint">骨の長さ・丸の太さ・大きさを初期値にします。ポーズ（骨の向き）と位置はそのままです。身長や脚の長さを変えても、足元は動きません。</span></div>
+    <div class="rs-row"><button id="figResetPos">↺ 位置と向きだけ</button><span class="hint">人物を床の中央に立て、向きと傾きを0に戻します。ポーズと体格はそのままです。</span></div>
+  </div>
+</section>
+
+<section data-menu="reset">
+  <h2>すべて</h2>
+  <div class="btns"><button id="resetAll">↺ すべて最初の状態に</button></div>
+  <div class="hint">人物・小物・物体・床と壁・定規・カメラを、最初の状態に戻します（記憶したカメラは残ります）。「元に戻す」で取り消せます。</div>
+</section>

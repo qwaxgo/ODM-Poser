@@ -34,6 +34,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - カメラが時々動かなくなる不具合を修正：タッチの指が離れたことが伝わらないと、それ以後のタッチがすべて2本指の操作になっていました。マウスでも、何もない所をドラッグするとカメラが回るように（Shift＋ドラッグで動かす）
 - 図の右上の「操作欄」ボタンが分割表示で効かなかったのを修正し、左上の「操作欄を隠す」ボタンを削除
 - 「人物」のメニューの全身図の下に「人物の管理」：人物の切り替え・追加・複製・削除と、持ち物・身に着けた物の一覧（装備のタブを開く・外す）
+- 人体のリセットを「作る › 人物 › リセット」に一箇所にまとめました：この人物を全部・性別の初期値・ポーズだけ・体格だけ・位置と向きだけ、付随物、すべて。ポーズ・体格・位置・性別の各タブの同じボタンは外しました
 - 「人物の管理」に「付随物のリセット」：持ち物・身に着けた物、オーラ、ワイヤー、関節の固定のうちチェックしたものを、まとめて外すか、付けたまま大きさ・色・向き・位置・ワイヤーの高さを初期値に戻せます
 - 「ComfyUI で使う」のページを新しいブリッジに合わせて更新：エディタ本体（HTML 版）がブリッジに同梱されるので、入れるときと更新するときにサブモジュールの手順は要りません
 - 書き出したファイル（画像・ポーズのファイル）の利用条件を CC0 1.0 に：商用・加工・AI の学習や生成への利用も自由で、クレジットは任意です。ドキュメントに「ライセンス・利用条件」のページを追加し、書き出しのタブ・ドキュメントの下・README・リリースの zip にも載せました（ツール自体は今までどおり MIT）
@@ -70,6 +71,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The camera sometimes stopped responding: a finger whose lifting was never told made every later touch a two-finger gesture. A mouse drag on empty space now turns the camera too (Shift: pans)
 - The "Panel" button at the view's top right works in split screen; the "Hide the panel" key at the top left is gone
 - "Figures" under the body map in the Figure menu: switch, add, copy and delete figures, and what the figure holds and wears (open it in Equip, take it off)
+- All the figure's resets are in one tab, Reset (Figure menu): the whole figure, its sex's default, its pose only, its body only, its place and turn only, the attached things, and everything. The same buttons in the Pose, Body and Place tabs are gone
 - "Reset what the figure has" in Figures: for the kinds ticked (held and worn things, auras, the wire, pinned joints), take them all off, or keep them and put their size, colour, turn, place and the wire's height back
 - The "Using it in ComfyUI" page follows the reworked bridge: the editor (its HTML build) comes inside the bridge, so installing and updating need no submodule steps
 - Exported files (pictures and pose files) are under CC0 1.0: use them commercially, change them, use them with AI for training or generation; credit is optional. A "License and terms of use" docs page, linked from the Export tab, the docs' footer, the README and the release zips (the tool itself stays MIT)
