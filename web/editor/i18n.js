@@ -4,6 +4,10 @@
 (() => {
   const KEY = "odm-poser-lang";
   const T = {
+    "↺ 色を初期状態に": "↺ Colours to the start", "線・床・壁・ワイヤー・小物・物体・オーラの色を、最初の色に戻す": "Back to the first colours: lines, floor, walls, wire, things, solids and auras",
+    "線・床・壁・天井・ワイヤー・小物・物体・オーラの色を、最初の色に戻します（「元に戻す」で取り消せます）。": "Puts the colours of the lines, floor, walls, ceiling, wire, things, solids and auras back to the first ones (Undo takes it back).",
+    "色の記憶": "Saved colours", "名前（例：夜の色）": "Name (e.g. night colours)",
+    "いまの線の色（人物・床・壁・天井・ワイヤー）を名前をつけて記憶し、呼び出せます。小物・物体・オーラの色は含みません。このブラウザに残ります。": "Saves the current line colours (figures, floor, walls, ceiling, wire) under a name, to load again. Things, solids and auras keep their own colours out of it. Kept in this browser.",
     "ODM-Poserについて": "About ODM-Poser", "ODM-Poser について": "About ODM-Poser", "分類": "Categories",
     "人物の簡略表示": "The figure, simplified", "操作欄を閉じる・広げる（下へドラッグで閉じる）": "Close or widen the panel (drag down to close)",
     "下へドラッグで閉じる・タップで広げる": "Drag down to close, tap to widen", "閉じる": "Close",

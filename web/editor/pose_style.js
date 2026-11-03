@@ -189,11 +189,12 @@ const colorRow = (id, label) => `<div class="row" style="margin-top:4px"><label 
 function buildStylePanel(){
   const sec = document.createElement("section");
   sec.innerHTML = `<h2>線の色</h2>
+    <div class="btns"><button id="pcReset" title="線・床・壁・ワイヤー・小物・物体・オーラの色を、最初の色に戻す">↺ 色を初期状態に</button></div>
+    <div class="hint">線・床・壁・天井・ワイヤー・小物・物体・オーラの色を、最初の色に戻します（「元に戻す」で取り消せます）。</div>
     <div class="grid2">${PART_NAMES.map(([k, ja]) => `<div>${colorRow("pc_" + k, ja)}</div>`).join("")}</div>
     <div class="grid2"><div>${colorRow("pc_floor", "床")}</div><div>${colorRow("pc_wall", "壁")}</div><div>${colorRow("pc_ceiling", "天井")}</div><div>${colorRow("pc_wire", "ワイヤー")}</div></div>
     <label style="margin-top:8px">小物・物体・オーラ</label>
     <div id="pcThings" class="pc-things"></div>
-    <div class="btns" style="margin-top:6px"><button id="pcReset">すべて既定の色に戻す</button></div>
     <div class="hint">線の色はすべてここで変えます。チェックしたものだけ色が変わります（書き出すアタリ画像にも）。</div>
     <h2 style="margin-top:14px">オーラ・気をまとう</h2>
     <div class="grid2">
@@ -258,6 +259,42 @@ function buildStylePanel(){
     $("auPart").value = a.part; $("auKind").value = a.kind; $("auSize").value = a.size; $("auColor").value = a.color || AURA_KINDS[a.kind][1]; auWrite(a); });
   auWrite({});
 }
+// 色の記憶: the line colours (S.colors: the figures' parts, the floor, walls, ceiling and the wire)
+// kept under a name in this browser; loaded, they replace the current ones (undo takes it back)
+const CS_KEY = KEY + "-colorsets";
+function loadColorSets(){ try { const v = JSON.parse(localStorage.getItem(CS_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function storeColorSets(list){
+  try { localStorage.setItem(CS_KEY, JSON.stringify(list)); return true; }
+  catch (e) { say("このブラウザには記憶できませんでした（容量か設定のため）。", true); return false; }
+}
+function buildColorSets(){
+  const sec = document.createElement("section");
+  sec.dataset.menu = "colors";
+  sec.innerHTML = `<h2>色の記憶</h2>
+    <div class="row"><input type="text" id="csName" placeholder="名前（例：夜の色）"><button type="button" id="csSave">記憶</button></div>
+    <select id="csList" size="4"></select>
+    <div class="btns"><button type="button" id="csLoad">呼び出す</button><button type="button" id="csDel">削除</button></div>
+    <div class="hint">いまの線の色（人物・床・壁・天井・ワイヤー）を名前をつけて記憶し、呼び出せます。小物・物体・オーラの色は含みません。このブラウザに残ります。</div>`;
+  $("pcReset").closest("section").after(sec);
+  const fill = () => { const list = loadColorSets();
+    $("csList").innerHTML = list.map((d, k) => `<option value="${k}">${esc(d.name)}</option>`).join("");
+    $("csLoad").disabled = $("csDel").disabled = !list.length; };
+  const load = () => { const list = loadColorSets(), d = list[+$("csList").value]; if (!d) return;
+    remember(); S.colors = JSON.parse(JSON.stringify(d.colors || {})); S.colors.parts = S.colors.parts || {};
+    syncStyle(); if (typeof syncUI === "function") syncUI(); draw(); say(`色「${d.name}」を呼び出しました。`); };
+  $("csSave").addEventListener("click", () => {
+    const list = loadColorSets(), name = ($("csName").value.trim() || `色${list.length + 1}`).slice(0, 60);
+    const at = list.findIndex(d => d.name === name), d = {name, colors: JSON.parse(JSON.stringify(S.colors || {parts: {}}))};
+    if (at >= 0) list[at] = d; else list.push(d);
+    if (storeColorSets(list)){ $("csName").value = ""; fill(); $("csList").value = String(at >= 0 ? at : list.length - 1);
+      say(`色「${name}」を記憶しました。`); }
+  });
+  $("csLoad").addEventListener("click", load);
+  $("csList").addEventListener("dblclick", load);
+  $("csDel").addEventListener("click", () => { const list = loadColorSets(), k = +$("csList").value; if (!list[k]) return;
+    const [d] = list.splice(k, 1); if (storeColorSets(list)){ fill(); say(`色「${d.name}」を削除しました。`); } });
+  fill();
+}
 // the things with a colour of their own: "i3" (S.items[3]), "s0" (S.solids[0]), "a1" (S.auras[1])
 function thingOf(k){ const n = +k.slice(1); return ({i: S.items, s: S.solids, a: S.auras}[k[0]] || [])[n]; }
 let thingsKey = "";
@@ -287,6 +324,7 @@ function syncStyle(){
     $("auColor").value = a.color || AURA_KINDS[a.kind][1]; auWrite(a); }
 }
 buildStylePanel();
+buildColorSets();
 syncStyle();
 { const d0 = draw; draw = function(){ d0.apply(this, arguments); syncThings(); }; }
 { const sync0 = syncUI; syncUI = function(){ sync0(); syncStyle(); }; }
