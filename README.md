@@ -11,11 +11,14 @@ rough ("atari"), and JSON.
 
 ## Use
 
-Open `web/editor/index.html` in a browser. The export buttons save the pictures and the pose;
+Open the editor at https://apps.qwaxgo.com/ODM-Poser/ (how to use it: the **Guide** link in its header,
+https://apps.qwaxgo.com/ODM-Poser/docs/). The export buttons save the pictures and the pose;
 "ファイルから読込 / Load from files" in the user presets box loads your own presets.
 
 To install it as an app (PC, phone, tablet; works offline), see **[docs/APP.md](docs/APP.md)**
-(日本語: [docs/APP-JA.md](docs/APP-JA.md)); `python tools/serve.py` serves it on this computer.
+(日本語: [docs/APP-JA.md](docs/APP-JA.md)); `python tools/serve.py` builds the site and serves it on this computer.
+Without a server: the [Releases](https://github.com/qwaxgo/ODM-Poser/releases) have an HTML zip (unzip it and
+open `index.html`; mods go in its `mods` folder), and an app (an AppImage for Linux, a zip for Windows) is coming. What changed: [CHANGELOG.md](CHANGELOG.md).
 
 ## Editing
 
@@ -158,7 +161,7 @@ keeps its own body. `group` defaults to the file name.
 
 Mods add props, solid kinds, auras, hand shapes, poses, translations, panels and drawing / mouse
 hooks without changing the editor: put `*.js` files in `mods/`, or clone a repository of mods into it.
-Opened from disk, run `python tools/make_mods_list.py` first so the editor knows them. The API: [docs/MODDING.md](docs/MODDING.md) (日本語: [docs/MODDING-JA.md](docs/MODDING-JA.md)).
+Run `python tools/make_mods_list.py` first so the editor knows them (`npm run dev` and `tools/serve.py` serve `mods/`). The API: [docs/MODDING.md](docs/MODDING.md) (日本語: [docs/MODDING-JA.md](docs/MODDING-JA.md)).
 On a site without `mods/` (GitHub Pages, the installed app, a phone), install mods in the MOD panel from a
 file or by URL; they are kept in the browser. Mods run with the editor's rights: install only mods you
 trust; `?nomods` starts without them.
@@ -166,11 +169,29 @@ trust; `?nomods` starts without them.
 ## Working on the UI
 
 The look follows [melta UI](https://github.com/tsubotax/melta-ui) (the submodule `design/melta-ui`:
-`git submodule update --init`). The editor needs no build; its CSS, `web/editor/ui.css`, is made by
-Tailwind CSS 4 from `web/editor/ui.src.css` and committed. With Node.js 22: `npm install` once, then
+`git submodule update --init`). The editor's markup is `src/pages/editor/index.astro` and
+`src/components/editor/`; its CSS, `web/editor/ui.css`, is made by Tailwind CSS 4 from `web/editor/ui.src.css` and committed. With Node.js 22: `npm install` once, then
 `npm run css` after changing `ui.src.css` or `web/editor/ui.js` (which gives the controls melta's
 classes). `python tools/lint_ui.py` checks the page as drawn with melta's lint. Notes for AI coding
 agents: `AGENTS.md`.
+
+## The site and the development container
+
+The site is built with [Astro](https://astro.build): the pages are `src/pages` (the editor, the docs from
+`docs/`, the site root), and `web/` goes out as it is (Astro's `publicDir`: the editor's scripts, styles
+and pictures). `npm run dev` serves it at http://localhost:4321/ODM-Poser/editor/ (docs:
+/ODM-Poser/docs/), `npm run build` writes `dist/` (what GitHub Pages publishes). To use the editor
+without a server, `python tools/make_release_html.py` makes the HTML release (`release/`); pushing a tag
+`v<version>` makes a release draft with it (`.github/workflows/release.yml`). The app (Tauri, `src-tauri/`) is built
+in its own container, where Docker is (not in the dev container):
+`HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose -f docker-compose.tauri.yml run --rm tauri [linux|windows|all]`
+writes an AppImage and a Windows zip to `release/`; add them to the release draft by hand.
+
+A development container (`.devcontainer/`: Node 24, Python with Playwright, Claude Code, zsh) can be
+opened from WSL2 (or Linux / macOS) with VS Code's "Reopen in Container"; it mounts `~/.ssh`,
+`~/.gitconfig`, `~/.claude`, `~/.config/gh` (gh's login) and your zsh settings. Without VS Code: `docker compose up dev` (also
+`preview`, `serve`), and the checks with `docker compose -f docker-compose.test.yml run --rm lint-ui`
+(also `syntax`, `build`).
 
 ## Built with Claude Code
 
@@ -188,8 +209,9 @@ MIT, (c) 2026 qwaxgo. All shapes and code are original to this project.
 **立体人形装置**（英語名 **ODM Poser**）は、線と丸の全身アタリを疑似3Dで動かすポーズエディタです。
 ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせるマネキン人形）の略です。OpenPose 画像・アタリ画像・JSON として書き出せます。
 
-- **使い方**：`web/editor/index.html` をブラウザで開く（書き出しボタンでファイルに保存、ユーザープリセットは「ファイルから読込」で選ぶ）。
-- **アプリとして使う**：パソコン・スマホ・タブレットにアプリとして追加でき、オフラインでも開けます。方法は **[docs/APP-JA.md](docs/APP-JA.md)**（`python tools/serve.py` でこのパソコンから開けます）。
+- **使い方**：https://apps.qwaxgo.com/ODM-Poser/ を開く（書き出しボタンでファイルに保存、ユーザープリセットは「ファイルから読込」で選ぶ）。説明はヘッダーの「使い方」から（https://apps.qwaxgo.com/ODM-Poser/docs/）。
+- **アプリとして使う**：パソコン・スマホ・タブレットにアプリとして追加でき、オフラインでも開けます。方法は **[docs/APP-JA.md](docs/APP-JA.md)**（`python tools/serve.py` でサイトをビルドして、このパソコンから開けます）。
+- **サーバーなしで使う**：[Releases](https://github.com/qwaxgo/ODM-Poser/releases) の HTML 版（zip を展開して `index.html` を開く。MOD は中の `mods` フォルダへ）。アプリ版（Linux は AppImage、Windows は zip）も用意しています。変更点は [CHANGELOG.md](CHANGELOG.md)。
 - **操作**：丸をドラッグ（骨の長さは保たれる）。手首・足首は腕・脚ごと（Shift でその骨だけ）。ダブルクリックで
   手前と奥を入れ替え。横図で奥行き。すべての関節を3軸（前後・左右・ねじり。頭はうなずく・かしげる・左右を向く）で
   回せます。関節の固定（ピン、Alt＋クリック）、手の関節（指の付け根の小さな丸）で手首の曲げ・手のひらの向き・手の形（指は手のひら側へ曲がって描かれ、どの向きからも手の向きが分かります）、体格モード、パースモード、人間の関節の限界。
@@ -219,7 +241,8 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
 - **組み込みポーズ**：11種（立ち・Aポーズ・Tポーズ・コントラポスト・歩く・走る・椅子に座る・しゃがむ・ジャンプ・ファイティングポーズ・腰に手）。関節の角度で作ったもので、体格はそのまま。
 - **ユーザープリセット**：自分のプリセット（JSON）を「ファイルから読込」で読むと一覧に出ます（形式は上の User presets）。MOD からも足せます。
-- **MOD**：`mods/` に `*.js` を置くと、小物・物体・オーラ・手の形・ポーズ・翻訳・自分の欄・描画やマウスのフックを追加できます（MOD のリポジトリを `mods/` に clone しても可。説明：`docs/MODDING-JA.md`）。直接開くときは `python tools/make_mods_list.py` を先に実行。サイトやスマホでは MOD 欄の「ファイルから入れる」「URLから追加」で入れられます（ブラウザに保存）。信頼できる MOD だけを入れてください（`?nomods` で MOD なし）。
-- **画面の作り**：見た目は [melta UI](https://github.com/tsubotax/melta-ui)（サブモジュール `design/melta-ui`）に従います。エディタはビルドなしで動き、CSS（`web/editor/ui.css`）は `web/editor/ui.src.css` から Tailwind CSS 4 で作ってコミットしています。変えるときは Node.js 22 で `npm install` のあと `npm run css`、確認は `python tools/lint_ui.py`（melta の lint）。AI 向けの注意は `AGENTS.md`。
+- **MOD**：`mods/` に `*.js` を置くと、小物・物体・オーラ・手の形・ポーズ・翻訳・自分の欄・描画やマウスのフックを追加できます（MOD のリポジトリを `mods/` に clone しても可。説明：`docs/MODDING-JA.md`）。`python tools/make_mods_list.py` を先に実行（`npm run dev` と `tools/serve.py` が `mods/` を配ります）。サイトやスマホでは MOD 欄の「ファイルから入れる」「URLから追加」で入れられます（ブラウザに保存）。信頼できる MOD だけを入れてください（`?nomods` で MOD なし）。
+- **画面の作り**：見た目は [melta UI](https://github.com/tsubotax/melta-ui)（サブモジュール `design/melta-ui`）に従います。エディタのマークアップは `src/pages/editor/index.astro` と `src/components/editor/`、CSS（`web/editor/ui.css`）は `web/editor/ui.src.css` から Tailwind CSS 4 で作ってコミットしています。変えるときは Node.js 22 で `npm install` のあと `npm run css`、確認は `python tools/lint_ui.py`（melta の lint）。AI 向けの注意は `AGENTS.md`。
+- **サイトと開発コンテナ**：サイトは [Astro](https://astro.build) で作ります。ページは `src/pages`（エディタ、`docs/` から作るドキュメント、サイトのトップ）、`web/` はそのまま出します（Astro の `publicDir`：エディタのスクリプト・スタイル・画像）。サーバーなしで使う HTML 版は `python tools/make_release_html.py` で作り（`release/`）、タグ `v<version>` を push するとそれを入れたリリースの下書きができます（`.github/workflows/release.yml`）。アプリ版（Tauri、`src-tauri/`）は専用のコンテナで作ります（Docker のある所で実行。開発コンテナの中ではありません）：`HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose -f docker-compose.tauri.yml run --rm tauri [linux|windows|all]` で `release/` に AppImage と Windows の zip ができるので、リリースの下書きに手で足します。`npm run dev` で http://localhost:4321/ODM-Poser/editor/（ドキュメントは /ODM-Poser/docs/）、`npm run build` で `dist/`（GitHub Pages に出すもの）。開発コンテナ（`.devcontainer/`：Node 24、Playwright 入りの Python、Claude Code、zsh）は、WSL2（または Linux・macOS）から VS Code の「コンテナーで再度開く」で開きます（`~/.ssh`・`~/.gitconfig`・`~/.claude`・`~/.config/gh`（gh のログイン）・zsh の設定をマウント）。VS Code なしなら `docker compose up dev`（`preview`・`serve` も）、確認は `docker compose -f docker-compose.test.yml run --rm lint-ui`（`syntax`・`build` も）。
 - **Claude Code での実装**：このリポジトリのコードとドキュメントは、qwaxgo の設計と指示のもとで、Anthropic の AI コーディングツール [Claude Code](https://claude.com/claude-code) が実装しました。
 - **ライセンス**：MIT（c）2026 qwaxgo。

@@ -17,9 +17,11 @@
 ## Tech Stack
 
 - CSS: Tailwind CSS 4, generated ahead of time (`npm run css`: `web/editor/ui.src.css` → `web/editor/ui.css`,
-  committed). The editor runs without a build: from disk, a static site, offline as an installed app.
+  committed). The editor is a page of the Astro site (a static site; offline as an installed app);
+  the docs pages share its CSS (`.doc` for their text).
 - Component: plain JavaScript; melta's recipes are given to the controls by `web/editor/ui.js`.
-- Template: HTML (`web/editor/index.html`) and template strings in the modules.
+- Template: Astro (`src/pages/editor/index.astro`, `src/components/editor/`, the docs in
+  `src/pages/docs`) and template strings in the modules.
 
 ## Sizes
 

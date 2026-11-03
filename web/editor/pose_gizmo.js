@@ -1,13 +1,16 @@
 // 3軸の操作ハンドル (index.html, loaded after pose_preview.js), like Blender's: one tool at a time,
 // chosen with 移動 / 回転 / 変形 (on the view under the modes, in the joint's and the objects'
-// sections, or the keys G / R / S):
-//  - 移動: three arrows (X red, Y green, Z blue) move it along one axis.
-//  - 回転: rings turn it about an axis. A joint swings its bone about the joint before it (the hips:
-//    the whole figure), as dragging the joint does; objects, things and the ruler turn about up.
-//  - 変形: squares stretch it. An object: its width / height / depth; a joint: its bone's length
-//    (along the bone) and its circle's thickness, as in 体格 mode (左右対称 follows).
-// ポーズ mode: the selected joint (関節の限界 applies). 配置 mode: the selected object, a thing put
-// down, or the ruler's box while the 定規 tab shows. The 3軸ハンドル switch hides them.
+// sections, or the keys G / R / S). Each mode has its own tools; the others are greyed out and the
+// tool switches to one the mode has:
+//  - ポーズ: 回転 turns what hangs on the selected joint about it (the elbow: the forearm; the hips:
+//    the whole figure; a hand, a toe or the head, having nothing after them: their own bone about
+//    the joint before). 移動 only for the arms and legs (elbow, wrist, knee, ankle ...: they reach).
+//  - 体格: 変形 only. A shoulder or a thigh root: the width, height and how far forward along the
+//    torso's axes; another joint: its bone's length (along the bone) and its circle's thickness
+//    (an arm's or a leg's circles together, unless 太さを部位ごとに連動 is off; 左右対称 follows).
+//  - 配置: an object, a thing put down, the ruler's box (while the 定規 tab shows), or the figure by
+//    its hips: 移動, 回転 about up, 変形 (its width / height / depth; not the figure).
+// While the handles show (the 3軸ハンドル switch), dragging a joint or a thing only selects it.
 (() => {
 const $ = id => document.getElementById(id);
 const COL = ["#e5484d", "#30a46c", "#3e63dd"], ARROW_PX = 64, RING_PX = 52;
@@ -23,8 +26,9 @@ const COL = ["#e5484d", "#30a46c", "#3e63dd"], ARROW_PX = 64, RING_PX = 52;
 
 // the tool: 移動 / 回転 / 変形 (kept in this browser)
 const TOOLS = [["move", "移動", "Move1", "G"], ["rotate", "回転", "rotate", "R"], ["scale", "変形", "FrameSize", "S"]];
-let tool = "move";
-try { const v = localStorage.getItem(KEY + "-gizmotool"); if (TOOLS.some(t => t[0] === v)) tool = v; } catch (e) {}
+let pref = "move", tool = "move";          // the tool chosen; the tool in use (one the mode has)
+try { const v = localStorage.getItem(KEY + "-gizmotool"); if (TOOLS.some(t => t[0] === v)) pref = tool = v; } catch (e) {}
+gizmoHolds = () => $("gizmoOn").checked && mode !== "persp";
 const bars = [];
 function bar(cls){
   const d = document.createElement("div");
@@ -41,18 +45,32 @@ function bar(cls){
 function icons(){ if (!window.ODMICONS) return;
   for (const d of bars) d.querySelectorAll("button[data-gzicon]").forEach(b => { if (!b.querySelector("svg")) b.insertAdjacentHTML("afterbegin", ODMICONS.svg(b.dataset.gzicon)); }); }
 addEventListener("DOMContentLoaded", icons);
+// the tools the mode (and what is selected) has
+const LIMB = new Set(["elbow", "wrist", "hand", "knee", "ankle", "toe"].flatMap(n => ["r_" + n, "l_" + n]));
+function tools(){
+  if (mode === "pose") return sel >= 0 && LIMB.has(J[sel]) ? ["move", "rotate"] : ["rotate"];
+  if (mode === "body") return ["scale"];
+  if (mode === "place"){ const t = target(true); return t ? TOOLS.map(x => x[0]).filter(id => !t.lacks || !t.lacks.includes(id)) : ["move", "rotate", "scale"]; }
+  return [];
+}
+let barKey = "";
 function syncBars(){
   icons();
-  const on = $("gizmoOn").checked;
+  const on = $("gizmoOn").checked, can = tools();
+  tool = can.includes(pref) ? pref : can[0] || pref;
+  const k = [on, tool, can.join()].join("|"); if (k === barKey) return; barKey = k;
   for (const d of bars){ d.classList.toggle("off", !on);
-    d.querySelectorAll("button").forEach(b => { const me = b.dataset.gz === tool; b.classList.toggle("on", me); b.setAttribute("aria-pressed", String(me)); }); }
+    d.querySelectorAll("button").forEach(b => { const me = b.dataset.gz === tool && can.includes(tool);
+      b.disabled = !can.includes(b.dataset.gz); b.classList.toggle("on", me); b.setAttribute("aria-pressed", String(me)); }); }
 }
 function setTool(id, tell){
-  tool = id; try { localStorage.setItem(KEY + "-gizmotool", id); } catch (e) {}
+  if (!tools().includes(id)){ if (tell) toast(`${modeName()}では「${TOOLS.find(t => t[0] === id)[1]}」は使えません。`, true); return; }
+  pref = id; try { localStorage.setItem(KEY + "-gizmotool", id); } catch (e) {}
   if (!$("gizmoOn").checked){ $("gizmoOn").checked = true; $("gizmoOn").dispatchEvent(new Event("change")); }
   syncBars(); draw();
   if (tell) toast(`3軸ハンドル：${TOOLS.find(t => t[0] === id)[1]}`);
 }
+const modeName = () => ({pose: "ポーズ", body: "体格", persp: "カメラ", place: "配置"})[mode] || mode;
 // on the view, under the modes; in the joint's section (ポーズ) and the objects' (設置)
 { const ov = document.createElement("div"); ov.className = "ov-body ov-row"; ov.id = "ovGizmo"; ov.appendChild(bar("gz-ov"));
   $("modes").after(ov);
@@ -72,30 +90,54 @@ const UP = [0, 1, 0], WORLD = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
 function across(u){ const r = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], a = norm(cross(r, u)); return [a, norm(cross(u, a))]; }
 // what the handles act on: {c: centre, ax: the move axes, rings: [axis index], pivot, sc: [[u, n, label]],
 //  save(), move(s0, d), turn(s0, k, degrees), scale(s0, factor, n)}
-function target(){
-  if (!$("gizmoOn").checked) return null;
+function target(any){
+  if (!$("gizmoOn").checked && !any) return null;
+  const save = () => ({P: S.P.map(p => p.slice()), R: S.R.slice(), body: Object.assign({}, S.body)});
   if (mode === "pose" && sel >= 0){
-    const i = sel, par = PARENT[i], root = i === IX.pelvis || par === undefined || par < 0;
-    const pivot = root ? S.P[i] : S.P[par], u = root ? UP : norm(sub(S.P[i], S.P[par])), [e1] = across(u);
-    const mirror = () => $("sym") && $("sym").checked && MIRROR[i] !== i ? [i, MIRROR[i]] : [i];
-    return {c: S.P[i], ax: WORLD, joint: i, pivot, rings: [0, 1, 2],
-      sc: root ? [[e1, 1, "太さ"]] : [[u, 0, "長さ"], [e1, 1, "太さ"]],
-      save: () => ({P: S.P.map(p => p.slice()), R: S.R.slice()}),
+    // 回転: what hangs on the joint turns about it; a joint with nothing after it, its own bone
+    const i = sel, par = PARENT[i], root = i === IX.pelvis || par === undefined || par < 0, own = !root && !KIDS[i].length;
+    const pivot = own ? S.P[par] : S.P[i];
+    return {c: S.P[i], ax: WORLD, joint: i, pivot, rings: [0, 1, 2], sc: [], save,
       move: (s0, d) => { const t = add(s0.P[i], d);
-        if (i === IX.pelvis) moveAll(sub(t, S.P[i]), false);
-        else if (IK_END[J[i]]) solveIK(i, t);
+        if (IK_END[J[i]]) solveIK(i, t);
         else { const p = S.P[par], L = len(sub(S.P[i], p)); rotateSubtree(i, add(p, mul(norm(sub(t, p)), L))); }
         afterEdit(i); },
       turn: (s0, k, dg) => { S.P = s0.P.map(p => p.slice());
-        const pv = root ? s0.P[i] : s0.P[par], who = root ? S.P.map((p, n) => n) : subtree(i);
+        const pv = own ? s0.P[par] : s0.P[i], who = root ? S.P.map((p, n) => n) : own ? subtree(i) : subtree(i).slice(1);
         for (const n of who) S.P[n] = add(pv, rotAxis(sub(s0.P[n], pv), WORLD[k], deg(dg)));
-        afterEdit(i); },
+        // the hips: the body's turn goes with it, so the joints' angles and limits keep to the body
+        if (root && typeof turnBody === "function"){ S.body = Object.assign({}, s0.body); turnBody(WORLD[k], deg(dg)); }
+        afterEdit(root || own ? i : KIDS[i][0]); }};
+  }
+  if (mode === "body" && sel > 0){
+    const i = sel, par = PARENT[i], u = norm(sub(S.P[i], S.P[par])), [e1] = across(u);
+    const mirror = () => $("sym") && $("sym").checked && MIRROR[i] !== i ? [i, MIRROR[i]] : [i];
+    if (TORSO_PAIR[J[i]]){
+      const ax = torsoAxes(i), out = J[i].startsWith("l_") ? 1 : -1;
+      return {c: S.P[i], ax: WORLD, pivot: S.P[i], rings: [], pair: true,
+        sc: [[mul(ax[0], out), 0, "幅"], [ax[1], 1, "高さ"], [ax[2], 2, "前後"]], save,
+        scale: (s0, f, n, d) => { S.P = s0.P.map(p => p.slice()); fromBottom(() => movePair(i, n, d, $("sym").checked)); afterEdit(i); }};
+    }
+    return {c: S.P[i], ax: WORLD, joint: i, pivot: S.P[i], rings: [], sc: [[u, 0, "長さ"], [e1, 1, "太さ"]], save,
       scale: (s0, f, n) => { S.P = s0.P.map(p => p.slice()); S.R = s0.R.slice();
-        for (const j of mirror()){
+        fromBottom(() => { for (const j of mirror()){
           if (n === 0){ const v = sub(s0.P[j], s0.P[PARENT[j]]); moveSubtree(j, mul(v, Math.max(0.2, Math.min(4, f)) - 1)); }
-          else S.R[j] = Math.max(0.5, s0.R[j] * f);
-        }
+          else for (const q of thickJoints(j, false)) S.R[q] = Math.max(0.5, s0.R[q] * f);
+        } });
         afterEdit(i); }};
+  }
+  // 配置: the figure by its hips (moved along with its pins and wire; turned about up)
+  if (mode === "place" && sel === IX.pelvis){
+    const c = S.P[IX.pelvis];
+    return {c, ax: WORLD, pivot: c, rings: [1], sc: [], lacks: ["scale"],
+      save: () => Object.assign(save(), {pins: JSON.parse(JSON.stringify(S.pins || {})), anchor: S.wire && S.wire.anchor ? S.wire.anchor.slice() : null}),
+      move: (s0, d) => { const m = sub(add(s0.P[IX.pelvis], d), S.P[IX.pelvis]); moveAll(m, false);
+        for (const k of Object.keys(S.pins || {})) S.pins[k] = add(S.pins[k], m);
+        if (S.wire && S.wire.anchor) S.wire.anchor = add(S.wire.anchor, m);
+        afterEdit(IX.pelvis); },
+      turn: (s0, k, dg) => { S.P = s0.P.map(p => p.slice()); S.body = Object.assign({}, s0.body); S.pins = JSON.parse(JSON.stringify(s0.pins));
+        if (S.wire && s0.anchor) S.wire.anchor = s0.anchor.slice();
+        placeFigure([0, 0, 0], dg); afterEdit(IX.pelvis); }};
   }
   if (mode !== "place") return null;
   const so = S.solids && S.solids[soSel];
@@ -111,11 +153,13 @@ function target(){
   }
   const it = S.items && S.items[scSel];
   if (it && it.base && (it.where === "world" || (PROPS_[it.key] || {}).place === "world" || (PROPS_[it.key] || {}).place === "grab")){
-    const a = deg(it.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)];
-    return {c: it.base, ax, pivot: it.base, rings: [1], sc: [[ax[0], 0, "大きさ"]],
-      save: () => ({base: it.base.slice(), scale: it.scale || 1, yaw: it.yaw || 0}),
+    const a = deg(it.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)], f0 = frameOf(it);
+    // stretched along its own axes (as turned), each on its own
+    const own = [0, 1, 2].map(n => { const e = [0, 0, 0]; e[n] = 1; const v = dirToWorld(f0, it, e); return len(v) > 1e-6 ? norm(v) : ax[n]; });
+    return {c: it.base, ax, pivot: it.base, rings: [1], sc: own.map((u, n) => [u, n, "XYZ"[n]]),
+      save: () => ({base: it.base.slice(), st: (stretchOf(it) || [1, 1, 1]).slice(), yaw: it.yaw || 0}),
       move: (s0, d) => { it.base = add(s0.base, d); if (typeof snapItem === "function") snapItem(it); afterEdit(); },
-      scale: (s0, f) => { it.scale = Math.max(0.1, s0.scale * f); afterEdit(); },
+      scale: (s0, f, n) => { foldStretch(it)[n] = Math.max(0.05, Math.round(s0.st[n] * f * 100) / 100); afterEdit(); },
       turn: (s0, k, dg) => { it.yaw = ((s0.yaw + dg) + 540) % 360 - 180; afterEdit(); }};
   }
   const r = typeof rulerState === "function" ? rulerState() : null;
@@ -132,6 +176,7 @@ function target(){
 // on screen, for the tool chosen: the handles as lines (from the centre to an end), rings as
 // point lists; L: the handle's length in cm (ARROW_PX on screen)
 function layout(t, W, H){
+  syncBars();
   const dpr = devicePixelRatio || 1, c = project(t.c, W, H), L = ARROW_PX * dpr / Math.max(1e-6, c.s);
   const out = {c, L, dpr, lines: [], rings: []};
   if (tool === "move") t.ax.forEach((u, k) => out.lines.push({k, u, n: k, col: COL[k], label: "XYZ"[k], e: project(add(t.c, mul(u, L)), W, H)}));
@@ -202,7 +247,7 @@ DOWN_HOOKS.unshift((cv, x, y) => {
   const vx = hit.e.x - g.c.x, vy = hit.e.y - g.c.y, v2 = vx * vx + vy * vy || 1;
   return {move(mx, my){
     const f = ((mx - x0) * vx + (my - y0) * vy) / v2;            // in handle lengths
-    if (tool === "scale") t.scale(s0, Math.max(0.05, 1 + f), hit.n);
+    if (tool === "scale") t.scale(s0, Math.max(0.05, 1 + f), hit.n, f * g.L);
     else t.move(s0, mul(hit.u, f * g.L));
   }};
 });
@@ -213,6 +258,6 @@ DOWN_HOOKS.unshift((cv, x, y) => {
   "3軸ハンドルを出します。": "Showing the 3-axis handles.", "3軸ハンドルを隠しました。": "The 3-axis handles are hidden.",
   "移動": "Move", "回転": "Rotate", "変形": "Scale", "移動（Gキー）": "Move (G)", "回転（Rキー）": "Rotate (R)", "変形（Sキー）": "Scale (S)",
   "3軸ハンドルの操作": "3-axis handle tool", "3軸ハンドル：移動": "3-axis handles: move", "3軸ハンドル：回転": "3-axis handles: rotate",
-  "3軸ハンドル：変形": "3-axis handles: scale", "長さ": "Length", "太さ": "Thickness", "大きさ": "Size"});
+  "3軸ハンドル：変形": "3-axis handles: scale", "長さ": "Length", "太さ": "Thickness", "大きさ": "Size", "幅": "Width", "高さ": "Height", "前後": "Front / back"});
 draw();
 })();

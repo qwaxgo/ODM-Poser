@@ -19,7 +19,7 @@ function pair(root){
 // the panel's buttons get an icon before their name (Charcoal, ui-icons.js); a name that starts
 // with its own sign (↺ ↶ ↷ ⇋) keeps that instead
 const DEL = "Close", OUT = "DownloadAlt", IN = "Upload";
-const ICON = {applyPreset: "Pose", tcApply: "Pose", tcRandom: "Collection", tcLoadFile: IN, loadJson: IN, modInstall: IN, modLoad: IN,
+const ICON = {applyPreset: "Pose", tcApply: "Pose", tcRandom: "Collection", tcLoadFile: IN, loadJson: IN, modInstall: IN, modFolder: IN, modLoad: IN,
   saveAtari: OUT, saveComp: OUT, saveJson: OUT, saveOpenpose: OUT, saveRuler: "ruler", spSave: OUT, spCancel: DEL,
   auAdd: "Glow", castAdd: "Users", castDup: "Users", camSave: "Camera", camLoad: "Camera", scAddR: "Fashion", scAddL: "Fashion",
   scHold: "Fashion", scBack: "Fashion", scGrab: "Fashion", scHang: "Fashion", scMount: "Body", scWorld: "Home", scView: "Fov",
@@ -35,7 +35,7 @@ function iconize(root){
     b.dataset.iconed = "1"; b.insertAdjacentHTML("afterbegin", ODMICONS.svg(name, "btn-icon"));
   }
 }
-// where things go on screen (横の図の置き場所, 操作欄の位置, メニューの側): a row of small pictures
+// where things go on screen (側面図の置き場所, 操作欄の位置, メニューの側): a row of small pictures
 // of the screen instead of a drop-down; the select stays (hidden) and the code still reads it
 const FRAME = '<rect x="2.5" y="4.5" width="19" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>';
 const BLOCK = {right: [14, 6, 6, 12], left: [4, 6, 6, 12], top: [4, 6, 16, 4.5], bottom: [4, 13.5, 16, 4.5]};
@@ -69,7 +69,7 @@ function picker(id, kind){
 function sync(){ for (const [sel, box] of pickers) box.querySelectorAll("button").forEach(b => {
   const on = b.dataset.v === sel.value; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }); }
 picker("sidePos", "place"); picker("asidePos", "place"); picker("menuSide", "menu"); sync();
-// the code also sets them itself (the 横の図 switch, a saved choice): the pictures follow at each drawing
+// the code also sets them itself (the 側面図 switch, a saved choice): the pictures follow at each drawing
 { const d0 = draw; draw = function(){ d0.apply(this, arguments); sync(); }; }
 
 aside.querySelectorAll(":scope > section").forEach(pair);

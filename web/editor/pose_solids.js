@@ -195,7 +195,8 @@ function solidUnder(x, y){
 DOWN_HOOKS.push((cv, x, y) => {
   if (mode !== "place" || cv !== front || pick(cv, x, y) >= 0) return null;
   const u = solidUnder(x, y); if (!u) return null;
-  soSel = u.k; syncSolids();
+  soSel = u.k; sel = -1; syncSolids();
+  if (gizmoHolds()) return {move(){}};       // the 3-axis handles move it
   return dragFrom(u.hit, cv.width, cv.height, dlt => {
     // snapping (pose_ruler.js) moves the solid itself, so the drag keeps its own, unsnapped place
     const o = S.solids[u.k]; soFree = add(soFree || o.pos, dlt); o.pos = soFree.slice();

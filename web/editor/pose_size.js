@@ -6,8 +6,10 @@
 //    height or the heads count changes, or when another part's size does with 身長を保つ
 //  - lengths (縦) and widths (横) one by one: the torso's shoulders, waist and hips apart, the neck,
 //    the arms and legs bone by bone, their thickness; the head is a circle, one size
-//  - the selected thing (装備): its length along its long side and its thickness, the hand's grip
-//    staying where it is (the root holds, the tip moves)
+//  - the shoulders and the thigh roots along the torso's three axes: the width (apart, level), the
+//    height and how far forward, each on its own
+//  - the selected thing (装備): its own three axes stretched one by one, the hand's grip staying
+//    where it is (the root holds, the tip moves)
 (() => {
 const $ = id => document.getElementById(id);
 // the part each bone (its child joint) and each joint's circle belongs to
@@ -32,16 +34,19 @@ const parts = [
     <label><input type="checkbox" id="szLock_arms"> 腕</label><label><input type="checkbox" id="szLock_legs"> 脚</label>
     <div class="hint">固定した部位は、身長・頭身を変えても長さと太さが変わりません。</div>`),
   sec("頭と胴体（縦・横）", ctl("szHead", "頭の大きさ（直径）", 10, 40, 0.5, "cm") + ctl("szNeck", "首の長さ", 2, 30, 0.5, "cm") +
-    ctl("szShoulder", "肩幅", 15, 70, 0.5, "cm") + ctl("szChest", "胸の長さ", 5, 40, 0.5, "cm") + ctl("szWaistW", "ウエスト幅", 8, 60, 0.5, "cm") +
-    ctl("szBelly", "腹の長さ", 4, 35, 0.5, "cm") + ctl("szHip", "腰幅（股の間）", 8, 50, 0.5, "cm")),
+    ctl("szShoulder", "肩幅", 15, 70, 0.5, "cm") + ctl("szShoulderY", "肩の高さ（胸から）", -10, 30, 0.5, "cm") +
+    ctl("szShoulderZ", "肩の前後（胸から）", -15, 15, 0.5, "cm") + ctl("szChest", "胸の長さ", 5, 40, 0.5, "cm") + ctl("szWaistW", "ウエスト幅", 8, 60, 0.5, "cm") +
+    ctl("szBelly", "腹の長さ", 4, 35, 0.5, "cm") + ctl("szHip", "腰幅（股の間）", 8, 50, 0.5, "cm") +
+    ctl("szHipY", "股の高さ（腰から）", -20, 15, 0.5, "cm") + ctl("szHipZ", "股の前後（腰から）", -15, 15, 0.5, "cm") +
+    `<div class="hint">肩幅・腰幅は体の左右の向きだけ、高さ・前後はそれぞれの向きだけで変わります（体格モードで肩・股をドラッグしても、最初に動かした向きだけ動きます）。</div>`),
   sec("腕と脚（縦・横）", `<label>どちら側</label><select id="szSide"><option value="both">左右とも</option><option value="r">右</option><option value="l">左</option></select>` +
     ctl("szUpper", "上腕", 10, 50, 0.5, "cm") + ctl("szFore", "前腕", 10, 50, 0.5, "cm") + ctl("szHand", "手", 4, 16, 0.5, "cm") +
     ctl("szArmT", "腕の太さ（肘）", 3, 24, 0.5, "cm") + ctl("szThigh", "太もも", 15, 70, 0.5, "cm") + ctl("szShin", "すね", 15, 70, 0.5, "cm") +
     ctl("szFoot", "足", 5, 25, 0.5, "cm") + ctl("szLegT", "脚の太さ（膝）", 4, 30, 0.5, "cm")),
-  sec("小物の長さと太さ", `<div class="hint" id="szItemName">装備のタブで小物を選ぶと、ここで変えられます。</div>` +
-    ctl("szLen", "長さ（長い向き）", 30, 300, 1, "%") + ctl("szThick", "太さ", 30, 300, 1, "%") +
-    `<div class="btns"><button type="button" id="szItemReset">↺ 長さ・太さを戻す</button></div>
-    <div class="hint">持つ所（握り）はそのままで、先の方が伸び縮みします。全体の大きさは装備のタブで変えます。</div>`)];
+  sec("小物の大きさ（3軸）", `<div class="hint" id="szItemName">装備のタブで小物を選ぶと、ここで変えられます。</div>` +
+    ctl("szSX", "X 方向（赤）", 20, 400, 1, "%") + ctl("szSY", "Y 方向（緑）", 20, 400, 1, "%") + ctl("szSZ", "Z 方向（青）", 20, 400, 1, "%") +
+    `<div class="btns"><button type="button" id="szItemReset">↺ 3軸の大きさを戻す</button></div>
+    <div class="hint">手に持つ物は Y が親指の向き（剣の刃）、Z が腕の向き（銃身）、X がそれと直角です。持つ所（握り）はそのままで、先の方が伸び縮みします。全体の大きさは装備のタブで変えます。</div>`)];
 const old = document.querySelector('aside > section[data-menu="size"]');
 old.replaceWith(...parts);
 
@@ -57,6 +62,16 @@ function setWidth(a, b, W){                   // a pair (shoulders, hips) moved 
   const u = across(a, b), d = (W - width(a, b)) / 2;
   moveSubtree(IX[a], mul(u, -d)); moveSubtree(IX[b], mul(u, d));
 }
+// the pair's height (a = 1) or how far forward (a = 2) from the chest / pelvis, both sides alike
+// (torsoAxes, movePair: pose_main.js)
+const PAIR_FROM = {shoulder: "chest", hip: "pelvis"};
+const pairAt = (n, a) => ["r", "l"].reduce((t, s) => t + dot(sub(S.P[IX[s + "_" + n]], S.P[IX[PAIR_FROM[n]]]), torsoAxes(IX[s + "_" + n])[a]), 0) / 2;
+function setPairAt(n, a, v){                  // both along the same axis, taken before either moves
+  const ax = torsoAxes(IX["r_" + n])[a];
+  // the shoulders' height takes the neck along (withNeck: pose_main.js)
+  const go = () => { for (const s of ["r", "l"]){ const i = IX[s + "_" + n]; moveSubtree(i, mul(ax, v - dot(sub(S.P[i], S.P[IX[PAIR_FROM[n]]]), ax))); } };
+  if (n === "shoulder") withNeck(go); else go();
+}
 const sides = () => ({both: ["r", "l"], r: ["r"], l: ["l"]})[$("szSide").value] || ["r", "l"];
 const pick = () => sides()[0];
 const LIMB_R = {arms: ["shoulder", "elbow", "wrist"], legs: ["hip", "knee", "ankle"]};
@@ -64,10 +79,14 @@ const SIZE = {
   szHead: [() => 2 * S.R[IX.head], v => scaleHead(v / (2 * S.R[IX.head])), "head"],
   szNeck: [() => bone("neck"), v => setBone("neck", v), "head"],
   szShoulder: [() => width("r_shoulder", "l_shoulder"), v => setWidth("r_shoulder", "l_shoulder", v), "torso"],
+  szShoulderY: [() => pairAt("shoulder", 1), v => setPairAt("shoulder", 1, v), "torso"],
+  szShoulderZ: [() => pairAt("shoulder", 2), v => setPairAt("shoulder", 2, v), "torso"],
   szChest: [() => bone("chest"), v => setBone("chest", v), "torso"],
   szWaistW: [() => 2 * S.R[IX.waist], v => { S.R[IX.waist] = v / 2; }, "torso"],
   szBelly: [() => bone("waist"), v => setBone("waist", v), "torso"],
   szHip: [() => width("r_hip", "l_hip"), v => setWidth("r_hip", "l_hip", v), "torso"],
+  szHipY: [() => pairAt("hip", 1), v => setPairAt("hip", 1, v), "torso"],
+  szHipZ: [() => pairAt("hip", 2), v => setPairAt("hip", 2, v), "torso"],
   szUpper: [() => bone(pick() + "_elbow"), v => sides().forEach(s => setBone(s + "_elbow", v)), "arms"],
   szFore: [() => bone(pick() + "_wrist"), v => sides().forEach(s => setBone(s + "_wrist", v)), "arms"],
   szHand: [() => bone(pick() + "_hand"), v => sides().forEach(s => setBone(s + "_hand", v)), "arms"],
@@ -76,7 +95,8 @@ const SIZE = {
   szShin: [() => bone(pick() + "_ankle"), v => sides().forEach(s => setBone(s + "_ankle", v)), "legs"],
   szFoot: [() => bone(pick() + "_toe"), v => sides().forEach(s => setBone(s + "_toe", v)), "legs"],
   szLegT: [() => 2 * S.R[IX[pick() + "_knee"]], v => thick("legs", v / (2 * S.R[IX[pick() + "_knee"]])), "legs"]};
-function thick(g, k){ for (const s of sides()) for (const n of LIMB_R[g]) S.R[IX[s + "_" + n]] *= k; }
+// an arm's or a leg's circles together (太さを部位ごとに連動, in 体格), else the elbow / knee alone
+function thick(g, k){ for (const s of sides()) for (const q of thickJoints(IX[s + "_" + LIMB_R[g][1]], false)) S.R[q] *= k; }
 
 // the whole body from a saved state, every bone of the free parts k times as long (and thick)
 const snap = () => ({P: S.P.map(p => p.slice()), R: S.R.slice()});
@@ -137,10 +157,10 @@ function setHeadsTo(H){
   } else setHeads(H);
 }
 
-// ---- the selected thing (pose_scene.js: scSel, the long side and thickness in itemLocal) --------
+// ---- the selected thing (pose_scene.js: scSel, its stretch in itemLocal) ----------------------------
 const curItem = () => (typeof scSel === "number" && scSel >= 0 && S.items) ? S.items[scSel] : null;
-const ITEM = {szLen: [it => Math.round((it.len || 1) * 100), (it, v) => { it.len = v / 100; }],
-              szThick: [it => Math.round((it.thick || 1) * 100), (it, v) => { it.thick = v / 100; }]};
+const axisItem = a => [it => Math.round((stretchOf(it) || [1, 1, 1])[a] * 100), (it, v) => { foldStretch(it)[a] = v / 100; }];
+const ITEM = {szSX: axisItem(0), szSY: axisItem(1), szSZ: axisItem(2)};
 
 // ---- wiring --------------------------------------------------------------------------------------
 const fmt = v => Math.round(v * 10) / 10;
@@ -165,11 +185,12 @@ function show(){
 function apply(id, v){
   if (!isFinite(v)) return;
   const h0 = standingHeight(), n0 = heads();
-  if (id === "szHeight") setHeight(v);
-  else if (id === "szHeads") setHeadsTo(v);
-  else if (id === "szSit") setSitting(v);
+  // the body grows from its lowest point (fromBottom: pose_main.js), the feet stay on the floor
+  if (id === "szHeight") fromBottom(() => setHeight(v));
+  else if (id === "szHeads") fromBottom(() => setHeadsTo(v));
+  else if (id === "szSit") fromBottom(() => setSitting(v));
   else if (ITEM[id]){ const it = curItem(); if (!it) return; ITEM[id][1](it, v); }
-  else { SIZE[id][1](v); hold(h0, n0, SIZE[id][2]); }
+  else fromBottom(() => { SIZE[id][1](v); if (/^sz(Shoulder|Hip)/.test(id)) keepTorsoShape(); hold(h0, n0, SIZE[id][2]); });
   if (typeof afterEdit === "function") afterEdit();
   draw();
 }
@@ -183,7 +204,7 @@ for (const id of ["szHeight", "szHeads", "szSit", ...Object.keys(SIZE), ...Objec
 $("szKeep").addEventListener("change", show);
 $("szSide").addEventListener("change", show);
 $("szItemReset").addEventListener("click", () => { const it = curItem(); if (!it) return;
-  remember(); delete it.len; delete it.thick; if (typeof afterEdit === "function") afterEdit(); draw(); say("小物の長さ・太さを戻しました。"); });
+  remember(); delete it.len; delete it.thick; delete it.stretch; if (typeof afterEdit === "function") afterEdit(); draw(); say("小物の3軸の大きさを戻しました。"); });
 for (const g of ["head", "torso", "arms", "legs"]) $("szLock_" + g).addEventListener("change", e =>
   say(`${GROUP_JA[g]}を${e.target.checked ? "固定しました（身長・頭身を変えても、長さと太さはそのまま）" : "固定から外しました"}。`));
 // the numbers follow every edit (dragging in the body mode too), while the tab shows
@@ -200,12 +221,17 @@ for (const g of ["head", "torso", "arms", "legs"]) $("szLock_" + g).addEventList
   "ウエスト幅": "Waist width", "腹の長さ": "Belly length", "腰幅（股の間）": "Hip width (between the thigh roots)",
   "腕と脚（縦・横）": "Arms and legs (lengths, thickness)", "どちら側": "Which side", "左右とも": "Both", "上腕": "Upper arm",
   "前腕": "Forearm", "手": "Hand", "腕の太さ（肘）": "Arm thickness (elbow)", "太もも": "Thigh", "すね": "Shin", "足": "Foot",
-  "脚の太さ（膝）": "Leg thickness (knee)", "小物の長さと太さ": "A thing's length and thickness", "長さ（長い向き）": "Length (the long side)",
-  "太さ": "Thickness", "↺ 長さ・太さを戻す": "↺ Default length and thickness",
+  "脚の太さ（膝）": "Leg thickness (knee)", "小物の大きさ（3軸）": "A thing's size (3 axes)", "X 方向（赤）": "X (red)",
+  "Y 方向（緑）": "Y (green)", "Z 方向（青）": "Z (blue)", "↺ 3軸の大きさを戻す": "↺ Default size on the 3 axes",
+  "肩の高さ（胸から）": "Shoulder height (from the chest)", "肩の前後（胸から）": "Shoulders forward / back (from the chest)",
+  "股の高さ（腰から）": "Thigh roots' height (from the pelvis)", "股の前後（腰から）": "Thigh roots forward / back (from the pelvis)",
+  "肩幅・腰幅は体の左右の向きだけ、高さ・前後はそれぞれの向きだけで変わります（体格モードで肩・股をドラッグしても、最初に動かした向きだけ動きます）。":
+    "The shoulder and hip widths change only across the body, the heights and forward / back only in their own direction (dragging a shoulder or a thigh root in Body mode moves it only the way it first went).",
   "装備のタブで小物を選ぶと、ここで変えられます。": "Select a thing in the Equip tab to change it here.",
-  "持つ所（握り）はそのままで、先の方が伸び縮みします。全体の大きさは装備のタブで変えます。": "The grip stays where it is; the far end grows and shrinks. The whole size is in the Equip tab.",
+  "手に持つ物は Y が親指の向き（剣の刃）、Z が腕の向き（銃身）、X がそれと直角です。持つ所（握り）はそのままで、先の方が伸び縮みします。全体の大きさは装備のタブで変えます。":
+    "For a held thing, Y is the way the thumb points (a sword's blade), Z the way the arm points (a gun's barrel), X across both. The grip stays where it is; the far end grows and shrinks. The whole size is in the Equip tab.",
   "固定した部位は、身長・頭身を変えても長さと太さが変わりません。": "Locked parts keep their lengths and thickness when the height or heads count changes.",
   "「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。座高を変えると、頭（頭身を保つときだけ）と胴体の長さが変わり、腕と脚はそのままです。": "With “The height”, changing the head or a part makes the other unlocked parts make up the height. The sitting height changes the torso (and the head when the heads count is kept); the arms and legs stay.",
-  "小物の長さ・太さを戻しました。": "The thing's length and thickness are back to default."});
+  "小物の3軸の大きさを戻しました。": "The thing's size on the 3 axes is back to default."});
 show();
 })();

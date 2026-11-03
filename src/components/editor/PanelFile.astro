@@ -1,0 +1,52 @@
+---
+// 読込 and 書き出し (pictures, OpenPose, the pose file), and the preview before saving.
+---
+
+  <section data-menu="import">
+    <h2>読込</h2>
+    <div class="btns"><button id="loadJson">ポーズのファイルを開く</button><input type="file" id="file" accept=".json,application/json" hidden></div>
+    <div class="hint">「書き出し」で保存したポーズ（.json）を開きます。人物・小物・物体・カメラも戻ります。</div>
+  </section>
+
+  <section data-menu="export">
+    <h2>書き出し</h2>
+    <div class="grid2">
+      <div><label>比率</label><select id="ratio">
+        <option value="">自由（幅と高さを直接）</option><option value="1:1">1:1（正方形）</option>
+        <option value="3:4">3:4（縦）</option><option value="4:3">4:3（横）</option><option value="2:3">2:3（縦）</option>
+        <option value="3:2">3:2（横）</option><option value="9:16">9:16（縦・スマホ）</option><option value="16:9">16:9（横・動画）</option>
+        <option value="1:1.414">A判・B判（縦）</option><option value="1.414:1">A判・B判（横）</option>
+        <option value="2.35:1">2.35:1（映画）</option><option value="custom">比率を指定</option></select></div>
+      <div><label>長辺</label><input type="number" id="longSide" min="256" max="8192" step="64" value="1920"></div>
+    </div>
+    <div class="grid2" id="ratioCustom" style="display:none">
+      <div><label>横の比</label><input type="number" id="ratioW" min="0.1" step="0.1" value="5"></div>
+      <div><label>縦の比</label><input type="number" id="ratioH" min="0.1" step="0.1" value="7"></div>
+    </div>
+    <div class="grid2">
+      <div><label>幅</label><input type="number" id="W" value="1080" min="256" max="8192"></div>
+      <div><label>高さ</label><input type="number" id="H" value="1920" min="256" max="8192"></div>
+    </div>
+    <div class="btns">
+      <button id="saveAtari">アタリ画像</button>
+      <button id="saveOpenpose">OpenPose 画像</button>
+      <button id="saveJson">ポーズ（.json）</button>
+    </div>
+    <div class="hint">画像は保存する前に全体を確認できます。</div>
+    <label style="margin-top:15px">構図の画像に含める</label>
+    <div class="grid2">
+      <label><input type="checkbox" id="cmFigure" checked> 人物</label><label><input type="checkbox" id="cmItems" checked> 小物</label>
+      <label><input type="checkbox" id="cmSolids" checked> 物体</label><label><input type="checkbox" id="cmEnv" checked> 環境</label>
+      <label><input type="checkbox" id="cmRuler" checked> 定規</label><label><input type="checkbox" id="cmAuras" checked> オーラ</label>
+    </div>
+    <div class="grid2">
+      <div><label>背景</label><select id="cmBg"><option value="white">白</option><option value="clear">透明</option><option value="theme">テーマ</option></select></div>
+      <div><label>&nbsp;</label><button id="saveComp" style="width:100%">構図の画像</button></div>
+    </div>
+  </section>
+  <dialog id="savePreview" aria-labelledby="spTitle">
+    <h2 id="spTitle" class="text-sm font-semibold text-text-heading mt-0 mb-2">保存する画像</h2>
+    <div class="sp-frame"><img id="spImg" alt="保存する画像のプレビュー"></div>
+    <div class="hint" id="spInfo"></div>
+    <div class="btns" style="margin-top:12px;justify-content:flex-end"><button type="button" id="spCancel">やめる</button><button type="button" id="spSave" class="primary">保存する</button></div>
+  </dialog>

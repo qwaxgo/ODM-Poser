@@ -1,0 +1,26 @@
+# ODM Poser as an app (Tauri 2): a window around the editor (../app/web, made by
+# tools/make_app_web.py), the user's mods read from the mods/ folder next to the app, and saving
+# through a "save as" dialog. Built in the container of docker-compose.tauri.yml (docs/HANDOFF.md).
+[package]
+name = "odm-poser"
+version = "0.2.0"          # keep as package.json's version (tauri.conf.json takes that one)
+description = "ODM Poser (立体人形装置): the pose editor as an app"
+authors = ["qwaxgo"]
+license = "MIT"
+edition = "2021"
+rust-version = "1.77"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

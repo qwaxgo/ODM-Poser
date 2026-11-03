@@ -1,7 +1,7 @@
 // 置く前のプレビュー (index.html, loaded after pose_style.js): while the 装備 or 設置 tab shows, the
 // thing or object chosen in its list is drawn faintly where it would go, at the size set beside it,
-// before 持つ・置く is pressed. The size set there is what it then gets (the thing's whole size,
-// length and thickness; the object's width, height and depth).
+// before 持つ・置く is pressed. The size set there is what it then gets (the thing's whole size and
+// its three axes; the object's width, height and depth).
 (() => {
 const $ = id => document.getElementById(id);
 const ctl = (id, label, min, max, step, unit, val) => `<label>${label}</label><div class="row"><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${val}">` +
@@ -13,16 +13,17 @@ const linkRange = id => { $(id).addEventListener("input", () => { $(id + "N").va
 const scBox = document.createElement("div");
 scBox.className = "pv-box";
 scBox.innerHTML = `<label title="持つ・置く前にプレビュー"><input type="checkbox" id="scPrevOn" checked> プレビュー</label>` +
-  ctl("scPreSize", "大きさ", 30, 300, 1, "%", 100) + ctl("scPreLen", "長さ（長い向き）", 30, 300, 1, "%", 100) + ctl("scPreThick", "太さ", 30, 300, 1, "%", 100);
+  ctl("scPreSize", "大きさ", 30, 300, 1, "%", 100) +
+  ctl("scPreX", "X 方向（赤）", 20, 400, 1, "%", 100) + ctl("scPreY", "Y 方向（緑）", 20, 400, 1, "%", 100) + ctl("scPreZ", "Z 方向（青）", 20, 400, 1, "%", 100);
 $("scAddR").closest(".btns").before(scBox);
-for (const id of ["scPreSize", "scPreLen", "scPreThick"]) linkRange(id);
+for (const id of ["scPreSize", "scPreX", "scPreY", "scPreZ"]) linkRange(id);
 $("scPrevOn").addEventListener("change", draw);
 $("scKey").addEventListener("change", draw);
 const pre = id => (+$(id).value || 100) / 100;
 function sized(it){                            // the sizes set before, on a new thing
   it.scale = pre("scPreSize");
-  if (pre("scPreLen") !== 1) it.len = pre("scPreLen");
-  if (pre("scPreThick") !== 1) it.thick = pre("scPreThick");
+  const st = ["scPreX", "scPreY", "scPreZ"].map(pre);
+  if (st.some(v => v !== 1)) it.stretch = st;
   return it;
 }
 function ghostItem(hand){
@@ -35,10 +36,11 @@ function ghostItem(hand){
   }
   return it;
 }
-{ const a0 = addItem;
-  addItem = function(key, hand){ const n = (S.items || []).length; a0(key, hand);
+{ const sizeNew = (fn) => function(key, hand){ const n = (S.items || []).length; fn(key, hand);
     const it = S.items && S.items[scSel];
-    if (it && it.key === key && S.items.length >= n){ sized(it); afterEdit(); fillItemList(); draw(); } };
+    if (it && it.key === key && S.items.length >= n){ sized(it); if (it.grounded && typeof groundItem === "function") groundItem(it);
+      afterEdit(); fillItemList(); draw(); } };
+  addItem = sizeNew(addItem);
 }
 
 // ---- objects (設置) ---------------------------------------------------------------------------------
@@ -100,6 +102,6 @@ const showing = el => { const s = el.closest("section"); return !!(s && s.classL
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
 (window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"持つ・置く前にプレビュー": "Preview before holding / putting", "置く前にプレビュー": "Preview before putting",
-  "大きさ": "Size", "長さ（長い向き）": "Length (the long side)", "太さ": "Thickness", "幅": "Width", "高さ": "Height", "奥行き": "Depth"});
+  "大きさ": "Size", "X 方向（赤）": "X (red)", "Y 方向（緑）": "Y (green)", "Z 方向（青）": "Z (blue)", "幅": "Width", "高さ": "Height", "奥行き": "Depth"});
 draw();
 })();

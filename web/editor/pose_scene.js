@@ -15,25 +15,58 @@ const PROPS_ = window.PROPS || {}, CATS_ = window.PROP_CATS || [];
 
 // ---- frames ------------------------------------------------------------------------------------
 function rotY(v, a){ const c = Math.cos(a), s = Math.sin(a); return [c*v[0] + s*v[2], v[1], -s*v[0] + c*v[2]]; }
-// it.len / it.thick (サイズ, pose_size.js): the long side stretched, the others thickened, about the
-// item's own origin (the grip of a held thing), so the root stays and the tip moves
+// it.stretch [x, y, z] (サイズ, pose_size.js): each of the item's own axes stretched on its own,
+// about the item's grip (a held thing's root stays, the tip moves). Older files have it.len (the
+// long side) and it.thick (the other two): they count as the same.
 function longAxis(it){
   const {lo, hi} = localExtent(partsOf(it)), e = [0, 1, 2].map(i => hi[i] - lo[i]);
   return e.indexOf(Math.max(...e));
 }
 function stretchOf(it){
-  if (!(it.len && it.len !== 1) && !(it.thick && it.thick !== 1)) return null;
-  const a = longAxis(it), L = it.len || 1, T = it.thick || 1;
-  return [0, 1, 2].map(i => i === a ? L : T);
+  let st = Array.isArray(it.stretch) ? [0, 1, 2].map(i => +it.stretch[i] || 1) : null;
+  if ((it.len && it.len !== 1) || (it.thick && it.thick !== 1)){
+    const a = longAxis(it), old = [0, 1, 2].map(i => i === a ? it.len || 1 : it.thick || 1);
+    st = st ? st.map((v, i) => v * old[i]) : old;
+  }
+  return st && st.some(v => v !== 1) ? st : null;
+}
+function foldStretch(it){ it.stretch = stretchOf(it) || [1, 1, 1]; delete it.len; delete it.thick; return it.stretch; }
+// a round part's radius under a stretch: the mean of the axes across its own axis d (a cylinder's,
+// a disc's normal); a ball (no d) the mean of all three
+function radK(it, d){
+  const st = stretchOf(it); if (!st) return 1;
+  if (!d) return (st[0] + st[1] + st[2]) / 3;
+  const l = len(d) || 1, w = d.map(v => 1 - (v / l) ** 2), sw = w[0] + w[1] + w[2] || 1;
+  return (st[0] * w[0] + st[1] * w[1] + st[2] * w[2]) / sw;
+}
+// a held thing's own grip point, which goes on the hand's (gripFrame, by the hand's shape): its
+// origin for handles (swords, guns, ...); for things held in a cupped hand the middle of its side
+// toward the palm; for things pinched the bit nearest its origin (across a thin part: its middle)
+const heldInHand = it => !it.where && (PROPS_[it.key] || {}).place === "hand";
+const gripMemo = new Map();
+function gripPoint(it){
+  const def = PROPS_[it.key] || {};
+  if (def.grip) return def.grip;
+  if (def.pose !== "cup" && def.pose !== "pinch") return [0, 0, 0];
+  const key = it.key + "|" + (it.dims || "") + "|" + !!it.bayonet;
+  let g = gripMemo.get(key);
+  if (!g){
+    const {lo, hi} = localExtent(partsOf(it)), mid = i => (lo[i] + hi[i]) / 2;
+    g = def.pose === "cup" ? [lo[0], mid(1), mid(2)]
+      : [0, 1, 2].map(i => hi[i] - lo[i] < 9 ? mid(i) : Math.max(lo[i], Math.min(hi[i], 0)));
+    gripMemo.set(key, g);
+  }
+  return g;
 }
 function itemLocal(it, p, k = 1){             // the item's own size and turn, before its frame
+  if (heldInHand(it)) p = sub(p, gripPoint(it));
   let q = mul(p, (it.scale || 1) * k);
   const st = stretchOf(it); if (st) q = [q[0] * st[0], q[1] * st[1], q[2] * st[2]];
   const r = it.rot || [0, 0, 0];
   q = rotAxis(q, [0, 0, 1], deg(r[2])); q = rotAxis(q, [1, 0, 0], deg(r[0])); q = rotAxis(q, [0, 1, 0], deg(r[1]));
   return add(q, it.off || [0, 0, 0]);
 }
-// handFrame(side): the hand's frame, in index.html (the fingers are drawn from it too)
+// handFrame(side): the hand's frame, in pose_main.js (the fingers are drawn from it too)
 function chestFrame(){
   const P = S.P, x = norm(sub(P[IX.l_shoulder], P[IX.r_shoulder]));
   let y = sub(P[IX.neck], P[IX.waist]); y = norm(sub(y, mul(x, dot(y, x))));
@@ -85,7 +118,7 @@ function partSets(it){
   }
   if (it.where === "back") return [{f: backFrame(it), parts: sets[0][1]}];
   if (def.place === "wear") return sets.map(([at, parts]) => ({f: wearFrame(at), parts}));
-  const f = def.place === "hand" ? handFrame(it.hand || "r") : def.place === "body" ? chestFrame() : worldFrame(it);
+  const f = def.place === "hand" ? gripFrame(it.hand || "r") : def.place === "body" ? chestFrame() : worldFrame(it);
   return [{f, parts: sets[0][1]}];
 }
 function frameOf(it){ return partSets(it)[0].f; }
@@ -136,7 +169,7 @@ function circle3(c, n, r, k = 24){            // points of a circle about the no
   return out;
 }
 function drawShape(ctx, sh, it, f, P, lw){
-  const W2 = q => itemToWorld(it, q, f), k = (it.scale || 1) * (f.k || 1) * (it.thick || 1);
+  const W2 = q => itemToWorld(it, q, f), k = (it.scale || 1) * (f.k || 1);
   const line = pts => {
     if (S.hiddenDashed && typeof strokeSeen === "function" && !sceneSide){      // dashed where a body or a solid hides it
       const W = ctx.canvas.width, H = ctx.canvas.height;
@@ -145,7 +178,7 @@ function drawShape(ctx, sh, it, f, P, lw){
     }
     ctx.beginPath(); pts.forEach((q, i) => { const s = P(q); i ? ctx.lineTo(s.x, s.y) : ctx.moveTo(s.x, s.y); }); ctx.stroke(); };
   if (sh.c){
-    const [x1, y1, z1, x2, y2, z2, r0] = sh.c, a = W2([x1, y1, z1]), b = W2([x2, y2, z2]), r = r0 * k;
+    const [x1, y1, z1, x2, y2, z2, r0] = sh.c, a = W2([x1, y1, z1]), b = W2([x2, y2, z2]), r = r0 * k * radK(it, [x2 - x1, y2 - y1, z2 - z1]);
     const pa = P(a), pb = P(b), wpx = 2 * r * Math.max(pa.s, pb.s);
     if (wpx < lw * 3){ ctx.save(); ctx.lineWidth = Math.max(lw, wpx); line([a, b]); ctx.restore(); return; }
     const ax = sub(b, a);
@@ -161,13 +194,13 @@ function drawShape(ctx, sh, it, f, P, lw){
     for (const [a, b] of [[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]]) line([V[a], V[b]]);
   } else if (sh.s){
     const [cx, cy, cz, r] = sh.s, c = P(W2([cx, cy, cz]));
-    ctx.beginPath(); ctx.arc(c.x, c.y, Math.max(1, r * k * c.s), 0, 2 * Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(c.x, c.y, Math.max(1, r * k * radK(it) * c.s), 0, 2 * Math.PI); ctx.stroke();
   } else if (sh.d){
     const [cx, cy, cz, nx, ny, nz, r] = sh.d, c = W2([cx, cy, cz]);
-    line(circle3(c, dirToWorld(f, it, [nx, ny, nz]), r * k));
+    line(circle3(c, dirToWorld(f, it, [nx, ny, nz]), r * k * radK(it, [nx, ny, nz])));
   } else if (sh.k){
     const [bx, by, bz, ax, ay, az, r] = sh.k, b = W2([bx, by, bz]), apex = W2([ax, ay, az]);
-    const ring = circle3(b, sub(apex, b), r * k), pa = P(apex), pr = ring.map(P);
+    const ring = circle3(b, sub(apex, b), r * k * radK(it, [ax - bx, ay - by, az - bz])), pa = P(apex), pr = ring.map(P);
     line(ring);
     let lo = 0, hi = 0, vlo = 1e9, vhi = -1e9;
     const pc = P(b), ux = pc.x - pa.x, uy = pc.y - pa.y;
@@ -175,9 +208,10 @@ function drawShape(ctx, sh, it, f, P, lw){
     for (const i of [lo, hi]){ ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pr[i].x, pr[i].y); ctx.stroke(); }
   } else if (sh.t){
     const [cx, cy, cz, nx, ny, nz, R, r] = sh.t, c = W2([cx, cy, cz]), n = dirToWorld(f, it, [nx, ny, nz]);
-    ctx.save(); ctx.lineWidth = Math.max(lw, 2 * r * k * P(c).s * 0.8); line(circle3(c, n, R * k)); ctx.restore();
+    const rk = k * radK(it, [nx, ny, nz]);
+    ctx.save(); ctx.lineWidth = Math.max(lw, 2 * r * rk * P(c).s * 0.8); line(circle3(c, n, R * rk)); ctx.restore();
   } else if (sh.h){                           // a dome: its rim and two arcs over the top
-    const [cx, cy, cz, nx, ny, nz, r0] = sh.h, c = W2([cx, cy, cz]), n = norm(dirToWorld(f, it, [nx, ny, nz])), r = r0 * k;
+    const [cx, cy, cz, nx, ny, nz, r0] = sh.h, c = W2([cx, cy, cz]), n = norm(dirToWorld(f, it, [nx, ny, nz])), r = r0 * k * radK(it, [nx, ny, nz]);
     line(circle3(c, n, r));
     const u = norm(cross(n, Math.abs(n[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0])), v = cross(n, u);
     for (const w of [u, v]) line([...Array(17)].map((_, i) => { const t = Math.PI * i / 16;
@@ -188,17 +222,17 @@ function drawShape(ctx, sh, it, f, P, lw){
 function worldSamples(it){
   const out = [];
   for (const {f, parts} of partSets(it)){
-    const k = (it.scale || 1) * (f.k || 1) * (it.thick || 1), W2 = q => itemToWorld(it, q, f);
+    const k = (it.scale || 1) * (f.k || 1), W2 = q => itemToWorld(it, q, f);
     for (const sh of parts){
-      if (sh.c){ const a = W2(sh.c.slice(0, 3)), b = W2(sh.c.slice(3, 6)), ax = sub(b, a), r = sh.c[6] * k;
+      if (sh.c){ const a = W2(sh.c.slice(0, 3)), b = W2(sh.c.slice(3, 6)), ax = sub(b, a), r = sh.c[6] * k * radK(it, sub(sh.c.slice(3, 6), sh.c.slice(0, 3)));
         out.push(...circle3(a, ax, r, 8), ...circle3(b, ax, r, 8)); }
       else if (sh.b){ const [cx, cy, cz, sx, sy, sz] = sh.b;
         for (const i of [-1, 1]) for (const j of [-1, 1]) for (const l of [-1, 1]) out.push(W2([cx + i*sx/2, cy + j*sy/2, cz + l*sz/2])); }
-      else if (sh.s){ const c = W2(sh.s.slice(0, 3)), r = sh.s[3] * k;
+      else if (sh.s){ const c = W2(sh.s.slice(0, 3)), r = sh.s[3] * k * radK(it);
         for (const d of [[0, -r, 0], [0, r, 0], [r, 0, 0], [-r, 0, 0], [0, 0, r], [0, 0, -r]]) out.push(add(c, d)); }
       else if (sh.d || sh.h || sh.t){ const a = sh.d || sh.h || sh.t, c = W2(a.slice(0, 3)), n = dirToWorld(f, it, a.slice(3, 6));
-        const r = (sh.t ? a[6] + a[7] : a[6]) * k; out.push(...circle3(c, n, r, 12)); if (sh.h) out.push(add(c, mul(norm(n), r))); }
-      else if (sh.k){ const b = W2(sh.k.slice(0, 3)), ap = W2(sh.k.slice(3, 6)); out.push(...circle3(b, sub(ap, b), sh.k[6] * k, 12), ap); }
+        const r = (sh.t ? a[6] + a[7] : a[6]) * k * radK(it, a.slice(3, 6)); out.push(...circle3(c, n, r, 12)); if (sh.h) out.push(add(c, mul(norm(n), r))); }
+      else if (sh.k){ const b = W2(sh.k.slice(0, 3)), ap = W2(sh.k.slice(3, 6)); out.push(...circle3(b, sub(ap, b), sh.k[6] * k * radK(it, sub(sh.k.slice(3, 6), sh.k.slice(0, 3))), 12), ap); }
       else if (sh.l) out.push(...sh.l.map(W2));
     }
   }
@@ -240,10 +274,16 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
   // the wire
   const w = S.wire;
   if (w && w.on && w.anchor){
-    const a = P(w.anchor), b = P(S.P[IX[w.joint] !== undefined ? IX[w.joint] : IX.chest]);
-    ctx.strokeStyle = (S.colors && S.colors.wire) || ink; ctx.lineWidth = lw; ctx.setLineDash([lw * 4, lw * 3]);
-    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.setLineDash([]);
-    ctx.beginPath(); ctx.arc(a.x, a.y, lw * 3, 0, 2 * Math.PI); ctx.stroke();
+    const hold = S.P[wireJoint(w)], a = P(w.anchor), b = P(hold);
+    ctx.strokeStyle = (S.colors && S.colors.wire) || ink;
+    if (w.joint === "rope"){                    // a rope: solid, on past the hands
+      const e = P(add(hold, mul(norm(sub(hold, w.anchor)), ROPE_GAP + 70)));
+      ctx.lineWidth = lw * 1.6; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(e.x, e.y); ctx.stroke();
+    } else {
+      ctx.lineWidth = lw; ctx.setLineDash([lw * 4, lw * 3]);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(a.x, a.y, lw * 3, 0, 2 * Math.PI); ctx.stroke();
   }
   // the things: their own colour (or an effect's), glowing effects drawn twice
   if (!opts.noItems) (S.items || []).forEach((it, n) => {
@@ -297,7 +337,7 @@ function aimOtherHand(side, it, g){
   const a = norm(dirToWorld(f, it, gz > gy && gz > gx ? [0, 0, 1] : [0, 1, 0]));
   let d = sub(g, S.P[IX[side + "_elbow"]]); d = sub(d, mul(a, dot(d, a)));
   const z = len(d) > 1e-3 ? norm(d) : norm(sub(g, S.P[IX[side + "_elbow"]]));
-  const t = sub(g, mul(z, 7));                 // handFrame: the fist's middle is 7 cm past the wrist
+  const t = sub(g, mul(z, 7));                 // first the hand's middle on it, then its grip point (gripFrame)
   solveIK(wi, t); solveIK(wi, t);
   const wr = S.P[wi];
   if (hi !== undefined && S.P[hi]) rotateSubtree(hi, add(wr, mul(norm(sub(g, wr)), len(sub(S.P[hi], wr)))));
@@ -307,6 +347,10 @@ function aimOtherHand(side, it, g){
   for (let v = -180; v < 180; v += 10){ const s = score(v); if (s > bs){ bs = s; best = v; } }
   for (let v = best - 9; v <= best + 9; v++){ const s = score(v); if (s > bs){ bs = s; best = v; } }
   S.twist[hi] = ((best + 540) % 360) - 180;
+  for (let n = 0; n < 2; n++){                 // the hand's grip point (by its shape) onto grip2
+    const d = sub(S.P[hi], S.P[wi]), w = add(S.P[wi], sub(g, gripFrame(side).o));
+    solveIK(wi, w); rotateSubtree(hi, add(S.P[wi], d));
+  }
 }
 function followItems(moved){
   for (const it of S.items || []){
@@ -341,8 +385,9 @@ function sceneAfterEdit(moved){
   followItems(moved);
   const w = S.wire;
   if (w && w.on && w.anchor){
-    const ji = IX[w.joint] !== undefined ? IX[w.joint] : IX.chest, d = sub(S.P[ji], w.anchor);
+    const ji = wireJoint(w), d = sub(S.P[ji], w.anchor);
     if (len(d) > w.length) moveAll(sub(add(w.anchor, mul(norm(d), w.length)), S.P[ji]));
+    if (w.joint === "rope") ropeHands();
   }
   const E = S.env;
   if (E.ground && E.ground !== "off" && !(w && w.on)){
@@ -440,8 +485,62 @@ function grab(){
   afterEdit(i); draw();
   say(`${J_JA[J[i]]}でつかまって固定しました。別の手足も選んで「つかまる」を押せます。`);
 }
+// hanging by one hand or one foot, as a body does: that arm straight up (or that leg straight, and
+// the body upside down), the body turned about the hold until its weight is right under it, the
+// hold kept where it was. legs(): an extra leg pose before the turn (the rope: swinging legs).
+function bodyCentre(){ return mul(S.P.reduce((m, p) => add(m, p), [0, 0, 0]), 1 / S.P.length); }
+function straighten(root, dir){               // root's limb (two bones and what hangs on them) along dir
+  const mid = KIDS[root][0], end = KIDS[mid][0];
+  rotateSubtree(mid, add(S.P[root], mul(dir, len(sub(S.P[mid], S.P[root])))));
+  rotateSubtree(end, add(S.P[mid], mul(dir, len(sub(S.P[end], S.P[mid])))));
+}
+function hangFrom(ji, legs){
+  const at = S.P[ji].slice(), name = J[ji], side = name[0];
+  const up = norm(sub(S.P[IX.neck], S.P[IX.pelvis])), across = norm(sub(S.P[IX.l_shoulder], S.P[IX.r_shoulder]));
+  const out = mul(across, side === "l" ? 1 : -1);
+  if (/wrist$/.test(name)){
+    const dir = norm(add(up, mul(out, 0.12)));           // the arm up, a little out
+    straighten(IX[side + "_shoulder"], dir);
+    const h = IX[side + "_hand"]; if (h !== undefined) rotateSubtree(h, add(S.P[ji], mul(dir, len(sub(S.P[h], S.P[ji])))));
+    S.hands[side] = "grip";
+  } else if (/ankle$/.test(name)) straighten(IX[side + "_hip"], norm(sub(mul(up, -1), mul(out, -0.05))));
+  if (legs) legs();
+  // the weight under the hold: the whole body turned about it (the body's turn goes with it)
+  const v = sub(bodyCentre(), S.P[ji]), down = [0, -1, 0], ax = cross(v, down);
+  if (len(ax) > 1e-6){
+    const ang = Math.acos(Math.max(-1, Math.min(1, dot(norm(v), down)))), a = norm(ax), c = S.P[ji].slice();
+    S.P = S.P.map(p => add(c, rotAxis(sub(p, c), a, ang)));
+    if (typeof turnBody === "function") turnBody(a, ang);
+  }
+  // the free arms hang down (upside down too), a little away from the body
+  for (const sd of ["r", "l"]){
+    if (/wrist$/.test(name) && sd === side) continue;
+    const sh = IX[sd + "_shoulder"], away = norm(sub(S.P[sh], S.P[IX.chest]));
+    straighten(sh, norm(add([0, -1, 0], mul([away[0], 0, away[2]], 0.2))));
+  }
+  moveAll(sub(at, S.P[ji]));
+}
+// the rope (ターザン): both hands on it, the right above the left; the legs swing a little
+const ROPE_GAP = 14;
+function ropeLegs(){
+  for (const [n, f] of [["r_knee", 35], ["r_ankle", -15], ["l_knee", 10], ["l_ankle", -22]]) setBoneAngles(IX[n], f, 0);
+}
+function ropeHands(){
+  const w = S.wire, top = S.P[IX.r_wrist], d = norm(sub(top, w.anchor)), lw = IX.l_wrist;
+  if (S.pins && S.pins[lw]) return;
+  solveIK(lw, add(top, mul(d, ROPE_GAP))); solveIK(lw, add(top, mul(d, ROPE_GAP)));
+  S.hands.l = S.hands.r = "grip";
+}
 function hang(){                              // let the body down until an arm that holds is straight
   const holds = ["r", "l"].filter(s => S.pins && S.pins[IX[s + "_wrist"]]);
+  const feet = ["r", "l"].filter(s => S.pins && S.pins[IX[s + "_ankle"]]);
+  // one hand (and no foot): that arm up, the body under it; one foot alone: upside down
+  if ((holds.length === 1 && !feet.length) || (!holds.length && feet.length === 1)){
+    const ji = holds.length ? IX[holds[0] + "_wrist"] : IX[feet[0] + "_ankle"];
+    remember(); hangFrom(ji); S.pins[ji] = S.P[ji].slice(); afterEdit(ji); draw();
+    say(holds.length ? "片手でぶら下がるポーズにしました（腕を上げ、体を真下に）。" : "片足でぶら下がるポーズにしました（逆さ吊り）。");
+    return;
+  }
   if (!holds.length) { say("先に手でつかまってください（固定された手首が必要です）。", true); return; }
   let dy = -1e9;
   for (const s of holds){
@@ -458,12 +557,25 @@ function hang(){                              // let the body down until an arm 
 }
 
 // ---- wire action -----------------------------------------------------------------------------
-function setWire(){
+// the joint the wire holds; "rope": both hands on a rope (ターザン), the right hand the one held
+const wireJoint = w => IX[w.joint === "rope" ? "r_wrist" : w.joint] !== undefined ? IX[w.joint === "rope" ? "r_wrist" : w.joint] : IX.chest;
+function setWire(posed){
   const w = S.wire = Object.assign({on: false, joint: "chest", height: 300}, S.wire || {});
+  const was = w.on && w.joint;
   w.on = $("scWire").checked; w.joint = $("scWireJ").value; w.height = +$("scWireH").value || 300;
   if (w.on){
-    const p = S.P[IX[w.joint]];
-    w.anchor = [p[0], w.height, p[2]]; w.length = Math.max(5, w.height - p[1]);
+    const ji = wireJoint(w);
+    // hung by a hand, a foot or the rope (as it is turned on or changed): a pose a body could hang in
+    if (posed && was !== w.joint && $("scWirePose").checked && (w.joint === "rope" || /_(wrist|ankle)$/.test(w.joint))){
+      delete (S.pins || {})[ji];
+      hangFrom(ji, w.joint === "rope" ? ropeLegs : null);
+      // hanging: the whole body clear of the floor (lifted, the hold with it)
+      const E = S.env || {}, low = lowest();
+      if (E.floor && low < (+E.floorY || 0) + 10) moveAll([0, (+E.floorY || 0) + 10 - low, 0]);
+    }
+    const p = S.P[ji];
+    w.anchor = [p[0], Math.max(w.height, p[1] + 5), p[2]]; w.length = Math.max(5, w.anchor[1] - p[1]);
+    if (w.joint === "rope") ropeHands();
   }
 }
 
@@ -520,7 +632,8 @@ function itemUnder(x, y){
 DOWN_HOOKS.push((cv, x, y) => {
   if (mode !== "place" || cv !== front || pick(cv, x, y) >= 0) return null;
   const u = itemUnder(x, y); if (!u) return null;
-  scSel = u.n; fillItemList();
+  scSel = u.n; sel = -1; fillItemList();
+  if (gizmoHolds()) return {move(){}};       // the 3-axis handles move it
   const it = S.items[u.n];
   return dragFrom(u.p, cv.width, cv.height, d => {
     it.base = add(it.base, d);
@@ -539,6 +652,21 @@ WHEEL_HOOKS.push((x, y, step, e) => {
 
 // ---- adding things -----------------------------------------------------------------------------
 function facingYaw(){ const f = bodyFront(); return Math.atan2(f[0], f[2]) * 180 / Math.PI; }
+// a thing on its own, held and worn by no one: on the floor (or a solid) in front of the figure
+// being edited, a held thing lying flat as when put down. It stands apart from the figures
+// (pose_cast.js keeps it with whoever is edited), so 配置 mode moves it.
+function placeAlone(key){
+  const def = PROPS_[key]; if (!def) return;
+  remember();
+  const c = S.P[IX.pelvis], f = bodyFront(), fy = +(S.env && S.env.floorY) || 0;
+  const it = {key, off: [0, 0, 0], rot: [0, 0, 0], scale: 1, where: "world", grounded: true,
+    yaw: facingYaw(), base: [c[0] + f[0] * 60, fy, c[2] + f[2] * 60]};
+  if (def.place === "hand"){ const {lo, hi} = localExtent(partsOf(it)); if (hi[1] - lo[1] > hi[2] - lo[2]) it.rot = [0, 0, 90]; }
+  S.items = S.items || []; S.items.push(it); scSel = S.items.length - 1;
+  groundItem(it);
+  afterEdit(); fillItemList(); draw();
+  say("単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。");
+}
 function addItem(key, hand){
   const def = PROPS_[key]; if (!def) return;
   remember();
@@ -639,10 +767,12 @@ function buildScenePanel(){
     <h2 style="margin-top:14px">ワイヤーアクション</h2>
     <label><input type="checkbox" id="scWire"> ワイヤーで吊る</label>
     <div class="grid2"><div><label>吊る所</label><select id="scWireJ">
-      ${[["chest", "胸（ハーネス）"], ["pelvis", "腰"], ["r_wrist", "右手"], ["l_wrist", "左手"], ["r_ankle", "右足首（逆さ吊り）"], ["l_ankle", "左足首"]]
+      ${[["chest", "胸（ハーネス）"], ["pelvis", "腰"], ["r_wrist", "右手"], ["l_wrist", "左手"], ["r_ankle", "右足首（逆さ吊り）"], ["l_ankle", "左足首（逆さ吊り）"],
+         ["rope", "両手でロープ（ターザン）"]]
         .map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select></div>
       <div><label>支点の高さ</label><div class="row"><input type="number" class="num" id="scWireH" step="10" value="300"><span class="unit">cm</span></div></div></div>
-    <div class="hint">オンにした時の位置の真上に支点ができます。腰をドラッグすると、ワイヤーの長さを保ったまま振れます。</div>`;
+    <label title="手で吊ると腕を上げ、足首で吊ると逆さになるなど、吊った所に合わせて体を動かす"><input type="checkbox" id="scWirePose" checked> ぶら下がるポーズにする</label>
+    <div class="hint">オンにした時の位置の真上に支点ができます。手・足首・ロープで吊ると、その腕を上げる・逆さになるなど、ぶら下がれるポーズになります（体の重さが支点の真下に来る向き）。配置モードで腰をドラッグすると、ワイヤーの長さを保ったまま振れます。</div>`;
   const cam = document.getElementById("camReset").closest("section");
   cam.parentNode.insertBefore(sec, cam);
   const fillKeys = () => {
@@ -666,11 +796,7 @@ function buildScenePanel(){
   $("scAddR").addEventListener("click", () => addItem($("scKey").value, "r"));
   $("scAddL").addEventListener("click", () => addItem($("scKey").value, "l"));
   $("scList").addEventListener("change", () => { scSel = +$("scList").value; showItem(); draw(); });
-  $("scDel").addEventListener("click", () => { if (scSel < 0 || !S.items[scSel]) return; remember();
-    freeHands(S.items[scSel]);
-    const it = S.items.splice(scSel, 1)[0], d = PROPS_[it.key];
-    if (d && d.mount) for (const jn of Object.keys(d.mount)) if (S.pins) delete S.pins[IX[jn]];
-    scSel = Math.min(scSel, S.items.length - 1); fillItemList(); draw(); });
+  $("scDel").addEventListener("click", () => removeItem(scSel));
   $("scMount").addEventListener("click", () => { const it = S.items[scSel]; if (it) mountOn(it); });
   $("scFlip").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
     it.rot[0] = ((it.rot[0] + 360) % 360) - 180; afterEdit(); showItem(); draw(); });
@@ -697,7 +823,7 @@ function buildScenePanel(){
     n.addEventListener("change", () => { remember(); r.value = n.value; apply(+n.value); });
   }
   $("scReset").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
-    it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.dims; delete it.len; delete it.thick; if (it.grounded) groundItem(it);
+    it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.dims; delete it.len; delete it.thick; delete it.stretch; if (it.grounded) groundItem(it);
     afterEdit(); showItem(); draw(); say("小物の位置・向き・大きさを戻しました。"); });
   $("scEnvReset").addEventListener("click", () => { remember(); S.env = fresh().env;
     afterEdit(); syncScene(); draw(); say("床・壁・天井を初期値に戻しました。"); });
@@ -717,9 +843,53 @@ function buildScenePanel(){
   $("scHang").addEventListener("click", hang);
   $("scView").addEventListener("click", () => { const c = S.P[IX.pelvis]; S.center = [c[0], c[1] - 5, c[2]]; draw(); });
   for (const id of ["scWire", "scWireJ", "scWireH"])
-    $(id).addEventListener("change", () => { remember(); setWire(); afterEdit(); draw();
-      say(S.wire.on ? `ワイヤーで${$("scWireJ").selectedOptions[0].textContent}を吊りました。` : "ワイヤーを外しました。"); });
+    $(id).addEventListener("change", () => { remember(); setWire(id !== "scWireH"); afterEdit(); draw();
+      say(!S.wire.on ? "ワイヤーを外しました。" : S.wire.joint === "rope" ? "両手でロープにつかまりました（ターザン）。配置モードで腰をドラッグすると振れます。"
+        : `ワイヤーで${$("scWireJ").selectedOptions[0].textContent}を吊りました。`); });
   fillKeys();
+}
+// take a thing off / away (装備, 設置, and 人物の管理 under the map): its hands let go, its seat's pins go
+function removeItem(n){
+  const it = (S.items || [])[n]; if (!it) return;
+  remember(); freeHands(it);
+  S.items.splice(n, 1); const d = PROPS_[it.key];
+  if (d && d.mount) for (const jn of Object.keys(d.mount)) if (S.pins) delete S.pins[IX[jn]];
+  scSel = Math.min(scSel > n ? scSel - 1 : scSel, S.items.length - 1);
+  afterEdit(); fillItemList(); draw(); say(`${(d && d.ja) || it.key}を外しました。`);
+}
+// 設置 › 小物を単体で置く: things to hold, wear or carry, put on the floor held by no one
+const ALONE_OK = d => d && (d.place === "hand" || d.place === "body" || d.place === "wear");
+function buildAlonePanel(){
+  const sec = document.createElement("section");
+  sec.dataset.menu = "objects";
+  const cats = CATS_.filter(([k]) => Object.values(PROPS_).some(d => d.cat === k && ALONE_OK(d)));
+  sec.innerHTML = `<h2>小物を単体で置く</h2>
+    <label>種類</label><select id="alCat">${cats.map(([k, ja, en]) => `<option value="${k}">${ja} / ${en}</option>`).join("")}</select>
+    <select id="alKey" style="margin-top:6px"></select>
+    <div class="btns" style="margin-top:6px"><button id="alPut" title="誰にも持たせず、人物の前の床に置く">単体で置く</button></div>
+    <label style="margin-top:10px">単体で置いた物</label>
+    <select id="alList" size="4"></select>
+    <div class="btns" style="margin-top:6px"><button id="alDel">外す</button><button id="alHold">いまの人物に持たせる</button></div>
+    <div class="hint">武器・道具・帽子なども、誰にも持たせずに床（物体の上）に置けます。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。人物に持たせた物は「装備」で扱います。</div>`;
+  const cam = document.getElementById("camReset").closest("section");
+  cam.parentNode.insertBefore(sec, cam);
+  const fill = () => { $("alKey").innerHTML = Object.entries(PROPS_).filter(([, d]) => d.cat === $("alCat").value && ALONE_OK(d))
+    .map(([k, d]) => `<option value="${k}">${d.ja} / ${d.en}</option>`).join(""); };
+  $("alCat").addEventListener("change", fill);
+  $("alPut").addEventListener("click", () => placeAlone($("alKey").value));
+  $("alList").addEventListener("change", () => { scSel = +$("alList").value; fillItemList(); draw(); });
+  $("alDel").addEventListener("click", () => removeItem(+$("alList").value));
+  $("alHold").addEventListener("click", () => { const it = S.items[+$("alList").value]; if (!it) return;
+    remember(); if ((PROPS_[it.key] || {}).place === "hand") it.hand = it.hand || "r"; holdAgain(it); afterEdit(); fillItemList(); draw();
+    say("いまの人物に持たせました（手の形も合わせました）。"); });
+  fill();
+}
+function fillAloneList(){
+  const el = $("alList"); if (!el) return;
+  const rows = (S.items || []).map((it, n) => [it, n]).filter(([it]) => it.where === "world" && ALONE_OK(PROPS_[it.key]));
+  el.innerHTML = rows.map(([it, n]) => `<option value="${n}">${String((PROPS_[it.key] || {}).ja || it.key).replace(/&/g, "&amp;").replace(/</g, "&lt;")}</option>`).join("");
+  if (rows.some(([, n]) => n === scSel)) el.value = String(scSel);
+  $("alDel").disabled = $("alHold").disabled = !rows.length;
 }
 function fillItemList(){
   const items = S.items || [];
@@ -731,6 +901,7 @@ function fillItemList(){
     return `<option value="${n}">${nm}（${where}）</option>`; }).join("");
   if (scSel >= items.length) scSel = items.length - 1;
   if (scSel >= 0) $("scList").value = String(scSel);
+  fillAloneList();
   showItem();
 }
 function showItem(){
@@ -770,6 +941,7 @@ function syncScene(){
   fillItemList();
 }
 buildScenePanel();
+buildAlonePanel();
 syncScene();
 // the editor's undo / load / presets replace S: keep the panel in step
 { const sync0 = syncUI; syncUI = function(){ sync0(); syncScene(); }; }

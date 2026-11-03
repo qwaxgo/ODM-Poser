@@ -1,14 +1,22 @@
 {
   "name": "odm-poser-dev",
+  "version": "0.2.0",
   "private": true,
-  "description": "Tools for working on the editor only: the editor itself needs no build. Tailwind CSS makes web/editor/ui.css from web/editor/ui.src.css (commit both); melta-lint checks the UI against melta UI (design/melta-ui).",
+  "type": "module",
+  "description": "Tools for working on the editor and the site. version: the editor's version (shown in its header; the next release, tagged v<version>, see CHANGELOG.md). Astro makes the pages (src/pages: the editor, the docs, the site root); web/ goes out as it is (Astro's publicDir: the editor's scripts, styles and pictures). Tailwind CSS makes web/editor/ui.css from web/editor/ui.src.css (commit both); melta-lint checks the UI against melta UI (design/melta-ui). cookie 2 is listed so that it, not the cookie 0.7 of melta-ds-mcp's express, sits at the top of node_modules, where Astro's build looks for it.",
   "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
     "css": "tailwindcss -i web/editor/ui.src.css -o web/editor/ui.css --minify",
     "css:watch": "tailwindcss -i web/editor/ui.src.css -o web/editor/ui.css --watch",
-    "lint:ui": "melta-lint web/editor/index.html"
+    "lint:ui": "astro build && melta-lint dist/editor/index.html"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.3.3",
+    "astro": "7.4.4",
+    "cookie": "2.0.1",
     "melta-ds-mcp": "1.9.1"
   }
 }

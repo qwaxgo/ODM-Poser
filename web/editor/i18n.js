@@ -13,9 +13,9 @@
     "パース（カメラとレンズ）": "Perspective (camera and lens)",
     "人間の関節の限界": "Human joint limits",
     "正面（カメラ）": "Front (camera)",
-    "横から（奥行き）": "Side (depth)",
+    "側面図（奥行き）": "Side (depth)",
     "身長": "Height",
-    "丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。横の図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す、Ctrl+Y：やり直す。":
+    "丸をドラッグ：関節を動かす（骨の長さは保たれ、寄せた分だけ手前／奥へ傾く）。手首・足首は腕・脚ごと届く（Shift＋ドラッグでその骨だけ）。ダブルクリック：その骨の手前と奥を入れ替える。Alt＋クリック：その関節を固定（ピン。固定した手足は他を動かしても動かない）。腰の丸：全体を動かす。側面図でドラッグ：奥行きを直接動かす。ホイール：拡大縮小。Ctrl+Z：元に戻す、Ctrl+Y：やり直す。":
       "Drag a circle: move the joint (bone lengths are kept; pulling it in tilts the bone toward or away from you). A wrist or ankle brings its whole arm or leg (Shift+drag: that bone only). Double-click: flip the bone toward / away from the camera. Alt+click: pin the joint (a pinned hand or foot stays when the rest moves). The hip circle moves the whole figure. Drag in the side view: move depth directly. Wheel: zoom. Ctrl+Z: undo, Ctrl+Y: redo.",
     "丸をドラッグ：その骨を伸ばす／縮める（先の部分ごと動く）。丸の上でホイール：丸（太さ）を大きく／小さく。左右対称にチェックすると反対側も同じに変わります。":
       "Drag a circle: lengthen / shorten that bone (what follows moves with it). Wheel over a circle: make it (the thickness) bigger / smaller. With symmetry on, the other side changes too.",
@@ -45,7 +45,8 @@
     "右手": "Right hand", "左手": "Left hand",
     "手首の曲げ（＋前へ）": "Bend the wrist (+ forward)", "手首の左右（＋外へ）": "Wrist sideways (+ outward)",
     "手のひらの向き（前腕のひねり）": "Palm direction (the forearm's twist)",
-    "GitHub リポジトリ": "GitHub repository", "意見箱": "Feedback",
+    "GitHub リポジトリ": "GitHub repository", "意見箱": "Feedback", "使い方": "Guide",
+    "使い方・アプリとして使う・MOD の作り方": "How to use it, install it as an app, write mods",
     "不具合の報告・要望・感想を GitHub の Issues に書けます（GitHub のアカウントが要ります）":
       "Report a bug, ask for a feature or say what you think, in the GitHub Issues (a GitHub account is needed)",
     "カメラの固定と記憶": "Camera lock and memory", "カメラを固定する": "Lock the camera", "カメラパッドを表示": "Show the camera pad",
@@ -121,8 +122,30 @@
       "Select a joint (wrist, ankle, knee, elbow or hips) first. What is put or grabbed gets pinned and stays when the rest moves.",
     "ワイヤーアクション": "Wire action", "ワイヤーで吊る": "Hang from a wire", "吊る所": "Hanging point",
     "胸（ハーネス）": "Chest (harness)", "右足首（逆さ吊り）": "Right ankle (upside down)", "支点の高さ": "Anchor height",
-    "オンにした時の位置の真上に支点ができます。腰をドラッグすると、ワイヤーの長さを保ったまま振れます。":
-      "The anchor is set straight above where the figure is when you turn this on. Dragging the hips swings the figure on the wire.",
+    "オンにした時の位置の真上に支点ができます。手・足首・ロープで吊ると、その腕を上げる・逆さになるなど、ぶら下がれるポーズになります（体の重さが支点の真下に来る向き）。配置モードで腰をドラッグすると、ワイヤーの長さを保ったまま振れます。":
+      "The anchor is set straight above where the figure is when you turn this on. Hung by a hand, an ankle or the rope, the body takes a pose it could hang in (that arm up, upside down ...; its weight right under the anchor). Dragging the hips in Place mode swings the figure on the wire.",
+    "左足首（逆さ吊り）": "Left ankle (upside down)", "両手でロープ（ターザン）": "Both hands on a rope (Tarzan)",
+    "ぶら下がるポーズにする": "Take a hanging pose", "手で吊ると腕を上げ、足首で吊ると逆さになるなど、吊った所に合わせて体を動かす":
+      "Hung by a hand the arm goes up, by an ankle the body turns upside down: the body follows where it hangs",
+    "片手でぶら下がるポーズにしました（腕を上げ、体を真下に）。": "Hanging by one hand (the arm up, the body right under it).",
+    "片足でぶら下がるポーズにしました（逆さ吊り）。": "Hanging by one foot (upside down).",
+    "両手でロープにつかまりました（ターザン）。配置モードで腰をドラッグすると振れます。": "Holding the rope with both hands (Tarzan). Drag the hips in Place mode to swing.",
+    "ロープにつかまる（ターザン）": "Holding a rope (Tarzan)",
+    "小物を単体で置く": "Things on their own", "単体で置いた物": "Things put on their own", "いまの人物に持たせる": "Give to this figure",
+    "武器・道具・帽子なども、誰にも持たせずに床（物体の上）に置けます。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。人物に持たせた物は「装備」で扱います。":
+      "Weapons, tools, hats and the like can lie on the floor (or an object) held by no one. Drag them in Place mode (Shift + drag: up / down, wheel: turn). What a figure holds is in Equip.",
+    "いまの人物に持たせました（手の形も合わせました）。": "Given to this figure (its hand shape set too).",
+    "腕・脚の太さを部位ごとに連動": "Arm and leg thickness as a whole limb",
+    "肩・肘・手首、股・膝・足首の丸をまとめて太く・細くする（外すと関節ごと）": "Shoulder, elbow, wrist (thigh root, knee, ankle) grow thicker or thinner together (off: joint by joint)",
+    "骨の長さ・丸の太さ・大きさを初期値にします。ポーズ（骨の向き）はそのままです。身長や脚の長さを変えても、足元（いちばん低い所）は動きません。":
+      "Bone lengths, circle sizes and scales back to default. The pose (bone directions) stays. Changing the height or the legs' length, the feet (the lowest point) stay where they are.",
+    "↺ この人物を性別の初期値に戻す": "↺ This figure back to its sex's default",
+    "選んでいる人物のポーズ・体格・手の形・向きを、女性・男性（最後に選んだ方）の初期状態に戻す": "The selected figure's pose, body, hands and turn back to the default of its sex (female / male, as last chosen)",
+    "ポーズも体格もすべて戻します。位置と持ち物はそのままです。": "Both the pose and the body go back. Where it stands and what it holds stay.",
+    "腕・脚の太さを部位ごとにまとめて変えます。": "Arms and legs change thickness as a whole.", "太さを関節ごとに変えます。": "Thickness changes joint by joint.",
+    "ポーズのプリセット": "Pose presets",
+    "骨の向きだけが変わり、体格（骨の長さ・太さ）と位置はそのままです。体格は下の「体格プリセット」で。":
+      "Only the bones' directions change; the body (bone lengths, thickness) and the place stay. Bodies are in Body presets below.",
     "置くと体を合わせる（座る・乗る・手を置く）": "Placing it fits the body (sit, ride, rest the hands)",
     "置いてから、手足でつかまる": "Place it, then grab it with a hand or foot", "床に置く": "Placed on the floor",
     "体の前に構える（両手は自動で合わせる）": "Held in front of the chest (both hands follow)",
@@ -159,8 +182,8 @@
     "気（炎のように立ちのぼる）": "Ki (rising like flames)", "オーラ（なめらかな光）": "Aura (smooth glow)", "プラズマ（電撃）": "Plasma (lightning)",
     // the MOD panel (pose_api.js)
     "読み込んだ MOD はありません。": "No mods loaded.", "MODファイルを読み込む（今回だけ）": "Load mod files (this session only)",
-    "mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ブラウザで直接開くときは、tools/make_mods_list.py で一覧を作ります）。「ファイルから入れる」と「URLから追加」の MOD はこのブラウザに保存され、毎回読み込まれます（mods フォルダのないサイトやスマホでも使えます。URL の MOD は毎回新しい版を読み、オフラインでは前回のものを使います）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。":
-      "The *.js files in mods/ (and its folders) load at start (opened straight from disk, run tools/make_mods_list.py to list them). Mods installed from a file or added by URL are kept in this browser and load every time (also on a site without a mods folder, or on a phone; a URL mod is read fresh each time and its last copy is used offline). A mod is a program that can do anything inside the editor: install only mods you trust. Add ?nomods to the address to start without mods.",
+    "mods フォルダ（とその中のフォルダ）の *.js を起動時に読み込みます（ディスクから開いたときは mods.js に書いたものだけです。「フォルダから」で mods フォルダを選ぶと中の MOD をまとめて読み込めて、Chrome と Edge ではそのフォルダを覚えます）。「ファイルから入れる」と「URLから追加」の MOD はこのブラウザに保存され、毎回読み込まれます（mods フォルダのないサイトやスマホでも使えます。URL の MOD は毎回新しい版を読み、オフラインでは前回のものを使います）。MOD はエディタの中で自由に動くプログラムなので、信頼できるものだけを入れてください。アドレスの末尾に ?nomods を付けると MOD なしで開きます。":
+      "The *.js files in mods/ (and its folders) load at start (opened from disk, only those listed in mods.js; “From a folder” picks the mods folder and loads every mod in it, and Chrome and Edge remember that folder). Mods installed from a file or added by URL are kept in this browser and load every time (also on a site without a mods folder, or on a phone; a URL mod is read fresh each time and its last copy is used offline). A mod is a program that can do anything inside the editor: install only mods you trust. Add ?nomods to the address to start without mods.",
     "この端末に入れた MOD": "Mods kept in this browser", "まだありません。": "None yet.", "ファイルから入れる（この端末）": "Install from a file (this device)",
     "今回だけ読み込む": "Load for this session only", "URLから追加": "Add by URL", "https://…/mod.js（GitHub のファイルのページでも可）": "https://…/mod.js (a GitHub file page works too)",
     "このブラウザには MOD を保存できません（今回だけ読み込みます）。": "This browser cannot keep mods (loaded for this session only).",
@@ -172,6 +195,12 @@
     "有効にしました。開き直すと読み込みます。": "Turned on; it loads when the editor is reopened.",
     "無効にしました。開き直すと読み込まれません。": "Turned off; it will not load when the editor is reopened.",
     "外しました。開き直すと読み込まれません。": "Removed; it will not load when the editor is reopened.",
+    "フォルダから": "From a folder", "mods フォルダを選んで、中の MOD を読み込む": "Pick the mods folder and load the mods in it",
+    "このフォルダの MOD を読み込む（読み取りの許可を聞かれます）": "Load the mods of this folder (the browser asks to allow reading it)",
+    "フォルダの MOD を読み込みました。": "Loaded the folder's mods.",
+    "フォルダの MOD を読み込みました。次からはこのフォルダも読み込みます（読み取りの許可を聞かれたら「読み込む」を押します）。":
+      "Loaded the folder's mods. From now on this folder loads too (if the browser asks to allow reading it, press “Load”).",
+    "フォルダの MOD を読み込みました（このブラウザでは今回だけです）。": "Loaded the folder's mods (this browser: for this session only).",
     // theme, the composition picture, figures (index.html, pose_cast.js)
     "表示：自動": "Theme: auto", "表示：ライト": "Theme: light", "表示：ダーク": "Theme: dark",
     "比率": "Aspect ratio", "自由（幅と高さを直接）": "Free (width and height)", "1:1（正方形）": "1:1 (square)",
@@ -184,12 +213,16 @@
     "透明（黒い線）": "Transparent (black lines)", "画面と同じ色": "As on screen", "構図を保存": "Save composition",
     "人物を追加": "Add a figure", "削除": "Delete", "名前": "Name",
     "人物が1人のときは削除できません。": "There is only one figure: nothing to delete.",
-    "ポーズ・体格・小物・オーラは、選んだ人物だけに効きます（ほかの人物は薄く表示）。ほかの人物の丸をクリックしても切り替わります。床・壁・物体・定規・カメラはみんなで共通です。":
-      "Pose, body, props and auras apply to the selected figure only (the others are drawn lighter). Clicking another figure's circle switches too. Floor, walls, objects, the ruler and the camera are shared.",
+    "ポーズ・体格・小物・オーラは、選んだ人物だけに効きます（ほかの人物は薄く表示）。ほかの人物の丸をクリックしても切り替わります。床・壁・物体・定規・カメラと、床に置いた物はみんなで共通です。位置と向きは編集中の人物を丸ごと動かします。":
+      "Pose, body, props and auras apply to the selected figure only (the others are drawn lighter). Clicking another figure's circle switches too. Floor, walls, objects, the ruler, the camera and things put down are shared. Position and direction move the whole figure being edited.",
+    "書き出す人物": "Figures in the picture", "全員": "Everyone",
+    "単体で置く": "Place on its own", "誰にも持たせず、人物の前の床に置く": "Held by no one: put on the floor in front of the figure",
+    "単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。":
+      "Placed on its own. Drag it in Place mode (Shift + drag: up / down, wheel: turn).",
     // touch, pens, phones (index.html)
-    "Shift（その骨だけ・上下）": "Shift (that bone only / up-down)", "固定（ピン）": "Pin", "横の図": "Side view",
-    "タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（パースモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。":
-      "Touch and pen: drag with one finger (or the pen), pinch with two to zoom (the lens in the Perspective mode), double-tap to flip a bone toward / away. Shift and Pin are the buttons above (a pen's side button is Shift, its eraser end pins).",
+    "Shift（その骨だけ・上下）": "Shift (that bone only / up-down)", "固定（ピン）": "Pin", "側面図": "Side view",
+    "タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（カメラモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。":
+      "Touch and pen: drag with one finger (or the pen), pinch with two to zoom (the lens in the Camera mode), double-tap to flip a bone toward / away. Shift and Pin are the buttons above (a pen's side button is Shift, its eraser end pins).",
     // the app (PWA, index.html)
     "アプリとして追加": "Install as an app", "アプリとして追加しました。": "Installed as an app.",
     "Safari の共有ボタン（□↑）→「ホーム画面に追加」で、アプリとして使えます。": "In Safari: the Share button (□↑) → \"Add to Home Screen\" installs it as an app.",
@@ -215,11 +248,11 @@
       "Verticals meet at a third point too (parallel when the camera height is 0°).",
     "カメラが俯瞰・あおりなので、縦の線は実際にはわずかに集まります（人物と直方体はそのとおりに描かれます）。厳密な1点・2点透視にするには、カメラの高さを0°にします。":
       "The camera looks down or up, so verticals really meet a little (the figure and the box are drawn that way). For a strict 1- or 2-point picture, set the camera height to 0°.",
-    "消失点はカメラ（パース）から決まるので、人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードで消失点をつかむとカメラはそのままで定規が回ります。直方体のガイドは配置モードでドラッグして動かせます。定規はアタリ画像には入りません（「定規の画像」で透明な PNG を保存）。":
-      "The vanishing points come from the camera, so the ruler has the figure's perspective. In the Perspective mode, grabbing a vanishing point or the eye level moves the camera; in the Place mode, grabbing a vanishing point turns the ruler and the camera stays. Drag the box guide in the Place mode. The ruler is not in the rough picture (\"Ruler picture\" saves a transparent PNG).",
-    "縦の消失点はカメラの高さで決まります。パースモードでつかむとカメラが動きます。":
-      "The vertical vanishing point follows the camera height. Grab it in the Perspective mode to move the camera.",
-    "1点透視の消失点は、パースモードでつかむとカメラが動きます。": "Grab the 1-point vanishing point in the Perspective mode to move the camera.",
+    "消失点はカメラ（パース）から決まるので、人物と同じパースになります。カメラモードで消失点やアイレベルをつかむとカメラが動き、配置モードで消失点をつかむとカメラはそのままで定規が回ります。直方体のガイドは配置モードでドラッグして動かせます。定規はアタリ画像には入りません（「定規の画像」で透明な PNG を保存）。":
+      "The vanishing points come from the camera, so the ruler has the figure's perspective. In the Camera mode, grabbing a vanishing point or the eye level moves the camera; in the Place mode, grabbing a vanishing point turns the ruler and the camera stays. Drag the box guide in the Place mode. The ruler is not in the rough picture (\"Ruler picture\" saves a transparent PNG).",
+    "縦の消失点はカメラの高さで決まります。カメラモードでつかむとカメラが動きます。":
+      "The vertical vanishing point follows the camera height. Grab it in the Camera mode to move the camera.",
+    "1点透視の消失点は、カメラモードでつかむとカメラが動きます。": "Grab the 1-point vanishing point in the Camera mode to move the camera.",
     // place mode, solids (pose_solids.js)
     "配置（定規・物体）": "Place (ruler, objects)",
     "ドラッグ：カメラを回す（左右＝向き、上下＝高さ）。Shift＋ドラッグ：カメラを傾ける（水平でなくする）。ホイール：レンズ（広角ほどパースが強い）。人物の大きさは画面に合わせて保たれます。パース定規の消失点やアイレベルをつかむと、そこに合うようにカメラが動きます。":
@@ -320,13 +353,13 @@
     "↺ 位置・向き・大きさを戻す": "↺ Default place, turn and size", "小物の位置・向き・大きさを戻しました。": "The thing's place, turn and size were reset.",
     "↺ 床・壁・天井を初期値に": "↺ Default floor, wall, ceiling", "床・壁・天井を初期値に戻しました。": "Floor, wall and ceiling back to the defaults.",
     "↺ 大きさ・向きを戻す": "↺ Default size and turn",
-    "横の図": "Side view", "右": "Right", "左": "Left", "上": "Top", "下": "Bottom", "隠す": "Hide",
-    "横から（奥行き）の図の置き場所": "Where the side (depth) view goes",
+    "側面図": "Side view", "右": "Right", "左": "Left", "上": "Top", "下": "Bottom", "隠す": "Hide",
+    "側面図の置き場所": "Where the side (depth) view goes",
     "操作欄": "Panel", "操作欄をしまう": "Hide the panel", "操作欄を出す": "Show the panel", "操作欄をしまう・出す": "Hide / show the panel",
-    "横から（奥行き）の図を出す・隠す": "Show / hide the side (depth) view", "横の図を出す・隠す": "Show / hide the side view",
-    "横の図を出しました。": "The side view is shown.", "横の図を隠しました。": "The side view is hidden.",
+    "側面図を出す・隠す": "Show / hide the side view",
+    "側面図を出しました。": "The side view is shown.", "側面図を隠しました。": "The side view is hidden.",
     "置き場所": "Place", "操作欄の位置": "Panel", "分割表示": "Split screen", "操作欄をしまいました。": "The panel is put away.", "操作欄を出しました。": "The panel is shown.",
-    "横から（奥行き）の図を出す・隠す（置き場所は横の図の右下で）": "Show / hide the side (depth) view (where it goes: on the side view, bottom right)",
+    "側面図を出す・隠す（置き場所は側面図の右下で）": "Show / hide the side (depth) view (where it goes: on the side view, bottom right)",
     "操作欄を出す・しまう（置き場所は操作欄の上で）": "Show / put away the panel (where it goes: at the top of the panel)",
     "図と操作欄を画面の半分ずつに分ける（スマホ・タブレット）": "The views and the panel on half the screen each (phones, tablets)",
     "表示の明るさ（押すたびに 自動 → ライト → ダーク）": "Light or dark (each press: auto → light → dark)", "操作欄を上・下に置いたとき、メニューを置く側": "With the panel above / below: the side the menu goes on",
@@ -384,6 +417,8 @@
     [/^このアドレスの MOD を、エディタを開くたびに読み込んで実行します。信頼できるものだけを追加してください。\n\n([\s\S]+)$/,
       m => `The mod at this address is loaded and run each time the editor opens. Add only mods you trust.\n\n${m[1]}`],
     [/^「(.+)」をこの端末から外しますか？$/, m => `Remove "${m[1]}" from this device?`],
+    [/^保存できませんでした：(.*)$/, m => `Could not save: ${m[1]}`],
+    [/^フォルダ: (.+)$/, m => `Folder: ${m[1]}`],
     [/^この端末では (\d+)×(\d+) を描けないため、(\d+)×(\d+) にしました。$/, m => `This device cannot draw ${m[1]} × ${m[2]}: saved at ${m[3]} × ${m[4]}.`],
     // posting and links (pose_share.js)
     [/^投稿の文をコピーしました。(.+)に貼り付けてください。$/, m => `Copied the post's text: paste it into ${m[1].replace("カカオトーク", "KakaoTalk")}.`],

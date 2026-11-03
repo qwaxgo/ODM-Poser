@@ -1,0 +1,15 @@
+---
+// The selected joint: pins, both sides at once, the hand's shape, its angles (jointCtl).
+---
+
+  <section data-menu="pose body size">
+    <h2>選んだ関節：<span id="selName">（丸をクリック）</span></h2>
+    <label class="only pose" title="関節の固定（ピン）とは同時に使えません"><input type="checkbox" id="symPose"> 左右同時に動かす</label>
+    <label id="pinRow" style="display:none" title="左右同時に動かすとは同時に使えません"><input type="checkbox" id="pin"> この関節を固定</label>
+    <div class="hint" id="symPinNote" style="display:none"></div>
+    <div id="handRow" style="display:none"><label>この腕の手の形</label><select id="handSel"></select></div>
+    <div id="symRow" style="display:none"><label>反対側をこの形に</label>
+      <div class="btns"><button id="symJoint">この関節だけ</button><button id="symLimb">ここから先</button></div></div>
+    <div id="jointCtl"></div>
+    <div class="hint" id="selHint">ドラッグ結果がここに反映されます</div>
+  </section>
