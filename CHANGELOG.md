@@ -35,6 +35,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 図の右上の「操作欄」ボタンが分割表示で効かなかったのを修正し、左上の「操作欄を隠す」ボタンを削除
 - 「人物」のメニューの全身図の下に「人物の管理」：人物の切り替え・追加・複製・削除と、持ち物・身に着けた物の一覧（装備のタブを開く・外す）
 - 「人物の管理」に「付随物のリセット」：持ち物・身に着けた物、オーラ、ワイヤー、関節の固定のうちチェックしたものを、まとめて外すか、付けたまま大きさ・色・向き・位置・ワイヤーの高さを初期値に戻せます
+- 「ComfyUI で使う」のページを新しいブリッジに合わせて更新：エディタ本体（HTML 版）がブリッジに同梱されるので、入れるときと更新するときにサブモジュールの手順は要りません
 
 ### English
 
@@ -61,6 +62,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The "Panel" button at the view's top right works in split screen; the "Hide the panel" key at the top left is gone
 - "Figures" under the body map in the Figure menu: switch, add, copy and delete figures, and what the figure holds and wears (open it in Equip, take it off)
 - "Reset what the figure has" in Figures: for the kinds ticked (held and worn things, auras, the wire, pinned joints), take them all off, or keep them and put their size, colour, turn, place and the wire's height back
+- The "Using it in ComfyUI" page follows the reworked bridge: the editor (its HTML build) comes inside the bridge, so installing and updating need no submodule steps
 
 ## v0.1.0
 

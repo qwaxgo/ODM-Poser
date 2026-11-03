@@ -37,10 +37,10 @@ nothing third-party: keep it that way.
     explains the Windows warning);
   - an APK (Tauri's Android build): a future plan, not now.
   The Tauri builds get their own build container, apart from the Astro one.
-- **ComfyUI**: the bridge is the owner's public repo `qwaxgo/ODM-Poser-ComfyUIBridge` (editor as
-  its git submodule, served from `web/editor/`). It is reworked on its own branch, in another
-  environment, to follow this branch; its outputs stay as they are. Here: keep what it relies on
-  (see Hosts); how it builds or gets the editor is the bridge's own choice.
+- **ComfyUI**: the bridge is the owner's public repo `qwaxgo/ODM-Poser-ComfyUIBridge` (a release's
+  HTML build in its `editor_html/`, since 2026-11-03; see Open items). It is worked on in another
+  environment; its outputs stay as they are. Here: keep what it relies on (see Hosts); how it
+  builds or gets the editor is the bridge's own choice.
 - The owner commits and pushes. Do not commit unless asked; finish a batch with ready-to-paste
   commit / push commands. Reports to the owner are in Japanese.
 - **Patch notes with every commit** (owner, 2026-11-02): each change adds lines (Japanese and
@@ -178,11 +178,11 @@ add its English to `T` (or a rule) -- the check below lists what is left untrans
   re-permission button "読み込む" was not tested by automation: it needs a real click). Tauri next. The site itself
   is deployed by .github/workflows/static.yml (GitHub Pages on push to main, shown at
   apps.qwaxgo.com/ODM-Poser/).
-- ComfyUI bridge (note for its rework, done in its own repo): since 2026-11-02 the editor's page
-  is built (dist/editor/), not in the repo, so the bridge's submodule no longer has
-  web/editor/index.html. Unchanged and still relied on: `../mods.js`, `../mods/`, the MOD API, the
-  state format. The bridge keeps this repository as its git submodule; how it gets a built editor
-  is decided in the bridge's repository (owner, 2026-11-02), not here.
+- ComfyUI bridge (reworked in its own repo, 2026-11-03): it no longer has this repository as a
+  submodule. It carries a release's HTML build in `editor_html/` (its `tools/update_editor.py
+  <version>`), and its config.json can name a built editor (a checkout's `dist`). Still relied on:
+  the HTML release's layout (`editor/` beside `mods.js`), relative links in the page, `../mods.js`,
+  `../mods/`, the MOD API, the state format.
 - Docs pages: download, app, export, poses, props, modding, comfyui (2026-11-02). A new page = a
   docs/NAME.md + NAME-JA.md pair, in src/content.config.ts and src/lib/docs.ts PAGES. COMFYUI*.md
   follows the bridge's README: update it when the bridge's rework changes how it is installed.
