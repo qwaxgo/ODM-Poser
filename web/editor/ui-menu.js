@@ -12,7 +12,8 @@
   const TREE = [
     {id: "make", title: "作る", icon: "PencilDraw", kids: [
       {id: "figure", title: "人物", icon: "Person", kids: [leaf("pose", "ポーズ", "Pose"), leaf("preset", "プリセット", "Collection"),
-        leaf("body", "体格", "Body"), leaf("size", "サイズ", "FrameSize"), leaf("colors", "色", "Palette", "線の色（人物・物・床などをまとめて）")]},
+        leaf("body", "体格", "Body"), leaf("size", "サイズ", "FrameSize"), leaf("colors", "色", "Palette", "線の色（人物・物・床などをまとめて）"),
+        leaf("reset", "リセット", "rotate", "人体のリセットを一箇所に（全部・ポーズ・体格・性別・位置・付随物）")]},
       {id: "things", title: "物と場所", icon: "Home", kids: [leaf("equip", "装備", "Fashion", "選んだ人物に持たせる・身に着ける・まとう"),
         leaf("objects", "設置", "AddModel", "人物から離れた物体を置く"), leaf("place", "配置", "Move1", "床・壁・天井、つかまる、ワイヤー")]}]},
     {id: "look", title: "見る", icon: "View", kids: [
@@ -29,7 +30,7 @@
   const MODE_OF = {pose: "pose", body: "body", size: "body", camera: "persp", place: "place", objects: "place"};
   const MENU_OF = {pose: "pose", body: "body", persp: "camera", place: "objects"};
   // English (i18n.js translates the text as it is shown)
-  const EN = {"作る": "Make", "見る": "View", "出す": "Output", "人物": "Figure", "物と場所": "Things & places", "シーン": "Scene",
+  const EN = {"作る": "Make", "見る": "View", "出す": "Output", "人物": "Figure", "物と場所": "Things & places", "リセット": "Reset", "シーン": "Scene",
     "視点": "Viewpoint", "ファイル": "File", "ポーズ": "Pose", "プリセット": "Presets", "体格": "Body", "サイズ": "Sizes", "色": "Colors",
     "装備": "Equip", "設置": "Objects", "配置": "Place", "管理": "Manage", "カメラ": "Camera", "定規": "Ruler", "読込": "Open",
     "書き出し": "Export", "共有": "Share", "パース": "Perspective", "›": "›", "メニュー": "Menu",

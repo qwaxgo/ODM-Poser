@@ -58,7 +58,7 @@ web/editor/pose_props*.js        window.PROP_CATS / window.PROPS: the props as p
 web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carrying, mounting, grabbing, wire
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
 web/editor/pose_cast.js          more than one figure; pose_sets.js the saved poses (pose + things + place) and bodies
-web/editor/pose_gizmo.js         the 3-axis handles (tools per mode); ui-figure.js the body map and 人物の管理 under it (with 付随物のリセット)
+web/editor/pose_gizmo.js         the 3-axis handles (tools per mode); ui-figure.js the body map and 人物の管理 under it; its 付随物 block is in the リセット tab (PanelReset.astro holds the other resets)
 web/editor/ui-pane.js            the grip between the views and the panel (--aside-w, --split-k, --split-aside-user), the modes' two columns, the switches' ▲ ▼
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)

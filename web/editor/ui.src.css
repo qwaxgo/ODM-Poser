@@ -573,3 +573,9 @@ aside [data-ui-wrap] { max-width: min(100%, 18rem); }
   .doc blockquote > :last-child { margin-bottom: 0; }
   .doc hr { border: 0; border-top: 1px solid var(--border-default); margin: 32px 0; }
 }
+/* リセット (PanelReset.astro): each reset a button with what it changes beside it */
+.rs-list { display: flex; flex-direction: column; gap: 10px; }
+.rs-row { display: grid; grid-template-columns: minmax(0, 11rem) 1fr; gap: 4px 12px; align-items: start; }
+.rs-row .hint { margin-top: 0; }
+.rs-row > button { justify-self: start; }
+@media (max-width: 560px) { .rs-row { grid-template-columns: 1fr; } }
