@@ -59,6 +59,7 @@ web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carr
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
 web/editor/pose_cast.js          more than one figure; pose_sets.js the saved poses (pose + things + place) and bodies
 web/editor/pose_gizmo.js         the 3-axis handles (tools per mode); ui-figure.js the body map and 人物の管理 under it (with 付随物のリセット)
+web/editor/ui-pane.js            the grip between the views and the panel (--aside-w, --split-k, --split-aside-user), the modes' two columns, the switches' ▲ ▼
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
 web/editor/pose_share.js         posting (X, Bluesky, Misskey, Mastodon, share menu) and #pose= links;
@@ -124,6 +125,9 @@ state format `version: 3`, `window.ODMPoser` (old alias `window.SymbolicPose`).
   `def.grip`. `aimOtherHand` puts the other hand's grip point on `grip2` the same way.
 - Item sizes: `it.stretch [x, y, z]` along its own axes (`stretchOf` also reads the older
   `len` / `thick`; `foldStretch` converts on edit); round parts' radii follow (`radK`).
+- Views' corners: #ovModes / #ovOpts are children of .views (over the front and the side view together); the touch keys
+  (#vShift, #vAlt) sit in #ovTouch under the handles' tools, #vPad among the switches; the old #touchBar is gone. On a
+  phone the side view takes sidePos like a computer (hidden until asked for); a side view under 420px folds its picker.
 - Item sections: `def.segs` ([id, from, to] along `segAxis`, about `segAnchor`) and `it.segs {id: factor}`;
   pose_scene.js `segMap` stretches the axis piece by piece, `segParts` (in `partsOf` / `partSets`) and `segPoint`
   (grip, grip2, bayonet, mount, grab) apply it before the stretch. Built-in sections: `SEGS` at the end of

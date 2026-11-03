@@ -119,11 +119,12 @@ held sideways, and one screen each on dual-screen devices.
 - **Touch**: tap a circle to pick it, then drag the picked circle; a one-finger swipe anywhere
   else turns the camera; two fingers pinch to zoom and move the view (the lens and the objects in
   the Perspective and Place modes); the camera pad on the front view (a stick to turn, a stick to
-  move, a zoom slider); double-tap to flip a bone; the on-screen 「Shift」「固定」 keys stand for
-  Shift and Alt.
-- **Split screen** (on by itself on phones and tablets, "Split screen" at the top to switch): the
+  move, a zoom slider); double-tap to flip a bone; the 「Shift」「固定」 keys on the view's left,
+  under the modes, stand for Shift and Alt.
+- **Split screen** (on by itself on phones and tablets, "Split screen" among the view's switches): the
   views stay on the top half (the left half when held sideways) and the panels scroll on the other;
-  "Hide panels" gives the views the whole screen.
+  "Panel" gives the views the whole screen. Drag the grip on the edge between the views and the panel
+  (on a computer too) for more room on either side; a double click puts it back.
 - **Pens** (Apple Pencil, Galaxy S Pen, Wacom tablets and pen displays such as MovinkPad, on
   Windows, macOS and Linux): the tip drags, the barrel button is Shift, the eraser end pins.
 - **Mac**: ⌘Z undoes; a trackpad pinch or scroll zooms smoothly.
@@ -240,8 +241,8 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **端末**：Windows・macOS・Linux（Ubuntu など）・iOS／iPadOS・Android・Fire OS の今のブラウザ（Chrome・Edge・Safari・Firefox・Vivaldi・Brave・Samsung Internet・Silk）。画面に合わせて、横長は左右に、縦置きモニターとタブレットは図の下に欄を段組みで、スマホは横の図をボタンで、横向きのスマホは図の横に欄を、2画面の端末は画面ごとに並べます。
 - **カメラ（パースモード以外でも。レンズはそのまま）**：Blender と同じく、中ボタンのドラッグで回す、Shift＋中ボタンで動かす、Ctrl＋中ボタンかホイールで拡大縮小（中ボタンがなければ何もない所を Alt＋ドラッグ）。テンキー：1・3・7 で正面・右・上（Ctrl で反対側）、2・4・6・8 で15°ずつ回す（Ctrl で動かす）、9 で裏へ、＋－ で拡大縮小、. で選んだ関節を中心に、Home で人物を中心に。
 - **カメラの固定と記憶**（どのモードでも出る欄）：固定すると、ドラッグ・スワイプ・2本指・ホイール・テンキー・カメラパッドではカメラが動きません。今のカメラ（向き・高さ・傾き・レンズ・拡大・中心）をいくつでも記憶して呼び出せます（ポーズと一緒に保存）。カメラパッドの表示・非表示もここで（パソコンでも出せます）。
-- **タッチ**：丸をタップして選び、選んだ丸をドラッグして動かす。それ以外の所を1本指でスワイプするとカメラが回り、2本指でつまむと拡大縮小、そのまま動かすと移動（パース・配置モードはレンズ・物体のまま）。正面の図のカメラパッド（回すスティック・動かすスティック・拡大のスライダー）でも動かせます。ダブルタップで骨の手前と奥を入れ替え。画面の「Shift」「固定」ボタンが Shift と Alt の代わり。
-- **分割表示**（スマホ・タブレットでは自動でオン。上の「分割表示」で切り替え）：図を画面の上半分（横向きは左半分）に固定し、もう半分で操作欄をスクロール。「操作欄を隠す」で図を全画面に。
+- **タッチ**：丸をタップして選び、選んだ丸をドラッグして動かす。それ以外の所を1本指でスワイプするとカメラが回り、2本指でつまむと拡大縮小、そのまま動かすと移動（パース・配置モードはレンズ・物体のまま）。正面の図のカメラパッド（回すスティック・動かすスティック・拡大のスライダー）でも動かせます。ダブルタップで骨の手前と奥を入れ替え。図の左（モードの下）の「Shift」「固定」ボタンが Shift と Alt の代わり。
+- **分割表示**（スマホ・タブレットでは自動でオン。図の右上の「分割表示」で切り替え）：図を画面の上半分（横向きは左半分）に固定し、もう半分で操作欄をスクロール。「操作欄」で図を全画面に。図と操作欄の境目のつまみをドラッグすると広さを変えられます（PC でも。ダブルクリックで戻す）。
 - **ペン**：Apple Pencil、Galaxy の S ペン、ワコムのペンタブレット・液晶ペンタブ（MovinkPad など。Windows・macOS・Linux）。ペン先でドラッグ、サイドボタンは Shift、消しゴム側は固定。
 - **大きな書き出し**：端末が描ける大きさ（iOS／iPadOS は約 1670 万画素）を超えるときは、比率を保って小さくし、そのことを表示します。
 - **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
