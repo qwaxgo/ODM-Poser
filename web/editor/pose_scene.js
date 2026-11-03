@@ -274,10 +274,16 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
   // the wire
   const w = S.wire;
   if (w && w.on && w.anchor){
-    const a = P(w.anchor), b = P(S.P[IX[w.joint] !== undefined ? IX[w.joint] : IX.chest]);
-    ctx.strokeStyle = (S.colors && S.colors.wire) || ink; ctx.lineWidth = lw; ctx.setLineDash([lw * 4, lw * 3]);
-    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.setLineDash([]);
-    ctx.beginPath(); ctx.arc(a.x, a.y, lw * 3, 0, 2 * Math.PI); ctx.stroke();
+    const hold = S.P[wireJoint(w)], a = P(w.anchor), b = P(hold);
+    ctx.strokeStyle = (S.colors && S.colors.wire) || ink;
+    if (w.joint === "rope"){                    // a rope: solid, on past the hands
+      const e = P(add(hold, mul(norm(sub(hold, w.anchor)), ROPE_GAP + 70)));
+      ctx.lineWidth = lw * 1.6; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(e.x, e.y); ctx.stroke();
+    } else {
+      ctx.lineWidth = lw; ctx.setLineDash([lw * 4, lw * 3]);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(a.x, a.y, lw * 3, 0, 2 * Math.PI); ctx.stroke();
   }
   // the things: their own colour (or an effect's), glowing effects drawn twice
   if (!opts.noItems) (S.items || []).forEach((it, n) => {
@@ -379,8 +385,9 @@ function sceneAfterEdit(moved){
   followItems(moved);
   const w = S.wire;
   if (w && w.on && w.anchor){
-    const ji = IX[w.joint] !== undefined ? IX[w.joint] : IX.chest, d = sub(S.P[ji], w.anchor);
+    const ji = wireJoint(w), d = sub(S.P[ji], w.anchor);
     if (len(d) > w.length) moveAll(sub(add(w.anchor, mul(norm(d), w.length)), S.P[ji]));
+    if (w.joint === "rope") ropeHands();
   }
   const E = S.env;
   if (E.ground && E.ground !== "off" && !(w && w.on)){
@@ -478,8 +485,62 @@ function grab(){
   afterEdit(i); draw();
   say(`${J_JA[J[i]]}でつかまって固定しました。別の手足も選んで「つかまる」を押せます。`);
 }
+// hanging by one hand or one foot, as a body does: that arm straight up (or that leg straight, and
+// the body upside down), the body turned about the hold until its weight is right under it, the
+// hold kept where it was. legs(): an extra leg pose before the turn (the rope: swinging legs).
+function bodyCentre(){ return mul(S.P.reduce((m, p) => add(m, p), [0, 0, 0]), 1 / S.P.length); }
+function straighten(root, dir){               // root's limb (two bones and what hangs on them) along dir
+  const mid = KIDS[root][0], end = KIDS[mid][0];
+  rotateSubtree(mid, add(S.P[root], mul(dir, len(sub(S.P[mid], S.P[root])))));
+  rotateSubtree(end, add(S.P[mid], mul(dir, len(sub(S.P[end], S.P[mid])))));
+}
+function hangFrom(ji, legs){
+  const at = S.P[ji].slice(), name = J[ji], side = name[0];
+  const up = norm(sub(S.P[IX.neck], S.P[IX.pelvis])), across = norm(sub(S.P[IX.l_shoulder], S.P[IX.r_shoulder]));
+  const out = mul(across, side === "l" ? 1 : -1);
+  if (/wrist$/.test(name)){
+    const dir = norm(add(up, mul(out, 0.12)));           // the arm up, a little out
+    straighten(IX[side + "_shoulder"], dir);
+    const h = IX[side + "_hand"]; if (h !== undefined) rotateSubtree(h, add(S.P[ji], mul(dir, len(sub(S.P[h], S.P[ji])))));
+    S.hands[side] = "grip";
+  } else if (/ankle$/.test(name)) straighten(IX[side + "_hip"], norm(sub(mul(up, -1), mul(out, -0.05))));
+  if (legs) legs();
+  // the weight under the hold: the whole body turned about it (the body's turn goes with it)
+  const v = sub(bodyCentre(), S.P[ji]), down = [0, -1, 0], ax = cross(v, down);
+  if (len(ax) > 1e-6){
+    const ang = Math.acos(Math.max(-1, Math.min(1, dot(norm(v), down)))), a = norm(ax), c = S.P[ji].slice();
+    S.P = S.P.map(p => add(c, rotAxis(sub(p, c), a, ang)));
+    if (typeof turnBody === "function") turnBody(a, ang);
+  }
+  // the free arms hang down (upside down too), a little away from the body
+  for (const sd of ["r", "l"]){
+    if (/wrist$/.test(name) && sd === side) continue;
+    const sh = IX[sd + "_shoulder"], away = norm(sub(S.P[sh], S.P[IX.chest]));
+    straighten(sh, norm(add([0, -1, 0], mul([away[0], 0, away[2]], 0.2))));
+  }
+  moveAll(sub(at, S.P[ji]));
+}
+// the rope (ターザン): both hands on it, the right above the left; the legs swing a little
+const ROPE_GAP = 14;
+function ropeLegs(){
+  for (const [n, f] of [["r_knee", 35], ["r_ankle", -15], ["l_knee", 10], ["l_ankle", -22]]) setBoneAngles(IX[n], f, 0);
+}
+function ropeHands(){
+  const w = S.wire, top = S.P[IX.r_wrist], d = norm(sub(top, w.anchor)), lw = IX.l_wrist;
+  if (S.pins && S.pins[lw]) return;
+  solveIK(lw, add(top, mul(d, ROPE_GAP))); solveIK(lw, add(top, mul(d, ROPE_GAP)));
+  S.hands.l = S.hands.r = "grip";
+}
 function hang(){                              // let the body down until an arm that holds is straight
   const holds = ["r", "l"].filter(s => S.pins && S.pins[IX[s + "_wrist"]]);
+  const feet = ["r", "l"].filter(s => S.pins && S.pins[IX[s + "_ankle"]]);
+  // one hand (and no foot): that arm up, the body under it; one foot alone: upside down
+  if ((holds.length === 1 && !feet.length) || (!holds.length && feet.length === 1)){
+    const ji = holds.length ? IX[holds[0] + "_wrist"] : IX[feet[0] + "_ankle"];
+    remember(); hangFrom(ji); S.pins[ji] = S.P[ji].slice(); afterEdit(ji); draw();
+    say(holds.length ? "片手でぶら下がるポーズにしました（腕を上げ、体を真下に）。" : "片足でぶら下がるポーズにしました（逆さ吊り）。");
+    return;
+  }
   if (!holds.length) { say("先に手でつかまってください（固定された手首が必要です）。", true); return; }
   let dy = -1e9;
   for (const s of holds){
@@ -496,12 +557,25 @@ function hang(){                              // let the body down until an arm 
 }
 
 // ---- wire action -----------------------------------------------------------------------------
-function setWire(){
+// the joint the wire holds; "rope": both hands on a rope (ターザン), the right hand the one held
+const wireJoint = w => IX[w.joint === "rope" ? "r_wrist" : w.joint] !== undefined ? IX[w.joint === "rope" ? "r_wrist" : w.joint] : IX.chest;
+function setWire(posed){
   const w = S.wire = Object.assign({on: false, joint: "chest", height: 300}, S.wire || {});
+  const was = w.on && w.joint;
   w.on = $("scWire").checked; w.joint = $("scWireJ").value; w.height = +$("scWireH").value || 300;
   if (w.on){
-    const p = S.P[IX[w.joint]];
-    w.anchor = [p[0], w.height, p[2]]; w.length = Math.max(5, w.height - p[1]);
+    const ji = wireJoint(w);
+    // hung by a hand, a foot or the rope (as it is turned on or changed): a pose a body could hang in
+    if (posed && was !== w.joint && $("scWirePose").checked && (w.joint === "rope" || /_(wrist|ankle)$/.test(w.joint))){
+      delete (S.pins || {})[ji];
+      hangFrom(ji, w.joint === "rope" ? ropeLegs : null);
+      // hanging: the whole body clear of the floor (lifted, the hold with it)
+      const E = S.env || {}, low = lowest();
+      if (E.floor && low < (+E.floorY || 0) + 10) moveAll([0, (+E.floorY || 0) + 10 - low, 0]);
+    }
+    const p = S.P[ji];
+    w.anchor = [p[0], Math.max(w.height, p[1] + 5), p[2]]; w.length = Math.max(5, w.anchor[1] - p[1]);
+    if (w.joint === "rope") ropeHands();
   }
 }
 
@@ -558,7 +632,8 @@ function itemUnder(x, y){
 DOWN_HOOKS.push((cv, x, y) => {
   if (mode !== "place" || cv !== front || pick(cv, x, y) >= 0) return null;
   const u = itemUnder(x, y); if (!u) return null;
-  scSel = u.n; fillItemList();
+  scSel = u.n; sel = -1; fillItemList();
+  if (gizmoHolds()) return {move(){}};       // the 3-axis handles move it
   const it = S.items[u.n];
   return dragFrom(u.p, cv.width, cv.height, d => {
     it.base = add(it.base, d);
@@ -655,8 +730,7 @@ function buildScenePanel(){
   sec.innerHTML = `<h2>小物・環境（シミュレーション）</h2>
     <label>種類</label><select id="scCat">${CATS_.map(([k, ja, en]) => `<option value="${k}">${ja} / ${en}</option>`).join("")}</select>
     <select id="scKey" style="margin-top:6px"></select>
-    <div class="btns" style="margin-top:6px"><button id="scAddR">右手に持つ・置く</button><button id="scAddL">左手に持つ</button>
-      <button id="scAlone" title="誰にも持たせず、人物の前の床に置く">単体で置く</button></div>
+    <div class="btns" style="margin-top:6px"><button id="scAddR">右手に持つ・置く</button><button id="scAddL">左手に持つ</button></div>
     <div class="hint" id="scNote"></div>
     <label style="margin-top:10px">出ている物</label>
     <select id="scList" size="4"></select>
@@ -693,10 +767,12 @@ function buildScenePanel(){
     <h2 style="margin-top:14px">ワイヤーアクション</h2>
     <label><input type="checkbox" id="scWire"> ワイヤーで吊る</label>
     <div class="grid2"><div><label>吊る所</label><select id="scWireJ">
-      ${[["chest", "胸（ハーネス）"], ["pelvis", "腰"], ["r_wrist", "右手"], ["l_wrist", "左手"], ["r_ankle", "右足首（逆さ吊り）"], ["l_ankle", "左足首"]]
+      ${[["chest", "胸（ハーネス）"], ["pelvis", "腰"], ["r_wrist", "右手"], ["l_wrist", "左手"], ["r_ankle", "右足首（逆さ吊り）"], ["l_ankle", "左足首（逆さ吊り）"],
+         ["rope", "両手でロープ（ターザン）"]]
         .map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select></div>
       <div><label>支点の高さ</label><div class="row"><input type="number" class="num" id="scWireH" step="10" value="300"><span class="unit">cm</span></div></div></div>
-    <div class="hint">オンにした時の位置の真上に支点ができます。腰をドラッグすると、ワイヤーの長さを保ったまま振れます。</div>`;
+    <label title="手で吊ると腕を上げ、足首で吊ると逆さになるなど、吊った所に合わせて体を動かす"><input type="checkbox" id="scWirePose" checked> ぶら下がるポーズにする</label>
+    <div class="hint">オンにした時の位置の真上に支点ができます。手・足首・ロープで吊ると、その腕を上げる・逆さになるなど、ぶら下がれるポーズになります（体の重さが支点の真下に来る向き）。配置モードで腰をドラッグすると、ワイヤーの長さを保ったまま振れます。</div>`;
   const cam = document.getElementById("camReset").closest("section");
   cam.parentNode.insertBefore(sec, cam);
   const fillKeys = () => {
@@ -713,20 +789,14 @@ function buildScenePanel(){
       : d.mount && Object.keys(d.mount).length ? "置くと体を合わせる（座る・乗る・手を置く）" : "床に置く";
     $("scNote").textContent = how + (d.note ? "。" + d.note : "");
     $("scAddL").style.display = d.place === "hand" ? "" : "none";
-    $("scAlone").style.display = d.place === "hand" || d.place === "body" || d.place === "wear" ? "" : "none";
     $("scAddR").textContent = d.place === "hand" ? "右手に持つ" : d.place === "wear" ? "身に着ける" : "置く";
   };
   $("scCat").addEventListener("change", fillKeys);
   $("scKey").addEventListener("change", showNote);
   $("scAddR").addEventListener("click", () => addItem($("scKey").value, "r"));
   $("scAddL").addEventListener("click", () => addItem($("scKey").value, "l"));
-  $("scAlone").addEventListener("click", () => placeAlone($("scKey").value));
   $("scList").addEventListener("change", () => { scSel = +$("scList").value; showItem(); draw(); });
-  $("scDel").addEventListener("click", () => { if (scSel < 0 || !S.items[scSel]) return; remember();
-    freeHands(S.items[scSel]);
-    const it = S.items.splice(scSel, 1)[0], d = PROPS_[it.key];
-    if (d && d.mount) for (const jn of Object.keys(d.mount)) if (S.pins) delete S.pins[IX[jn]];
-    scSel = Math.min(scSel, S.items.length - 1); fillItemList(); draw(); });
+  $("scDel").addEventListener("click", () => removeItem(scSel));
   $("scMount").addEventListener("click", () => { const it = S.items[scSel]; if (it) mountOn(it); });
   $("scFlip").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
     it.rot[0] = ((it.rot[0] + 360) % 360) - 180; afterEdit(); showItem(); draw(); });
@@ -773,9 +843,53 @@ function buildScenePanel(){
   $("scHang").addEventListener("click", hang);
   $("scView").addEventListener("click", () => { const c = S.P[IX.pelvis]; S.center = [c[0], c[1] - 5, c[2]]; draw(); });
   for (const id of ["scWire", "scWireJ", "scWireH"])
-    $(id).addEventListener("change", () => { remember(); setWire(); afterEdit(); draw();
-      say(S.wire.on ? `ワイヤーで${$("scWireJ").selectedOptions[0].textContent}を吊りました。` : "ワイヤーを外しました。"); });
+    $(id).addEventListener("change", () => { remember(); setWire(id !== "scWireH"); afterEdit(); draw();
+      say(!S.wire.on ? "ワイヤーを外しました。" : S.wire.joint === "rope" ? "両手でロープにつかまりました（ターザン）。配置モードで腰をドラッグすると振れます。"
+        : `ワイヤーで${$("scWireJ").selectedOptions[0].textContent}を吊りました。`); });
   fillKeys();
+}
+// take a thing off / away (装備, 設置, and 人物の管理 under the map): its hands let go, its seat's pins go
+function removeItem(n){
+  const it = (S.items || [])[n]; if (!it) return;
+  remember(); freeHands(it);
+  S.items.splice(n, 1); const d = PROPS_[it.key];
+  if (d && d.mount) for (const jn of Object.keys(d.mount)) if (S.pins) delete S.pins[IX[jn]];
+  scSel = Math.min(scSel > n ? scSel - 1 : scSel, S.items.length - 1);
+  afterEdit(); fillItemList(); draw(); say(`${(d && d.ja) || it.key}を外しました。`);
+}
+// 設置 › 小物を単体で置く: things to hold, wear or carry, put on the floor held by no one
+const ALONE_OK = d => d && (d.place === "hand" || d.place === "body" || d.place === "wear");
+function buildAlonePanel(){
+  const sec = document.createElement("section");
+  sec.dataset.menu = "objects";
+  const cats = CATS_.filter(([k]) => Object.values(PROPS_).some(d => d.cat === k && ALONE_OK(d)));
+  sec.innerHTML = `<h2>小物を単体で置く</h2>
+    <label>種類</label><select id="alCat">${cats.map(([k, ja, en]) => `<option value="${k}">${ja} / ${en}</option>`).join("")}</select>
+    <select id="alKey" style="margin-top:6px"></select>
+    <div class="btns" style="margin-top:6px"><button id="alPut" title="誰にも持たせず、人物の前の床に置く">単体で置く</button></div>
+    <label style="margin-top:10px">単体で置いた物</label>
+    <select id="alList" size="4"></select>
+    <div class="btns" style="margin-top:6px"><button id="alDel">外す</button><button id="alHold">いまの人物に持たせる</button></div>
+    <div class="hint">武器・道具・帽子なども、誰にも持たせずに床（物体の上）に置けます。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。人物に持たせた物は「装備」で扱います。</div>`;
+  const cam = document.getElementById("camReset").closest("section");
+  cam.parentNode.insertBefore(sec, cam);
+  const fill = () => { $("alKey").innerHTML = Object.entries(PROPS_).filter(([, d]) => d.cat === $("alCat").value && ALONE_OK(d))
+    .map(([k, d]) => `<option value="${k}">${d.ja} / ${d.en}</option>`).join(""); };
+  $("alCat").addEventListener("change", fill);
+  $("alPut").addEventListener("click", () => placeAlone($("alKey").value));
+  $("alList").addEventListener("change", () => { scSel = +$("alList").value; fillItemList(); draw(); });
+  $("alDel").addEventListener("click", () => removeItem(+$("alList").value));
+  $("alHold").addEventListener("click", () => { const it = S.items[+$("alList").value]; if (!it) return;
+    remember(); if ((PROPS_[it.key] || {}).place === "hand") it.hand = it.hand || "r"; holdAgain(it); afterEdit(); fillItemList(); draw();
+    say("いまの人物に持たせました（手の形も合わせました）。"); });
+  fill();
+}
+function fillAloneList(){
+  const el = $("alList"); if (!el) return;
+  const rows = (S.items || []).map((it, n) => [it, n]).filter(([it]) => it.where === "world" && ALONE_OK(PROPS_[it.key]));
+  el.innerHTML = rows.map(([it, n]) => `<option value="${n}">${String((PROPS_[it.key] || {}).ja || it.key).replace(/&/g, "&amp;").replace(/</g, "&lt;")}</option>`).join("");
+  if (rows.some(([, n]) => n === scSel)) el.value = String(scSel);
+  $("alDel").disabled = $("alHold").disabled = !rows.length;
 }
 function fillItemList(){
   const items = S.items || [];
@@ -787,6 +901,7 @@ function fillItemList(){
     return `<option value="${n}">${nm}（${where}）</option>`; }).join("");
   if (scSel >= items.length) scSel = items.length - 1;
   if (scSel >= 0) $("scList").value = String(scSel);
+  fillAloneList();
   showItem();
 }
 function showItem(){
@@ -826,6 +941,7 @@ function syncScene(){
   fillItemList();
 }
 buildScenePanel();
+buildAlonePanel();
 syncScene();
 // the editor's undo / load / presets replace S: keep the panel in step
 { const sync0 = syncUI; syncUI = function(){ sync0(); syncScene(); }; }

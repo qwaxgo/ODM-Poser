@@ -40,7 +40,7 @@ function ghostItem(hand){
     const it = S.items && S.items[scSel];
     if (it && it.key === key && S.items.length >= n){ sized(it); if (it.grounded && typeof groundItem === "function") groundItem(it);
       afterEdit(); fillItemList(); draw(); } };
-  addItem = sizeNew(addItem); placeAlone = sizeNew(placeAlone);
+  addItem = sizeNew(addItem);
 }
 
 // ---- objects (設置) ---------------------------------------------------------------------------------

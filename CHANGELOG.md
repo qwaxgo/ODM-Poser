@@ -19,6 +19,21 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 小物を「単体で置く」：誰にも持たせず、人物の前の床に置けます。床に置いた物はどの人物を編集していても配置モードで動かせます
 - 人物ごとに位置（左右・前後）と向きを数値で変えられるように。書き出しで「書き出す人物」を選ぶと、アタリ・OpenPose・構図の画像をその人物だけで書き出せます
 - ドキュメントに「ダウンロード」「書き出し」「ポーズを足す」「小物・物体を足す」「ComfyUI で使う」のページを追加。MOD の説明に、手に持つ物の持つ所（`grip`）を追加
+- 肩の高さを変えると首と頭も一緒に上下するように。首は肩の上面（両肩の真ん中）から描きます
+- 「この人物を性別の初期値に戻す」（体格）：編集している人物のポーズ・体格・手の形・向きを、女性・男性（最後に選んだ方）の初期状態に戻します。位置と持ち物はそのままです
+- モードごとに使える操作を分けました：ポーズでは「回転」と手足の「移動」だけ、体格では「変形」だけ（ドラッグ・タッチ・3軸ハンドルとも）。使えないボタンは灰色になり、使える操作に切り替わります。人物全体を動かす・回すのは配置モードで腰から
+- 3軸ハンドルの「回転」を、選んだ関節を中心にその先を回すように修正（肘なら前腕）。輪も選んだ関節に出ます
+- 3軸ハンドルを出しているときは、関節や物をドラッグしても動かず選ぶだけに（動かすのはハンドル）
+- 図の左上のモード「パース」を「カメラ」に、「横の図」を「側面図」に名前を変更
+- 腕・脚の太さを部位ごとに連動（肩〜手首、股〜足首をまとめて）。体格の「腕・脚の太さを部位ごとに連動」で関節ごとにもできます
+- ポーズのプリセットで体格が元に戻らないように。「ポーズ・小物・位置の記憶」と「体格プリセット」（標準・女性・男性と、自分で記憶した体格）を別々に記憶・呼び出しできます
+- 身長・脚の長さなど体の大きさを変えたとき、足元（いちばん低い所）を支点に伸び縮みするように
+- 小物の「単体で置く」を「設置」のタブ（小物を単体で置く）へ移動。単体で置いた物の一覧から外す・持たせることもできます
+- ワイヤーで手・足首を吊ると、腕を上げる・逆さになるなど、ぶら下がれるポーズに自動でなるように（「ぶら下がるポーズにする」）。蔓などに片手・片足でつかまって「ぶら下がる」を押したときも同じです
+- ワイヤーの「両手でロープ（ターザン）」と、ポーズのプリセット「ロープにつかまる（ターザン）」を追加
+- カメラが時々動かなくなる不具合を修正：タッチの指が離れたことが伝わらないと、それ以後のタッチがすべて2本指の操作になっていました。マウスでも、何もない所をドラッグするとカメラが回るように（Shift＋ドラッグで動かす）
+- 図の右上の「操作欄」ボタンが分割表示で効かなかったのを修正し、左上の「操作欄を隠す」ボタンを削除
+- 「人物」のメニューの全身図の下に「人物の管理」：人物の切り替え・追加・複製・削除と、持ち物・身に着けた物の一覧（装備のタブを開く・外す）
 
 ### English
 
@@ -29,6 +44,21 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - "Place on its own": put a thing on the floor in front of the figure, held by no one. Things put down move in Place mode whichever figure is being edited
 - Each figure's position (across, forward / back) and direction as numbers. "Figures in the picture" in Export saves the rough, OpenPose and composition pictures with one figure only
 - Docs pages: Download, Export, Adding poses, Adding props and objects, Using it in ComfyUI. The mod docs describe where a held prop is held (`grip`)
+- Raising or lowering the shoulders takes the neck and head with them; the neck is drawn from the shoulders' top (their middle)
+- "This figure back to its sex's default" (Body): the figure being edited gets the default pose, body, hands and turn of its sex (female / male, as last chosen); where it stands and what it holds stay
+- Each mode has its own tools: Pose has Rotate and Move for the arms and legs only, Body has Scale only (dragging, touch and the 3-axis handles alike). The other buttons are greyed out and the tool switches to one the mode has. The whole figure is moved and turned by its hips in Place mode
+- The 3-axis handles' Rotate turns what lies beyond the selected joint about it (the elbow: the forearm), its rings on that joint
+- While the 3-axis handles show, dragging a joint or a thing only selects it (the handles move it)
+- The views' modes: "Perspective" is now "Camera"; the "side view" is named 側面図 in Japanese
+- Thickness of an arm (shoulder to wrist) or a leg (thigh root to ankle) changes as a whole; "Arm and leg thickness as a whole limb" in Body turns it off
+- A pose preset no longer resets the body. "Pose, things and place: saved" and "Body presets" (Standard, Female, Male and your own) are saved and loaded apart
+- Changing the height, the legs' length and other sizes grows the body from its lowest point (the feet stay)
+- "Place on its own" moved to the Objects tab (Things on their own), with a list to take them away or give them to the figure
+- Hung from the wire by a hand or an ankle, the body takes a pose it could hang in (the arm up, upside down ...; "Take a hanging pose"); so does "Hang" when one hand or one foot holds a vine or the like
+- The wire's "Both hands on a rope (Tarzan)" and the pose preset "Holding a rope (Tarzan)"
+- The camera sometimes stopped responding: a finger whose lifting was never told made every later touch a two-finger gesture. A mouse drag on empty space now turns the camera too (Shift: pans)
+- The "Panel" button at the view's top right works in split screen; the "Hide the panel" key at the top left is gone
+- "Figures" under the body map in the Figure menu: switch, add, copy and delete figures, and what the figure holds and wears (open it in Equip, take it off)
 
 ## v0.1.0
 

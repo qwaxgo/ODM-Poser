@@ -7,8 +7,8 @@
 // 配置 mode moves them whoever is edited. Each figure can be moved and turned as a whole, and the
 // pictures can show everyone or one figure (書き出す人物).
 //
-// S.others: [{P, R, hands, head, body, twist, pins, items, auras, wire, scale, shape, figId, figName}]
-const FIG_KEYS = ["P", "R", "hands", "head", "body", "twist", "pins", "items", "auras", "wire", "scale", "shape", "figId", "figName"];
+// S.others: [{P, R, hands, head, body, twist, pins, items, auras, wire, scale, shape, sex, figId, figName}]
+const FIG_KEYS = ["P", "R", "hands", "head", "body", "twist", "pins", "items", "auras", "wire", "scale", "shape", "sex", "figId", "figName"];
 function takeFigure(){ const f = {}; for (const k of FIG_KEYS) f[k] = S[k]; return f; }
 function putFigure(f){ const d = fresh(); for (const k of FIG_KEYS) S[k] = f[k] !== undefined ? f[k] : d[k]; }
 function withFigure(f, fn){ const keep = takeFigure(); putFigure(f); try { return fn(); } finally { putFigure(keep); } }

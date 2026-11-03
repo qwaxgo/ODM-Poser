@@ -222,8 +222,8 @@ DOWN_HOOKS.unshift((cv, x, y) => {
   if (hit < 0) return null;
   if (mode === "persp") return {move(mx, my){ cameraToVanish(hit, mx, my, W, H); syncUI(); }};
   if (hit === 1 || r.n === 1){
-    say(hit === 1 ? "縦の消失点はカメラの高さで決まります。パースモードでつかむとカメラが動きます。"
-                  : "1点透視の消失点は、パースモードでつかむとカメラが動きます。", true);
+    say(hit === 1 ? "縦の消失点はカメラの高さで決まります。カメラモードでつかむとカメラが動きます。"
+                  : "1点透視の消失点は、カメラモードでつかむとカメラが動きます。", true);
     return {move(){}};
   }
   // 配置: the camera stays; the ruler turns so that its vanishing point follows the mouse on the eye level
@@ -241,6 +241,9 @@ DOWN_HOOKS.push((cv, x, y) => {                        // the box guide, after t
   if (!r.on || !r.cube || mode !== "place" || cv !== front || pick(cv, x, y) >= 0) return null;
   const ray = pixelRay(x, y, cv.width, cv.height), t = rayHit(solidMesh(guideSolid()), ray);
   if (t === null) return null;
+  // the 3-axis handles move it (they show on the box while the 定規 tab does)
+  const tab = document.getElementById("rulerN"), shown = tab && tab.closest("section").classList.contains("active");
+  if (gizmoHolds() && shown) return {move(){}};
   return dragFrom(add(ray.o, mul(ray.dir, t)), cv.width, cv.height, dlt => { r.pos = add(r.pos, dlt); syncRuler(); });
 });
 WHEEL_HOOKS.push((x, y, step, e) => {

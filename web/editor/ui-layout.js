@@ -35,7 +35,7 @@ function iconize(root){
     b.dataset.iconed = "1"; b.insertAdjacentHTML("afterbegin", ODMICONS.svg(name, "btn-icon"));
   }
 }
-// where things go on screen (横の図の置き場所, 操作欄の位置, メニューの側): a row of small pictures
+// where things go on screen (側面図の置き場所, 操作欄の位置, メニューの側): a row of small pictures
 // of the screen instead of a drop-down; the select stays (hidden) and the code still reads it
 const FRAME = '<rect x="2.5" y="4.5" width="19" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>';
 const BLOCK = {right: [14, 6, 6, 12], left: [4, 6, 6, 12], top: [4, 6, 16, 4.5], bottom: [4, 13.5, 16, 4.5]};
@@ -69,7 +69,7 @@ function picker(id, kind){
 function sync(){ for (const [sel, box] of pickers) box.querySelectorAll("button").forEach(b => {
   const on = b.dataset.v === sel.value; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); }); }
 picker("sidePos", "place"); picker("asidePos", "place"); picker("menuSide", "menu"); sync();
-// the code also sets them itself (the 横の図 switch, a saved choice): the pictures follow at each drawing
+// the code also sets them itself (the 側面図 switch, a saved choice): the pictures follow at each drawing
 { const d0 = draw; draw = function(){ d0.apply(this, arguments); sync(); }; }
 
 aside.querySelectorAll(":scope > section").forEach(pair);

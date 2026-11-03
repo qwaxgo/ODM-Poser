@@ -67,7 +67,9 @@ const PAIR_FROM = {shoulder: "chest", hip: "pelvis"};
 const pairAt = (n, a) => ["r", "l"].reduce((t, s) => t + dot(sub(S.P[IX[s + "_" + n]], S.P[IX[PAIR_FROM[n]]]), torsoAxes(IX[s + "_" + n])[a]), 0) / 2;
 function setPairAt(n, a, v){                  // both along the same axis, taken before either moves
   const ax = torsoAxes(IX["r_" + n])[a];
-  for (const s of ["r", "l"]){ const i = IX[s + "_" + n]; moveSubtree(i, mul(ax, v - dot(sub(S.P[i], S.P[IX[PAIR_FROM[n]]]), ax))); }
+  // the shoulders' height takes the neck along (withNeck: pose_main.js)
+  const go = () => { for (const s of ["r", "l"]){ const i = IX[s + "_" + n]; moveSubtree(i, mul(ax, v - dot(sub(S.P[i], S.P[IX[PAIR_FROM[n]]]), ax))); } };
+  if (n === "shoulder") withNeck(go); else go();
 }
 const sides = () => ({both: ["r", "l"], r: ["r"], l: ["l"]})[$("szSide").value] || ["r", "l"];
 const pick = () => sides()[0];
@@ -92,7 +94,8 @@ const SIZE = {
   szShin: [() => bone(pick() + "_ankle"), v => sides().forEach(s => setBone(s + "_ankle", v)), "legs"],
   szFoot: [() => bone(pick() + "_toe"), v => sides().forEach(s => setBone(s + "_toe", v)), "legs"],
   szLegT: [() => 2 * S.R[IX[pick() + "_knee"]], v => thick("legs", v / (2 * S.R[IX[pick() + "_knee"]])), "legs"]};
-function thick(g, k){ for (const s of sides()) for (const n of LIMB_R[g]) S.R[IX[s + "_" + n]] *= k; }
+// an arm's or a leg's circles together (太さを部位ごとに連動, in 体格), else the elbow / knee alone
+function thick(g, k){ for (const s of sides()) for (const q of thickJoints(IX[s + "_" + LIMB_R[g][1]], false)) S.R[q] *= k; }
 
 // the whole body from a saved state, every bone of the free parts k times as long (and thick)
 const snap = () => ({P: S.P.map(p => p.slice()), R: S.R.slice()});
@@ -169,10 +172,11 @@ function show(){
 function apply(id, v){
   if (!isFinite(v)) return;
   const h0 = standingHeight(), n0 = heads();
-  if (id === "szHeight") setHeight(v);
-  else if (id === "szHeads") setHeadsTo(v);
+  // the body grows from its lowest point (fromBottom: pose_main.js), the feet stay on the floor
+  if (id === "szHeight") fromBottom(() => setHeight(v));
+  else if (id === "szHeads") fromBottom(() => setHeadsTo(v));
   else if (ITEM[id]){ const it = curItem(); if (!it) return; ITEM[id][1](it, v); }
-  else { SIZE[id][1](v); if (/^sz(Shoulder|Hip)/.test(id)) keepTorsoShape(); hold(h0, n0, SIZE[id][2]); }
+  else fromBottom(() => { SIZE[id][1](v); if (/^sz(Shoulder|Hip)/.test(id)) keepTorsoShape(); hold(h0, n0, SIZE[id][2]); });
   if (typeof afterEdit === "function") afterEdit();
   draw();
 }

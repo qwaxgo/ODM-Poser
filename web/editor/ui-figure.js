@@ -56,10 +56,48 @@ function update(){
 }
 map.addEventListener("click", e => { const c = e.target.closest("circle"); if (!c) return;
   sel = +c.dataset.i; draw(); });
-{ const d0 = draw; draw = function(){ d0.apply(this, arguments); update(); }; }
+
+// 人物の管理, under the map: every figure (a press edits it), add / copy / delete the one edited
+// (pose_cast.js), and what it holds and wears: open it in 装備, or take it off (×). The same is in
+// 見る › 管理 and 物と場所 › 装備.
+const cast = document.createElement("div");
+cast.id = "figCast";
+cast.innerHTML = `<div class="ctx-name">人物の管理</div><div class="ctx-btns" id="fcList" role="group" aria-label="人物の一覧"></div>
+  <div class="ctx-btns"><button type="button" class="ctx-btn" id="fcAdd">＋ 人物を追加</button><button type="button" class="ctx-btn" id="fcDup">複製</button>
+    <button type="button" class="ctx-btn" id="fcDel" title="編集している人物を削除">削除</button></div>
+  <div class="ctx-name">持ち物・身に着けた物</div><div class="ctx-btns" id="fcItems"></div>`;
+box.appendChild(cast);
+const fcBtn = (label, cls, fn, title) => { const b = document.createElement("button"); b.type = "button"; b.className = "ctx-btn" + (cls ? " " + cls : "");
+  b.textContent = label; if (title){ b.title = title; b.setAttribute("aria-label", title); } b.addEventListener("click", fn); return b; };
+cast.querySelector("#fcAdd").addEventListener("click", () => addFigure(false));
+cast.querySelector("#fcDup").addEventListener("click", () => addFigure(true));
+cast.querySelector("#fcDel").addEventListener("click", () => removeFigure());
+let castKey = "";
+function updateCast(){
+  if (typeof takeFigure !== "function") return;
+  const figs = [{k: -1, id: S.figId || 1, name: S.figName || "1人目"}, ...(S.others || []).map((f, k) => ({k, id: f.figId || k + 2, name: f.figName || `${f.figId || k + 2}人目`}))]
+    .sort((a, b) => a.id - b.id);
+  const mine = (S.items || []).map((it, n) => [it, n]).filter(([it]) => !(typeof loose === "function" && loose(it)));
+  const k = JSON.stringify([figs, mine.map(([it, n]) => [it.key, n, it.where || "", it.hand || ""]), typeof scSel === "number" ? scSel : -1]);
+  if (k === castKey) return; castKey = k;
+  const list = cast.querySelector("#fcList"), items = cast.querySelector("#fcItems");
+  list.replaceChildren(...figs.map(f => { const b = fcBtn(f.name, f.k < 0 ? "on" : "", () => { if (f.k >= 0) switchFigure(f.k); });
+    b.setAttribute("aria-pressed", String(f.k < 0)); return b; }));
+  cast.querySelector("#fcDel").disabled = !(S.others || []).length;
+  const P = window.PROPS || {}, open = n => () => { scSel = n; if (typeof fillItemList === "function") fillItemList(); if (window.ODMUI && ODMUI.showMenu) ODMUI.showMenu("equip"); draw(); };
+  items.replaceChildren(...mine.flatMap(([it, n]) => { const d = P[it.key] || {};
+    const where = it.where === "back" ? "背中" : d.place === "hand" ? (it.hand === "l" ? "左手" : "右手") : d.place === "wear" ? "着用" : d.place === "body" ? "構え" : "";
+    const name = `${d.ja || it.key}${where ? "（" + where + "）" : ""}`;
+    return [fcBtn(name, n === scSel ? "on" : "", open(n), ""), fcBtn("×", "x", () => removeItem(n), `${d.ja || it.key}を外す`)]; }),
+    fcBtn("＋ 持たせる・着ける", "", () => { if (window.ODMUI && ODMUI.showMenu) ODMUI.showMenu("equip"); }));
+}
+{ const d0 = draw; draw = function(){ d0.apply(this, arguments); update(); updateCast(); }; }
 if (window.ODMPoserI18n) window.ODMPoserI18n.add({"全身図（どこを編集しているか）": "Body map (what is being edited)",
   "部位を選ぶ：図か人形の丸をタップ": "Pick a part: tap the map or a circle on the figure", "固定を外す": "Unpin", "固定": "Pin",
   "持たせる": "Hold", "頭に着ける": "Put on the head", "床に着ける": "Onto the floor", "線の色": "Line colour",
+  "人物の管理": "Figures", "人物の一覧": "The figures", "＋ 人物を追加": "+ Add a figure", "複製": "Copy", "削除": "Delete",
+  "編集している人物を削除": "Delete the figure being edited", "持ち物・身に着けた物": "Held and worn", "＋ 持たせる・着ける": "+ Hold / wear",
+  "背中": "back", "着用": "worn", "構え": "held ready",
   "頭": "Head", "胴体": "Torso", "右腕": "Right arm", "左腕": "Left arm", "右脚": "Right leg", "左脚": "Left leg", "右手": "Right hand", "左手": "Left hand"});
-update();
+update(); updateCast();
 })();

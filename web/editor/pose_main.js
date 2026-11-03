@@ -310,7 +310,8 @@ function drawAtari(ctx, W, H, opts = {}){
     }
     if (it.kind === "bone"){
       ctx.strokeStyle = shade(it.z, PART_OF[J[it.b]]); ctx.lineWidth = lw * 1.4;
-      strokeSeen(ctx, S.P[it.a], S.P[it.b], W, H, skipBone(it.b));
+      // the neck from the shoulders' top face (their middle), not from inside the chest
+      strokeSeen(ctx, it.b === IX.neck ? shoulderMid() : S.P[it.a], S.P[it.b], W, H, skipBone(it.b));
     } else {
       const i = it.i, p = P[i], r = handleR(i) * p.s;
       if (HANDLE.has(i) && opts.export) continue;           // handles are for the editor only
@@ -523,7 +524,7 @@ function viewChrome(){
   if (sec && key !== chromeKey){ chromeKey = key; chromeH = Math.max(0, sec.offsetHeight - views.offsetHeight); }
   return chromeH;
 }
-// the side view above or below the front one: placed so (横の図の置き場所), or on a phone held
+// the side view above or below the front one: placed so (側面図の置き場所), or on a phone held
 // upright, where it goes under the front one when asked for
 const PHONE = "(max-width:700px)";
 function sideStacked(){
@@ -731,9 +732,34 @@ function torsoAxes(i){
 function movePair(i, a, t, sym){
   const ax = torsoAxes(i)[a], out = J[i].startsWith("l_") ? 1 : -1;
   const d = mul(ax, a === 0 ? t * out : t);
-  moveSubtree(i, d);
-  if (sym) moveSubtree(MIRROR[i], a === 0 ? mul(d, -1) : d);
+  withNeck(() => { moveSubtree(i, d); if (sym) moveSubtree(MIRROR[i], a === 0 ? mul(d, -1) : d); });
   keepTorsoShape();
+}
+// the neck starts on the shoulders' top face: when the shoulders go up or down (their middle along
+// the torso's up), the neck and the head go with them
+const shoulderMid = () => mul(add(S.P[IX.r_shoulder], S.P[IX.l_shoulder]), 0.5);
+function withNeck(fn){
+  const m0 = shoulderMid(), up = torsoAxes(IX.r_shoulder)[1];
+  fn();
+  const d = dot(sub(shoulderMid(), m0), up);
+  if (Math.abs(d) > 1e-9) moveSubtree(IX.neck, mul(up, d));
+}
+// a change of the body's sizes grows from the bottom: the lowest point stays where it was (the
+// feet stay on the floor when the legs or the height change)
+function fromBottom(fn){
+  const low = () => Math.min(...S.P.map(p => p[1])), y0 = low();
+  fn();
+  const d = y0 - low();
+  if (Math.abs(d) > 1e-9) S.P = S.P.map(p => [p[0], p[1] + d, p[2]]);
+}
+// an arm's circles (shoulder, elbow, wrist) or a leg's (thigh root, knee, ankle) are made thicker
+// together unless 太さを部位ごとに連動 is off; mirror: the other side too (左右対称)
+const LIMB_THICK = {arm: ["shoulder", "elbow", "wrist"], leg: ["hip", "knee", "ankle"]};
+function thickJoints(j, mirror){
+  const n = J[j].slice(2), side = J[j][0], link = !$("thickLink") || $("thickLink").checked;
+  const g = (side === "r" || side === "l") && Object.values(LIMB_THICK).find(list => list.includes(n));
+  const out = link && g ? g.map(m => IX[side + "_" + m]) : [j];
+  return mirror && $("sym").checked && MIRROR[j] !== j ? [...out, ...out.map(q => MIRROR[q])] : out;
 }
 function dragPair(i, x, y, W, H){
   const q = project(S.P[i], W, H), axes = torsoAxes(i);
@@ -803,17 +829,38 @@ function down(cv, e){
   if (mode === "persp" && cv === front){
     if (camHeld()) return;
     drag = {cam: true, roll: e.shiftKey, x, y, yaw: S.cam.yaw, pitch: S.cam.pitch, roll0: S.cam.roll}; remember(); return; }
-  // a finger: a tap picks a joint and the picked one is dragged; a swipe elsewhere turns the camera
+  const i = pick(cv, x, y);
+  // 配置: the hips move the whole figure along the floor (Shift: up and down); other joints are only picked
+  // (across the picture: across; up the picture: away from the camera, on the floor; Shift: up and down)
+  if (mode === "place" && i === IX.pelvis && cv === front && !gizmoHolds()){
+    sel = i; remember(); draw();
+    const W = cv.width, H = cv.height, flat = v => norm([v[0], 0, v[2]]);
+    const right = flat(camRotInv([1, 0, 0])), away = flat(camRotInv([0, 0, -1]));
+    let lx = x, ly = y;
+    drag = {move(mx, my, ev){
+      const k = 1 / Math.max(1e-6, project(S.P[IX.pelvis], W, H).s), dx = (mx - lx) * k, dy = (ly - my) * k; lx = mx; ly = my;
+      const d = ev && ev.shiftKey ? [0, dy, 0] : add(mul(right, dx), mul(away, dy));
+      moveAll(d, false);
+      for (const n of Object.keys(S.pins || {})) S.pins[n] = add(S.pins[n], d);
+      if (S.wire && S.wire.anchor) S.wire.anchor = add(S.wire.anchor, d);
+      afterEdit(IX.pelvis); }};
+    return;
+  }
+  // a joint is dragged (a finger: the one already picked) unless: 配置 (picked only), the 3-axis
+  // handles show (they do the moving), or ポーズ's hips (moving the figure is 配置's)
+  const drags = i >= 0 && mode !== "place" && !gizmoHolds() && !(mode === "pose" && i === IX.pelvis);
   if (e.pointerType === "touch"){
-    const i = pick(cv, x, y);
-    if (i >= 0 && i === sel && mode !== "place"){ remember(); drag = {cv, i, single: e.shiftKey}; }
+    if (drags && i === sel){ remember(); drag = {cv, i, single: e.shiftKey}; }
     else drag = {tapPick: i, cv, x, y};
     return;
   }
-  if (mode === "place"){ if (cv === front){ sel = pick(cv, x, y); draw(); } return; }   // select only
-  sel = pick(cv, x, y); draw();
-  if (sel >= 0){ remember(); drag = {cv, i: sel, single: e.shiftKey}; }
+  // the mouse: a joint is picked at once; a drag from an empty place turns the camera (Shift: moves it)
+  if (i < 0){ drag = {tapPick: -1, cv, x, y, pan: e.shiftKey}; return; }
+  sel = i; draw();
+  if (drags){ remember(); drag = {cv, i, single: e.shiftKey}; }
 }
+// 3軸ハンドル (pose_gizmo.js): while they show, joints and things are moved by the handles only
+let gizmoHolds = () => false;
 function move(cv, e){
   if (!drag) return;
   const [x, y] = evPos(cv, e), W = cv.width, H = cv.height;
@@ -827,7 +874,7 @@ function move(cv, e){
   }
   if (drag.tapPick !== undefined){
     if (Math.hypot(x - drag.x, y - drag.y) < 12 * (devicePixelRatio || 1)) return;
-    if (cv === front && !camHeld()){ remember(); drag = {nav: "orbit", lx: drag.x, ly: drag.y}; move(cv, e); } else drag = null;
+    if (cv === front && !camHeld()){ remember(); drag = {nav: drag.pan ? "pan" : "orbit", lx: drag.x, ly: drag.y}; move(cv, e); } else drag = null;
     return;
   }
   if (drag.cam && drag.roll){
@@ -846,7 +893,7 @@ function move(cv, e){
     else dragPose(i, x, y, W, H);
     afterEdit(i);
   }
-  else if (mode === "body") dragBody(drag.i, x, y, W, H);
+  else if (mode === "body") fromBottom(() => dragBody(drag.i, x, y, W, H));
   drawSoon();
 }
 function up(){
@@ -854,7 +901,7 @@ function up(){
   if (drag && drag.nav) syncUI();
   drag = null;
 }
-// ---- the camera without the Perspective mode: turn, move, zoom (the lens stays) -------------
+// ---- the camera without the Camera mode: turn, move, zoom (the lens stays) -------------
 function zoomSpan(){ return [0.3, 4]; }
 // 「カメラを固定する」: free moves (drags, swipes, pinches, the wheel, the keypad, the pad) are
 // refused with a word; the Perspective sliders and a remembered camera still set it
@@ -922,8 +969,7 @@ function wheelStep(x, y, step, e){
   if (mode !== "body" && !S.camLock){ const t = performance.now(); if (t - wheelMem > 800) remember(); wheelMem = t; }
   if (mode === "persp"){ if (camHeld()) return; S.cam.lens = Math.max(14, Math.min(200, S.cam.lens * (step > 0 ? 1.1 : 1/1.1))); syncUI(); }
   else if (mode === "body"){ const i = pick(front, x, y);
-    if (i >= 0){ remember(); const k = step > 0 ? 1.08 : 1/1.08; S.R[i] *= k;
-      if ($("sym").checked && MIRROR[i] !== i) S.R[MIRROR[i]] *= k; } }
+    if (i >= 0){ remember(); const k = step > 0 ? 1.08 : 1/1.08; for (const q of thickJoints(i, true)) S.R[q] *= k; } }
   else { if (camHeld()) return; S.cam.zoom = Math.max(0.3, Math.min(4, S.cam.zoom * (step > 0 ? 1.1 : 1/1.1))); }
   draw();
 }
@@ -939,6 +985,9 @@ for (const cv of [front, side]){
     if (e.button === 1) e.preventDefault();                              // the middle button: the camera, not autoscroll
     try { cv.setPointerCapture(e.pointerId); } catch (err) {}
     if (e.pointerType === "touch"){
+      // the first finger of a new touch: fingers whose lifting was never told (a system gesture, a
+      // lost capture) are forgotten, else they made every later touch a pinch and the camera stuck
+      if (e.isPrimary){ touches.clear(); pinch = null; }
       touches.set(e.pointerId, evPos(cv, e));
       if (touches.size === 2 && cv === front){                          // a pinch: forget the drag
         drag = null; tap = null;
@@ -983,6 +1032,7 @@ for (const cv of [front, side]){
     tap = null;
   };
   cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+  cv.addEventListener("lostpointercapture", e => { if (touches.has(e.pointerId) || drag) end(e); });
   cv.addEventListener("contextmenu", e => e.preventDefault());           // right button, pen button, long press
 }
 let lastTap = null;
@@ -1066,9 +1116,12 @@ function setLengths(lengths){                 // keep every bone's direction, ch
 }
 function applySex(sex){
   const b = SEX_BODY[sex];
-  setLengths(b.len);
-  S.R[IX.head] = b.head; S.R[IX.waist] = b.waistR; S.R[IX.r_hip] = S.R[IX.l_hip] = b.hipR;
-  scaleAbout(b.height / standingHeight());
+  S.sex = sex;
+  fromBottom(() => {
+    setLengths(b.len);
+    S.R[IX.head] = b.head; S.R[IX.waist] = b.waistR; S.R[IX.r_hip] = S.R[IX.l_hip] = b.hipR;
+    scaleAbout(b.height / standingHeight());
+  });
 }
 // The body's own frame: the whole figure's turn (S.body), so a bone's angles stay the same
 // when the whole figure is turned. Bone angles are measured from the bone's rest direction:
@@ -1445,6 +1498,7 @@ const PRESETS = {
   "ジャンプ（バンザイ）": [["r_elbow","z",-160],["l_elbow","z",160],["r_knee","x",-30],["r_ankle","x",55],["l_knee","x",-30],["l_ankle","x",55]],
   "ファイティングポーズ": [["r_knee","z",-12],["l_knee","z",12],["l_knee","x",-15],["r_elbow","x",-45],["r_wrist","x",-110],["l_elbow","x",-60],["l_wrist","x",-115]],
   "腰に手": [["r_elbow","z",-35],["r_wrist","z",95],["l_elbow","z",35],["l_wrist","z",-95]],
+  "ロープにつかまる（ターザン）": [["r_elbow","z",-172],["l_elbow","z",165],["l_wrist","z",-12],["r_knee","x",-35],["r_ankle","x",50],["l_knee","x",-10],["l_ankle","x",25]],
 };
 const AXES = {x: [1,0,0], y: [0,1,0], z: [0,0,1]};
 function applyPreset(name){
@@ -1624,12 +1678,21 @@ document.querySelectorAll("#modes button").forEach(b => b.addEventListener("clic
   document.body.className = document.body.className.replace(/\bmode-\S+/, "").trim() + " mode-" + mode;   // keep touch, split ...
   document.querySelectorAll("#modes button").forEach(x => x.classList.toggle("on", x === b)); draw();
 }));
+// a preset pose on this figure's own body: the preset's bone directions with this figure's
+// lengths, thicknesses and shoulders (体格 is kept; 体格プリセット are apart, pose_sets.js)
+function posePreset(name){
+  const old = S.P.map(p => p.slice()), c = old[IX.pelvis], shape = S.shape;
+  applyPreset(name); S.shape = shape; S.P = withBoneLengths(S.P, old);
+  // the shoulders and the thigh roots where this figure's own sit (S.shape)
+  for (const n of Object.keys(TORSO_PAIR)){ const i = IX[n], p = PARENT[i];
+    moveSubtree(i, sub(add(S.P[p], mul(restDir(i), len(sub(old[i], old[p])))), S.P[i])); }
+  withNeck(() => {});
+  standOnFloor(c[0], c[2]); S.pins = {};
+}
 $("applyPreset").addEventListener("click", () => {
   const v = $("preset").value;
-  remember(); applyPreset(v); S.pins = {};
-  if (typeof sceneAfterEdit === "function") sceneAfterEdit();
-  S.R = REST_R.slice(); S.scale = fresh().scale;
-  syncUI(); draw();
+  remember(); posePreset(v);
+  afterEdit(); syncUI(); draw(); say(`ポーズ「${v}」にしました（体格はそのまま）。`);
 });
 $("mirror").addEventListener("click", () => {
   remember();
@@ -1662,21 +1725,27 @@ function standOnFloor(x, z){                  // the pelvis over (x, z), the low
   S.P = P.map(p => [p[0] - c[0] + x, p[1] - low + floorY() + 2, p[2] - c[2] + z]);
 }
 $("poseReset").addEventListener("click", () => {
-  remember();
-  const old = S.P.map(p => p.slice()), c = old[IX.pelvis];
-  const shape = S.shape;
-  applyPreset("立ち（標準）"); S.shape = shape; S.P = withBoneLengths(S.P, old);
-  // the shoulders and the thigh roots where this figure's own sit (S.shape)
-  for (const n of Object.keys(TORSO_PAIR)){ const i = IX[n], p = PARENT[i];
-    moveSubtree(i, sub(add(S.P[p], mul(restDir(i), len(sub(old[i], old[p])))), S.P[i])); }
-  standOnFloor(c[0], c[2]); S.pins = {};
+  remember(); posePreset("立ち（標準）");
   afterEdit(); syncUI(); draw(); say("立ちポーズに戻しました（体格はそのまま）。");
 });
 $("bodyReset").addEventListener("click", () => {
   remember();
-  S.P = withBoneLengths(S.P, REST); S.R = REST_R.slice(); S.scale = fresh().scale; delete S.shape;
+  fromBottom(() => { S.P = withBoneLengths(S.P, REST); S.R = REST_R.slice(); S.scale = fresh().scale; delete S.shape; delete S.sex; });
   afterEdit(); syncUI(); draw(); say("体格を初期値に戻しました（ポーズはそのまま）。");
 });
+// the figure being edited, all of it (pose, body, hands, turn, pins) back to the default of its sex
+// (女性 / 男性 as last chosen; else the standard body); where it stands and what it holds stay
+function resetToSex(){
+  remember();
+  const c = S.P[IX.pelvis].slice(), sex = S.sex, f = fresh();
+  for (const k of ["P", "R", "hands", "head", "body", "twist", "pins", "scale"]) S[k] = f[k];
+  delete S.shape; delete S.sex;
+  if (SEX_BODY[sex]) applySex(sex);
+  standOnFloor(c[0], c[2]);
+  afterEdit(); syncUI(); draw();
+  say(`${S.figName || "この人物"}を${sex === "female" ? "女性" : sex === "male" ? "男性" : "標準"}の初期状態に戻しました（位置と持ち物はそのまま）。`);
+}
+$("sexReset").addEventListener("click", resetToSex);
 // the 管理 tab's 位置と向き: the hips' own controls (setJointValue pX ... bRoll), pins carried along
 const FIG_CTL = [["figX", "pX"], ["figY", "pY"], ["figZ", "pZ"], ["figYaw", "bYaw"], ["figPitch", "bPitch"], ["figRoll", "bRoll"]];
 function setFigure(key, v){
@@ -1734,7 +1803,7 @@ for (const [id, key, fn] of [["scaleAll", "all", scaleAbout], ["scaleHead", "hea
   $(id).addEventListener("pointerdown", remember);
   $(id).addEventListener("input", e => {
     const sc = S.scale = Object.assign(fresh().scale, S.scale);
-    const v = +e.target.value; fn(v / sc[key]); sc[key] = v;
+    const v = +e.target.value; fromBottom(() => fn(v / sc[key])); sc[key] = v;
     if (document.activeElement !== $(id + "V")) $(id + "V").value = v; draw();
   });
 }
@@ -1749,7 +1818,7 @@ for (const id of Object.keys(UNITS)){
 }
 $("heightN").addEventListener("change", e => {
   const v = +e.target.value; if (!(v > 20)) return;
-  remember(); scaleAbout(v / standingHeight()); draw();
+  remember(); fromBottom(() => scaleAbout(v / standingHeight())); draw();
 });
 buildJointPanel();
 $("handSel").innerHTML = Object.keys(HANDS).map(k => `<option value="${k}">${HAND_JA[k]}（${k}）</option>`).join("");
@@ -1919,6 +1988,10 @@ const qs = new URLSearchParams(location.search);
 const KEY = "odm-poser-editor-v1";
 try { const l = localStorage.getItem(KEY + "-limits"); if (l !== null) $("limits").checked = l === "1"; } catch (e) {}
 try { $("symPose").checked = localStorage.getItem(KEY + "-sympose") === "1"; } catch (e) {}
+// 太さを部位ごとに連動 (体格): on unless switched off here
+try { const v = localStorage.getItem(KEY + "-thicklink"); if (v !== null) $("thickLink").checked = v === "1"; } catch (e) {}
+$("thickLink").addEventListener("change", e => { try { localStorage.setItem(KEY + "-thicklink", e.target.checked ? "1" : "0"); } catch (err) {}
+  say(e.target.checked ? "腕・脚の太さを部位ごとにまとめて変えます。" : "太さを関節ごとに変えます。"); });
 // the camera pad: the left stick turns the camera round the figure, the right one moves it (both
 // as a game's camera: push right, the camera goes right), the slider zooms
 function padStick(id, act){
@@ -2008,10 +2081,10 @@ syncCams();
   const choose = v => { put("-side", v); if (v !== "hide") put("-sidelast", v); set(v); };
   el.addEventListener("change", () => choose(el.value));
   btn.addEventListener("click", () => {
-    // phones show it on request (the 横の図 key): the same here
+    // phones show it on request (the 側面図 key): the same here
     if (matchMedia("(max-width: 700px)").matches){ $("vSide").click(); return; }
     const show = el.value === "hide";
-    choose(show ? get("-sidelast", "right") : "hide"); toast(show ? "横の図を出しました。" : "横の図を隠しました。"); });
+    choose(show ? get("-sidelast", "right") : "hide"); toast(show ? "側面図を出しました。" : "側面図を隠しました。"); });
   const p = get("-side", "right");
   set(["right", "left", "top", "bottom", "hide"].includes(p) ? p : "right");
 }
@@ -2029,7 +2102,11 @@ syncCams();
   el.addEventListener("change", () => { put("-aside", el.value); set(el.value); });
   side.addEventListener("change", () => { put("-menuside", side.value); setSide(side.value); });
   const flip = () => { const off = !bc.contains("aside-off"); put("-asideoff", off ? "1" : "0"); setOff(off); };
-  $("ovAside").addEventListener("click", () => { flip(); toast(bc.contains("aside-off") ? "操作欄をしまいました。" : "操作欄を出しました。"); });
+  // split screen: the panel's half is given to the views (full) instead
+  $("ovAside").addEventListener("click", () => {
+    if (bc.contains("split")){ const full = bc.toggle("full"); $("ovAside").setAttribute("aria-pressed", String(!full)); draw();
+      toast(full ? "操作欄をしまいました。" : "操作欄を出しました。"); return; }
+    flip(); toast(bc.contains("aside-off") ? "操作欄をしまいました。" : "操作欄を出しました。"); });
   const p = get("-aside", "right"); set(all.includes(p) ? p : "right");
   setSide(get("-menuside", "left") === "right" ? "right" : "left");
   setOff(get("-asideoff", "0") === "1");
@@ -2043,15 +2120,14 @@ function toast(msg, warn){
 // split screen: on by itself where a finger is the main pointer (phones, tablets), or as chosen
 function setSplit(on){
   document.body.classList.toggle("split", on);
-  if (!on){ document.body.classList.remove("full"); $("vPanels").textContent = "操作欄を隠す"; }
+  document.body.classList.remove("full");
+  $("ovAside").setAttribute("aria-pressed", String(!document.body.classList.contains(on ? "full" : "aside-off")));
   $("splitBtn").setAttribute("aria-pressed", String(on)); draw();
 }
 { let pref = null; try { pref = localStorage.getItem(KEY + "-split"); } catch (e) {}
   setSplit(pref ? pref === "1" : matchMedia("(pointer: coarse)").matches); }
 $("splitBtn").addEventListener("click", () => { const on = !document.body.classList.contains("split");
   try { localStorage.setItem(KEY + "-split", on ? "1" : "0"); } catch (e) {} setSplit(on); });
-$("vPanels").addEventListener("click", () => { const full = document.body.classList.toggle("full");
-  $("vPanels").textContent = full ? "操作欄を出す" : "操作欄を隠す"; draw(); });
 $("symPose").addEventListener("change", e => { try { localStorage.setItem(KEY + "-sympose", e.target.checked ? "1" : "0"); } catch (err) {}
   if (e.target.checked && sel >= 0 && MIRROR[sel] !== sel){ remember(); afterEdit(sel); draw(); say("反対側をそろえました。"); } });
 $("torso3d").addEventListener("change", e => { remember(); S.torso3d = e.target.checked; draw();

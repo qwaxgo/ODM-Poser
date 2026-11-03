@@ -2,13 +2,13 @@
 // #helpDlg. Two tables, one for a mouse and keyboard (key | what it does) and one for touch
 // (finger | where | what it does); the one for this device comes first. Each text is [ja, en].
 (() => {
-const MODE_JA = {pose: "ポーズ", body: "体格", persp: "パース", place: "配置"};
+const MODE_JA = {pose: "ポーズ", body: "体格", persp: "カメラ", place: "配置"};
 const PC = [
   {title: ["カメラ（どのモードでも）", "Camera (in every mode)"], rows: [
     [["中ボタンでドラッグ", "Middle-button drag"], ["カメラを回す", "Orbit the camera"]],
     [["Shift＋中ボタンでドラッグ", "Shift + middle-button drag"], ["カメラを動かす", "Pan the camera"]],
     [["Ctrl＋中ボタンでドラッグ／ホイール", "Ctrl + middle-button drag / wheel"], ["拡大・縮小", "Zoom"]],
-    [["Alt＋何もない所をドラッグ", "Alt + drag on empty space"], ["カメラを回す（中ボタンのないマウス・トラックパッド）", "Orbit (a mouse or trackpad without a middle button)"]],
+    [["何もない所をドラッグ（Alt＋でも）", "Drag on empty space (Alt + too)"], ["カメラを回す（Shift＋で動かす）", "Orbit the camera (Shift: pan)"]],
     [["テンキー 1・3・7", "Numpad 1, 3, 7"], ["正面・右から・上から（Ctrl で反対側）", "Front, right, top (Ctrl: the other side)"]],
     [["テンキー 2・4・6・8", "Numpad 2, 4, 6, 8"], ["15°ずつ回す（Ctrl で動かす）", "Turn by 15° (Ctrl: pan)"]],
     [["テンキー 9", "Numpad 9"], ["裏へ回る", "Go round to the back"]],
@@ -18,20 +18,20 @@ const PC = [
     [["Ctrl＋Z ／ Ctrl＋Y", "Ctrl + Z / Ctrl + Y"], ["元に戻す／やり直す", "Undo / redo"]],
     [["?", "?"], ["このヒントを開く", "Open these hints"]]]},
   {mode: "pose", title: ["ポーズモード", "Pose mode"], rows: [
-    [["丸をドラッグ", "Drag a circle"], ["関節を動かす（骨の長さは保つ。寄せた分だけ手前・奥へ傾く）", "Move the joint (bone lengths kept; it leans toward / away as you bring it in)"]],
+    [["丸をドラッグ（3軸ハンドルを隠したとき）", "Drag a circle (with the 3-axis handles hidden)"], ["関節を動かす（骨の長さは保つ。寄せた分だけ手前・奥へ傾く）", "Move the joint (bone lengths kept; it leans toward / away as you bring it in)"]],
     [["Shift＋ドラッグ（手首・足首）", "Shift + drag (wrist, ankle)"], ["その骨だけ動かす（ふだんは腕・脚ごと届く）", "Move only that bone (otherwise the whole arm / leg reaches)"]],
     [["ダブルクリック", "Double-click"], ["その骨の手前と奥を入れ替える", "Flip the bone toward / away"]],
     [["Alt＋クリック", "Alt + click"], ["関節を固定する（ピン）", "Pin the joint"]],
-    [["腰の丸をドラッグ", "Drag the hips' circle"], ["人物全体を動かす", "Move the whole figure"]],
-    [["横の図でドラッグ", "Drag in the side view"], ["奥行きを直接動かす", "Move the depth directly"]],
+    [["側面図でドラッグ", "Drag in the side view"], ["奥行きを直接動かす", "Move the depth directly"]],
     [["G・R・S キー（または 移動・回転・変形 ボタン）", "G, R, S keys (or the Move / Rotate / Scale buttons)"], ["3軸ハンドルの操作を切り替える", "Switch the 3-axis handles' tool"]],
-    [["選んだ関節の矢印（X・Y・Z）をドラッグ", "Drag an arrow (X, Y, Z) on the selected joint"], ["その軸の向きにだけ動かす（移動）", "Move it along that axis only (Move)"]],
-    [["輪（X・Y・Z）をドラッグ", "Drag a ring (X, Y, Z)"], ["その軸のまわりに骨を回す（回転）", "Turn the bone about that axis (Rotate)"]],
-    [["四角をドラッグ", "Drag a square"], ["骨の長さ・丸の太さを変える（変形）", "Change the bone's length or the circle's thickness (Scale)"]]]},
+    [["輪（X・Y・Z）をドラッグ", "Drag a ring (X, Y, Z)"], ["選んだ関節で、その先を軸のまわりに回す（回転）", "Turn what lies beyond the selected joint about that axis (Rotate)"]],
+    [["手足の関節の矢印（X・Y・Z）をドラッグ", "Drag an arrow (X, Y, Z) on an arm or leg joint"], ["その軸の向きに動かす（移動。手足だけ）", "Move it along that axis (Move; arms and legs only)"]],
+    [["3軸ハンドルを出しているとき", "While the 3-axis handles show"], ["丸のドラッグは選ぶだけ。動かすのはハンドルで（変形は体格モードで）", "Dragging a circle only selects it; the handles move it (Scale is in Body mode)"]]]},
   {mode: "body", title: ["体格モード", "Body mode"], rows: [
     [["丸をドラッグ", "Drag a circle"], ["その骨を伸ばす・縮める（先の部分ごと）", "Lengthen / shorten the bone (with what lies beyond)"]],
-    [["丸の上でホイール", "Wheel over a circle"], ["丸（太さ）を大きく・小さく", "Make the circle (thickness) bigger / smaller"]]]},
-  {mode: "persp", title: ["パースモード", "Perspective mode"], rows: [
+    [["丸の上でホイール", "Wheel over a circle"], ["丸（太さ）を大きく・小さく（腕・脚はまとめて）", "Make the circle (thickness) bigger / smaller (an arm or a leg together)"]],
+    [["四角をドラッグ（3軸ハンドル：変形）", "Drag a square (3-axis handles: Scale)"], ["骨の長さ・丸の太さ、肩・股の幅・高さ・前後を変える", "Change a bone's length, a circle's thickness, a shoulder's or thigh root's width, height, depth"]]]},
+  {mode: "persp", title: ["カメラモード", "Camera mode"], rows: [
     [["ドラッグ", "Drag"], ["カメラを回す（左右＝向き、上下＝高さ）", "Turn the camera (sideways: direction, up-down: height)"]],
     [["Shift＋ドラッグ", "Shift + drag"], ["カメラを傾ける", "Tilt the camera"]],
     [["ホイール", "Wheel"], ["レンズ（広角ほどパースが強い）", "Lens (wider: stronger perspective)"]],
@@ -44,6 +44,7 @@ const PC = [
     [["物体の上でホイール", "Wheel over an object"], ["向きを回す（スナップ中は定規の向きへ 90°ずつ）", "Turn it (with snapping: 90° at a time, along the ruler)"]],
     [["消失点をドラッグ", "Drag a vanishing point"], ["定規の向きを変える", "Turn the ruler"]],
     [["丸をクリック", "Click a circle"], ["関節を選ぶ（物体に着ける用）", "Select a joint (to put it on an object)"]],
+    [["腰の丸をドラッグ（または選んで矢印・輪）", "Drag the hips' circle (or select it: arrows, ring)"], ["人物全体を動かす・回す", "Move / turn the whole figure"]],
     [["矢印・輪・四角をドラッグ（G・R・S で切り替え）", "Drag an arrow, the ring or a square (G, R, S switch)"], ["選んだ物体を軸に沿って動かす・回す・伸ばす（3軸ハンドル）", "Move, turn or stretch the selected object along an axis (3-axis handles)"]]]}];
 const TOUCH = [
   {title: ["人物と関節", "The figure and its joints"], rows: [
@@ -54,7 +55,7 @@ const TOUCH = [
     [["「固定」を押してから丸をタップ", "Press “Pin”, then tap a circle"], ["上のボタン", "The keys above"], ["関節を固定する（ピン）", "Pin the joint"]]]},
   {title: ["カメラ", "Camera"], rows: [
     [["1本指でスワイプ", "Swipe with one finger"], ["丸のない所", "Where there is no circle"], ["カメラを回す", "Orbit the camera"]],
-    [["2本指でつまむ・広げる", "Pinch / spread two fingers"], ["画面のどこでも", "Anywhere on the view"], ["拡大・縮小（パースモードではレンズ）", "Zoom (the lens in the perspective mode)"]],
+    [["2本指でつまむ・広げる", "Pinch / spread two fingers"], ["画面のどこでも", "Anywhere on the view"], ["拡大・縮小（カメラモードではレンズ）", "Zoom (the lens in the perspective mode)"]],
     [["2本指でそのまま動かす", "Move two fingers together"], ["画面のどこでも", "Anywhere on the view"], ["カメラを動かす（ポーズ・体格モード）", "Pan the camera (pose and build modes)"]],
     [["左のスティックを倒す", "Push the left stick"], ["カメラパッド（左下）", "Camera pad (bottom left)"], ["カメラを回す", "Orbit the camera"]],
     [["右のスティックを倒す", "Push the right stick"], ["カメラパッド（右下）", "Camera pad (bottom right)"], ["カメラを動かす", "Pan the camera"]],
