@@ -1745,8 +1745,16 @@ function withBoneLengths(dirsFrom, lengthsFrom){
   return out;
 }
 const floorY = () => (S.env && S.env.floor ? +S.env.floorY || 0 : 0);
+// what stands on the floor besides the shown joints: points a mod adds (pose_api.js: on("floorPoints"),
+// a centaur's hooves); hidden joints (S.hide, a centaur's human legs) do not stand on it
+const FLOOR_HOOKS = window.ODMFloorHooks = window.ODMFloorHooks || [];
+function lowestPoint(){
+  const ys = S.P.filter((p, i) => !hidJ(i)).map(p => p[1]);
+  for (const h of FLOOR_HOOKS){ const pts = h(); if (Array.isArray(pts)) for (const q of pts) ys.push(q[1]); }
+  return ys.length ? Math.min(...ys) : Math.min(...S.P.map(p => p[1]));
+}
 function standOnFloor(x, z){                  // the pelvis over (x, z), the lowest point on the floor
-  const P = S.P, low = Math.min(...P.map(p => p[1])), c = P[IX.pelvis];
+  const P = S.P, low = lowestPoint(), c = P[IX.pelvis];
   S.P = P.map(p => [p[0] - c[0] + x, p[1] - low + floorY() + 2, p[2] - c[2] + z]);
 }
 $("poseReset").addEventListener("click", () => {

@@ -259,6 +259,7 @@ api.i18n.addRule(/^(.+)を投げました。$/, m => `Threw the ${m[1]}.`);   //
 | `putPose` | `record` | その record（API 1.3）。人物がポーズを取ったあとに呼ばれるので、自分の分を読み戻す |
 | `figureCopy` | `from, to` | 人物の管理の「複製」で、`from` から人物 `to`（いまの `S.figId`）を作った（API 1.3）。人物ごとに持つものを写す |
 | `figureRemove` | `id` | 人物 `id` を削除した（API 1.3）。その人物の分を消す |
+| `floorPoints` | なし | `[[x, y, z], ...]` を返す。エディタが人物を床に立たせるとき（ポーズのプリセット・リセット）に、床に着く点として一緒に数える。隠した関節は数えない（API 1.3） |
 
 **人物ごとのもの（API 1.3）。** `api.ui.addFigureExtra({id, label, labelEn, has(tune), strip(), tune()})` で、人物の管理 › 付随物のリセットに自分のチェックを足せます。
 

@@ -286,6 +286,7 @@ The editor gives your section's controls melta UI's look by what they are (`sect
 | `putPose` | `record` | that record, after the figure took the pose (API 1.3): read your part back |
 | `figureCopy` | `from, to` | 人物の管理's Copy made figure `to` (now `S.figId`) from `from` (API 1.3): copy what you keep per figure |
 | `figureRemove` | `id` | the figure `id` was deleted (API 1.3): drop what you kept for it |
+| `floorPoints` | — | return `[[x, y, z], ...]`: points of the edited figure that stand on the floor too, when the editor stands it there (pose presets, リセット); hidden joints do not (API 1.3) |
 
 **More per figure (API 1.3).** `api.ui.addFigureExtra({id, label, labelEn, has(tune), strip(), tune()})`
 adds a box of your own to 人物の管理 › 付随物のリセット: `has` says whether there is anything to take

@@ -299,9 +299,12 @@ function makeApi(mod){
     // return {move(x, y, event)} to take the drag), wheel (x, y, step, event: return true when used),
     // takePose (the record of a pose being kept in ポーズ・小物・位置: add the mod's part to it) and
     // putPose (that record, after the figure took the pose), figureCopy (the copied figure's id, the
-    // copy's: S.figId), figureRemove (the id of the figure deleted)
+    // copy's: S.figId), figureRemove (the id of the figure deleted), floorPoints (() -> [[x, y, z], ...]:
+    // points of the edited figure that stand on the floor too, when the editor stands it there)
     on(event, fn){
       if (typeof fn !== "function") throw new Error("on(event, fn)");
+      if (event === "floorPoints"){            // () -> [[x, y, z], ...]: the edited figure's points on the floor
+        (window.ODMFloorHooks = window.ODMFloorHooks || []).push(guarded(mod, event, fn)); return; }
       if (event === "figureCopy" || event === "figureRemove"){
         const h = window.ODMFigureHooks = window.ODMFigureHooks || {copy: [], remove: []};
         h[event === "figureCopy" ? "copy" : "remove"].push(guarded(mod, event, fn)); return; }
@@ -312,7 +315,7 @@ function makeApi(mod){
         DOWN_HOOKS.splice(Math.max(0, DOWN_HOOKS.length - 1), 0, (cv, x, y, e) => { const d = g(cv, x, y, e);
           return d && typeof d.move === "function" ? {move: guarded(mod, "drag", d.move)} : null; }); return; }
       if (event === "wheel"){ const g = guarded(mod, "wheel", fn); WHEEL_HOOKS.push((x, y, step, e) => !!g(x, y, step, e)); return; }
-      if (!hooks[event]) throw new Error(`no event "${event}" (${[...Object.keys(hooks), "pointerDown", "wheel", "takePose", "putPose", "figureCopy", "figureRemove"].join(", ")})`);
+      if (!hooks[event]) throw new Error(`no event "${event}" (${[...Object.keys(hooks), "pointerDown", "wheel", "takePose", "putPose", "figureCopy", "figureRemove", "floorPoints"].join(", ")})`);
       hooks[event].push(guarded(mod, event, fn));
     },
   };
