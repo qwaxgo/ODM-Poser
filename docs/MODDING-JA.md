@@ -10,7 +10,7 @@ MOD は、エディタの起動時に読み込まれる JavaScript のファイ�
 - 日本語の表示に対する英語（英語表示のとき）
 - 横の欄に出す自分の欄、描画・編集・元に戻す／読み込み・モード・マウスへのフック
 
-API の版：**1.2.0**。English: [MODDING.md](MODDING.md)（こちらが正式な説明で、内容は同じです）。
+API の版：**1.3.0**。English: [MODDING.md](MODDING.md)（こちらが正式な説明で、内容は同じです）。
 
 > **安全のために。** MOD はエディタのページの中で、エディタと同じ権限で動くプログラムです。信頼できる MOD だけを
 > 入れてください。エディタのアドレスの末尾に `?nomods` を付けると、MOD なしで開きます（MOD のせいで動かなくなったときなど）。
@@ -255,8 +255,23 @@ api.i18n.addRule(/^(.+)を投げました。$/, m => `Threw the ${m[1]}.`);   //
 | `mode` | 新しいモード | モードのボタン |
 | `pointerDown` | `canvas, x, y, event` | ドラッグを引き受けるなら `{move(x, y, event)}` を返す（何も返さなければ素通り）。x, y はキャンバスのピクセル。エディタが先に元に戻す用に覚えます |
 | `wheel` | `x, y, step, event` | 使ったら `true` を返す（step は +1／−1） |
+| `takePose` | `record` | ポーズ・小物・位置に記憶するポーズ（API 1.3）：自分の分を record に足す（自分の名前の項目で） |
+| `putPose` | `record` | その record（API 1.3）。人物がポーズを取ったあとに呼ばれるので、自分の分を読み戻す |
 
 描画のフックの前後で、キャンバスの状態（`ctx`）は保存・復元されます。
+
+**自分の物に3軸ハンドルを出す（API 1.3）。** `api.gizmo.addTarget(fn)`：`fn(mode)` は `null` か、ハンドルが動かす物を返します。
+`{c, ax, rings, ringAx, pivot, sc, tools, save, move, turn, scale}` の中身は次のとおりです。
+
+- `c`：中心
+- `ax`：移動の軸
+- `rings`：輪の番号。`ringAx` がその軸（省略するとワールドの軸）で、`pivot` を中心に回ります
+- `sc`：変形の `[[軸, n, ラベル], ...]`
+- `tools`：使える操作（`"move"`・`"rotate"`・`"scale"`）
+- `save()`：ドラッグの始めの状態
+- `move(s0, d)`・`turn(s0, 輪, 度)`・`scale(s0, 倍率, n)`：動かす処理
+
+エディタ自身の対象より先に聞かれるので、自分の物が選ばれているときだけ返してください。
 
 **マウス・タッチ・ペン（API 1.2）。** `pointerDown`、ドラッグの `move`、`wheel` には、どの入力でも同じ形のイベントが渡ります：
 `{shiftKey, altKey, ctrlKey, metaKey, pointerType（"mouse"・"touch"・"pen"）, pointerId, button, buttons, pressure, clientX, clientY, preventDefault(), original}`。

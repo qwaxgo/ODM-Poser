@@ -45,9 +45,15 @@ function bar(cls){
 function icons(){ if (!window.ODMICONS) return;
   for (const d of bars) d.querySelectorAll("button[data-gzicon]").forEach(b => { if (!b.querySelector("svg")) b.insertAdjacentHTML("afterbegin", ODMICONS.svg(b.dataset.gzicon)); }); }
 addEventListener("DOMContentLoaded", icons);
+// targets a mod adds (pose_api.js: api.gizmo.addTarget): fn(mode) gives a target (as target() below,
+// plus tools: the tools it has, ringAx: the rings' own axes) or null; asked before the editor's own
+const EXTRA = [];
+window.ODMGizmo = {addTarget: fn => { EXTRA.push(fn); }};
+function extra(){ for (const f of EXTRA){ const t = f(mode); if (t) return t; } return null; }
 // the tools the mode (and what is selected) has
 const LIMB = new Set(["elbow", "wrist", "hand", "knee", "ankle", "toe"].flatMap(n => ["r_" + n, "l_" + n]));
 function tools(){
+  const xt = extra(); if (xt) return xt.tools || TOOLS.map(x => x[0]);
   if (mode === "pose") return sel >= 0 && LIMB.has(J[sel]) ? ["move", "rotate"] : ["rotate"];
   if (mode === "body") return ["scale"];
   if (mode === "place"){ const t = target(true); return t ? TOOLS.map(x => x[0]).filter(id => !t.lacks || !t.lacks.includes(id)) : ["move", "rotate", "scale"]; }
@@ -92,6 +98,7 @@ function across(u){ const r = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], a = 
 //  save(), move(s0, d), turn(s0, k, degrees), scale(s0, factor, n)}
 function target(any){
   if (!$("gizmoOn").checked && !any) return null;
+  const xt = extra(); if (xt) return xt;
   const save = () => ({P: S.P.map(p => p.slice()), R: S.R.slice(), body: Object.assign({}, S.body)});
   if (mode === "pose" && sel >= 0){
     // 回転: what hangs on the joint turns about it; a joint with nothing after it, its own bone
@@ -183,12 +190,12 @@ function layout(t, W, H){
   else if (tool === "scale") t.sc.forEach(([u, n, label], k) => out.lines.push({k, u, n, col: t.joint !== undefined ? (n ? "#f5a524" : "#8e4ec6") : COL[n], label,
     e: project(add(t.c, mul(u, L)), W, H)}));
   else {
-    const pc = project(t.pivot, W, H), R = RING_PX * dpr / Math.max(1e-6, pc.s);
+    const pc = project(t.pivot, W, H), R = RING_PX * dpr / Math.max(1e-6, pc.s), AX = t.ringAx || WORLD;
     out.pc = pc;
     for (const k of t.rings){
-      const [a, b] = across(WORLD[k]), pts = [];
+      const [a, b] = across(AX[k]), pts = [];
       for (let m = 0; m <= 64; m++){ const q = 2 * Math.PI * m / 64; pts.push(project(add(t.pivot, add(mul(a, R * Math.cos(q)), mul(b, R * Math.sin(q)))), W, H)); }
-      out.rings.push({k, pts, a, b, R});
+      out.rings.push({k, pts, a, b, R, axis: AX[k]});
     }
   }
   return out;
@@ -234,7 +241,7 @@ DOWN_HOOKS.unshift((cv, x, y) => {
       const tx = (r.pts[m].x - r.pts[m - 1].x) / (2 * Math.PI / 64), ty = (r.pts[m].y - r.pts[m - 1].y) / (2 * Math.PI / 64);
       const t2 = Math.max(tx * tx + ty * ty, (24 * g.dpr) ** 2);     // a ring seen edge-on does not spin wildly
       // which way the ring's own angle turns the thing about its axis (a, b, axis: right-handed or not)
-      const sgn = Math.sign(dot(cross(r.a, r.b), WORLD[r.k])) || 1;
+      const sgn = Math.sign(dot(cross(r.a, r.b), r.axis)) || 1;
       return {move(mx, my){ t.turn(s0, r.k, sgn * ((mx - x0) * tx + (my - y0) * ty) / t2 * 180 / Math.PI); }};
     }
   }

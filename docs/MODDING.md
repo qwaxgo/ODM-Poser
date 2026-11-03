@@ -10,7 +10,7 @@ A mod is a JavaScript file that the editor loads at start. Through the **MOD API
 - English words for its Japanese labels (and the other way round)
 - panels in the side bar, and hooks into drawing, editing, undo / load, the mode and the mouse
 
-API version: **1.2.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
+API version: **1.3.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
 
 > **Safety.** A mod is a program that runs inside the editor page with the same rights as the
 > editor itself. Install only mods you trust. Add `?nomods` to the editor's address to start
@@ -282,8 +282,18 @@ The editor gives your section's controls melta UI's look by what they are (`sect
 | `mode` | the new mode | the mode buttons |
 | `pointerDown` | `canvas, x, y, event` | return `{move(x, y, event)}` to take the drag, or nothing; x, y in canvas pixels; the editor remembers for undo first |
 | `wheel` | `x, y, step, event` | return `true` when you used it (step: +1 / −1) |
+| `takePose` | `record` | a pose being kept in ポーズ・小物・位置 (API 1.3): add your part to the record (a field of your own name) |
+| `putPose` | `record` | that record, after the figure took the pose (API 1.3): read your part back |
 
 The canvas state (`ctx`) is saved and restored around each drawing hook.
+
+**The 3-axis handles on your own things (API 1.3).** `api.gizmo.addTarget(fn)`: `fn(mode)` returns
+`null`, or what the handles act on: `{c, ax, rings, ringAx, pivot, sc, tools, save, move, turn, scale}`:
+`c` the centre, `ax` the move axes, `rings` ring indices with `ringAx` their axes (the world's by
+default) turning about `pivot`, `sc` `[[axis, n, label], ...]` for scaling, `tools` the tools it has
+(`"move"`, `"rotate"`, `"scale"`), `save()` the state a drag starts from, then `move(s0, d)`,
+`turn(s0, ring, degrees)` and `scale(s0, factor, n)`. It is asked before the editor's own targets,
+so answer only while one of yours is selected.
 
 **Mouse, touch and pens (API 1.2).** `pointerDown`, the drag's `move` and `wheel` get the same
 event for every device: `{shiftKey, altKey, ctrlKey, metaKey, pointerType ("mouse" | "touch" |

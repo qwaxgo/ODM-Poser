@@ -11,7 +11,7 @@
 // from disk the editor cannot list one itself). ?nomods in the address starts without mods.
 // A mod's own data lives in S.mods[id]: saved with the pose, undone with Ctrl+Z.
 (() => {
-const API_VERSION = "1.2.0", API_MAJOR = 1;
+const API_VERSION = "1.3.0", API_MAJOR = 1;
 const mods = [];                              // {id, name, version, file, status: "ok" | "error", error}
 const ORIGIN = {props: {}, solids: {}, auras: {}, parts: {}, hands: {}};   // kind key -> the mod id that added it
 const hooks = {drawBehind: [], draw: [], drawSide: [], afterEdit: [], sync: [], mode: []};
@@ -150,6 +150,14 @@ function makeApi(mod){
       camera: () => Object.assign({}, S.cam),
     },
     shapes: SHAPES,
+    // the 3-axis handles on something of the mod's: fn(mode) gives null, or {c: centre, ax: the move
+    // axes, rings: [ring index], ringAx: the rings' axes (world by default), pivot, sc: [[axis, n, label]],
+    // tools: ["move", "rotate", "scale"] it has, save(), move(s0, d), turn(s0, ring, degrees),
+    // scale(s0, factor, n)}; asked before the editor's own targets
+    gizmo: {
+      addTarget(fn){ if (typeof fn !== "function") throw new Error("gizmo.addTarget(fn)");
+        if (window.ODMGizmo) window.ODMGizmo.addTarget(guarded(mod, "gizmo", fn)); },
+    },
     props: {
       addCategory(key, ja, en){
         if (!/^[\w:.-]+$/.test(key)) throw new Error(`category key "${key}"`);
@@ -280,14 +288,19 @@ function makeApi(mod){
     },
     // events: drawBehind / draw (ctx, W, H, opts: export, side ...), drawSide, afterEdit (moved joint
     // index or -1), sync (after undo / load), mode (the new mode), pointerDown (canvas, x, y, event:
-    // return {move(x, y, event)} to take the drag), wheel (x, y, step, event: return true when used)
+    // return {move(x, y, event)} to take the drag), wheel (x, y, step, event: return true when used),
+    // takePose (the record of a pose being kept in ポーズ・小物・位置: add the mod's part to it) and
+    // putPose (that record, after the figure took the pose)
     on(event, fn){
       if (typeof fn !== "function") throw new Error("on(event, fn)");
+      if (event === "takePose" || event === "putPose"){
+        const h = window.ODMPoseSetHooks = window.ODMPoseSetHooks || {take: [], put: []};
+        h[event === "takePose" ? "take" : "put"].push(guarded(mod, event, fn)); return; }
       if (event === "pointerDown"){ const g = guarded(mod, "pointerDown", fn);
         DOWN_HOOKS.splice(Math.max(0, DOWN_HOOKS.length - 1), 0, (cv, x, y, e) => { const d = g(cv, x, y, e);
           return d && typeof d.move === "function" ? {move: guarded(mod, "drag", d.move)} : null; }); return; }
       if (event === "wheel"){ const g = guarded(mod, "wheel", fn); WHEEL_HOOKS.push((x, y, step, e) => !!g(x, y, step, e)); return; }
-      if (!hooks[event]) throw new Error(`no event "${event}" (${[...Object.keys(hooks), "pointerDown", "wheel"].join(", ")})`);
+      if (!hooks[event]) throw new Error(`no event "${event}" (${[...Object.keys(hooks), "pointerDown", "wheel", "takePose", "putPose"].join(", ")})`);
       hooks[event].push(guarded(mod, event, fn));
     },
   };

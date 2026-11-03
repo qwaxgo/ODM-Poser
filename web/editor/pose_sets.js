@@ -20,10 +20,15 @@ const r2 = v => Math.round(v * 100) / 100;
 const copy = v => JSON.parse(JSON.stringify(v));
 
 // ---- ポーズ・小物・位置 ----------------------------------------------------------------------------
+// a mod's own part of a saved pose (pose_api.js: on("takePose") / on("putPose")): take(rec) adds to the
+// record being saved, put(rec) reads it back after the figure has taken the pose
+const HOOKS = window.ODMPoseSetHooks = window.ODMPoseSetHooks || {take: [], put: []};
 const held = () => (S.items || []).filter(it => !(typeof loose === "function" && loose(it)));
 function takePose(name){
-  return {name, P: S.P.map(p => p.map(r2)), body: copy(S.body), twist: S.twist.slice(), hands: copy(S.hands),
+  const rec = {name, P: S.P.map(p => p.map(r2)), body: copy(S.body), twist: S.twist.slice(), hands: copy(S.hands),
     head: copy(S.head || {}), items: copy(held())};
+  for (const h of HOOKS.take) h(rec);
+  return rec;
 }
 function putPose(d){
   const cur = S.P.map(p => p.slice()), out = [d.P[0].slice()];
@@ -37,6 +42,7 @@ function putPose(d){
   S.items = [...(S.items || []).filter(it => typeof loose === "function" && loose(it)), ...copy(d.items || [])];
   S.pins = {};
   if (typeof scSel === "number") scSel = -1;
+  for (const h of HOOKS.put) h(d);
 }
 
 // ---- 体格 --------------------------------------------------------------------------------------
