@@ -60,7 +60,7 @@ const navBase = "flex items-center px-4 py-2.5 text-sm font-medium rounded-lg tr
 		</div>
 		<footer class="border-t border-border-default">
 			<div class="max-w-[1042px] mx-auto px-4 py-6 text-xs text-text-muted flex flex-wrap gap-4">
-				<span>MIT License</span>
+				<span>{lang === "ja" ? "ツール：MIT License／書き出したファイル：" : "Tool: MIT License / Exported files: "}<a href={href(lang, "license")} class="underline underline-offset-2">CC0 1.0</a></span>
 				<a href="https://github.com/qwaxgo/ODM-Poser" target="_blank" rel="noopener" class="underline underline-offset-2">{w.repo}</a>
 			</div>
 		</footer>

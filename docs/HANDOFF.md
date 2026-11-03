@@ -11,7 +11,7 @@ together, the owner's rules, and what is still open.
 ## What it is
 
 A pseudo-3D stick-and-circle pose editor ("atari" = a rough of lines and circles): a web page
-on a static site (GitHub Pages, built with Astro) that also installs as an app (PWA). The owner (qwaxgo, an illustrator) publishes it under MIT. It started
+on a static site (GitHub Pages, built with Astro) that also installs as an app (PWA). The owner (qwaxgo, an illustrator) publishes it under MIT; what it exports is CC0 1.0 (docs/LICENSE*.md: commercial and AI use, credit optional). It started
 as a tool inside a private project and was split out on 2026-10-19 with no git history and
 nothing third-party: keep it that way.
 

@@ -16,6 +16,7 @@ export const PAGES: { slug: string; about: Record<Lang, string> }[] = [
 	{ slug: "props", about: { ja: "小物を持たせる・身に着ける・単体で置く、物体を置く。3軸の大きさ。", en: "Props held, worn or placed on their own, objects on the floor: sizes on three axes." } },
 	{ slug: "modding", about: { ja: "MOD で小物・物体・オーラ・手の形・ポーズ・欄を足す。MOD API の説明。", en: "Add props, objects, auras, hand shapes, poses and panels with a mod: the MOD API." } },
 	{ slug: "comfyui", about: { ja: "ComfyUI のノードとして使う（ODM-Poser-ComfyUIBridge）。出力とつなぎ方。", en: "Use it as a ComfyUI node (ODM-Poser-ComfyUIBridge): its outputs." } },
+	{ slug: "license", about: { ja: "書き出したファイルは CC0 1.0（商用・AI 利用可、クレジット任意）。ツールは MIT。", en: "Exported files are CC0 1.0 (commercial and AI use, credit optional); the tool is MIT." } },
 ];
 
 export const WORDS = {

@@ -200,7 +200,13 @@ Anthropic's AI coding tool, under qwaxgo's design and direction.
 
 ## License
 
-MIT, (c) 2026 qwaxgo. All shapes and code are original to this project.
+- **The tool** (code and docs): MIT, (c) 2026 qwaxgo ([LICENSE](LICENSE)).
+- **Exported files** (pictures and pose files): [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). Use them
+  commercially, change them, use them with AI (training, ControlNet); credit is optional. What mods add follows each
+  mod's terms. Details: [docs/LICENSE.md](docs/LICENSE.md).
+- The figure's shapes, the built-in props, objects, auras and poses, and the code are original to this project. Some
+  menu icons are pixiv's Charcoal Icons (Apache License 2.0, via melta UI:
+  [web/editor/THIRD_PARTY_LICENSES.md](web/editor/THIRD_PARTY_LICENSES.md)); they are not in exported files.
 
 ---
 
@@ -245,4 +251,4 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **画面の作り**：見た目は [melta UI](https://github.com/tsubotax/melta-ui)（サブモジュール `design/melta-ui`）に従います。エディタのマークアップは `src/pages/editor/index.astro` と `src/components/editor/`、CSS（`web/editor/ui.css`）は `web/editor/ui.src.css` から Tailwind CSS 4 で作ってコミットしています。変えるときは Node.js 22 で `npm install` のあと `npm run css`、確認は `python tools/lint_ui.py`（melta の lint）。AI 向けの注意は `AGENTS.md`。
 - **サイトと開発コンテナ**：サイトは [Astro](https://astro.build) で作ります。ページは `src/pages`（エディタ、`docs/` から作るドキュメント、サイトのトップ）、`web/` はそのまま出します（Astro の `publicDir`：エディタのスクリプト・スタイル・画像）。サーバーなしで使う HTML 版は `python tools/make_release_html.py` で作り（`release/`）、タグ `v<version>` を push するとそれを入れたリリースの下書きができます（`.github/workflows/release.yml`）。アプリ版（Tauri、`src-tauri/`）は専用のコンテナで作ります（Docker のある所で実行。開発コンテナの中ではありません）：`HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose -f docker-compose.tauri.yml run --rm tauri [linux|windows|all]` で `release/` に AppImage と Windows の zip ができるので、リリースの下書きに手で足します。`npm run dev` で http://localhost:4321/ODM-Poser/editor/（ドキュメントは /ODM-Poser/docs/）、`npm run build` で `dist/`（GitHub Pages に出すもの）。開発コンテナ（`.devcontainer/`：Node 24、Playwright 入りの Python、Claude Code、zsh）は、WSL2（または Linux・macOS）から VS Code の「コンテナーで再度開く」で開きます（`~/.ssh`・`~/.gitconfig`・`~/.claude`・`~/.config/gh`（gh のログイン）・zsh の設定をマウント）。VS Code なしなら `docker compose up dev`（`preview`・`serve` も）、確認は `docker compose -f docker-compose.test.yml run --rm lint-ui`（`syntax`・`build` も）。
 - **Claude Code での実装**：このリポジトリのコードとドキュメントは、qwaxgo の設計と指示のもとで、Anthropic の AI コーディングツール [Claude Code](https://claude.com/claude-code) が実装しました。
-- **ライセンス**：MIT（c）2026 qwaxgo。
+- **ライセンス**：ツール（コードとドキュメント）は MIT（c）2026 qwaxgo。書き出したファイル（画像・ポーズのファイル）は [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/deed.ja) で、商用・加工・AI の学習や ControlNet への利用も自由、クレジットは任意です（MOD で足したものは各 MOD の条件）。詳しくは [docs/LICENSE-JA.md](docs/LICENSE-JA.md)。メニューのアイコンの一部は pixiv の Charcoal Icons（Apache License 2.0、melta UI 経由。[web/editor/THIRD_PARTY_LICENSES.md](web/editor/THIRD_PARTY_LICENSES.md)）で、書き出したファイルには入りません。
