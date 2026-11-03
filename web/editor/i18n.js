@@ -336,6 +336,8 @@
     "ポーズのファイルを開く": "Open a pose file", "「書き出し」で保存したポーズ（.json）を開きます。人物・小物・物体・カメラも戻ります。":
       "Opens a pose (.json) saved with Export; figures, things, objects and the camera come back too.",
     "長辺": "Long side", "アタリ画像": "Rough picture", "ポーズ（.json）": "Pose (.json)", "画像は保存する前に全体を確認できます。": "You see a picture whole before it is saved.",
+    "書き出したファイルは、商用・AI の学習も含めて自由に使えます。クレジットは任意です。": "Exported files are free to use, commercially and with AI too. Credit is optional.",
+    "利用条件（CC0 1.0）": "Terms (CC0 1.0)",
     "構図の画像に含める": "In the composition picture", "環境": "Surroundings", "白": "White", "透明": "Transparent", "テーマ": "Theme", "構図の画像": "Composition picture",
     "保存する画像": "The picture to save", "やめる": "Cancel", "保存する": "Save", "保存をやめました。": "Not saved.",
     "人物の位置と向き": "The figure's place and direction", "左右（＋人物の左）": "Left-right (+ the figure's left)", "前後（＋前）": "Front-back (+ front)",

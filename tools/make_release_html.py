@@ -8,7 +8,8 @@ Builds the site (npm run build) and writes to release/:
         editor/        dist/editor/ (its "使い方" link goes to the site's docs: the zip has none)
         mods.js        the mods to load, written by the user (tools/html_release/mods.js)
         mods/          the user's mods (tools/html_release/mods/README.txt)
-        LICENSE
+        LICENSE        the tool's (MIT)
+        LICENSE-EXPORTS.md, LICENSE-EXPORTS-JA.md   what may be done with exports (CC0 1.0: docs/LICENSE*.md)
     notes.md        the release notes: the "## v<version>" part of CHANGELOG.md
 
 The version is package.json's; --tag (the pushed tag, in .github/workflows/release.yml) must match it.
@@ -43,6 +44,15 @@ def notes(ver: str) -> str:
     if not m or not m.group(1).strip():
         sys.exit(f"CHANGELOG.md has no notes under \"## v{ver}\"")
     return m.group(1).strip() + "\n"
+
+
+def write_licences(z: zipfile.ZipFile, top: str) -> None:
+    """The tool's licence (MIT) and the terms of the exported files (CC0 1.0, docs/LICENSE*.md)."""
+    z.write(ROOT / "LICENSE", f"{top}/LICENSE")
+    for src, dst in (("LICENSE.md", "LICENSE-EXPORTS.md"), ("LICENSE-JA.md", "LICENSE-EXPORTS-JA.md")):
+        text = (ROOT / "docs" / src).read_text(encoding="utf-8")
+        text = text.replace("(LICENSE-JA.md)", "(LICENSE-EXPORTS-JA.md)").replace("(LICENSE.md)", "(LICENSE-EXPORTS.md)")
+        z.writestr(f"{top}/{dst}", text)
 
 
 def editor_page(app: bool = False) -> bytes:
@@ -85,7 +95,7 @@ def main() -> None:
         z.write(PARTS / "index.html", f"{top}/index.html")
         z.write(PARTS / "mods.js", f"{top}/mods.js")
         z.write(PARTS / "mods" / "README.txt", f"{top}/mods/README.txt")
-        z.write(ROOT / "LICENSE", f"{top}/LICENSE")
+        write_licences(z, top)
         for f in sorted(editor.rglob("*")):
             rel = f.relative_to(editor).as_posix()
             if f.is_dir() or rel in SKIP:
