@@ -166,6 +166,11 @@ function facePoints(){
 // ---- drawing: the アタリ (lines and circles) ----------------------------------------------
 const BONES = PARENT.map((p, i) => [p, i]).filter(([p]) => p >= 0);
 function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+// joints the figure does not show (S.hide, their names: a centaur's or a lamia's human legs, set by a
+// mod): not drawn, not picked, not in the OpenPose picture, hiding nothing; still there, so the pose
+// and what hangs on them keep working
+const hidJ = i => !!(S.hide && S.hide.length && S.hide.includes(J[i]));
+const legsHidden = () => hidJ(IX.r_knee) && hidJ(IX.l_knee);
 // the body's parts for line colours: a bone takes its child joint's part
 const PART_OF = {pelvis: "torso", waist: "torso", chest: "torso", r_shoulder: "torso", l_shoulder: "torso",
   r_hip: "torso", l_hip: "torso", neck: "head", head: "head", r_elbow: "r_arm", r_wrist: "r_arm",
@@ -183,7 +188,7 @@ function bodySpheres(fig){                    // the figure in S now
   const put = (a, b, r, bone) => { const d = sub(b, a), L = len(d), n = Math.max(1, Math.ceil(L / Math.max(2, r)));
     for (let k = 0; k <= n; k++) out.push({c: add(a, mul(d, k / n)), r, fig, bone}); };
   BONES.forEach(([a, b]) => {
-    if (b === IX.head) return;
+    if (b === IX.head || hidJ(b)) return;
     const r = TORSO_JOINTS.has(a) && TORSO_JOINTS.has(b) && (b === IX.waist || b === IX.chest || b === IX.neck)
       ? R[IX.waist] * 0.8 : Math.max(2.5, Math.min(R[a] || 4, R[b] || 4) * 0.9);
     put(P[a], P[b], r, b);
@@ -270,8 +275,8 @@ function drawAtari(ctx, W, H, opts = {}){
   }
   const wl = tp.waistLine.map(q => project(q, W, H));
   items.push({z: wl[1].z - 0.4, kind: "line", pp: wl, q3: tp.waistLine});
-  BONES.forEach(([a, b]) => { if (!TORSO_BONES.has(b) && !HAND_J.has(b)) items.push({z: (P[a].z + P[b].z)/2, kind: "bone", a, b}); });
-  J.forEach((_, i) => items.push({z: P[i].z + 0.01, kind: "joint", i}));
+  BONES.forEach(([a, b]) => { if (!TORSO_BONES.has(b) && !HAND_J.has(b) && !hidJ(b)) items.push({z: (P[a].z + P[b].z)/2, kind: "bone", a, b}); });
+  J.forEach((_, i) => { if (!hidJ(i)) items.push({z: P[i].z + 0.01, kind: "joint", i}); });
   items.sort((u, v) => u.z - v.z);
   // what lies well behind the body's middle (10 cm and more) is drawn lighter
   const zs = P.map(p => p.z).sort((a, b) => a - b), zmid = zs[Math.floor(zs.length / 2)];
@@ -486,13 +491,18 @@ function openposePoints(W, H){
 function drawOpenpose(ctx, W, H, noBg){
   if (!noBg){ ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); }
   const K = openposePoints(W, H), sw = Math.max(2, Math.round(4 * Math.max(W, H) / 1024));
+  // hidden joints are missing points (as OpenPose leaves out what it cannot see), their limbs too
+  const OP_J = [-1, IX.neck, IX.r_shoulder, IX.r_elbow, IX.r_wrist, IX.l_shoulder, IX.l_elbow, IX.l_wrist, IX.r_hip, IX.r_knee,
+    IX.r_ankle, IX.l_hip, IX.l_knee, IX.l_ankle, -1, -1, -1, -1];
+  const off = i => OP_J[i] >= 0 && hidJ(OP_J[i]);
   OP_LIMBS.forEach(([a, b], i) => {
+    if (off(a) || off(b)) return;
     const pa = K[a], pb = K[b], mx = (pa.x + pb.x)/2, my = (pa.y + pb.y)/2;
     const l = Math.hypot(pa.x - pb.x, pa.y - pb.y), ang = Math.atan2(pa.y - pb.y, pa.x - pb.x);
     ctx.fillStyle = `rgba(${OP_COLORS[i].join(",")},0.6)`;
     ctx.beginPath(); ctx.ellipse(mx, my, l/2, sw, ang, 0, 2*Math.PI); ctx.fill();
   });
-  K.forEach((p, i) => { ctx.fillStyle = `rgb(${OP_COLORS[i].join(",")})`;
+  K.forEach((p, i) => { if (off(i)) return; ctx.fillStyle = `rgb(${OP_COLORS[i].join(",")})`;
     ctx.beginPath(); ctx.arc(p.x, p.y, sw, 0, 2*Math.PI); ctx.fill(); });
   for (const side of ["r", "l"]){
     const pts = handPoints(side, W, H), hw = Math.max(1, sw * 0.5);
@@ -602,7 +612,7 @@ function draw(){
     const P = S.P.map(p => sideProject(p, W, H)), ink = cssVar(active ? "--figure" : "--far");
     const col = g => partColor(g) || ink;
     ctx.lineWidth = Math.max(1.2, W / 260);
-    BONES.forEach(([a, b]) => { if (HAND_J.has(b)) return; ctx.strokeStyle = col(PART_OF[J[b]]);
+    BONES.forEach(([a, b]) => { if (HAND_J.has(b) || hidJ(b)) return; ctx.strokeStyle = col(PART_OF[J[b]]);
       strokeSeen(ctx, S.P[a], S.P[b], W, H, skipBone(b), sideProject, seen); });
     const tps = torsoParts();
     ctx.strokeStyle = col("torso");
@@ -610,6 +620,7 @@ function draw(){
     else for (const poly of tps.blocks) poly.forEach((q, k) => strokeSeen(ctx, q, poly[(k + 1) % poly.length], W, H, skipTorso(), sideProject, seen));
     for (let k = 1; k < tps.waistLine.length; k++) strokeSeen(ctx, tps.waistLine[k - 1], tps.waistLine[k], W, H, skipTorso(), sideProject, seen);
     P.forEach((p, i) => {
+      if (hidJ(i)) return;
       ctx.strokeStyle = active && i === sel ? cssVar("--sel") : HANDLE.has(i) ? cssVar("--far") : col(PART_OF[J[i]]);
       if (S.hiddenDashed && hiddenAt(S.P[i], FW, FH, skipJoint(i))) ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2.5]);
       ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2, handleR(i) * p.s), 0, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]); });
@@ -619,10 +630,12 @@ function draw(){
   occFrozen = S.hiddenDashed ? occluders(FW, FH) : null;
   try { if (typeof everyFigure === "function") everyFigure(sideFigure); else sideFigure(true, true); }
   finally { occFrozen = null; }
-  const hgt = standingHeight();
-  $("headsV").textContent = (hgt / (2 * S.R[IX.head])).toFixed(1) + " 頭身";
+  const hgt = standingHeight(), n = headsCount().toFixed(1);
+  $("headsV").textContent = legsHidden() ? `${n} 頭身（人間なら）` : n + " 頭身";
   if (document.activeElement !== $("heightN")) $("heightN").value = hgt.toFixed(1);
-  $("heightP").textContent = `${hgt.toFixed(1)} cm（${(hgt / (2 * S.R[IX.head])).toFixed(1)} 頭身）`;
+  // legs hidden: the sitting height, and the heads count of a human that tall sitting
+  const lab = legsHidden() ? "座高" : "身長"; if ($("heightL").textContent !== lab) $("heightL").textContent = lab;
+  $("heightP").textContent = legsHidden() ? `${sittingHeight().toFixed(1)} cm（人間なら ${n} 頭身）` : `${hgt.toFixed(1)} cm（${n} 頭身）`;
   showSelected(); camCoords(); figCoords();
 }
 // standing height from the bone lengths (whatever the pose): crown to the floor
@@ -633,7 +646,17 @@ function standingHeight(){
     + bl(s + "_toe", s + "_ankle") * 0.55;
   return upper + (leg("r") + leg("l")) / 2;
 }
-function headsCount(){ return standingHeight() / (2 * S.R[IX.head]); }
+// the heads count; a body without human legs (hidden) counts as a human of its sitting height would
+function headsCount(){ return (legsHidden() ? humanHeight() : standingHeight()) / (2 * S.R[IX.head]); }
+// the standing height a standard human of this sitting height has (the standard body's ratio)
+let sitRatio = 0;
+function humanHeight(){
+  if (!sitRatio){ const keep = S; S = Object.assign({}, S, {P: REST, R: REST_R});
+    try { sitRatio = standingHeight() / sittingHeight(); } finally { S = keep; } }
+  return sittingHeight() * sitRatio;
+}
+// what the height means for this figure: standing, or (legs hidden) sitting
+function heightMeasure(){ return legsHidden() ? sittingHeight() : standingHeight(); }
 // 座高: from the top of the head down to the thigh roots (where a seated body meets the seat), the
 // standing height's upper part; the measure for a body whose legs are not a human's (centaur, lamia)
 function sittingHeight(){
@@ -648,6 +671,7 @@ function pick(cv, x, y){
   const W = cv.width, H = cv.height, isSide = cv === side;
   let best = -1, bd = 1e9;
   S.P.forEach((p, i) => {
+    if (hidJ(i)) return;
     const q = isSide ? sideProject(p, W, H) : project(p, W, H);
     const d = Math.hypot(q.x - x, q.y - y) - Math.max(8, handleR(i) * q.s);
     if (d < bd){ bd = d; best = i; }

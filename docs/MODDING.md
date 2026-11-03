@@ -284,6 +284,16 @@ The editor gives your section's controls melta UI's look by what they are (`sect
 | `wheel` | `x, y, step, event` | return `true` when you used it (step: +1 / −1) |
 | `takePose` | `record` | a pose being kept in ポーズ・小物・位置 (API 1.3): add your part to the record (a field of your own name) |
 | `putPose` | `record` | that record, after the figure took the pose (API 1.3): read your part back |
+| `figureCopy` | `from, to` | 人物の管理's Copy made figure `to` (now `S.figId`) from `from` (API 1.3): copy what you keep per figure |
+| `figureRemove` | `id` | the figure `id` was deleted (API 1.3): drop what you kept for it |
+
+**More per figure (API 1.3).** `api.ui.addFigureExtra({id, label, labelEn, has(tune), strip(), tune()})`
+adds a box of your own to 人物の管理 › 付随物のリセット: `has` says whether there is anything to take
+off (`tune` false) or to put back to its defaults (`tune` true), `strip` / `tune` do it for the edited
+figure, in the same undo step as the rest. A figure's `S.hide` (joint names, kept per figure) leaves
+those joints out of drawing, picking, the hidden lines and the OpenPose picture; with both knees
+hidden the figure is measured by its sitting height (`sittingHeight()`), and its heads count is a
+standard human's of that sitting height.
 
 The canvas state (`ctx`) is saved and restored around each drawing hook.
 

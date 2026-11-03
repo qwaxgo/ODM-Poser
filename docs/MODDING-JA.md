@@ -257,6 +257,16 @@ api.i18n.addRule(/^(.+)を投げました。$/, m => `Threw the ${m[1]}.`);   //
 | `wheel` | `x, y, step, event` | 使ったら `true` を返す（step は +1／−1） |
 | `takePose` | `record` | ポーズ・小物・位置に記憶するポーズ（API 1.3）：自分の分を record に足す（自分の名前の項目で） |
 | `putPose` | `record` | その record（API 1.3）。人物がポーズを取ったあとに呼ばれるので、自分の分を読み戻す |
+| `figureCopy` | `from, to` | 人物の管理の「複製」で、`from` から人物 `to`（いまの `S.figId`）を作った（API 1.3）。人物ごとに持つものを写す |
+| `figureRemove` | `id` | 人物 `id` を削除した（API 1.3）。その人物の分を消す |
+
+**人物ごとのもの（API 1.3）。** `api.ui.addFigureExtra({id, label, labelEn, has(tune), strip(), tune()})` で、人物の管理 › 付随物のリセットに自分のチェックを足せます。
+
+- `has`：外すもの（`tune` が false）か、初期値に戻すもの（`tune` が true）があるかを返す
+- `strip` / `tune`：編集している人物に対して、それを行う。ほかのリセットと同じ「元に戻す」1回にまとまります
+
+人物の `S.hide`（関節の名前の一覧。人物ごと）に入れた関節は、描画・選択・隠れ線・OpenPose 画像から外れます。
+両膝を隠した人物は座高（`sittingHeight()`）で測り、頭身は「同じ座高の標準の人間なら何頭身か」で数えます。
 
 描画のフックの前後で、キャンバスの状態（`ctx`）は保存・復元されます。
 

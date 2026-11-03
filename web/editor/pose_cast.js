@@ -7,8 +7,12 @@
 // 配置 mode moves them whoever is edited. Each figure can be moved and turned as a whole, and the
 // pictures can show everyone or one figure (書き出す人物).
 //
-// S.others: [{P, R, hands, head, body, twist, pins, items, auras, wire, scale, shape, sex, figId, figName}]
-const FIG_KEYS = ["P", "R", "hands", "head", "body", "twist", "pins", "items", "auras", "wire", "scale", "shape", "sex", "figId", "figName"];
+// S.others: [{P, R, hands, head, body, twist, pins, items, auras, wire, scale, shape, sex, hide, figId, figName}]
+// (hide: the names of joints the figure does not show, as a centaur's human legs: pose_main.js hidJ)
+const FIG_KEYS = ["P", "R", "hands", "head", "body", "twist", "pins", "items", "auras", "wire", "scale", "shape", "sex", "hide", "figId", "figName"];
+// what mods keep per figure (pose_api.js: on("figureCopy") / on("figureRemove")): told after a copy
+// (the copied figure's id, the new one's) and a removal (the id gone), in the same undo step
+const FIG_HOOKS = window.ODMFigureHooks = window.ODMFigureHooks || {copy: [], remove: []};
 function takeFigure(){ const f = {}; for (const k of FIG_KEYS) f[k] = S[k]; return f; }
 function putFigure(f){ const d = fresh(); for (const k of FIG_KEYS) S[k] = f[k] !== undefined ? f[k] : d[k]; }
 function withFigure(f, fn){ const keep = takeFigure(); putFigure(f); try { return fn(); } finally { putFigure(keep); } }
@@ -85,6 +89,7 @@ function placeFigure(d, yaw){
 function newFigureId(){ return Math.max(S.figId || 1, ...(S.others || []).map(f => f.figId || 1)) + 1; }
 function addFigure(copy){
   remember();
+  const from = S.figId || 1;
   let f;
   if (copy){ f = JSON.parse(JSON.stringify(takeFigure())); f.items = (f.items || []).filter(it => !loose(it)); }
   else { const d = fresh(); f = {}; for (const k of FIG_KEYS) f[k] = d[k]; }
@@ -100,6 +105,7 @@ function addFigure(copy){
   const cur = takeFigure(); passLoose(cur, f);
   S.others.push(cur); putFigure(f); sel = -1;
   if (typeof scSel === "number") scSel = -1;
+  if (copy) for (const h of FIG_HOOKS.copy) h(from, f.figId);
   afterEdit(); syncUI(); draw();
   say(`${f.figName}を${copy ? "複製して" : ""}追加しました。いま編集しているのは${f.figName}です。`);
 }
@@ -107,11 +113,12 @@ function removeFigure(){
   const others = S.others || [];
   if (!others.length){ say("人物が1人のときは削除できません。", true); return; }
   remember();
-  const gone = S.figName;
+  const gone = S.figName, goneId = S.figId || 1;
   let k = 0; others.forEach((f, i) => { if ((f.figId || 0) < (others[k].figId || 0)) k = i; });
   const next = others.splice(k, 1)[0]; passLoose(S, next);
   putFigure(next); sel = -1;
   if (typeof scSel === "number") scSel = -1;
+  for (const h of FIG_HOOKS.remove) h(goneId);
   syncUI(); draw(); say(`${gone}を削除しました。`);
 }
 // clicking another figure's circle edits that figure (the click then goes on as usual)

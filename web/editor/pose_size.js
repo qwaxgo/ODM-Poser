@@ -114,16 +114,20 @@ function scaleFree(base, k, fixed){
   }
   S.P = out; S.R = base.R.map((r, i) => fixed.has(R_GROUP[J[i]]) ? r : r * k);
 }
+// a figure whose human legs are hidden (centaur, lamia: legsHidden in pose_main.js) is measured by its
+// 座高 instead of its height, and its heads count is a human's of that sitting height (humanHeight)
+const measureFn = () => (legsHidden() ? sittingHeight : standingHeight);
+const tall = () => (legsHidden() ? humanHeight() : standingHeight());
 // the k (bisection) for which the free parts make the height h (or another measure: sittingHeight)
-function fitHeight(h, fixed, measure = standingHeight){
+function fitHeight(h, fixed, measure = measureFn()){
   const base = snap(); let lo = 0.2, hi = 5;
   for (let n = 0; n < 40; n++){ const m = (lo + hi) / 2; scaleFree(base, m, fixed); if (measure() < h) lo = m; else hi = m; }
   scaleFree(base, (lo + hi) / 2, fixed);
 }
 const locked = () => new Set(["head", "torso", "arms", "legs"].filter(g => $("szLock_" + g).checked));
-const heads = () => standingHeight() / (2 * S.R[IX.head]);
+const heads = () => headsCount();
 function setHeads(H){                          // the head's size (with the neck kept), for H heads at this height
-  for (let n = 0; n < 6; n++){ const want = standingHeight() / (2 * H); scaleHead(want / S.R[IX.head]); }
+  for (let n = 0; n < 6; n++){ const want = tall() / (2 * H); scaleHead(want / S.R[IX.head]); }
 }
 // after a change: hold what 保つもの keeps (the height h0 or the heads count n0)
 function hold(h0, n0, changed){
@@ -152,14 +156,14 @@ function setSitting(h){
   fitHeight(h, fix, sittingHeight);
   // 頭身を保つ: the head follows the new height, the torso settles the sitting height again
   if (keep === "heads") for (let n = 0; n < 8; n++){ setHeads(n0); fitHeight(h, new Set([...fix, "head"]), sittingHeight); }
-  // 身長を保つ: the legs make up the height (unless they are locked)
-  if (keep === "height" && !locked().has("legs")) fitHeight(h0, new Set([...locked(), "head", "torso", "arms"]));
+  // 身長を保つ: the legs make up the height (unless they are locked, or hidden: then 座高 is the height)
+  if (keep === "height" && !locked().has("legs") && !legsHidden()) fitHeight(h0, new Set([...locked(), "head", "torso", "arms"]), standingHeight);
 }
 function setHeadsTo(H){
   if (locked().has("head")){ say("頭を固定しているので、頭身は変えられません。", true); return; }
-  const h0 = standingHeight();
+  const h0 = heightMeasure();
   if ($("szKeep").value === "height"){
-    for (let n = 0; n < 5; n++){ scaleHead((h0 / (2 * H)) / S.R[IX.head]); const fix = locked(); fix.add("head"); fitHeight(h0, fix); }
+    for (let n = 0; n < 5; n++){ scaleHead((tall() / (2 * H)) / S.R[IX.head]); const fix = locked(); fix.add("head"); fitHeight(h0, fix); }
   } else setHeads(H);
 }
 
@@ -202,6 +206,9 @@ function show(){
     if (document.activeElement !== n) n.value = v;
   }
   const keep = $("szKeep").value;
+  // legs hidden: no standing height to set (座高 is the height; the heads count a human's)
+  const row = $("szHeight").closest(".row"), hide = legsHidden();
+  row.style.display = row.previousElementSibling.style.display = hide ? "none" : "";
   for (const id of ["szHeight", "szHeightN"]) $(id).disabled = keep === "height";
   for (const id of ["szHeads", "szHeadsN"]) $(id).disabled = keep === "heads";
   const it = curItem(), def = it && (window.PROPS || {})[it.key];
@@ -215,7 +222,7 @@ function show(){
 }
 function apply(id, v){
   if (!isFinite(v)) return;
-  const h0 = standingHeight(), n0 = heads();
+  const h0 = heightMeasure(), n0 = heads();
   // the body grows from its lowest point (fromBottom: pose_main.js), the feet stay on the floor
   if (id === "szHeight") fromBottom(() => setHeight(v));
   else if (id === "szHeads") fromBottom(() => setHeadsTo(v));

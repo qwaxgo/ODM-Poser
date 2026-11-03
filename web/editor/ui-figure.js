@@ -84,9 +84,19 @@ cast.querySelector("#fcDel").addEventListener("click", () => removeFigure());
 // wire's height back
 const mineOf = () => (S.items || []).map((it, n) => [it, n]).filter(([it]) => !(typeof loose === "function" && loose(it)));
 const picked = () => { const o = {}; cast.querySelectorAll("[data-fr]").forEach(c => { o[c.dataset.fr] = c.checked; }); return o; };
+// a mod's own kinds (pose_api.js: api.ui.addFigureExtra): {id, label, has(tune), strip(), tune()}, a
+// box of its own among the ones ticked, done in the same undo step as the rest
+const EXTRAS = [];
+window.ODMFigure = {addExtra(x){
+  EXTRAS.push(x);
+  const lab = document.createElement("label"); lab.innerHTML = `<input type="checkbox" data-fr="mod:${x.id}" checked> `;
+  lab.append(x.label); cast.querySelector(".fc-pick").appendChild(lab);
+  lab.querySelector("input").addEventListener("change", () => { castKey = ""; updateCast(); });
+}};
+const extrasOn = k => EXTRAS.filter(x => k["mod:" + x.id]);
 function hasExtra(k, tune){
   return k.items && mineOf().length > 0 || k.auras && (S.auras || []).length > 0 || k.wire && !!(S.wire && S.wire.on) ||
-    !tune && k.pins && Object.keys(S.pins || {}).length > 0;
+    !tune && k.pins && Object.keys(S.pins || {}).length > 0 || extrasOn(k).some(x => x.has(tune));
 }
 function stripFigure(){
   const k = picked(); if (!hasExtra(k, false)) return;
@@ -96,6 +106,7 @@ function stripFigure(){
   if (k.auras) S.auras = [];
   if (k.wire && S.wire) S.wire.on = false;
   if (k.pins) S.pins = {};
+  for (const x of extrasOn(k)) x.strip();
   afterEdit(); fillItemList(); if (typeof syncStyle === "function") syncStyle(); if (typeof syncScene === "function") syncScene(); draw();
   say("この人物の付随物を外しました（元に戻すで戻せます）。");
 }
@@ -107,6 +118,7 @@ function tuneFigure(){
   if (k.auras) (S.auras || []).forEach(a => { a.size = 14; a.color = (AURA_KINDS[a.kind] || AURA_KINDS.flame)[1];
     for (const kk of ["even", "sharp", "round", "angle", "height", "thick", "fine", "spread", "density"]) delete a[kk]; });
   if (k.wire && S.wire && S.wire.on){ S.wire.height = 300; if (typeof syncScene === "function") syncScene(); setWire(false); }
+  for (const x of extrasOn(k)) x.tune();
   afterEdit(); fillItemList(); if (typeof syncStyle === "function") syncStyle(); draw();
   say("この人物の付随物の大きさ・色などを初期値に戻しました。");
 }

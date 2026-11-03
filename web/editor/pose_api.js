@@ -285,14 +285,26 @@ function makeApi(mod){
         return sec;
       },
       $: id => document.getElementById(id),
+      // a kind of the mod's own in 人物の管理 › 付随物のリセット: {id, label, labelEn, has(tune): anything to
+      // do, strip(): take it all off the edited figure, tune(): keep it, back to its defaults}
+      addFigureExtra({id, label, labelEn, has, strip, tune}){
+        if (!window.ODMFigure || !id) return;
+        tr(label, labelEn);
+        window.ODMFigure.addExtra({id: mod.id + ":" + id, label: label || id, has: guarded(mod, "figure extra", has || (() => false)),
+          strip: guarded(mod, "figure extra", strip || (() => {})), tune: guarded(mod, "figure extra", tune || (() => {}))});
+      },
     },
     // events: drawBehind / draw (ctx, W, H, opts: export, side ...), drawSide, afterEdit (moved joint
     // index or -1), sync (after undo / load), mode (the new mode), pointerDown (canvas, x, y, event:
     // return {move(x, y, event)} to take the drag), wheel (x, y, step, event: return true when used),
     // takePose (the record of a pose being kept in ポーズ・小物・位置: add the mod's part to it) and
-    // putPose (that record, after the figure took the pose)
+    // putPose (that record, after the figure took the pose), figureCopy (the copied figure's id, the
+    // copy's: S.figId), figureRemove (the id of the figure deleted)
     on(event, fn){
       if (typeof fn !== "function") throw new Error("on(event, fn)");
+      if (event === "figureCopy" || event === "figureRemove"){
+        const h = window.ODMFigureHooks = window.ODMFigureHooks || {copy: [], remove: []};
+        h[event === "figureCopy" ? "copy" : "remove"].push(guarded(mod, event, fn)); return; }
       if (event === "takePose" || event === "putPose"){
         const h = window.ODMPoseSetHooks = window.ODMPoseSetHooks || {take: [], put: []};
         h[event === "takePose" ? "take" : "put"].push(guarded(mod, event, fn)); return; }
@@ -300,7 +312,7 @@ function makeApi(mod){
         DOWN_HOOKS.splice(Math.max(0, DOWN_HOOKS.length - 1), 0, (cv, x, y, e) => { const d = g(cv, x, y, e);
           return d && typeof d.move === "function" ? {move: guarded(mod, "drag", d.move)} : null; }); return; }
       if (event === "wheel"){ const g = guarded(mod, "wheel", fn); WHEEL_HOOKS.push((x, y, step, e) => !!g(x, y, step, e)); return; }
-      if (!hooks[event]) throw new Error(`no event "${event}" (${[...Object.keys(hooks), "pointerDown", "wheel", "takePose", "putPose"].join(", ")})`);
+      if (!hooks[event]) throw new Error(`no event "${event}" (${[...Object.keys(hooks), "pointerDown", "wheel", "takePose", "putPose", "figureCopy", "figureRemove"].join(", ")})`);
       hooks[event].push(guarded(mod, event, fn));
     },
   };

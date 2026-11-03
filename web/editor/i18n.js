@@ -456,6 +456,9 @@
     [/^(.+) \/ ([^぀-鿿]+)$/, m => jp.test(m[1]) ? m[2] : null],               // "ダガー / Dagger"
     [/^([\d.]+) cm（([\d.]+) 頭身）$/, m => `${m[1]} cm (${m[2]} heads)`],
     [/^([\d.]+) 頭身$/, m => `${m[1]} heads`],
+    [/^([\d.]+) cm（人間なら ([\d.]+) 頭身）$/, m => `${m[1]} cm (${m[2]} heads as a human)`],
+    [/^座高$/, () => "Sitting height"],
+    [/^([\d.]+) 頭身（人間なら）$/, m => `${m[1]} heads (as a human)`],
     [/^.+（([a-z_]+)）$/, m => HAND[m[1]] ? `${HAND[m[1]]}` : null],                    // hand shape options
     [/^(.+)を固定しました。$/, m => `Pinned the ${joint(m[1])}.`],
     [/^(.+)の固定を外しました。$/, m => `Unpinned the ${joint(m[1])}.`],
