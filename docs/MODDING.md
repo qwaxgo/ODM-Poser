@@ -151,6 +151,7 @@ Each shape is an object with one key (helpers in `api.shapes`):
 | `at`, `sets` | `wear`: where (see above) |
 | `grab` | `grab`: the lines to take hold of, `[[[x,y,z], [x,y,z]], ...]` |
 | `bayonet` | the muzzle [x, y, z]: offers "fix a bayonet" (the blade goes along +z) |
+| `couchable`, `couch` | `couchable`: may be held couched (the 持ち方 choice in the Equip tab). `couch`: held couched by default (lances) |
 | `segs` | sections whose lengths change one by one: `[["grip", -7, 7], ["blade", 9.5, 90]]` ([id, from, to] in cm). `grip`, `blade`, `head`, `stock`, `barrel`, `claw`, `tip` and `tube` come with a name; others take one as `["hilt", 7, 9, "鍔", "Guard"]` or `{id, from, to, ja, en}`. Sections must not overlap |
 | `segAxis`, `segAnchor` | the axis the sections lie along (`"x"`, `"y"` or `"z"`; `"y"` if not given) and the point that stays (cm on that axis; 0 if not given: a held thing's fist) |
 | `glow`, `color` | drawn glowing in this colour (effects) |

@@ -54,10 +54,14 @@ it while the hand's hold stays; the other hand of a two-handed thing and a bayon
 |--------|----------|
 | Swords, katana, knives, kunai | Grip, Blade |
 | Axes, hammers, halberd | Grip, Head |
-| Spears, lances | Grip, Tip (Lance) |
+| Spear | Grip, Tip (Lance) |
+| Huge lance | Shaft, Lance |
+| Gun lance (bayonet type) | Stock, Barrel, Bayonet |
 | Double-bladed sword | Grip, Upper blade, Lower blade |
 | Guns (rifle, shotgun ...) | Stock, Barrel |
 | Claws | (Grip), Claws |
+
+Lances and the gun lance are held couched by default (under the arm, thrust forward); the gun lance is one-handed. Long weapons (spears, polearms, staffs, sticks) can be gripped or couched: the **Way of holding** choice in the Equip tab. **Where it is held** moves the grip along the thing; **↺ Way of holding and place to the start** puts both back. A plain stick is among the one-handed weapons.
 
 **↺ This section back** and **↺ All sections back** restore the lengths. A mod's props can have sections too (`segs` in the mod docs).
 

@@ -109,7 +109,7 @@ function radK(it, d){
 // toward the palm; for things pinched the bit nearest its origin (across a thin part: its middle)
 const heldInHand = it => !it.where && (PROPS_[it.key] || {}).place === "hand";
 const gripMemo = new Map();
-function gripPoint(it){
+function gripBase(it){
   const def = PROPS_[it.key] || {};
   if (def.grip) return segPoint(it, def.grip);
   if (def.pose !== "cup" && def.pose !== "pinch") return [0, 0, 0];
@@ -122,6 +122,36 @@ function gripPoint(it){
     gripMemo.set(key, g);
   }
   return g;
+}
+// the point the hand holds: the item's own grip, moved along its long axis by 持つ位置 (it.gripAt, cm)
+function gripPoint(it){
+  const base = gripBase(it).slice();
+  if (!it.gripAt) return base;
+  base[longAxis(it)] += +it.gripAt;
+  return base;
+}
+// 持ち方 of a held thing: "grip" or "couch" (it.hold; else the item's own default, def.couch)
+function holdOf(it){ const d = PROPS_[it.key] || {}; return it.hold || (d.couch ? "couch" : "grip"); }
+// the holding arm to the default place for a grip: out in front of the chest, at shoulder height
+function gripHold(side){
+  const s = side === "l" ? "l" : "r", wi = IX[s + "_wrist"], cf = chestFrame(), sx = s === "l" ? 1 : -1;
+  reachWith(wi, add(add(cf.o, mul(bodyFront(), 28)), add(mul(cf.x, sx * 14), [0, -8, 0])), false);
+}
+// change the 持ち方 of a held thing; the arm moves only when the way of holding changes
+function setHold(it, mode){
+  const was = holdOf(it);
+  freeHands(it); it.hold = mode;
+  if (mode === "couch") it.both = false; else delete it.both;
+  holdHands(it);
+  if (holdOf(it) !== was) (mode === "couch" ? couchHold : gripHold)(it.hand);
+}
+// back to the item's own defaults: the grip, the place on it, the way of holding
+function resetGrip(it){
+  const was = holdOf(it);
+  freeHands(it); delete it.gripAt; delete it.hold; delete it.both;
+  if (holdOf(it) === "couch") it.both = false;
+  holdHands(it);
+  if (holdOf(it) !== was) (holdOf(it) === "couch" ? couchHold : gripHold)(it.hand);
 }
 function itemLocal(it, p, k = 1){             // the item's own size and turn, before its frame
   if (heldInHand(it)) p = sub(p, gripPoint(it));
@@ -736,6 +766,14 @@ function placeAlone(key){
   afterEdit(); fillItemList(); draw();
   say("単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。");
 }
+// カウチ (def.couch: lances): the holding arm comes back to the hip, its hand low by the side, so the
+// shaft lies along the forearm, forward and under the arm
+function couchHold(side){
+  const s = side === "l" ? "l" : "r", wi = IX[s + "_wrist"], cf = chestFrame(), P = S.P;
+  const sx = s === "l" ? 1 : -1;
+  const t = add(add(P[IX.pelvis], mul(bodyFront(), 30)), add(mul(cf.x, sx * 12), [0, 12, 0]));
+  reachWith(wi, t, false);
+}
 function addItem(key, hand){
   const def = PROPS_[key]; if (!def) return;
   remember();
@@ -744,7 +782,9 @@ function addItem(key, hand){
     it.hand = hand === "l" ? "l" : "r";
     // one thing per hand: a new one replaces what that hand held (things on the back or put down stay)
     S.items = (S.items || []).filter(o => !(PROPS_[o.key] && PROPS_[o.key].place === "hand" && !o.where && o.hand === it.hand));
+    if (holdOf(it) === "couch") it.both = false;
     holdHands(it);
+    if (holdOf(it) === "couch") couchHold(it.hand);
   } else if (def.place === "body"){
     S.items = (S.items || []).filter(o => !(PROPS_[o.key] && PROPS_[o.key].place === "body" && !o.where));
     holdHands(it);
@@ -809,6 +849,11 @@ function buildScenePanel(){
     <div id="scItemMore">
       <div class="btns" style="margin-top:6px"><button id="scBack">背負う</button><button id="scWorld">床・物体に置く</button>
         <button id="scHold">手に持つ・身に着ける</button><button id="scGround2">接地させる</button></div>
+      <div id="scHoldRow" class="grid2" style="margin-top:6px">
+        <div><label id="scHoldLbl">持ち方</label><select id="scHoldSel"><option value="grip">握る</option><option value="couch">カウチ（脇に挟む）</option></select></div>
+        <div><label>持つ位置（長い方向）</label><div class="row"><input type="range" id="scGripAt" min="-80" max="80" step="1"><input type="number" class="num" id="scGripAtN" step="1"><span class="unit">cm</span></div></div>
+      </div>
+      <div class="btns"><button id="scGripReset" title="持ち方と持つ位置を、この小物の初期値に戻す">↺ 持ち方と持つ位置を戻す</button></div>
       <label id="scBayRow"><input type="checkbox" id="scBay"> 銃剣を付ける</label>
       <div id="scDims" class="grid2"></div>
       <div class="row" style="margin-top:6px"><label style="margin:0;flex:1"><input type="checkbox" id="scColorOn"> 線の色を変える</label>
@@ -878,6 +923,14 @@ function buildScenePanel(){
   onItem("scWorld", putDown, "床・物体の上に置きました。配置モードでドラッグして動かせます。");
   onItem("scHold", holdAgain, "持たせました（手の形も合わせました）。");
   onItem("scGround2", it => { it.grounded = true; groundItem(it); }, "接地させました。");
+  $("scHoldSel").addEventListener("change", e => { const it = S.items[scSel]; if (!it) return; remember();
+    setHold(it, e.target.value); afterEdit(); fillItemList(); draw(); });
+  const setAt = v => { const it = S.items[scSel]; if (!it || !isFinite(v)) return; if (v === 0) delete it.gripAt; else it.gripAt = v; afterEdit(); draw(); };
+  $("scGripAt").addEventListener("pointerdown", remember);
+  $("scGripAt").addEventListener("input", e => { $("scGripAtN").value = e.target.value; setAt(+e.target.value); });
+  $("scGripAtN").addEventListener("change", e => { remember(); $("scGripAt").value = e.target.value; setAt(+e.target.value); });
+  $("scGripReset").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
+    resetGrip(it); afterEdit(); fillItemList(); draw(); say("持ち方と持つ位置を戻しました。"); });
   $("scBay").addEventListener("change", e => { const it = S.items[scSel]; if (!it) return; remember(); it.bayonet = e.target.checked; draw(); });
   const setColor = () => { const it = S.items[scSel]; if (!it) return; remember();
     it.color = $("scColorOn").checked ? $("scColor").value : undefined; draw(); };
@@ -997,6 +1050,11 @@ function showItem(){
   $("scBoth").parentNode.style.display = d && d.grip2 ? "inline" : "none";
   if (!it) return;
   $("scBoth").checked = it.both !== false;
+  const hand = d && d.place === "hand", ways = d && (d.couchable || d.couch);
+  $("scHoldRow").style.display = hand ? "" : "none"; $("scGripReset").style.display = hand ? "" : "none";
+  $("scHoldSel").parentNode.style.display = ways ? "" : "none";
+  $("scHoldSel").value = holdOf(it);
+  $("scGripAt").value = it.gripAt || 0; $("scGripAtN").value = it.gripAt || 0;
   const vals = {scSize: Math.round((it.scale || 1) * 100), scRx: it.rot[0], scRy: it.rot[1], scRz: it.rot[2],
     scOx: it.off[0], scOy: it.off[1], scOz: it.off[2]};
   for (const [id, v] of Object.entries(vals)){ $(id).value = v; $(id + "N").value = Math.round(v); }

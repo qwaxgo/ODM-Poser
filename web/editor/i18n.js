@@ -4,6 +4,9 @@
 (() => {
   const KEY = "odm-poser-lang";
   const T = {
+    "持ち方": "Way of holding", "握る": "Grip", "カウチ（脇に挟む）": "Couched (under the arm)", "持つ位置（長い方向）": "Where it is held (along its length)",
+    "↺ 持ち方と持つ位置を戻す": "↺ Way of holding and place to the start", "持ち方と持つ位置を戻しました。": "The way of holding and the place are back to the start.",
+    "持ち方と持つ位置を、この小物の初期値に戻す": "Back to this thing's own start", "棒（ただの棒）": "Plain stick", "何の変哲もない棒。握るか、カウチで持つ": "A plain stick. Grip it, or hold it couched.",
     "↺ 色を初期状態に": "↺ Colours to the start", "線・床・壁・ワイヤー・小物・物体・オーラの色を、最初の色に戻す": "Back to the first colours: lines, floor, walls, wire, things, solids and auras",
     "線・床・壁・天井・ワイヤー・小物・物体・オーラの色を、最初の色に戻します（「元に戻す」で取り消せます）。": "Puts the colours of the lines, floor, walls, ceiling, wire, things, solids and auras back to the first ones (Undo takes it back).",
     "色の記憶": "Saved colours", "名前（例：夜の色）": "Name (e.g. night colours)",
@@ -182,8 +185,8 @@
       "Put down on the floor / an object. Drag it in the Place mode.", "持たせました（手の形も合わせました）。": "Held again (the hand shape follows).",
     "接地させました。": "Grounded.", "直径": "Diameter", "長さ": "Length", "底の直径": "Base diameter", "底の一辺": "Base side",
     "外径": "Outer diameter", "太さ": "Thickness",
-    "前腕の向きに突き出す（大盾と組み合わせる）": "thrust along the forearm (pair it with a great shield)",
-    "前腕の向きに突き出す、銃身のある槍": "a lance with a gun barrel, thrust along the forearm",
+    "カウチ（脇に挟んで前へ突き出す）で持つ。柄は細く、先に槍身": "Held couched (under the arm, thrust forward). Thin shaft, the lance head at the end",
+    "銃剣を付けた銃の形。カウチ（脇に挟んで前へ突き出す）で持つ": "A rifle with a bayonet fixed. Held couched (under the arm, thrust forward)",
     "身の丈ほどの、幅広く厚い刃": "a wide, thick blade as tall as a person",
     "腰だめに両手で持ち、左手は上の取っ手": "held at the hip with both hands, the left on the top handle",
     "前腕にはめる筒形の砲（手は中で握る）": "a cannon worn over the forearm (the hand grips inside)",

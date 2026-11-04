@@ -16,6 +16,8 @@
 //   x = the figure's left, y = up, z = where the face looks), "chest" / "back" (chest frame, cm),
 //   "waist" (pelvis frame, cm), "feet" (each foot: origin = the ankle, z = toward the toe, y = up,
 //   x = outward); sets = [[frame, parts], ...] for things on more than one place (skis and poles).
+// couchable: may be held couched as well as gripped (the 持ち方 choice in the equip tab).
+// couch: held couched by default (カウチ: the arm back at the hip, the shaft forward under the arm; pose_scene.js couchHold).
 // scalable: the size slider is meant for it (a ball). bayonet: the muzzle, where a bayonet goes.
 // glow, color: drawn glowing in that colour (effects). dims + make(dims): the size is set in cm.
 // segs: sections whose lengths change one by one (a grip and a blade), along segAxis ("y" unless
@@ -58,13 +60,13 @@ window.PROPS = {
     parts: [handle(-6, 12, 1.4), C(0, 12, 0, 0, 40, 20, 0.6), C(0, 40, 20, 0, 30, 70, 0.4)]},
   big_longsword: {ja: "長剣（片手・大型）", en: "Long sword (one hand, large)", cat: "onehand", place: "hand", pose: "grip",
     parts: [handle(-10, 9, 1.9), SP(0, -11.5, 0, 2.4), B(0, 11, 0, 4, 4, 24), B(0, 74, 0, 2, 122, 11), K(0, 135, 0, 0, 146, 0, 4)]},
-  big_lance: {ja: "大型ランス（片手）", en: "Huge lance (one hand)", cat: "onehand", place: "hand", pose: "grip",
-    note: "前腕の向きに突き出す（大盾と組み合わせる）",
-    parts: [C(0, 0, -45, 0, 0, 8, 5), D(0, 0, 9, 0, 0, 1, 19), K(0, 0, 10, 0, 0, 210, 15), T(0, 0, 60, 0, 0, 1, 12, 1)]},
-  gunlance: {ja: "銃槍（ガンランス・片手）", en: "Gun lance (one hand)", cat: "onehand", place: "hand", pose: "trigger",
-    note: "前腕の向きに突き出す、銃身のある槍",
-    parts: [C(0, 0, -40, 0, 0, 8, 5), D(0, 0, 9, 0, 0, 1, 17), C(0, 0, 10, 0, 0, 165, 7), B(0, -11, 40, 9, 12, 34),
-            K(0, 0, 165, 0, 0, 205, 10), T(0, 0, 165, 0, 0, 1, 7.5, 1.2), C(0, 9, 30, 0, 9, 120, 2)]},
+  big_lance: {ja: "大型ランス（片手）", en: "Huge lance (one hand)", cat: "onehand", place: "hand", pose: "grip", couch: true,
+    note: "カウチ（脇に挟んで前へ突き出す）で持つ。柄は細く、先に槍身",
+    parts: [C(0, 0, -45, 0, 0, 8, 2.2), D(0, 0, 9, 0, 0, 1, 12), K(0, 0, 10, 0, 0, 210, 8), T(0, 0, 60, 0, 0, 1, 8, 0.8)]},
+  gunlance: {ja: "銃槍（ガンランス・銃剣型）", en: "Gun lance (bayonet type)", cat: "onehand", place: "hand", pose: "trigger", couch: true,
+    note: "銃剣を付けた銃の形。カウチ（脇に挟んで前へ突き出す）で持つ",
+    parts: [C(0, -6, -1, 0, 3, 0.5, 1.6), B(0, 3, -24, 4, 9, 30), B(0, 5, 22, 4, 6, 50), C(0, 6, 47, 0, 6, 84, 1),
+            B(0, 11, 12, 2.5, 3, 18), B(0, 6, 86, 4, 4, 2), B(0, 6, 130, 1.2, 3.6, 88), K(0, 6, 174, 0, 6, 192, 1.6)]},
   // ---- two-handed weapons
   greatsword: {ja: "両手剣", en: "Greatsword", cat: "twohand", place: "hand", pose: "grip", grip2: [0, -15, 0], pose2: "grip",
     parts: [handle(-24, 7, 1.9), B(0, 9, 0, 3.5, 3, 30), B(0, 78, 0, 1.2, 135, 7)]},
@@ -78,15 +80,15 @@ window.PROPS = {
   warhammer: {ja: "両手鎚・ウォーハンマー", en: "War hammer", cat: "twohand", place: "hand", pose: "grip", grip2: [0, -40, 0], pose2: "grip",
     parts: [handle(-60, 70, 2.2), B(0, 72, 0, 16, 16, 30)]},
   // ---- polearms and double blades
-  naginata: {ja: "薙刀", en: "Naginata", cat: "polearm", place: "hand", pose: "grip", grip2: [0, -55, 0], pose2: "grip",
+  naginata: {ja: "薙刀", en: "Naginata", cat: "polearm", place: "hand", pose: "grip", couchable: true, grip2: [0, -55, 0], pose2: "grip",
     parts: [handle(-110, 90, 2), B(0, 120, 3, 0.8, 55, 5)]},
-  halberd: {ja: "ハルバード", en: "Halberd", cat: "polearm", place: "hand", pose: "grip", grip2: [0, -55, 0], pose2: "grip",
+  halberd: {ja: "ハルバード", en: "Halberd", cat: "polearm", place: "hand", pose: "grip", couchable: true, grip2: [0, -55, 0], pose2: "grip",
     parts: [handle(-110, 110, 2.2), B(0, 100, 9, 1.5, 22, 18), K(0, 110, 0, 0, 135, 0, 3), B(0, 100, -6, 1, 6, 10)]},
-  spear: {ja: "槍", en: "Spear", cat: "polearm", place: "hand", pose: "grip", grip2: [0, -50, 0], pose2: "grip",
+  spear: {ja: "槍", en: "Spear", cat: "polearm", place: "hand", pose: "grip", couchable: true, grip2: [0, -50, 0], pose2: "grip",
     parts: [handle(-110, 100, 1.8), K(0, 100, 0, 0, 130, 0, 3)]},
   doublesword: {ja: "両剣", en: "Double-bladed sword", cat: "polearm", place: "hand", pose: "grip", grip2: [0, -18, 0], pose2: "grip",
     parts: [handle(-28, 10, 1.8), B(0, 11, 0, 2.5, 2, 12), B(0, 55, 0, 0.8, 85, 4.5), B(0, -29, 0, 2.5, 2, 12), B(0, -73, 0, 0.8, 85, 4.5)]},
-  staff_bo: {ja: "棒・棍", en: "Bo staff", cat: "polearm", place: "hand", pose: "grip", grip2: [0, -45, 0], pose2: "grip",
+  staff_bo: {ja: "棒・棍", en: "Bo staff", cat: "polearm", place: "hand", pose: "grip", couchable: true, grip2: [0, -45, 0], pose2: "grip",
     parts: [handle(-90, 90, 2)]},
   // ---- firearms
   pistol: {ja: "拳銃", en: "Pistol", cat: "gun", place: "hand", pose: "trigger",
@@ -408,6 +410,10 @@ window.PROPS = {
               return [c > 0 ? 120 * c : 100 * c, 5 + (c > 0.9 ? 6 * (c - 0.9) * 10 : 0), 27 * s * (c > 0 ? Math.pow(1 - c, 0.45) : Math.pow(1 + c * 0.6, 0.5))]; })},
             {l: [[-100, 5, 0], [120, 8, 0]]}, B(-85, -2, 0, 12, 10, 1)],
     mount: {r_ankle: [-35, 14, 0], l_ankle: [25, 14, 0]}},
+  // ---- a plain stick (a branch, a rod)
+  stick: {ja: "棒（ただの棒）", en: "Plain stick", cat: "onehand", place: "hand", pose: "grip", couchable: true,
+    note: "何の変哲もない棒。握るか、カウチで持つ",
+    parts: [C(0, -45, 0, 0, 45, 0, 1.2)]},
   // ---- things to grab: vines, trees, bars, ropes, ladders
   vine: {ja: "蔓・ロープ（縦）", en: "Vine / rope", cat: "grab", place: "grab", grab: [[[0, 0, 15], [0, 320, 15]]],
     parts: [C(0, 0, 15, 0, 320, 15, 1.4)]},
@@ -441,7 +447,7 @@ const SEGS = {
   revolver: [["barrel", 8, 22]], rifle: [["stock", -39, -9], ["barrel", 47, 80]], sniper: [["stock", -46, -10], ["barrel", 43, 112]],
   shotgun: [["stock", -38, -10], ["barrel", 29, 75]], minigun: [["barrel", 22, 110]], bazooka: [["tube", -55, 75]],
   light_crossgun: [["stock", -32, -8], ["barrel", 34, 64]], heavy_crossgun: [["stock", -41, -11], ["barrel", 47, 100]],
-  big_lance: [["grip", -45, 8], ["tip", 10, 210, "槍身", "Lance"]], gunlance: [["grip", -40, 8], ["tip", 10, 205, "槍身", "Lance"]],
+  big_lance: [["grip", -45, 8], ["tip", 10, 210, "槍身", "Lance"]], gunlance: [["stock", -39, -9], ["barrel", 47, 86], ["blade", 86, 192, "銃剣", "Bayonet"]],
   claws: [["claw", 9, 37]], big_claws: [["grip", -26, 4], ["claw", 5.5, 96]],
 };
 const ALONG_Z = new Set(["revolver", "rifle", "sniper", "shotgun", "minigun", "bazooka", "light_crossgun", "heavy_crossgun",

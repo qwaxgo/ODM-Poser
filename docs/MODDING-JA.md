@@ -137,6 +137,7 @@ ODMPoser.registerMod({
 | `at`、`sets` | `wear`：着ける場所（上の表） |
 | `grab` | `grab`：つかむ線 `[[[x,y,z], [x,y,z]], ...]` |
 | `bayonet` | 銃口 [x, y, z]：「銃剣を付ける」が出ます（刃は +z の向き） |
+| `couchable`、`couch` | `couchable`：カウチ（脇に挟む）で持てる（装備の「持ち方」に出ます）。`couch`：持たせるとカウチで持つ（ランス） |
 | `segs` | 長さを1つずつ変えられる部位：`[["grip", -7, 7], ["blade", 9.5, 90]]`（[id, 始まり, 終わり] cm）。`grip`（柄）・`blade`（刀身）・`head`（頭）・`stock`（銃床）・`barrel`（銃身）・`claw`（爪）・`tip`（穂先）・`tube`（筒）は名前が付きます。ほかは `["hilt", 7, 9, "鍔", "Guard"]` か `{id, from, to, ja, en}` で名前も。部位は重ならないように |
 | `segAxis`、`segAnchor` | 部位が並ぶ軸（`"x"`・`"y"`・`"z"`、書かなければ `"y"`）と、伸び縮みしない点（その軸の cm、書かなければ 0：手に持つ物では拳の所） |
 | `glow`、`color` | この色で光って描く（エフェクト） |

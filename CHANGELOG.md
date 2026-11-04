@@ -34,6 +34,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - カメラが時々動かなくなる不具合を修正：タッチの指が離れたことが伝わらないと、それ以後のタッチがすべて2本指の操作になっていました。マウスでも、何もない所をドラッグするとカメラが回るように（Shift＋ドラッグで動かす）
 - 図の右上の「操作欄」ボタンが分割表示で効かなかったのを修正し、左上の「操作欄を隠す」ボタンを削除
 - 「人物」のメニューの全身図の下に「人物の管理」：人物の切り替え・追加・複製・削除と、持ち物・身に着けた物の一覧（装備のタブを開く・外す）
+- 長柄（槍・薙刀・ハルバード・棍）と棒は、装備の「持ち方」で握るかカウチ（脇に挟む）を選べます。手で持つ小物はすべて、「持つ位置」で握る場所を柄に沿ってずらせて、「↺ 持ち方と持つ位置を戻す」で初期値に戻せます。「棒（ただの棒）」を追加
+- 大型ランスとガンランスを直しました：柄を細く（太さ 10cm → 4.4cm）、持たせると脇に挟んで前へ突き出す構え（カウチ）に。ガンランスは銃剣を付けた銃の形に（銃床・銃身・銃剣、片手で持つ）
 - 色を初期状態に戻すボタン（「色」のタブの上）と、色の記憶（名前をつけて保存・呼び出し・削除。このブラウザに残ります）を追加。記憶するのは線・床・壁・天井・ワイヤーの色で、小物・物体・オーラの色は含みません
 - スマホ・縦のタブレットの画面を作り直し：キャンバスを画面いっぱいに出し、下の分類バー（作る・見る・出す・ODM-Poser について）から、タブを選ぶと操作の欄が画面いっぱいのシートで立ち上がり、その上に人物の簡略表示が固定されて出ます（操作の欄だけがスクロールします）。つまみを下へドラッグするかタップすると閉じます。タイトル・版・リンクは「ODM-Poser について」へ。横画面とPCは今のまま
 - 開発用の端末表示（`npm run dev` の /ODM-Poser/dev/phone/ と /dev/tablet/）：VS Code のブラウザの中で、スマホ・タブレットの枠に編集画面を入れて確かめられます（本番サイトには出ません）
@@ -74,6 +76,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The camera sometimes stopped responding: a finger whose lifting was never told made every later touch a two-finger gesture. A mouse drag on empty space now turns the camera too (Shift: pans)
 - The "Panel" button at the view's top right works in split screen; the "Hide the panel" key at the top left is gone
 - "Figures" under the body map in the Figure menu: switch, add, copy and delete figures, and what the figure holds and wears (open it in Equip, take it off)
+- Long weapons (spears, polearms, staffs) and sticks: a choice of Grip or Couched in the Equip tab (Way of holding). Every thing held: its grip can slide along it (Where it is held), and ↺ Way of holding and place to the start puts both back. A plain stick is added
+- Huge lance and gun lance: the shaft is thinner (10 cm to 4.4 cm across) and held couched by default (under the arm, thrust forward). The gun lance is now a rifle with a bayonet fixed (stock, barrel, blade; held one-handed)
 - A "Colours to the start" button at the top of the Colours tab, and saved colours (save under a name, load, delete; kept in this browser). They keep the lines, floor, walls, ceiling and wire; things, solids and auras keep their own colours out of them
 - Phones and upright tablets get a new layout: the views fill the screen, a bar at the bottom (Make, View, Output, About ODM-Poser) opens a tab's controls as a full-screen sheet with a simplified view of the figure fixed at its top (only the controls scroll). Drag the grip down or tap it to close. The title, version and links are under About ODM-Poser. Sideways and on computers, the layout is as before
 - A development device frame (`npm run dev`, /ODM-Poser/dev/phone/ and /dev/tablet/): the editor in a phone or tablet frame, to look at the phone layout in VS Code's browser (not in the site)
