@@ -968,9 +968,11 @@ let wheelMem = 0;
 function wheelStep(x, y, step, e){
   if (WHEEL_HOOKS.some(h => h(x, y, step, e))){ draw(); return; }
   if (mode !== "body" && !S.camLock){ const t = performance.now(); if (t - wheelMem > 800) remember(); wheelMem = t; }
-  if (mode === "persp"){ if (camHeld()) return; S.cam.lens = Math.max(14, Math.min(200, S.cam.lens * (step > 0 ? 1.1 : 1/1.1))); syncUI(); }
-  else if (mode === "body"){ const i = pick(front, x, y);
-    if (i >= 0){ remember(); const k = step > 0 ? 1.08 : 1/1.08; for (const q of thickJoints(i, true)) S.R[q] *= k; } }
+  // Ctrl+Alt+wheel: the lens (パース, as Blender's focal length); the wheel alone zooms the camera
+  // (as Blender's view zoom). In body mode over a part, the wheel changes that part's thickness
+  if (e && e.ctrlKey && e.altKey){ if (camHeld()) return; S.cam.lens = Math.max(14, Math.min(200, S.cam.lens * (step > 0 ? 1.1 : 1/1.1))); syncUI(); }
+  else if (mode === "body" && pick(front, x, y) >= 0){ const i = pick(front, x, y);
+    remember(); const k = step > 0 ? 1.08 : 1/1.08; for (const q of thickJoints(i, true)) S.R[q] *= k; }
   else { if (camHeld()) return; S.cam.zoom = Math.max(0.3, Math.min(4, S.cam.zoom * (step > 0 ? 1.1 : 1/1.1))); }
   draw();
 }

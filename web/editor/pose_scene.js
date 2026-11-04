@@ -250,7 +250,8 @@ function backFrame(it){
   const d = slant(cf.y), x = out;
   let y, z;
   if (ext[1] >= ext[2]){ y = d; z = cross(x, y); } else { z = d; y = cross(z, x); }
-  const centre = add(cf.o, add(mul(out, 13 + lift + ext[0] * sc / 2), mul(cf.y, -4)));
+  // on the back, just off the spine (the chest's half depth), its middle level with the chest
+  const centre = add(cf.o, add(mul(out, 9 + lift + ext[0] * sc / 2), mul(cf.y, 0)));
   return {o: sub(centre, add(add(mul(x, mid[0]), mul(y, mid[1])), mul(z, mid[2]))), x, y, z};
 }
 const dirToWorld = (f, it, v) => { const a = itemToWorld(it, [0, 0, 0], f), b = itemToWorld(it, v, f); return sub(b, a); };
