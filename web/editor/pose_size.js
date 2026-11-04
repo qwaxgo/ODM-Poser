@@ -30,7 +30,7 @@ const parts = [
   sec("身長と頭身", `<label>保つもの</label><select id="szKeep"><option value="none">なし（頭の大きさはそのまま）</option>
       <option value="heads">頭身を保つ（全身が同じ割合で）</option><option value="height">身長を保つ（残りの体で合わせる）</option></select>` +
     ctl("szHeight", "身長", 60, 240, 0.5, "cm") + ctl("szHeads", "頭身", 2, 10, 0.1, "頭身") +
-    `<div class="hint">「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。</div>`),
+    `<div class="hint">「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。</div>`, "size body"),
   sec("部位の固定", `<label><input type="checkbox" id="szLock_head"> 頭と首</label><label><input type="checkbox" id="szLock_torso"> 胴体</label>
     <label><input type="checkbox" id="szLock_arms"> 腕</label><label><input type="checkbox" id="szLock_legs"> 脚</label>
     <div class="hint">固定した部位は、身長・頭身を変えても長さと太さが変わりません。</div>`),

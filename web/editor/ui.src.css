@@ -195,8 +195,10 @@
   #ovOpts.folded .ov-item span { display: none; }
   /* 3軸ハンドル's tool (移動 / 回転 / 変形): on the view under the modes, and in the joint's and objects' sections */
   .gz-tools { display: flex; flex-direction: column; align-items: stretch; gap: 2px; }
-  .gz-tools.off { display: none; }
-  #ovGizmo:has(.gz-tools.off) { display: none; }
+  /* off: only the 3軸ハンドル button shows; on: the tools and 解除 */
+  .gz-tools.off button[data-gz] { display: none; }
+  .gz-tools:not(.off) .gz-on, .gz-tools.off .gz-off { display: none; }
+  .gz-tools .gz-on, .gz-tools .gz-off { font-weight: 600; }
   #ovGizmo { flex-direction: column; }
   .gz-tools button { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 3px 8px 3px 5px; border: 0; border-radius: 8px;
     background: transparent; color: var(--text-muted); font: inherit; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap; }

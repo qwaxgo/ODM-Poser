@@ -34,6 +34,10 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - カメラが時々動かなくなる不具合を修正：タッチの指が離れたことが伝わらないと、それ以後のタッチがすべて2本指の操作になっていました。マウスでも、何もない所をドラッグするとカメラが回るように（Shift＋ドラッグで動かす）
 - 図の右上の「操作欄」ボタンが分割表示で効かなかったのを修正し、左上の「操作欄を隠す」ボタンを削除
 - 「人物」のメニューの全身図の下に「人物の管理」：人物の切り替え・追加・複製・削除と、持ち物・身に着けた物の一覧（装備のタブを開く・外す）
+- 3軸ハンドル：左側のメニューの「3軸ハンドル」を押すと出て、「解除」で隠します（右側の欄のコピーは削除）。掴んだ軸は太く強調され、ドラッグはその軸だけに動きます
+- 身長と頭身の欄を体格タブにも出しました（頭身は直接入力可）
+- 線の色は、色見本の横に #rrggbb の色コードを入力できるように
+- 出ている小物を設置タブの「選んだ物を接地させる」で接地（持っている物は床に置く）
 - 武器を背負ったときの位置を直しました：背中の中心線の近くに、肩から腰にかけて収まるように（以前は腰の下へ垂れ、背中から離れていました）
 - マウスホイールは既定でカメラの拡大縮小に（人体の部位の上での体格モードは従来どおり太さ）。パース（レンズ）の変更は Ctrl＋Alt＋ホイール
 - SNS 投稿欄：Misskey.io と Misskey.dev のボタンを追加（Misskey.io を既定に）。Facebook・Instagram・LINE・Discord・Reddit を主要ボタンに
@@ -79,6 +83,10 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The camera sometimes stopped responding: a finger whose lifting was never told made every later touch a two-finger gesture. A mouse drag on empty space now turns the camera too (Shift: pans)
 - The "Panel" button at the view's top right works in split screen; the "Hide the panel" key at the top left is gone
 - "Figures" under the body map in the Figure menu: switch, add, copy and delete figures, and what the figure holds and wears (open it in Equip, take it off)
+- The 3-axis handles: the 3軸ハンドル button on the left turns them on and 解除 off (the copies in the panel are gone). The axis taken is drawn heavier, and a drag moves along that axis only
+- The height and heads are in the Body tab too (heads can be typed)
+- The line colours take a #rrggbb code beside each colour
+- The things out: 選んだ物を接地させる in the Objects tab puts the chosen one on the ground (a held one is put on the floor)
 - A weapon carried on the back sits just off the spine, from the shoulders to the hips (it used to hang below the hips, away from the back)
 - The mouse wheel zooms the camera by default (in body mode over a part it still changes that part's thickness); the lens (perspective) is Ctrl + Alt + wheel
 - Share panel: Misskey.io and Misskey.dev buttons (Misskey.io by default); Facebook, Instagram, LINE, Discord and Reddit are main buttons

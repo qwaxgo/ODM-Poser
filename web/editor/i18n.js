@@ -4,6 +4,8 @@
 (() => {
   const KEY = "odm-poser-lang";
   const T = {
+    "選んだ物を接地させる": "Put the chosen thing on the ground", "接地させる物を、下の「出ている物」の一覧から選んでください。": "Choose the thing to put on the ground from the list of things out.", "接地させました。": "Put on the ground.",
+    "色は #rrggbb の形で入れてください（例：#e0605a）。": "Type the colour as #rrggbb (e.g. #e0605a).",
     "持ち方": "Way of holding", "握る": "Grip", "カウチ（脇に挟む）": "Couched (under the arm)", "持つ位置（長い方向）": "Where it is held (along its length)",
     "↺ 持ち方と持つ位置を戻す": "↺ Way of holding and place to the start", "持ち方と持つ位置を戻しました。": "The way of holding and the place are back to the start.",
     "持ち方と持つ位置を、この小物の初期値に戻す": "Back to this thing's own start", "棒（ただの棒）": "Plain stick", "何の変哲もない棒。握るか、カウチで持つ": "A plain stick. Grip it, or hold it couched.",

@@ -185,7 +185,7 @@ function auShow(){ const k = $("auKind").value;
   document.querySelectorAll("[data-au]").forEach(e => { e.style.display = e.dataset.au === k ? "" : "none"; });
   const ev = $("auEven").closest("label"); if (ev) ev.style.display = $("auPart").value === "body" ? "" : "none"; }
 const colorRow = (id, label) => `<div class="row" style="margin-top:4px"><label style="margin:0;flex:1"><input type="checkbox" id="${id}On"> ${label}</label>
-  <input type="color" id="${id}" value="#e0605a" ></div>`;
+  <input type="color" id="${id}" value="#e0605a" ><input type="text" id="${id}Hex" class="hexin" maxlength="7" placeholder="#rrggbb" aria-label="${label}の色コード" inputmode="text"></div>`;
 function buildStylePanel(){
   const sec = document.createElement("section");
   sec.innerHTML = `<h2>線の色</h2>
@@ -217,7 +217,11 @@ function buildStylePanel(){
   const bind = (id, get, set) => {
     const apply = () => { remember(); set($(id + "On").checked ? $(id).value : undefined); draw(); };
     $(id + "On").addEventListener("change", apply);
-    $(id).addEventListener("input", () => { $(id + "On").checked = true; apply(); });
+    $(id).addEventListener("input", () => { $(id + "On").checked = true; $(id + "Hex").value = $(id).value; apply(); });
+    // the colour typed as #rrggbb (any case; a bad one is left alone)
+    $(id + "Hex").addEventListener("change", () => { const v = $(id + "Hex").value.trim();
+      if (!/^#[0-9a-f]{6}$/i.test(v)){ $(id + "Hex").value = $(id).value; say("色は #rrggbb の形で入れてください（例：#e0605a）。", true); return; }
+      $(id).value = v.toLowerCase(); $(id + "On").checked = true; $(id + "Hex").value = $(id).value; apply(); });
   };
   for (const [k] of PART_NAMES) bind("pc_" + k, () => colors().parts[k], v => { if (v) colors().parts[k] = v; else delete colors().parts[k]; });
   for (const k of ["floor", "wall", "ceiling"]) bind("pc_" + k, () => colors()[k], v => { colors()[k] = v; delete colors().env; });
@@ -311,7 +315,7 @@ function syncThings(){
 function syncStyle(){
   const c = S.colors = Object.assign({parts: {}}, S.colors || {}); c.parts = c.parts || {};
   // a colour that is not set shows the picker's own starting colour
-  const show = (id, v) => { $(id + "On").checked = !!v; $(id).value = v || $(id).defaultValue; };
+  const show = (id, v) => { $(id + "On").checked = !!v; $(id).value = v || $(id).defaultValue; $(id + "Hex").value = $(id).value; };
   for (const [k] of PART_NAMES) show("pc_" + k, c.parts[k]);
   for (const k of ["floor", "wall", "ceiling"]) show("pc_" + k, c[k] || c.env); show("pc_wire", c.wire);
   syncThings();

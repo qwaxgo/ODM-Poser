@@ -1001,6 +1001,14 @@ function buildAlonePanel(){
     .map(([k, d]) => `<option value="${k}">${d.ja} / ${d.en}</option>`).join(""); };
   $("alCat").addEventListener("change", fill);
   $("alPut").addEventListener("click", () => placeAlone($("alKey").value));
+  // 接地 for the things already out (held ones are put down on the floor): the same as in 装備
+  { const g = document.createElement("button"); g.id = "alGround"; g.type = "button"; g.textContent = "選んだ物を接地させる";
+    g.title = "出ている物の一覧で選んだ小物を、床・物体の上に接地（持っている物は床に置く）";
+    $("alPut").after(g);
+    g.addEventListener("click", () => { const it = S.items[scSel];
+      if (!it){ say("接地させる物を、下の「出ている物」の一覧から選んでください。", true); return; }
+      remember(); if (it.where) { it.grounded = true; groundItem(it); } else putDown(it);
+      afterEdit(); fillItemList(); draw(); say("接地させました。"); }); }
   $("alList").addEventListener("change", () => { scSel = +$("alList").value; fillItemList(); draw(); });
   $("alDel").addEventListener("click", () => removeItem(+$("alList").value));
   $("alHold").addEventListener("click", () => { const it = S.items[+$("alList").value]; if (!it) return;

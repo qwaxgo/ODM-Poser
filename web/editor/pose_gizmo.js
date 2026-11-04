@@ -30,15 +30,25 @@ let pref = "move", tool = "move";          // the tool chosen; the tool in use (
 try { const v = localStorage.getItem(KEY + "-gizmotool"); if (TOOLS.some(t => t[0] === v)) pref = tool = v; } catch (e) {}
 gizmoHolds = () => $("gizmoOn").checked && mode !== "persp";
 const bars = [];
+// the handles on or off (the switch in the views' corner, the 3軸ハンドル button and 解除)
+function setOn(on){ const c = $("gizmoOn"); if (c.checked === on) return; c.checked = on; c.dispatchEvent(new Event("change")); }
+let gzDrag = -1;                              // the axis being dragged (drawn heavier)
 function bar(cls){
   const d = document.createElement("div");
   d.className = "gz-tools " + cls; d.setAttribute("role", "group"); d.setAttribute("aria-label", "3軸ハンドルの操作"); d.dataset.ui = "skip";
+  // off: one button turns the handles on (and shows the tools); on: the tools and 解除 (off again)
+  const on = document.createElement("button"); on.type = "button"; on.className = "gz-on"; on.dataset.gzicon = "axes";
+  on.title = "3軸ハンドルを出す"; on.innerHTML = "<span>3軸ハンドル</span>"; on.addEventListener("click", () => setOn(true));
+  const off = document.createElement("button"); off.type = "button"; off.className = "gz-off"; off.title = "3軸ハンドルを隠す";
+  off.innerHTML = "<span>解除</span>"; off.addEventListener("click", () => setOn(false));
+  d.append(on);
   for (const [id, name, icon, key] of TOOLS){
     const b = document.createElement("button"); b.type = "button"; b.dataset.gz = id; b.title = `${name}（${key}キー）`;
     b.dataset.gzicon = icon; b.innerHTML = `<span>${name}</span>`;
     b.addEventListener("click", () => setTool(id, true));
     d.appendChild(b);
   }
+  d.appendChild(off);
   bars.push(d); return d;
 }
 // the icons (ui-icons.js loads after this file)
@@ -60,7 +70,7 @@ function syncBars(){
   tool = can.includes(pref) ? pref : can[0] || pref;
   const k = [on, tool, can.join()].join("|"); if (k === barKey) return; barKey = k;
   for (const d of bars){ d.classList.toggle("off", !on);
-    d.querySelectorAll("button").forEach(b => { const me = b.dataset.gz === tool && can.includes(tool);
+    d.querySelectorAll("button[data-gz]").forEach(b => { const me = b.dataset.gz === tool && can.includes(tool);
       b.disabled = !can.includes(b.dataset.gz); b.classList.toggle("on", me); b.setAttribute("aria-pressed", String(me)); }); }
 }
 function setTool(id, tell){
@@ -74,8 +84,7 @@ const modeName = () => ({pose: "ポーズ", body: "体格", persp: "カメラ", 
 // on the view, under the modes; in the joint's section (ポーズ) and the objects' (設置)
 { const ov = document.createElement("div"); ov.className = "ov-body ov-row"; ov.id = "ovGizmo"; ov.appendChild(bar("gz-ov"));
   $("modes").after(ov);
-  const h = $("selName") && $("selName").closest("h2"); if (h) h.after(bar("gz-panel"));
-  const so = $("soKind") && $("soKind").closest("section"); if (so){ const h2 = so.querySelector("h2"); (h2 ? h2.after.bind(h2) : so.prepend.bind(so))(bar("gz-panel")); }
+  // the handles' menu is on the left (here) only; the copies in the panel's sections are gone
   syncBars(); }
 // G / R / S as in Blender (not while typing)
 document.addEventListener("keydown", e => {
@@ -203,7 +212,7 @@ function draw3(ctx, W, H){
     r.pts.forEach((q, m) => m ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke();
   }
   for (const h of g.lines){
-    const e = h.e; ctx.strokeStyle = ctx.fillStyle = h.col; ctx.lineWidth = lw * 1.2;
+    const e = h.e; ctx.strokeStyle = ctx.fillStyle = h.col; ctx.lineWidth = lw * (gzDrag === h.k ? 3.4 : 1.2);
     ctx.beginPath(); ctx.moveTo(g.c.x, g.c.y); ctx.lineTo(e.x, e.y); ctx.stroke();
     const dx = e.x - g.c.x, dy = e.y - g.c.y, l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, s = 9 * g.dpr;
     if (tool === "scale") ctx.fillRect(e.x - s / 2, e.y - s / 2, s, s);
@@ -244,6 +253,10 @@ DOWN_HOOKS.unshift((cv, x, y) => {
         : segDist(x, y, g.c, h.e) < near && Math.hypot(x - g.c.x, y - g.c.y) > 5 * g.dpr){ hit = h; break; }
   }
   if (!hit) return null;
+  // the axis taken is drawn heavier until the press is let go; the drag moves along that axis only
+  gzDrag = hit.k; draw();
+  addEventListener("pointerup", () => { gzDrag = -1; draw(); }, {once: true});
+  addEventListener("pointercancel", () => { gzDrag = -1; draw(); }, {once: true});
   const vx = hit.e.x - g.c.x, vy = hit.e.y - g.c.y, v2 = vx * vx + vy * vy || 1;
   return {move(mx, my){
     const f = ((mx - x0) * vx + (my - y0) * vy) / v2;            // in handle lengths
