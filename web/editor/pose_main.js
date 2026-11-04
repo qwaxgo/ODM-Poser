@@ -1797,6 +1797,8 @@ for (const [id, set] of [["lens", v => S.cam.lens = v], ["yaw", v => S.cam.yaw =
   $(id).addEventListener("input", e => { set(+e.target.value); syncUI(); draw(); });
 }
 $("camReset").addEventListener("click", () => { remember(); S.cam = fresh().cam; syncUI(); draw(); });
+// the same reset in the リセット tab: the camera back to its first place (saved cameras and the lock stay)
+$("resetCam").addEventListener("click", () => { remember(); const f = fresh(); S.cam = f.cam; S.center = f.center.slice(); syncUI(); draw(); say("カメラを初期状態に戻しました。"); });
 for (const [id, key, fn] of [["scaleAll", "all", scaleAbout], ["scaleHead", "head", scaleHead],
     ["scaleThick", "thick", k => { S.R = S.R.map(r => r * k); }]]){
   $(id).addEventListener("pointerdown", remember);
