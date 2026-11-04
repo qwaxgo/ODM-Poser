@@ -156,6 +156,25 @@ function headFrame(){
   const up2 = norm(cross(fwd, side));
   return {fwd, side, up: up2, r: S.R[IX.head]};
 }
+// the head's shape (サイズ › 頭の形): S.headShape {x, y, z, mode}: the width (x), the height (y) and the
+// depth (z) each a share of the head's size; mode "ball" stretches the ball, "cyl" joins the stretched
+// ends with a cylinder of the head's width (drawn in headOutline)
+const headShaped = () => { const h = S.headShape; return !!h && (h.x !== 1 || h.y !== 1 || h.z !== 1); };
+function headOutline(ctx, p, r, side){
+  const hs = S.headShape, sx = hs.x || 1, sy = hs.y || 1, sz = hs.z || 1;
+  const w = r * (side ? sz : sx), v = r * sy;                 // the drawn width and height in px
+  if (hs.mode !== "cyl" || sy <= 1){
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, w, v, 0, 0, 2 * Math.PI); ctx.stroke(); return;
+  }
+  // the cylinder: a half-ball at each end, the sides joining them (screen up = the head's up)
+  const L = v - w;                                            // how far each end is drawn out from the centre
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y - L, w, w, 0, Math.PI, 2 * Math.PI);
+  ctx.ellipse(p.x, p.y + L, w, w, 0, 0, Math.PI);
+  ctx.moveTo(p.x - w, p.y - L); ctx.lineTo(p.x - w, p.y + L);
+  ctx.moveTo(p.x + w, p.y - L); ctx.lineTo(p.x + w, p.y + L);
+  ctx.stroke();
+}
 function facePoints(){
   const h = headFrame(), c = S.P[IX.head], r = h.r;
   const at = (f, s, u) => add(add(add(c, mul(h.fwd, f*r)), mul(h.side, s*r)), mul(h.up, u*r));
@@ -320,7 +339,9 @@ function drawAtari(ctx, W, H, opts = {}){
         ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.fill(); ctx.globalAlpha = 1; }
       const hid = S.hiddenDashed && hiddenAt(S.P[i], W, H, skipJoint(i));
       if (hid) ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2.5]);
-      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]);
+      if (i === IX.head && headShaped()) headOutline(ctx, p, r, opts.side);
+      else { ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.stroke(); }
+      ctx.setLineDash([]);
       if (opts.sel === i){ ctx.strokeStyle = cssVar("--sel"); ctx.lineWidth = lw * 2;
         ctx.beginPath(); ctx.arc(p.x, p.y, r + 3*lw, 0, 2*Math.PI); ctx.stroke(); }
     }

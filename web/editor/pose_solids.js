@@ -24,7 +24,9 @@ let soSel = -1;
 // ---- shape: corners, faces with outward planes (n . p <= d inside) ----------------------------------
 function solidMesh(o){
   const k = solidKind(o), [w, h, d] = o.size.map(v => Math.max(1, +v || 1));
-  const smooth = k.shape === "cyl" || k.shape === "cone", apex = k.shape === "pyr" || k.shape === "cone";
+  // 天面 (o.top, a share of the base): a prism's top is scaled; a pyramid with no top is a point
+  const top = o.top == null ? 1 : Math.max(0, +o.top);
+  const smooth = k.shape === "cyl" || k.shape === "cone", apex = (k.shape === "pyr" || k.shape === "cone") && (k.shape === "cone" || top <= 0.02);
   const n = k.shape === "box" ? 4 : smooth ? 32 : Math.max(3, Math.min(24, Math.round(o.sides || k.sides || 6)));
   const ring = [];
   for (let i = 0; i < n; i++){
@@ -33,7 +35,8 @@ function solidMesh(o){
   }
   const a = deg(o.yaw || 0), at = (x, y, z) => add(o.pos, rotY([x, y, z], a));
   const V = ring.map(([x, z]) => at(x, 0, z));
-  if (apex) V.push(at(0, h, 0)); else ring.forEach(([x, z]) => V.push(at(x, h, z)));
+  const tk = k.shape === "prism" || k.shape === "pyr" ? top : 1;      // only prisms and pyramids have a top size
+  if (apex) V.push(at(0, h, 0)); else ring.forEach(([x, z]) => V.push(at(x * tk, h, z * tk)));
   const faces = [{v: ring.map((_, i) => i)}];
   if (!apex) faces.push({v: ring.map((_, i) => n + i)});
   const s0 = faces.length;
@@ -265,15 +268,15 @@ function standOnSolid(){
 }
 
 // ---- the panel ------------------------------------------------------------------------------------
-const SOLID_CTL = [["soW", "幅", 0], ["soH", "高さ", 1], ["soD", "奥行き", 2], ["soSides", "角の数"],
+const SOLID_CTL = [["soW", "幅", 0], ["soH", "高さ", 1], ["soD", "奥行き", 2], ["soSides", "角の数"], ["soTop", "天面の大きさ（底面に対して）"],
   ["soX", "位置（左右）", 0], ["soY", "位置（上下）", 1], ["soZ", "位置（前後）", 2], ["soYaw", "向き"]];
 // each number has a slider too: [min, max, step] (cm, or the count / degrees)
-const SOLID_RANGE = {soW: [5, 400, 1], soH: [5, 400, 1], soD: [5, 400, 1], soSides: [3, 24, 1],
+const SOLID_RANGE = {soW: [5, 400, 1], soH: [5, 400, 1], soD: [5, 400, 1], soSides: [3, 24, 1], soTop: [0, 200, 1],
   soX: [-600, 600, 5], soY: [-100, 400, 5], soZ: [-600, 600, 5], soYaw: [-180, 180, 1]};
 let soSlide = false;                          // a slider being dragged: one undo step for the drag
 function buildSolidPanel(){
   const sec = document.createElement("section");
-  const unit = id => id === "soSides" ? "" : id === "soYaw" ? "°" : "cm";
+  const unit = id => id === "soSides" ? "" : id === "soYaw" ? "°" : id === "soTop" ? "%" : "cm";
   sec.innerHTML = `<h2>物体（床・壁・建物・柱など）</h2>
     <select id="soKind">${Object.entries(SOLID_KINDS).map(([k, d]) => `<option value="${k}">${d.ja}</option>`).join("")}</select>
     <div class="btns" style="margin-top:6px"><button id="soAdd">置く</button></div>
@@ -305,6 +308,7 @@ function buildSolidPanel(){
       if (!soSlide) remember();
       if (id === "soW" || id === "soH" || id === "soD") o.size[k] = Math.max(1, v);
       else if (id === "soSides") o.sides = Math.max(3, Math.min(24, Math.round(v)));
+      else if (id === "soTop") o.top = Math.max(0, Math.min(2, v / 100));
       else if (id === "soYaw") o.yaw = v;
       else { o.pos = o.pos.slice(); o.pos[k] = v; }
       afterEdit(); syncSolids(); draw();
@@ -331,7 +335,8 @@ function syncSolids(){
   $("soColorOn").checked = !!o.color; $("soColor").value = o.color || $("soColor").defaultValue;
   const sh = solidKind(o).shape;
   $("soSidesBox").style.display = sh === "prism" || sh === "pyr" ? "" : "none";
-  const vals = {soW: o.size[0], soH: o.size[1], soD: o.size[2], soSides: o.sides || solidKind(o).sides || 4,
+  $("soTopBox").style.display = sh === "prism" || sh === "pyr" ? "" : "none";
+  const vals = {soW: o.size[0], soH: o.size[1], soD: o.size[2], soSides: o.sides || solidKind(o).sides || 4, soTop: Math.round((o.top == null ? 1 : o.top) * 100),
     soX: o.pos[0], soY: o.pos[1], soZ: o.pos[2], soYaw: o.yaw || 0};
   for (const [id, v] of Object.entries(vals)) if (document.activeElement !== $(id)) $(id).value = Math.round(v);
   for (const [id] of SOLID_CTL){ const r = $(id + "R"); if (r && document.activeElement !== r) r.value = $(id).value; }

@@ -118,12 +118,24 @@ function drawAura(ctx, a, idx, W, H, front){
       // sharp: how far the outline dips between the tongues (0: a smooth swell, 100: thin points)
       const ux = Math.sin(lean), uy = -Math.cos(lean);
       ctx.lineJoin = sharp > 0.6 ? "miter" : "round";
+      // 放物線: the origin is the bottom centre of the base (raised by origin, a share of the size); each
+      // tongue points away from it, and its length falls off in a parabola toward the base's ends
+      const xs = pts.map(q => q.x), ys = pts.map(q => q.y), half = Math.max(1, (Math.max(...xs) - Math.min(...xs)) / 2);
+      const ox = (Math.max(...xs) + Math.min(...xs)) / 2, oy = Math.max(...ys) - (a.origin === undefined ? 0 : (+a.origin / 100)) * size;
       for (const [k, alpha, fill] of [[1, 0.9, 0.16], [0.55, 0.6, 0.1]]){
         ctx.beginPath();
         pts.forEach((p, i) => {
-          const up = Math.max(0, p.nx * ux + p.ny * uy), tip = i % 2 === 0, rise = 0.35 + 1.5 * up * up;
+          const tip = i % 2 === 0;
+          let x, y;
+          if (a.para){
+            const dx = p.x - ox, dy = p.y - oy, dl = Math.hypot(dx, dy) || 1, ex = dx / dl, ey = dy / dl;
+            const t = Math.max(-1, Math.min(1, dx / half)), len = size * k * Math.max(0.15, 1 - 0.7 * t * t) * (tip ? 0.6 + 0.6 * rnd() : 0.15);
+            x = p.x + ex * len; y = p.y + ey * len;
+          } else {
+          const up = Math.max(0, p.nx * ux + p.ny * uy), rise = 0.35 + 1.5 * up * up;
           const h = tip ? size * k * rise * (0.6 + 0.6 * rnd()) : size * k * (0.12 + (1 - sharp) * 0.6 * rise);
-          const x = p.x + p.nx * h * 0.6 + (tip ? h * up * 0.9 * ux : 0), y = p.y + p.ny * h * 0.6 + (tip ? h * up * 0.9 * uy : 0);
+          x = p.x + p.nx * h * 0.6 + (tip ? h * up * 0.9 * ux : 0); y = p.y + p.ny * h * 0.6 + (tip ? h * up * 0.9 * uy : 0);
+          }
           i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
         });
         ctx.closePath(); if (!flatAura){ ctx.globalAlpha = fill; ctx.fill(); } ctx.globalAlpha = alpha; ctx.lineWidth = lwA * 1.3; ctx.stroke();
@@ -171,13 +183,13 @@ function drawAura(ctx, a, idx, W, H, front){
 
 // ---- the panel ------------------------------------------------------------------------------------
 // the aura's shape: [id, label, min, max, unit, default, the kinds it is for]
-const AU_SHAPE = [["auSharp", "とがり（炎の先）", 0, 100, "%", 50, "flame"], ["auRound", "丸み（楕円に近づける）", 0, 100, "%", 0, ""],
+const AU_SHAPE = [["auOrigin", "放物線の原点の高さ（根元の底辺から）", -50, 150, "%", 0, "flame"], ["auSharp", "とがり（炎の先）", 0, 100, "%", 50, "flame"], ["auRound", "丸み（楕円に近づける）", 0, 100, "%", 0, ""],
   ["auAngle", "なびく向き（炎の傾き）", -60, 60, "°", 0, "flame"], ["auHeight", "高さ", 50, 250, "%", 100, ""], ["auThick", "線の太さ", 30, 300, "%", 100, ""],
   ["auFine", "細かさ（稲妻のギザギザ）", 0, 100, "%", 50, "plasma"], ["auSpread", "広がり（外へ飛ぶ量）", 0, 100, "%", 50, "plasma"],
   ["auDensity", "密度（稲妻の本数）", 10, 100, "%", 50, "plasma"]];
-const AU_KEY = {auSharp: "sharp", auRound: "round", auAngle: "angle", auHeight: "height", auThick: "thick", auFine: "fine", auSpread: "spread", auDensity: "density"};
-function auRead(){ const o = {even: $("auEven").checked}; for (const [id] of AU_SHAPE) o[AU_KEY[id]] = +$(id).value; return o; }
-function auWrite(a){ $("auEven").checked = !!a.even;
+const AU_KEY = {auOrigin: "origin", auSharp: "sharp", auRound: "round", auAngle: "angle", auHeight: "height", auThick: "thick", auFine: "fine", auSpread: "spread", auDensity: "density"};
+function auRead(){ const o = {even: $("auEven").checked, para: $("auPara").checked}; for (const [id] of AU_SHAPE) o[AU_KEY[id]] = +$(id).value; return o; }
+function auWrite(a){ $("auEven").checked = !!a.even; $("auPara").checked = !!a.para;
   for (const [id, , , , , d] of AU_SHAPE){ const v = a[AU_KEY[id]] === undefined ? d : a[AU_KEY[id]]; $(id).value = v; $(id + "N").value = v; }
   auShow(); }
 // only the controls for the kind chosen (炎: とがり・なびく向き; プラズマ: 細かさ・広がり・密度); 全身 for the even width
@@ -202,6 +214,7 @@ function buildStylePanel(){
       <div><label>色</label><input type="color" id="auColor" value="#ffd84a" style="width:100%"></div>
     </div>
     <label title="全身のときだけ。体を囲む立った円柱の形で描くので、横から見ても正面から見ても幅が同じ"><input type="checkbox" id="auEven"> どの角度でも同じ幅</label>
+    <label data-au="flame" title="炎の先が、根元の底辺中心を原点として放射状に出て、長さが左右の端へ向けて放物線状に短くなる"><input type="checkbox" id="auPara"> 放物線（炎の先が根元の中心から放射状に）</label>
     ${AU_SHAPE.map(([id, ja, min, max, unit, , only]) => `<label${only ? ` data-au="${only}"` : ""}>${ja}</label>
       <div class="row"${only ? ` data-au="${only}"` : ""}><input type="range" id="${id}" min="${min}" max="${max}" step="1"><input type="number" class="num" id="${id}N" step="1"><span class="unit">${unit}</span></div>`).join("")}
     <div class="btns" style="margin-top:6px"><button id="auAdd">まとう</button></div>
@@ -247,7 +260,7 @@ function buildStylePanel(){
   const editAura = held => { auShow(); const a = (S.auras || [])[auSel()]; if (!a) return; if (!held) remember();
     Object.assign(a, {part: $("auPart").value, kind: $("auKind").value, size: +$("auSize").value || 14, color: $("auColor").value}, auRead());
     syncStyle(); draw(); };
-  for (const id of ["auPart", "auSize", "auEven"]) $(id).addEventListener("change", editAura);
+  for (const id of ["auPart", "auSize", "auEven", "auPara"]) $(id).addEventListener("change", editAura);
   for (const [id] of AU_SHAPE){
     $(id).addEventListener("pointerdown", () => remember());
     $(id).addEventListener("input", () => { $(id + "N").value = $(id).value; editAura(true); });

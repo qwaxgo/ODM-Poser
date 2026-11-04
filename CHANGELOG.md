@@ -34,6 +34,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - カメラが時々動かなくなる不具合を修正：タッチの指が離れたことが伝わらないと、それ以後のタッチがすべて2本指の操作になっていました。マウスでも、何もない所をドラッグするとカメラが回るように（Shift＋ドラッグで動かす）
 - 図の右上の「操作欄」ボタンが分割表示で効かなかったのを修正し、左上の「操作欄を隠す」ボタンを削除
 - 「人物」のメニューの全身図の下に「人物の管理」：人物の切り替え・追加・複製・削除と、持ち物・身に着けた物の一覧（装備のタブを開く・外す）
+- 頭の形：サイズのタブの「頭の形」で、幅・高さ・奥行きを伸び縮み（頭身は変わらず）。伸ばした形は「球のまま伸ばす」か「円柱でつなぐ」を選べます
+- 角柱・角錐の天面の大きさ（底面に対する %）。角錐を 0% にすると頂点になります
+- オーラの「放物線」：炎の先が、根元の底辺中心を原点として放射状に出て、長さが両端へ向けて放物線状に短くなります。原点の高さはスライダーで調整（既定は底辺の中心）
 - カメラを初期状態に戻すボタンを、リセットタブにも追加（記憶したカメラと固定は残ります）
 - 線の色の欄を作り直し：対象（人物の部位・床・壁・天井・ワイヤー・小物・物体・オーラ）を一覧から選び、色を変えるものにチェックを入れて、色を選ぶか #rrggbb のコードを入力します。固定の色の一覧はなくなりました
 - 「クリックで自動的にモードを切り替える」（ポーズの欄）：物を押すと配置モード、人体の関節を押すとポーズモード（配置・カメラから。体格は残す）。このブラウザに残ります
@@ -90,6 +93,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The camera sometimes stopped responding: a finger whose lifting was never told made every later touch a two-finger gesture. A mouse drag on empty space now turns the camera too (Shift: pans)
 - The "Panel" button at the view's top right works in split screen; the "Hide the panel" key at the top left is gone
 - "Figures" under the body map in the Figure menu: switch, add, copy and delete figures, and what the figure holds and wears (open it in Equip, take it off)
+- The head's shape: width, height and depth stretch (the head count stays); the stretched shape is a ball or a cylinder joining the ends
+- A prism's or pyramid's top size (a share of the base); a pyramid at 0% is a point
+- The aura's parabola: the flame tips point away from the bottom centre of the base, and their length falls off in a parabola toward the ends; the origin height is a slider (default: the base's centre)
 - A "Camera to the start" button in the Reset tab too (saved cameras and the lock stay)
 - The line colours: pick the object from a list (the figure's parts, floor, walls, ceiling, wire, things, solids, auras), check what to change, then pick a colour or type #rrggbb. The fixed list is gone
 - Click to switch mode (in the Pose tab): a press on a thing goes to Place, a press on the body to Pose (from Place or Camera; Body stays). Kept in this browser
