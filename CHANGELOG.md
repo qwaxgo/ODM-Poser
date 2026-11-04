@@ -34,6 +34,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - カメラが時々動かなくなる不具合を修正：タッチの指が離れたことが伝わらないと、それ以後のタッチがすべて2本指の操作になっていました。マウスでも、何もない所をドラッグするとカメラが回るように（Shift＋ドラッグで動かす）
 - 図の右上の「操作欄」ボタンが分割表示で効かなかったのを修正し、左上の「操作欄を隠す」ボタンを削除
 - 「人物」のメニューの全身図の下に「人物の管理」：人物の切り替え・追加・複製・削除と、持ち物・身に着けた物の一覧（装備のタブを開く・外す）
+- 両手持ちの武器：利き手（右手・左手）を装備の欄で切り替えられます。持つ手を動かしても武器が手を支点に回らず、もう片方の手が向きを保って付いてくるように
 - 3軸ハンドル：左側のメニューの「3軸ハンドル」を押すと出て、「解除」で隠します（右側の欄のコピーは削除）。掴んだ軸は太く強調され、ドラッグはその軸だけに動きます
 - 身長と頭身の欄を体格タブにも出しました（頭身は直接入力可）
 - 線の色は、色見本の横に #rrggbb の色コードを入力できるように
@@ -83,6 +84,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The camera sometimes stopped responding: a finger whose lifting was never told made every later touch a two-finger gesture. A mouse drag on empty space now turns the camera too (Shift: pans)
 - The "Panel" button at the view's top right works in split screen; the "Hide the panel" key at the top left is gone
 - "Figures" under the body map in the Figure menu: switch, add, copy and delete figures, and what the figure holds and wears (open it in Equip, take it off)
+- Two-handed weapons: the main hand (right or left) is chosen in the Equip tab. Moving the holding hand no longer swings the weapon about it: the other hand follows and the weapon keeps its direction
 - The 3-axis handles: the 3軸ハンドル button on the left turns them on and 解除 off (the copies in the panel are gone). The axis taken is drawn heavier, and a drag moves along that axis only
 - The height and heads are in the Body tab too (heads can be typed)
 - The line colours take a #rrggbb code beside each colour

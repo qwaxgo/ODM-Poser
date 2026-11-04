@@ -452,6 +452,31 @@ function aimOtherHand(side, it, g){
     solveIK(wi, w); rotateSubtree(hi, add(S.P[wi], d));
   }
 }
+// a two-handed thing keeps the way it points while its holding hand moves (no swinging about that
+// hand): when only the hand moved, the thing's own turn is set back so the line from its grip to the
+// other hand's grip keeps the direction it had; the other hand then follows along it. A turn made by
+// the user (it.rot changed) sets the way anew instead.
+const STAB = new WeakMap();
+function stabilize(it){
+  const def = PROPS_[it.key], main = it.hand === "l" ? "l" : "r", wr = S.P[IX[main + "_wrist"]];
+  const dirNow = () => norm(sub(itemToWorld(it, segPoint(it, def.grip2)), itemToWorld(it, gripPoint(it))));
+  const st = STAB.get(it), rotKey = JSON.stringify(it.rot || [0, 0, 0]);
+  if (st && st.rot === rotKey && st.side === main && len(sub(wr, st.wrist)) > 0.05){
+    const cost = () => 1 - dot(dirNow(), st.dir);
+    let c = cost();
+    for (let iter = 0; iter < 10 && c > 1e-4; iter++){
+      let better = false;
+      for (const ax of [0, 1, 2]) for (const dd of [6, -6, 1.5, -1.5]){
+        it.rot = it.rot || [0, 0, 0];
+        const old = it.rot[ax]; it.rot[ax] = old + dd;
+        const c2 = cost();
+        if (c2 < c - 1e-9){ c = c2; better = true; } else it.rot[ax] = old;
+      }
+      if (!better) break;
+    }
+  }
+  STAB.set(it, {dir: dirNow(), rot: JSON.stringify(it.rot || [0, 0, 0]), side: main, wrist: wr.slice()});
+}
 function followItems(moved){
   for (const it of S.items || []){
     const def = PROPS_[it.key]; if (!def || it.where) continue;
@@ -468,6 +493,7 @@ function followItems(moved){
         const want = add(S.P[sh], mul(norm(d), arm * 0.85));
         solveIK(mw, add(S.P[mw], sub(want, g)));
       }
+      stabilize(it);
       aimOtherHand(other, it, itemToWorld(it, segPoint(it, def.grip2)));
     }
     if (def.place === "body" && def.mount){
@@ -852,6 +878,7 @@ function buildScenePanel(){
         <button id="scHold">手に持つ・身に着ける</button><button id="scGround2">接地させる</button></div>
       <div id="scHoldRow" class="grid2" style="margin-top:6px">
         <div><label id="scHoldLbl">持ち方</label><select id="scHoldSel"><option value="grip">握る</option><option value="couch">カウチ（脇に挟む）</option></select></div>
+        <div><label>利き手（両手持ちの主に持つ手）</label><select id="scHandSel"><option value="r">右手</option><option value="l">左手</option></select></div>
         <div><label>持つ位置（長い方向）</label><div class="row"><input type="range" id="scGripAt" min="-80" max="80" step="1"><input type="number" class="num" id="scGripAtN" step="1"><span class="unit">cm</span></div></div>
       </div>
       <div class="btns"><button id="scGripReset" title="持ち方と持つ位置を、この小物の初期値に戻す">↺ 持ち方と持つ位置を戻す</button></div>
@@ -930,6 +957,9 @@ function buildScenePanel(){
   $("scGripAt").addEventListener("pointerdown", remember);
   $("scGripAt").addEventListener("input", e => { $("scGripAtN").value = e.target.value; setAt(+e.target.value); });
   $("scGripAtN").addEventListener("change", e => { remember(); $("scGripAt").value = e.target.value; setAt(+e.target.value); });
+  // 利き手: a two-handed thing's main hand (the other hand takes the rest); the thing is held again
+  $("scHandSel").addEventListener("change", e => { const it = S.items[scSel]; if (!it || it.where) return; remember();
+    freeHands(it); it.hand = e.target.value === "l" ? "l" : "r"; holdHands(it); afterEdit(); fillItemList(); draw(); });
   $("scGripReset").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
     resetGrip(it); afterEdit(); fillItemList(); draw(); say("持ち方と持つ位置を戻しました。"); });
   $("scBay").addEventListener("change", e => { const it = S.items[scSel]; if (!it) return; remember(); it.bayonet = e.target.checked; draw(); });
@@ -1062,6 +1092,8 @@ function showItem(){
   const hand = d && d.place === "hand", ways = d && (d.couchable || d.couch);
   $("scHoldRow").style.display = hand ? "" : "none"; $("scGripReset").style.display = hand ? "" : "none";
   $("scHoldSel").parentNode.style.display = ways ? "" : "none";
+  $("scHandSel").parentNode.style.display = d && d.grip2 ? "" : "none";
+  $("scHandSel").value = it.hand === "l" ? "l" : "r";
   $("scHoldSel").value = holdOf(it);
   $("scGripAt").value = it.gripAt || 0; $("scGripAtN").value = it.gripAt || 0;
   const vals = {scSize: Math.round((it.scale || 1) * 100), scRx: it.rot[0], scRy: it.rot[1], scRz: it.rot[2],
