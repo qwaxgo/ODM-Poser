@@ -6,7 +6,10 @@
 (() => {
 const $ = id => document.getElementById(id);
 const body = document.body, aside = document.querySelector("aside"), header = document.querySelector(".app-header");
-const SHEET = matchMedia("(max-width: 900px) and (orientation: portrait)");
+// upright: the phone (the sheet from the bar) and the upright tablet / monitor (the tall layout: the
+// categories and tabs in a column at the left, the controls beside them, scrolling sideways)
+const SHEET = matchMedia("(orientation: portrait)");
+const TALL = matchMedia("(min-width: 701px) and (orientation: portrait)");
 const IC = window.ODMICONS || {svg: () => ""};
 
 // the sheet's parts, in the panel: a grip (drag it down to close, up to open wider) and the simplified view
@@ -93,10 +96,12 @@ function drawMini(){
 function sync(){
   const on = SHEET.matches;
   body.classList.toggle("sheet", on);
+  body.classList.toggle("sheet-tall", on && TALL.matches);
   if (on){ body.classList.remove("split", "full"); }
   if (!on){ body.classList.remove("sheet-open", "about-open"); }
   syncBar(); draw();
 }
 SHEET.addEventListener("change", sync);
+TALL.addEventListener("change", sync);
 if (SHEET.matches) sync(); else syncBar();
 })();

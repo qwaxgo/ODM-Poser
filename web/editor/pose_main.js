@@ -2041,16 +2041,27 @@ function syncCams(){
   for (const id of ["camLoad", "camDel"]) $(id).disabled = !list.length;
   camLockUI();
 }
+// the position and the look point: a slider (dragged, one step to the undo) and a number, each the other's
+let camSlide = false;
+for (const id of [...CAM_P, ...CAM_T]){
+  const r = $(id + "R");
+  if (r){
+    r.addEventListener("pointerdown", () => remember());
+    r.addEventListener("input", () => { $(id).value = r.value; camSlide = true; $(id).dispatchEvent(new Event("change")); camSlide = false; });
+  }
+}
 for (const id of [...CAM_P, ...CAM_T]) $(id).addEventListener("change", () => {
   if (camHeld()) return;
   const v = ids => ids.map(k => +$(k).value);
   if (![...v(CAM_P), ...v(CAM_T)].every(isFinite)) return;
-  remember();
+  if (!camSlide) remember();
   if (CAM_T.includes(id)){ const pos = camPos(); S.center = v(CAM_T); setCamPos(pos); }
   else if (!setCamPos(v(CAM_P))) say("カメラが見る点に近すぎます。", true);
   syncUI(); draw();
 });
-{ const sync0 = syncUI; syncUI = function(){ sync0(); syncCams(); }; }
+{ const sync0 = syncUI; syncUI = function(){ sync0(); syncCams(); syncCamRanges(); }; }
+// the sliders follow the numbers (the camera moved by the view, the lock, a saved camera)
+function syncCamRanges(){ for (const id of [...CAM_P, ...CAM_T]){ const r = $(id + "R"); if (r && document.activeElement !== r) r.value = $(id).value; } }
 $("camLock").addEventListener("change", e => { remember(); S.camLock = e.target.checked; camLockUI();
   say(S.camLock ? "カメラを固定しました（スライダー・座標も動きません。「呼出」は使えます）。" : "カメラの固定を外しました。"); });
 $("camSave").addEventListener("click", () => {

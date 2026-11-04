@@ -12,10 +12,18 @@
     <div class="row"><input type="range" id="pitch" min="-80" max="80" value="0"><input type="number" class="num" id="pitchV"><span class="unit">°</span></div>
     <label>傾き</label>
     <div class="row"><input type="range" id="roll" min="-90" max="90" value="0"><input type="number" class="num" id="rollV"><span class="unit">°</span></div>
-    <label>カメラの位置（左右・上下・前後）</label>
-    <div class="row"><input type="number" class="num" id="camPX" step="5" aria-label="カメラの位置 左右"><input type="number" class="num" id="camPY" step="5" aria-label="カメラの位置 上下"><input type="number" class="num" id="camPZ" step="5" aria-label="カメラの位置 前後"><span class="unit">cm</span></div>
-    <label>見る点（左右・上下・前後）</label>
-    <div class="row"><input type="number" class="num" id="camTX" step="5" aria-label="見る点 左右"><input type="number" class="num" id="camTY" step="5" aria-label="見る点 上下"><input type="number" class="num" id="camTZ" step="5" aria-label="見る点 前後"><span class="unit">cm</span></div>
+    <label>カメラの位置（左右）</label>
+    <div class="row"><input type="range" id="camPXR" min="-600" max="600" step="5"><input type="number" class="num" id="camPX" step="5"><span class="unit">cm</span></div>
+    <label>カメラの位置（上下）</label>
+    <div class="row"><input type="range" id="camPYR" min="-100" max="400" step="5"><input type="number" class="num" id="camPY" step="5"><span class="unit">cm</span></div>
+    <label>カメラの位置（前後）</label>
+    <div class="row"><input type="range" id="camPZR" min="-600" max="600" step="5"><input type="number" class="num" id="camPZ" step="5"><span class="unit">cm</span></div>
+    <label>見る点（左右）</label>
+    <div class="row"><input type="range" id="camTXR" min="-600" max="600" step="5"><input type="number" class="num" id="camTX" step="5"><span class="unit">cm</span></div>
+    <label>見る点（上下）</label>
+    <div class="row"><input type="range" id="camTYR" min="-100" max="400" step="5"><input type="number" class="num" id="camTY" step="5"><span class="unit">cm</span></div>
+    <label>見る点（前後）</label>
+    <div class="row"><input type="range" id="camTZR" min="-600" max="600" step="5"><input type="number" class="num" id="camTZ" step="5"><span class="unit">cm</span></div>
     <div class="hint">床の中心が 0。前後は人物の正面側が＋。位置を変えると、見る点を向いたまま向き・高さ・拡大が決まります（傾きはそのまま）。</div>
     <div class="btns"><button id="camReset">↺ リセット</button></div>
   </section>
