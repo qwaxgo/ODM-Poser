@@ -2154,3 +2154,16 @@ window.addEventListener("beforeunload", () => { try { localStorage.setItem(KEY, 
 try { const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d && d.P){ migrate(d); if (d.P.length === J.length) S = Object.assign(fresh(), d); } } catch (e) {}
 for (const id of ["scaleAll", "scaleHead", "scaleThick"]) $(id + "V").value = 100;
 syncUI(); draw();
+// the setting 「クリックで自動的にモードを切り替える」 (kept in this browser): a press on a thing goes
+// to 配置 (where things move), a press on the body to ポーズ (from 配置 or カメラ; 体格 stays)
+const AUTO_KEY = KEY + "-automode";
+let autoMode = false; try { autoMode = localStorage.getItem(AUTO_KEY) === "1"; } catch (e) {}
+function modeTo(m){ const b = document.querySelector(`#modes [data-mode="${m}"]`); if (b && mode !== m) b.click(); }
+DOWN_HOOKS.unshift((cv, x, y) => {
+  if (!autoMode || cv !== front) return null;
+  if (pick(cv, x, y) >= 0){ if (mode === "place" || mode === "persp") modeTo("pose"); return null; }
+  if ((typeof solidUnder === "function" && solidUnder(x, y)) || (typeof itemUnder === "function" && itemUnder(x, y))) modeTo("place");
+  return null;
+});
+document.getElementById("autoMode").checked = autoMode;
+document.getElementById("autoMode").addEventListener("change", e => { autoMode = e.target.checked; try { localStorage.setItem(AUTO_KEY, autoMode ? "1" : "0"); } catch (err) {} });

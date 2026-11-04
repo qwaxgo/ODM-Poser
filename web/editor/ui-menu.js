@@ -26,7 +26,7 @@
         leaf("mod", "MOD", "Codes", "MOD の管理")]}]}];
   // a part of a module's panel -> its tab, by an element it holds
   const BY_ID = [["scCat", "equip"], ["auPart", "equip"], ["soKind", "objects"], ["castList", "scene"],
-    ["scFloor", "place"], ["scWire", "place"], ["pc_head", "colors"], ["shText", "share"], ["modBox", "mod"]];
+    ["scFloor", "place"], ["scWire", "place"], ["clObj", "colors"], ["shText", "share"], ["modBox", "mod"]];
   const MODE_OF = {pose: "pose", body: "body", size: "body", camera: "persp", place: "place", objects: "place"};
   const MENU_OF = {pose: "pose", body: "body", persp: "camera", place: "objects"};
   // English (i18n.js translates the text as it is shown)

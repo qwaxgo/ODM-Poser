@@ -102,3 +102,28 @@ new MutationObserver(() => { if (queued) return; queued = true;
   requestAnimationFrame(() => { queued = false; aside.querySelectorAll(":scope > section").forEach(pair); iconize(document); });
 }).observe(aside, {childList: true, subtree: true});
 })();
+
+// a number field that also has a slider beside it (ui-layout.js, last): the number stays the one the
+// code reads; the slider writes it and follows it. A slider's drag is one undo step (remember is
+// held back while it moves)
+(() => {
+const PAIRS = [["scFloorY", -100, 400, 1], ["scCeilY", 0, 500, 1], ["scWallZ", -600, 600, 1], ["scWallYaw", -180, 180, 1],
+  ["scWireH", 0, 600, 10], ["castX", -600, 600, 5], ["castZ", -600, 600, 5], ["auSize", 4, 80, 1]];
+let dragging = false;
+const r0 = remember;
+remember = function(){ if (dragging) return; return r0.apply(this, arguments); };
+for (const [id, min, max, step] of PAIRS){
+  const n = document.getElementById(id); if (!n || n.dataset.paired) continue; n.dataset.paired = "1";
+  const r = document.createElement("input"); r.type = "range"; r.id = id + "R"; r.min = min; r.max = max; r.step = step;
+  r.setAttribute("aria-label", n.getAttribute("aria-label") || n.previousElementSibling?.textContent || id);
+  n.before(r);
+  r.addEventListener("pointerdown", () => remember());
+  r.addEventListener("input", () => { n.value = r.value; dragging = true; n.dispatchEvent(new Event("change")); dragging = false; });
+  n.addEventListener("input", () => { r.value = n.value; });
+  n.addEventListener("change", () => { r.value = n.value; });
+  r.value = n.value;
+}
+const syncPairs = () => { for (const [id] of PAIRS){ const n = document.getElementById(id), r = document.getElementById(id + "R");
+  if (n && r && document.activeElement !== r && document.activeElement !== n) r.value = n.value; } };
+{ const d0 = draw; draw = function(){ d0.apply(this, arguments); syncPairs(); }; }
+})();

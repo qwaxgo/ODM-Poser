@@ -34,6 +34,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - カメラが時々動かなくなる不具合を修正：タッチの指が離れたことが伝わらないと、それ以後のタッチがすべて2本指の操作になっていました。マウスでも、何もない所をドラッグするとカメラが回るように（Shift＋ドラッグで動かす）
 - 図の右上の「操作欄」ボタンが分割表示で効かなかったのを修正し、左上の「操作欄を隠す」ボタンを削除
 - 「人物」のメニューの全身図の下に「人物の管理」：人物の切り替え・追加・複製・削除と、持ち物・身に着けた物の一覧（装備のタブを開く・外す）
+- 線の色の欄を作り直し：対象（人物の部位・床・壁・天井・ワイヤー・小物・物体・オーラ）を一覧から選び、色を変えるものにチェックを入れて、色を選ぶか #rrggbb のコードを入力します。固定の色の一覧はなくなりました
+- 「クリックで自動的にモードを切り替える」（ポーズの欄）：物を押すと配置モード、人体の関節を押すとポーズモード（配置・カメラから。体格は残す）。このブラウザに残ります
+- 物（設置物）の幅・高さ・奥行き・角の数・位置・向き、床と天井の高さ、壁の位置と向き、ワイヤーの支点、人物の位置（castX/Z）、オーラの大きさにもスライダーを付けました（数値欄と連動、ドラッグは取り消し1回分）
 - カメラの位置と見る点を、XYZ それぞれスライダーと数値欄で調整できるように（スライダーを動かしても取り消し履歴は1回分）
 - 縦のタブレットと PC の縦モニター：分類とタブを画面左端の縦の列に置き、選んだタブの中身を右に横へ並べてスクロールします。スライダーは縦型に
 - 両手持ちの武器：利き手（右手・左手）を装備の欄で切り替えられます。持つ手を動かしても武器が手を支点に回らず、もう片方の手が向きを保って付いてくるように
@@ -86,6 +89,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The camera sometimes stopped responding: a finger whose lifting was never told made every later touch a two-finger gesture. A mouse drag on empty space now turns the camera too (Shift: pans)
 - The "Panel" button at the view's top right works in split screen; the "Hide the panel" key at the top left is gone
 - "Figures" under the body map in the Figure menu: switch, add, copy and delete figures, and what the figure holds and wears (open it in Equip, take it off)
+- The line colours: pick the object from a list (the figure's parts, floor, walls, ceiling, wire, things, solids, auras), check what to change, then pick a colour or type #rrggbb. The fixed list is gone
+- Click to switch mode (in the Pose tab): a press on a thing goes to Place, a press on the body to Pose (from Place or Camera; Body stays). Kept in this browser
+- Sliders beside the numbers of objects (size, sides, position, turn), the floor and ceiling heights, the wall, the wire's height, the figure's place and the aura size (linked with the number; a drag is one undo step)
 - The camera's position and look point: X, Y and Z each with a slider and a number (a slider drag is one undo step)
 - Upright tablets and tall monitors: the categories and tabs are a column at the left edge, the controls of the tab chosen sit beside it in a row (scrolling sideways), and the sliders stand upright
 - Two-handed weapons: the main hand (right or left) is chosen in the Equip tab. Moving the holding hand no longer swings the weapon about it: the other hand follows and the weapon keeps its direction

@@ -191,11 +191,9 @@ function buildStylePanel(){
   sec.innerHTML = `<h2>線の色</h2>
     <div class="btns"><button id="pcReset" title="線・床・壁・ワイヤー・小物・物体・オーラの色を、最初の色に戻す">↺ 色を初期状態に</button></div>
     <div class="hint">線・床・壁・天井・ワイヤー・小物・物体・オーラの色を、最初の色に戻します（「元に戻す」で取り消せます）。</div>
-    <div class="grid2">${PART_NAMES.map(([k, ja]) => `<div>${colorRow("pc_" + k, ja)}</div>`).join("")}</div>
-    <div class="grid2"><div>${colorRow("pc_floor", "床")}</div><div>${colorRow("pc_wall", "壁")}</div><div>${colorRow("pc_ceiling", "天井")}</div><div>${colorRow("pc_wire", "ワイヤー")}</div></div>
-    <label style="margin-top:8px">小物・物体・オーラ</label>
-    <div id="pcThings" class="pc-things"></div>
-    <div class="hint">線の色はすべてここで変えます。チェックしたものだけ色が変わります（書き出すアタリ画像にも）。</div>
+    <div class="row" style="margin-top:6px"><label style="margin:0;flex:1">対象</label><select id="clObj"></select></div>
+    <div id="clRows" class="cl-rows"></div>
+    <div class="hint">対象（人物・床・物・オーラなど）を選び、色を変えるものにチェックを入れて色を選ぶか、#rrggbb のコードを入力します。チェックしていないものは既定の色のままです（書き出すアタリ画像にも反映）。</div>
     <h2 style="margin-top:14px">オーラ・気をまとう</h2>
     <div class="grid2">
       <div><label>部位</label><select id="auPart">${Object.entries(AURA_PARTS).map(([k, [ja]]) => `<option value="${k}">${ja}</option>`).join("")}</select></div>
@@ -223,20 +221,21 @@ function buildStylePanel(){
       if (!/^#[0-9a-f]{6}$/i.test(v)){ $(id + "Hex").value = $(id).value; say("色は #rrggbb の形で入れてください（例：#e0605a）。", true); return; }
       $(id).value = v.toLowerCase(); $(id + "On").checked = true; $(id + "Hex").value = $(id).value; apply(); });
   };
-  for (const [k] of PART_NAMES) bind("pc_" + k, () => colors().parts[k], v => { if (v) colors().parts[k] = v; else delete colors().parts[k]; });
-  for (const k of ["floor", "wall", "ceiling"]) bind("pc_" + k, () => colors()[k], v => { colors()[k] = v; delete colors().env; });
-  bind("pc_wire", () => colors().wire, v => { colors().wire = v; });
   $("pcReset").addEventListener("click", () => { remember(); S.colors = {parts: {}};
     for (const o of [...(S.items || []), ...(S.solids || [])]) delete o.color;
     for (const a of S.auras || []) delete a.color;
     syncStyle(); if (typeof syncUI === "function") syncUI(); draw(); });
-  // each thing, solid and aura: its own colour (the old pickers in their panels give way to this)
-  $("pcThings").addEventListener("input", e => { const t = e.target; if (t.type !== "color") return;
-    const o = thingOf(t.dataset.k); if (!o) return; remember(); o.color = t.value;
-    t.parentNode.querySelector("input[type=checkbox]").checked = true; draw(); });
-  $("pcThings").addEventListener("change", e => { const t = e.target; if (t.type !== "checkbox") return;
-    const o = thingOf(t.dataset.k); if (!o) return; remember();
-    if (t.checked) o.color = t.parentNode.parentNode.querySelector("input[type=color]").value; else delete o.color; draw(); });
+  // the object picker and its rows (see renderCl): one delegated handler for the rows
+  $("clObj").addEventListener("change", () => { clKey = $("clObj").value; clRowsKey = ""; renderCl(); });
+  $("clRows").addEventListener("pointerdown", e => { if (e.target.type === "color") remember(); });
+  $("clRows").addEventListener("input", e => { const t = e.target, k = t.dataset.cl || t.dataset.clhex; if (!k) return;
+    if (t.type === "color"){ $("clRows").querySelector(`input[type=checkbox][data-cl="${k}"]`).checked = true; setClColor(k, t.value, true); } });
+  $("clRows").addEventListener("change", e => { const t = e.target;
+    if (t.type === "checkbox" && t.dataset.cl){ setClColor(t.dataset.cl, t.checked ? defClColor(t.dataset.cl) : undefined, false); return; }
+    if (t.dataset.clhex){ const v = t.value.trim();
+      if (!/^#[0-9a-f]{6}$/i.test(v)){ t.value = clColorOf(t.dataset.clhex) || defClColor(t.dataset.clhex); say("色は #rrggbb の形で入れてください（例：#e0605a）。", true); return; }
+      setClColor(t.dataset.clhex, v.toLowerCase(), false); }
+  });
   for (const [on] of [["scColorOn"], ["soColorOn"]]){ const row = $(on) && $(on).closest(".row"); if (!row) continue;
     row.style.display = "none";
     const go = document.createElement("div"); go.className = "btns";
@@ -301,23 +300,60 @@ function buildColorSets(){
 }
 // the things with a colour of their own: "i3" (S.items[3]), "s0" (S.solids[0]), "a1" (S.auras[1])
 function thingOf(k){ const n = +k.slice(1); return ({i: S.items, s: S.solids, a: S.auras}[k[0]] || [])[n]; }
-let thingsKey = "";
-function syncThings(){
-  const box = $("pcThings"); if (!box) return;
-  const rows = [], P = window.PROPS || {};
-  (S.items || []).forEach((it, n) => { const d = P[it.key] || {}; rows.push(["i" + n, `小物：${d.ja || it.key}`, it.color, d.color || "#e0605a"]); });
-  (S.solids || []).forEach((o, n) => rows.push(["s" + n, `物体：${typeof solidName === "function" ? solidName(o) : o.kind}`, o.color, "#8a8a8a"]));
-  (S.auras || []).forEach((a, n) => rows.push(["a" + n, `オーラ：${(AURA_PARTS[a.part] || AURA_PARTS.body)[0]}・${(AURA_KINDS[a.kind] || AURA_KINDS.flame)[0]}`, a.color, (AURA_KINDS[a.kind] || AURA_KINDS.flame)[1]]));
-  const key = JSON.stringify(rows); if (key === thingsKey) return; thingsKey = key;
-  box.innerHTML = rows.length ? rows.map(([k, name, c, d]) => `<div class="row pc-thing"><label style="margin:0;flex:1"><input type="checkbox" data-k="${k}"${c ? " checked" : ""}> ${name}</label>
-    <input type="color" data-k="${k}" value="${c || d}"></div>`).join("") : `<div class="hint">まだありません。</div>`;
+// the line colours by object (the picker 対象): the figure's parts, the floor, walls, ceiling and the
+// wire, and each thing, solid and aura (their own colour). A colour not set (no check) is the default.
+let clKey = "body", clRowsKey = "", clObjKey = "";
+const CL_ENV = [["floor", "床"], ["wall", "壁"], ["ceiling", "天井"], ["wire", "ワイヤー"]];
+function clObjects(){
+  const P = window.PROPS || {}, out = [["body", "人物（体の部位）"], ...CL_ENV.map(([k, ja]) => [k, ja])];
+  (S.items || []).forEach((it, n) => { const d = P[it.key] || {}; out.push(["i" + n, `小物：${d.ja || it.key}`]); });
+  (S.solids || []).forEach((o, n) => out.push(["s" + n, `物体：${typeof solidName === "function" ? solidName(o) : o.kind}`]));
+  (S.auras || []).forEach((a, n) => out.push(["a" + n, `オーラ：${(AURA_PARTS[a.part] || AURA_PARTS.body)[0]}・${(AURA_KINDS[a.kind] || AURA_KINDS.flame)[0]}`]));
+  return out;
 }
+function defClColor(k){
+  if (k[0] === "i") return ((window.PROPS || {})[(S.items || [])[+k.slice(1)] && S.items[+k.slice(1)].key] || {}).color || "#e0605a";
+  if (k[0] === "s") return "#8a8a8a";
+  if (k[0] === "a") { const a = (S.auras || [])[+k.slice(1)]; return a ? (AURA_KINDS[a.kind] || AURA_KINDS.flame)[1] : "#7fd6ff"; }
+  return "#e0605a";
+}
+// the colour of one row's key: a part (head ...), an environment surface (floor ...), or a thing ("i0" ...)
+function clColorOf(k){
+  const c = S.colors || {};
+  if (k[0] === "i" || k[0] === "s" || k[0] === "a"){ const o = thingOf(k); return o && o.color; }
+  if (k === "wire") return c.wire;
+  if (CL_ENV.some(([e]) => e === k)) return c[k] || (c.env && k !== "wire" ? c.env : undefined);
+  return (c.parts || {})[k];
+}
+function setClColor(k, v, slide){
+  if (!slide) remember();
+  if (k[0] === "i" || k[0] === "s" || k[0] === "a"){ const o = thingOf(k); if (o){ if (v) o.color = v; else delete o.color; } }
+  else if (k === "wire") S.colors = Object.assign({parts: {}}, S.colors || {}, {wire: v});
+  else if (CL_ENV.some(([e]) => e === k)){ const c = S.colors = Object.assign({parts: {}}, S.colors || {}); c[k] = v; delete c.env; }
+  else { const c = S.colors = Object.assign({parts: {}}, S.colors || {}); c.parts = c.parts || {};
+    if (v) c.parts[k] = v; else delete c.parts[k]; }
+  draw();
+}
+function renderCl(){
+  const box = $("clRows"), sel = $("clObj"); if (!box || !sel) return;
+  const objs = clObjects(), okey = JSON.stringify(objs);
+  if (okey !== clObjKey){ clObjKey = okey; sel.innerHTML = objs.map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join(""); }
+  if (!objs.some(([k]) => k === clKey)) clKey = "body";
+  sel.value = clKey;
+  const rows = clKey === "body" ? PART_NAMES.map(([k, ja]) => [k, ja])
+    : [[clKey, (objs.find(([k]) => k === clKey) || [clKey, clKey])[1]]];
+  const state = JSON.stringify(rows.map(([k]) => [k, clColorOf(k) || null]));
+  if (state === clRowsKey) return; clRowsKey = state;
+  box.innerHTML = rows.map(([k, name]) => {
+    const c = clColorOf(k), v = c || defClColor(k);
+    return `<div class="row cl-row"><label style="margin:0;flex:1"><input type="checkbox" data-cl="${k}"${c ? " checked" : ""}> ${esc(name)}</label>
+      <input type="color" data-cl="${k}" value="${v}" aria-label="${esc(name)}の色"><input type="text" class="hexin" data-clhex="${k}" value="${v}" maxlength="7" aria-label="${esc(name)}の色コード"></div>`;
+  }).join("");
+}
+function syncThings(){ renderCl(); }
 function syncStyle(){
   const c = S.colors = Object.assign({parts: {}}, S.colors || {}); c.parts = c.parts || {};
   // a colour that is not set shows the picker's own starting colour
-  const show = (id, v) => { $(id + "On").checked = !!v; $(id).value = v || $(id).defaultValue; $(id + "Hex").value = $(id).value; };
-  for (const [k] of PART_NAMES) show("pc_" + k, c.parts[k]);
-  for (const k of ["floor", "wall", "ceiling"]) show("pc_" + k, c[k] || c.env); show("pc_wire", c.wire);
   syncThings();
   const list = S.auras = S.auras || [], cur = $("auList").value;
   $("auList").innerHTML = list.map((a, i) => `<option value="${i}">${i + 1}. ${(AURA_PARTS[a.part] || AURA_PARTS.body)[0]}：${(AURA_KINDS[a.kind] || AURA_KINDS.flame)[0]}</option>`).join("");

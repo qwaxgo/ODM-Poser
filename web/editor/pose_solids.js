@@ -267,6 +267,10 @@ function standOnSolid(){
 // ---- the panel ------------------------------------------------------------------------------------
 const SOLID_CTL = [["soW", "幅", 0], ["soH", "高さ", 1], ["soD", "奥行き", 2], ["soSides", "角の数"],
   ["soX", "位置（左右）", 0], ["soY", "位置（上下）", 1], ["soZ", "位置（前後）", 2], ["soYaw", "向き"]];
+// each number has a slider too: [min, max, step] (cm, or the count / degrees)
+const SOLID_RANGE = {soW: [5, 400, 1], soH: [5, 400, 1], soD: [5, 400, 1], soSides: [3, 24, 1],
+  soX: [-600, 600, 5], soY: [-100, 400, 5], soZ: [-600, 600, 5], soYaw: [-180, 180, 1]};
+let soSlide = false;                          // a slider being dragged: one undo step for the drag
 function buildSolidPanel(){
   const sec = document.createElement("section");
   const unit = id => id === "soSides" ? "" : id === "soYaw" ? "°" : "cm";
@@ -277,7 +281,7 @@ function buildSolidPanel(){
     <select id="soList" size="4"></select>
     <div class="btns" style="margin-top:6px"><button id="soDel">外す</button><button id="soDup">複製</button></div>
     <div id="soCtl" class="grid2" style="margin-top:6px">${SOLID_CTL.map(([id, label]) =>
-      `<div id="${id}Box"><label>${label}</label><div class="row"><input type="number" id="${id}" step="${id === "soSides" ? 1 : 5}"><span class="unit">${unit(id)}</span></div></div>`).join("")}</div>
+      `<div id="${id}Box"><label>${label}</label><div class="row"><input type="range" id="${id}R" min="${SOLID_RANGE[id][0]}" max="${SOLID_RANGE[id][1]}" step="${SOLID_RANGE[id][2]}"><input type="number" id="${id}" step="${id === "soSides" ? 1 : 5}"><span class="unit">${unit(id)}</span></div></div>`).join("")}</div>
     <div class="row" id="soColorRow" style="margin-top:6px"><label style="margin:0;flex:1"><input type="checkbox" id="soColorOn"> 線の色を変える</label>
       <input type="color" id="soColor" value="#e0605a" ></div>
     <div class="btns" id="soResetRow" style="margin-top:6px"><button id="soReset" title="大きさ・向きを戻す">↺ 戻す</button></div>
@@ -293,9 +297,12 @@ function buildSolidPanel(){
     const c = JSON.parse(JSON.stringify(o)); c.pos = add(c.pos, [o.size[0] + 20, 0, 0]);
     S.solids.push(c); soSel = S.solids.length - 1; afterEdit(); syncSolids(); draw(); });
   for (const [id, , k] of SOLID_CTL){
+    const r = $(id + "R");
+    r.addEventListener("pointerdown", () => remember());
+    r.addEventListener("input", () => { $(id).value = r.value; soSlide = true; $(id).dispatchEvent(new Event("change")); soSlide = false; });
     $(id).addEventListener("change", e => {
       const o = S.solids && S.solids[soSel], v = +e.target.value; if (!o || !isFinite(v)) return;
-      remember();
+      if (!soSlide) remember();
       if (id === "soW" || id === "soH" || id === "soD") o.size[k] = Math.max(1, v);
       else if (id === "soSides") o.sides = Math.max(3, Math.min(24, Math.round(v)));
       else if (id === "soYaw") o.yaw = v;
@@ -327,6 +334,7 @@ function syncSolids(){
   const vals = {soW: o.size[0], soH: o.size[1], soD: o.size[2], soSides: o.sides || solidKind(o).sides || 4,
     soX: o.pos[0], soY: o.pos[1], soZ: o.pos[2], soYaw: o.yaw || 0};
   for (const [id, v] of Object.entries(vals)) if (document.activeElement !== $(id)) $(id).value = Math.round(v);
+  for (const [id] of SOLID_CTL){ const r = $(id + "R"); if (r && document.activeElement !== r) r.value = $(id).value; }
 }
 buildSolidPanel();
 syncSolids();
