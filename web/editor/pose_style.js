@@ -118,12 +118,24 @@ function drawAura(ctx, a, idx, W, H, front){
       // sharp: how far the outline dips between the tongues (0: a smooth swell, 100: thin points)
       const ux = Math.sin(lean), uy = -Math.cos(lean);
       ctx.lineJoin = sharp > 0.6 ? "miter" : "round";
+      // 放物線: the origin is the bottom centre of the base (raised by origin, a share of the size); each
+      // tongue points away from it, and its length falls off in a parabola toward the base's ends
+      const xs = pts.map(q => q.x), ys = pts.map(q => q.y), half = Math.max(1, (Math.max(...xs) - Math.min(...xs)) / 2);
+      const ox = (Math.max(...xs) + Math.min(...xs)) / 2, oy = Math.max(...ys) - (a.origin === undefined ? 0 : (+a.origin / 100)) * size;
       for (const [k, alpha, fill] of [[1, 0.9, 0.16], [0.55, 0.6, 0.1]]){
         ctx.beginPath();
         pts.forEach((p, i) => {
-          const up = Math.max(0, p.nx * ux + p.ny * uy), tip = i % 2 === 0, rise = 0.35 + 1.5 * up * up;
+          const tip = i % 2 === 0;
+          let x, y;
+          if (a.para){
+            const dx = p.x - ox, dy = p.y - oy, dl = Math.hypot(dx, dy) || 1, ex = dx / dl, ey = dy / dl;
+            const t = Math.max(-1, Math.min(1, dx / half)), len = size * k * Math.max(0.15, 1 - 0.7 * t * t) * (tip ? 0.6 + 0.6 * rnd() : 0.15);
+            x = p.x + ex * len; y = p.y + ey * len;
+          } else {
+          const up = Math.max(0, p.nx * ux + p.ny * uy), rise = 0.35 + 1.5 * up * up;
           const h = tip ? size * k * rise * (0.6 + 0.6 * rnd()) : size * k * (0.12 + (1 - sharp) * 0.6 * rise);
-          const x = p.x + p.nx * h * 0.6 + (tip ? h * up * 0.9 * ux : 0), y = p.y + p.ny * h * 0.6 + (tip ? h * up * 0.9 * uy : 0);
+          x = p.x + p.nx * h * 0.6 + (tip ? h * up * 0.9 * ux : 0); y = p.y + p.ny * h * 0.6 + (tip ? h * up * 0.9 * uy : 0);
+          }
           i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
         });
         ctx.closePath(); if (!flatAura){ ctx.globalAlpha = fill; ctx.fill(); } ctx.globalAlpha = alpha; ctx.lineWidth = lwA * 1.3; ctx.stroke();
@@ -171,13 +183,13 @@ function drawAura(ctx, a, idx, W, H, front){
 
 // ---- the panel ------------------------------------------------------------------------------------
 // the aura's shape: [id, label, min, max, unit, default, the kinds it is for]
-const AU_SHAPE = [["auSharp", "とがり（炎の先）", 0, 100, "%", 50, "flame"], ["auRound", "丸み（楕円に近づける）", 0, 100, "%", 0, ""],
+const AU_SHAPE = [["auOrigin", "放物線の原点の高さ（根元の底辺から）", -50, 150, "%", 0, "flame"], ["auSharp", "とがり（炎の先）", 0, 100, "%", 50, "flame"], ["auRound", "丸み（楕円に近づける）", 0, 100, "%", 0, ""],
   ["auAngle", "なびく向き（炎の傾き）", -60, 60, "°", 0, "flame"], ["auHeight", "高さ", 50, 250, "%", 100, ""], ["auThick", "線の太さ", 30, 300, "%", 100, ""],
   ["auFine", "細かさ（稲妻のギザギザ）", 0, 100, "%", 50, "plasma"], ["auSpread", "広がり（外へ飛ぶ量）", 0, 100, "%", 50, "plasma"],
   ["auDensity", "密度（稲妻の本数）", 10, 100, "%", 50, "plasma"]];
-const AU_KEY = {auSharp: "sharp", auRound: "round", auAngle: "angle", auHeight: "height", auThick: "thick", auFine: "fine", auSpread: "spread", auDensity: "density"};
-function auRead(){ const o = {even: $("auEven").checked}; for (const [id] of AU_SHAPE) o[AU_KEY[id]] = +$(id).value; return o; }
-function auWrite(a){ $("auEven").checked = !!a.even;
+const AU_KEY = {auOrigin: "origin", auSharp: "sharp", auRound: "round", auAngle: "angle", auHeight: "height", auThick: "thick", auFine: "fine", auSpread: "spread", auDensity: "density"};
+function auRead(){ const o = {even: $("auEven").checked, para: $("auPara").checked}; for (const [id] of AU_SHAPE) o[AU_KEY[id]] = +$(id).value; return o; }
+function auWrite(a){ $("auEven").checked = !!a.even; $("auPara").checked = !!a.para;
   for (const [id, , , , , d] of AU_SHAPE){ const v = a[AU_KEY[id]] === undefined ? d : a[AU_KEY[id]]; $(id).value = v; $(id + "N").value = v; }
   auShow(); }
 // only the controls for the kind chosen (炎: とがり・なびく向き; プラズマ: 細かさ・広がり・密度); 全身 for the even width
@@ -185,16 +197,15 @@ function auShow(){ const k = $("auKind").value;
   document.querySelectorAll("[data-au]").forEach(e => { e.style.display = e.dataset.au === k ? "" : "none"; });
   const ev = $("auEven").closest("label"); if (ev) ev.style.display = $("auPart").value === "body" ? "" : "none"; }
 const colorRow = (id, label) => `<div class="row" style="margin-top:4px"><label style="margin:0;flex:1"><input type="checkbox" id="${id}On"> ${label}</label>
-  <input type="color" id="${id}" value="#e0605a" ></div>`;
+  <input type="color" id="${id}" value="#e0605a" ><input type="text" id="${id}Hex" class="hexin" maxlength="7" placeholder="#rrggbb" aria-label="${label}の色コード" inputmode="text"></div>`;
 function buildStylePanel(){
   const sec = document.createElement("section");
   sec.innerHTML = `<h2>線の色</h2>
-    <div class="grid2">${PART_NAMES.map(([k, ja]) => `<div>${colorRow("pc_" + k, ja)}</div>`).join("")}</div>
-    <div class="grid2"><div>${colorRow("pc_floor", "床")}</div><div>${colorRow("pc_wall", "壁")}</div><div>${colorRow("pc_ceiling", "天井")}</div><div>${colorRow("pc_wire", "ワイヤー")}</div></div>
-    <label style="margin-top:8px">小物・物体・オーラ</label>
-    <div id="pcThings" class="pc-things"></div>
-    <div class="btns" style="margin-top:6px"><button id="pcReset">すべて既定の色に戻す</button></div>
-    <div class="hint">線の色はすべてここで変えます。チェックしたものだけ色が変わります（書き出すアタリ画像にも）。</div>
+    <div class="btns"><button id="pcReset" title="線・床・壁・ワイヤー・小物・物体・オーラの色を、最初の色に戻す">↺ 色を初期状態に</button></div>
+    <div class="hint">線・床・壁・天井・ワイヤー・小物・物体・オーラの色を、最初の色に戻します（「元に戻す」で取り消せます）。</div>
+    <div class="row" style="margin-top:6px"><label style="margin:0;flex:1">対象</label><select id="clObj"></select></div>
+    <div id="clRows" class="cl-rows"></div>
+    <div class="hint">対象（人物・床・物・オーラなど）を選び、色を変えるものにチェックを入れて色を選ぶか、#rrggbb のコードを入力します。チェックしていないものは既定の色のままです（書き出すアタリ画像にも反映）。</div>
     <h2 style="margin-top:14px">オーラ・気をまとう</h2>
     <div class="grid2">
       <div><label>部位</label><select id="auPart">${Object.entries(AURA_PARTS).map(([k, [ja]]) => `<option value="${k}">${ja}</option>`).join("")}</select></div>
@@ -203,6 +214,7 @@ function buildStylePanel(){
       <div><label>色</label><input type="color" id="auColor" value="#ffd84a" style="width:100%"></div>
     </div>
     <label title="全身のときだけ。体を囲む立った円柱の形で描くので、横から見ても正面から見ても幅が同じ"><input type="checkbox" id="auEven"> どの角度でも同じ幅</label>
+    <label data-au="flame" title="炎の先が、根元の底辺中心を原点として放射状に出て、長さが左右の端へ向けて放物線状に短くなる"><input type="checkbox" id="auPara"> 放物線（炎の先が根元の中心から放射状に）</label>
     ${AU_SHAPE.map(([id, ja, min, max, unit, , only]) => `<label${only ? ` data-au="${only}"` : ""}>${ja}</label>
       <div class="row"${only ? ` data-au="${only}"` : ""}><input type="range" id="${id}" min="${min}" max="${max}" step="1"><input type="number" class="num" id="${id}N" step="1"><span class="unit">${unit}</span></div>`).join("")}
     <div class="btns" style="margin-top:6px"><button id="auAdd">まとう</button></div>
@@ -216,22 +228,27 @@ function buildStylePanel(){
   const bind = (id, get, set) => {
     const apply = () => { remember(); set($(id + "On").checked ? $(id).value : undefined); draw(); };
     $(id + "On").addEventListener("change", apply);
-    $(id).addEventListener("input", () => { $(id + "On").checked = true; apply(); });
+    $(id).addEventListener("input", () => { $(id + "On").checked = true; $(id + "Hex").value = $(id).value; apply(); });
+    // the colour typed as #rrggbb (any case; a bad one is left alone)
+    $(id + "Hex").addEventListener("change", () => { const v = $(id + "Hex").value.trim();
+      if (!/^#[0-9a-f]{6}$/i.test(v)){ $(id + "Hex").value = $(id).value; say("色は #rrggbb の形で入れてください（例：#e0605a）。", true); return; }
+      $(id).value = v.toLowerCase(); $(id + "On").checked = true; $(id + "Hex").value = $(id).value; apply(); });
   };
-  for (const [k] of PART_NAMES) bind("pc_" + k, () => colors().parts[k], v => { if (v) colors().parts[k] = v; else delete colors().parts[k]; });
-  for (const k of ["floor", "wall", "ceiling"]) bind("pc_" + k, () => colors()[k], v => { colors()[k] = v; delete colors().env; });
-  bind("pc_wire", () => colors().wire, v => { colors().wire = v; });
   $("pcReset").addEventListener("click", () => { remember(); S.colors = {parts: {}};
     for (const o of [...(S.items || []), ...(S.solids || [])]) delete o.color;
     for (const a of S.auras || []) delete a.color;
     syncStyle(); if (typeof syncUI === "function") syncUI(); draw(); });
-  // each thing, solid and aura: its own colour (the old pickers in their panels give way to this)
-  $("pcThings").addEventListener("input", e => { const t = e.target; if (t.type !== "color") return;
-    const o = thingOf(t.dataset.k); if (!o) return; remember(); o.color = t.value;
-    t.parentNode.querySelector("input[type=checkbox]").checked = true; draw(); });
-  $("pcThings").addEventListener("change", e => { const t = e.target; if (t.type !== "checkbox") return;
-    const o = thingOf(t.dataset.k); if (!o) return; remember();
-    if (t.checked) o.color = t.parentNode.parentNode.querySelector("input[type=color]").value; else delete o.color; draw(); });
+  // the object picker and its rows (see renderCl): one delegated handler for the rows
+  $("clObj").addEventListener("change", () => { clKey = $("clObj").value; clRowsKey = ""; renderCl(); });
+  $("clRows").addEventListener("pointerdown", e => { if (e.target.type === "color") remember(); });
+  $("clRows").addEventListener("input", e => { const t = e.target, k = t.dataset.cl || t.dataset.clhex; if (!k) return;
+    if (t.type === "color"){ $("clRows").querySelector(`input[type=checkbox][data-cl="${k}"]`).checked = true; setClColor(k, t.value, true); } });
+  $("clRows").addEventListener("change", e => { const t = e.target;
+    if (t.type === "checkbox" && t.dataset.cl){ setClColor(t.dataset.cl, t.checked ? defClColor(t.dataset.cl) : undefined, false); return; }
+    if (t.dataset.clhex){ const v = t.value.trim();
+      if (!/^#[0-9a-f]{6}$/i.test(v)){ t.value = clColorOf(t.dataset.clhex) || defClColor(t.dataset.clhex); say("色は #rrggbb の形で入れてください（例：#e0605a）。", true); return; }
+      setClColor(t.dataset.clhex, v.toLowerCase(), false); }
+  });
   for (const [on] of [["scColorOn"], ["soColorOn"]]){ const row = $(on) && $(on).closest(".row"); if (!row) continue;
     row.style.display = "none";
     const go = document.createElement("div"); go.className = "btns";
@@ -243,7 +260,7 @@ function buildStylePanel(){
   const editAura = held => { auShow(); const a = (S.auras || [])[auSel()]; if (!a) return; if (!held) remember();
     Object.assign(a, {part: $("auPart").value, kind: $("auKind").value, size: +$("auSize").value || 14, color: $("auColor").value}, auRead());
     syncStyle(); draw(); };
-  for (const id of ["auPart", "auSize", "auEven"]) $(id).addEventListener("change", editAura);
+  for (const id of ["auPart", "auSize", "auEven", "auPara"]) $(id).addEventListener("change", editAura);
   for (const [id] of AU_SHAPE){
     $(id).addEventListener("pointerdown", () => remember());
     $(id).addEventListener("input", () => { $(id + "N").value = $(id).value; editAura(true); });
@@ -258,25 +275,98 @@ function buildStylePanel(){
     $("auPart").value = a.part; $("auKind").value = a.kind; $("auSize").value = a.size; $("auColor").value = a.color || AURA_KINDS[a.kind][1]; auWrite(a); });
   auWrite({});
 }
+// 色の記憶: the line colours (S.colors: the figures' parts, the floor, walls, ceiling and the wire)
+// kept under a name in this browser; loaded, they replace the current ones (undo takes it back)
+const CS_KEY = KEY + "-colorsets";
+function loadColorSets(){ try { const v = JSON.parse(localStorage.getItem(CS_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function storeColorSets(list){
+  try { localStorage.setItem(CS_KEY, JSON.stringify(list)); return true; }
+  catch (e) { say("このブラウザには記憶できませんでした（容量か設定のため）。", true); return false; }
+}
+function buildColorSets(){
+  const sec = document.createElement("section");
+  sec.dataset.menu = "colors";
+  sec.innerHTML = `<h2>色の記憶</h2>
+    <div class="row"><input type="text" id="csName" placeholder="名前（例：夜の色）"><button type="button" id="csSave">記憶</button></div>
+    <select id="csList" size="4"></select>
+    <div class="btns"><button type="button" id="csLoad">呼び出す</button><button type="button" id="csDel">削除</button></div>
+    <div class="hint">いまの線の色（人物・床・壁・天井・ワイヤー）を名前をつけて記憶し、呼び出せます。小物・物体・オーラの色は含みません。このブラウザに残ります。</div>`;
+  $("pcReset").closest("section").after(sec);
+  const fill = () => { const list = loadColorSets();
+    $("csList").innerHTML = list.map((d, k) => `<option value="${k}">${esc(d.name)}</option>`).join("");
+    $("csLoad").disabled = $("csDel").disabled = !list.length; };
+  const load = () => { const list = loadColorSets(), d = list[+$("csList").value]; if (!d) return;
+    remember(); S.colors = JSON.parse(JSON.stringify(d.colors || {})); S.colors.parts = S.colors.parts || {};
+    syncStyle(); if (typeof syncUI === "function") syncUI(); draw(); say(`色「${d.name}」を呼び出しました。`); };
+  $("csSave").addEventListener("click", () => {
+    const list = loadColorSets(), name = ($("csName").value.trim() || `色${list.length + 1}`).slice(0, 60);
+    const at = list.findIndex(d => d.name === name), d = {name, colors: JSON.parse(JSON.stringify(S.colors || {parts: {}}))};
+    if (at >= 0) list[at] = d; else list.push(d);
+    if (storeColorSets(list)){ $("csName").value = ""; fill(); $("csList").value = String(at >= 0 ? at : list.length - 1);
+      say(`色「${name}」を記憶しました。`); }
+  });
+  $("csLoad").addEventListener("click", load);
+  $("csList").addEventListener("dblclick", load);
+  $("csDel").addEventListener("click", () => { const list = loadColorSets(), k = +$("csList").value; if (!list[k]) return;
+    const [d] = list.splice(k, 1); if (storeColorSets(list)){ fill(); say(`色「${d.name}」を削除しました。`); } });
+  fill();
+}
 // the things with a colour of their own: "i3" (S.items[3]), "s0" (S.solids[0]), "a1" (S.auras[1])
 function thingOf(k){ const n = +k.slice(1); return ({i: S.items, s: S.solids, a: S.auras}[k[0]] || [])[n]; }
-let thingsKey = "";
-function syncThings(){
-  const box = $("pcThings"); if (!box) return;
-  const rows = [], P = window.PROPS || {};
-  (S.items || []).forEach((it, n) => { const d = P[it.key] || {}; rows.push(["i" + n, `小物：${d.ja || it.key}`, it.color, d.color || "#e0605a"]); });
-  (S.solids || []).forEach((o, n) => rows.push(["s" + n, `物体：${typeof solidName === "function" ? solidName(o) : o.kind}`, o.color, "#8a8a8a"]));
-  (S.auras || []).forEach((a, n) => rows.push(["a" + n, `オーラ：${(AURA_PARTS[a.part] || AURA_PARTS.body)[0]}・${(AURA_KINDS[a.kind] || AURA_KINDS.flame)[0]}`, a.color, (AURA_KINDS[a.kind] || AURA_KINDS.flame)[1]]));
-  const key = JSON.stringify(rows); if (key === thingsKey) return; thingsKey = key;
-  box.innerHTML = rows.length ? rows.map(([k, name, c, d]) => `<div class="row pc-thing"><label style="margin:0;flex:1"><input type="checkbox" data-k="${k}"${c ? " checked" : ""}> ${name}</label>
-    <input type="color" data-k="${k}" value="${c || d}"></div>`).join("") : `<div class="hint">まだありません。</div>`;
+// the line colours by object (the picker 対象): the figure's parts, the floor, walls, ceiling and the
+// wire, and each thing, solid and aura (their own colour). A colour not set (no check) is the default.
+let clKey = "body", clRowsKey = "", clObjKey = "";
+const CL_ENV = [["floor", "床"], ["wall", "壁"], ["ceiling", "天井"], ["wire", "ワイヤー"]];
+function clObjects(){
+  const P = window.PROPS || {}, out = [["body", "人物（体の部位）"], ...CL_ENV.map(([k, ja]) => [k, ja])];
+  (S.items || []).forEach((it, n) => { const d = P[it.key] || {}; out.push(["i" + n, `小物：${d.ja || it.key}`]); });
+  (S.solids || []).forEach((o, n) => out.push(["s" + n, `物体：${typeof solidName === "function" ? solidName(o) : o.kind}`]));
+  (S.auras || []).forEach((a, n) => out.push(["a" + n, `オーラ：${(AURA_PARTS[a.part] || AURA_PARTS.body)[0]}・${(AURA_KINDS[a.kind] || AURA_KINDS.flame)[0]}`]));
+  return out;
 }
+function defClColor(k){
+  if (k[0] === "i") return ((window.PROPS || {})[(S.items || [])[+k.slice(1)] && S.items[+k.slice(1)].key] || {}).color || "#e0605a";
+  if (k[0] === "s") return "#8a8a8a";
+  if (k[0] === "a") { const a = (S.auras || [])[+k.slice(1)]; return a ? (AURA_KINDS[a.kind] || AURA_KINDS.flame)[1] : "#7fd6ff"; }
+  return "#e0605a";
+}
+// the colour of one row's key: a part (head ...), an environment surface (floor ...), or a thing ("i0" ...)
+function clColorOf(k){
+  const c = S.colors || {};
+  if (k[0] === "i" || k[0] === "s" || k[0] === "a"){ const o = thingOf(k); return o && o.color; }
+  if (k === "wire") return c.wire;
+  if (CL_ENV.some(([e]) => e === k)) return c[k] || (c.env && k !== "wire" ? c.env : undefined);
+  return (c.parts || {})[k];
+}
+function setClColor(k, v, slide){
+  if (!slide) remember();
+  if (k[0] === "i" || k[0] === "s" || k[0] === "a"){ const o = thingOf(k); if (o){ if (v) o.color = v; else delete o.color; } }
+  else if (k === "wire") S.colors = Object.assign({parts: {}}, S.colors || {}, {wire: v});
+  else if (CL_ENV.some(([e]) => e === k)){ const c = S.colors = Object.assign({parts: {}}, S.colors || {}); c[k] = v; delete c.env; }
+  else { const c = S.colors = Object.assign({parts: {}}, S.colors || {}); c.parts = c.parts || {};
+    if (v) c.parts[k] = v; else delete c.parts[k]; }
+  draw();
+}
+function renderCl(){
+  const box = $("clRows"), sel = $("clObj"); if (!box || !sel) return;
+  const objs = clObjects(), okey = JSON.stringify(objs);
+  if (okey !== clObjKey){ clObjKey = okey; sel.innerHTML = objs.map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join(""); }
+  if (!objs.some(([k]) => k === clKey)) clKey = "body";
+  sel.value = clKey;
+  const rows = clKey === "body" ? PART_NAMES.map(([k, ja]) => [k, ja])
+    : [[clKey, (objs.find(([k]) => k === clKey) || [clKey, clKey])[1]]];
+  const state = JSON.stringify(rows.map(([k]) => [k, clColorOf(k) || null]));
+  if (state === clRowsKey) return; clRowsKey = state;
+  box.innerHTML = rows.map(([k, name]) => {
+    const c = clColorOf(k), v = c || defClColor(k);
+    return `<div class="row cl-row"><label style="margin:0;flex:1"><input type="checkbox" data-cl="${k}"${c ? " checked" : ""}> ${esc(name)}</label>
+      <input type="color" data-cl="${k}" value="${v}" aria-label="${esc(name)}の色"><input type="text" class="hexin" data-clhex="${k}" value="${v}" maxlength="7" aria-label="${esc(name)}の色コード"></div>`;
+  }).join("");
+}
+function syncThings(){ renderCl(); }
 function syncStyle(){
   const c = S.colors = Object.assign({parts: {}}, S.colors || {}); c.parts = c.parts || {};
   // a colour that is not set shows the picker's own starting colour
-  const show = (id, v) => { $(id + "On").checked = !!v; $(id).value = v || $(id).defaultValue; };
-  for (const [k] of PART_NAMES) show("pc_" + k, c.parts[k]);
-  for (const k of ["floor", "wall", "ceiling"]) show("pc_" + k, c[k] || c.env); show("pc_wire", c.wire);
   syncThings();
   const list = S.auras = S.auras || [], cur = $("auList").value;
   $("auList").innerHTML = list.map((a, i) => `<option value="${i}">${i + 1}. ${(AURA_PARTS[a.part] || AURA_PARTS.body)[0]}：${(AURA_KINDS[a.kind] || AURA_KINDS.flame)[0]}</option>`).join("");
@@ -287,6 +377,7 @@ function syncStyle(){
     $("auColor").value = a.color || AURA_KINDS[a.kind][1]; auWrite(a); }
 }
 buildStylePanel();
+buildColorSets();
 syncStyle();
 { const d0 = draw; draw = function(){ d0.apply(this, arguments); syncThings(); }; }
 { const sync0 = syncUI; syncUI = function(){ sync0(); syncStyle(); }; }

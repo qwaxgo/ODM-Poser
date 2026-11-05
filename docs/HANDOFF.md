@@ -11,7 +11,7 @@ together, the owner's rules, and what is still open.
 ## What it is
 
 A pseudo-3D stick-and-circle pose editor ("atari" = a rough of lines and circles): a web page
-on a static site (GitHub Pages, built with Astro) that also installs as an app (PWA). The owner (qwaxgo, an illustrator) publishes it under MIT. It started
+on a static site (GitHub Pages, built with Astro) that also installs as an app (PWA). The owner (qwaxgo, an illustrator) publishes it under MIT; what it exports is CC0 1.0 (docs/LICENSE*.md: commercial and AI use, credit optional). It started
 as a tool inside a private project and was split out on 2026-10-19 with no git history and
 nothing third-party: keep it that way.
 
@@ -58,7 +58,9 @@ web/editor/pose_props*.js        window.PROP_CATS / window.PROPS: the props as p
 web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carrying, mounting, grabbing, wire
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
 web/editor/pose_cast.js          more than one figure; pose_sets.js the saved poses (pose + things + place) and bodies
-web/editor/pose_gizmo.js         the 3-axis handles (tools per mode); ui-figure.js the body map and 人物の管理 under it (with 付随物のリセット)
+web/editor/pose_gizmo.js         the 3-axis handles (tools per mode); ui-figure.js the body map and 人物の管理 under it; its 付随物 block is in the リセット tab (PanelReset.astro holds the other resets)
+web/editor/ui-pane.js            the grip between the views and the panel (--aside-w, --split-k, --split-aside-user), the modes' two columns, the switches' ▲ ▼
+web/editor/ui-sheet.js           the phone and upright tablet: full-screen views, the category bar, the translucent sheets (aside.sheet-panel), the simplified view (#sheetMini), the About sheet (#aboutSheet). Upright and narrow only (`(max-width: 900px) and (orientation: portrait)`); sideways and computers keep the panel as before
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
 web/editor/pose_share.js         posting (X, Bluesky, Misskey, Mastodon, share menu) and #pose= links;
@@ -124,6 +126,15 @@ state format `version: 3`, `window.ODMPoser` (old alias `window.SymbolicPose`).
   `def.grip`. `aimOtherHand` puts the other hand's grip point on `grip2` the same way.
 - Item sizes: `it.stretch [x, y, z]` along its own axes (`stretchOf` also reads the older
   `len` / `thick`; `foldStretch` converts on edit); round parts' radii follow (`radK`).
+- Checking the phone view from VS Code's browser (which does not emulate devices): `npm run dev`, then open
+  http://localhost:4321/ODM-Poser/dev/phone/ (or /dev/tablet/); src/pages/dev/[device].astro, dev only (no pages in the build).
+- Views' corners: #ovModes / #ovOpts are children of .views (over the front and the side view together); the touch keys
+  (#vShift, #vAlt) sit in #ovTouch under the handles' tools, #vPad among the switches; the old #touchBar is gone. On a
+  phone the side view takes sidePos like a computer (hidden until asked for); a side view under 420px folds its picker.
+- Item sections: `def.segs` ([id, from, to] along `segAxis`, about `segAnchor`) and `it.segs {id: factor}`;
+  pose_scene.js `segMap` stretches the axis piece by piece, `segParts` (in `partsOf` / `partSets`) and `segPoint`
+  (grip, grip2, bayonet, mount, grab) apply it before the stretch. Built-in sections: `SEGS` at the end of
+  pose_props.js; the panel is in pose_size.js (`segSel` draws the chosen one heavier).
 - Modes and tools: ポーズ rotates (3-axis rotate turns what lies beyond the selected joint about it)
   and moves only arm / leg joints (`LIMB` in pose_gizmo.js); 体格 only scales; 配置 moves objects,
   things, the ruler box and the whole figure by its hips. `tools()` greys out the rest and the tool in

@@ -98,6 +98,19 @@ function checkProp(key, def){
   } else checkShapes(def.parts, `prop ${key} parts`);
   if (def.mount) for (const [j, p] of Object.entries(def.mount)){
     if (IX[j] === undefined || !isPoint(p)) throw new Error(`prop ${key}: mount.${j} must be a joint name and [x, y, z]`); }
+  if (def.segs !== undefined){
+    if (!Array.isArray(def.segs) || !def.segs.length) throw new Error(`prop ${key}: segs is a list of [id, from, to] or {id, from, to, ja, en}`);
+    const ids = new Set();
+    def.segs.forEach((g, i) => { const o = Array.isArray(g) ? {id: g[0], from: g[1], to: g[2], ja: g[3], en: g[4]} : g || {};
+      if (typeof o.id !== "string" || !/^[\w-]+$/.test(o.id) || ids.has(o.id)) throw new Error(`prop ${key}: segs[${i}] needs an id of its own (letters, digits, _ -)`);
+      if (!isFinite(o.from) || !isFinite(o.to) || +o.from === +o.to) throw new Error(`prop ${key}: segs[${i}] from and to are two different numbers (cm)`);
+      if (o.ja !== undefined && typeof o.ja !== "string" || o.en !== undefined && typeof o.en !== "string") throw new Error(`prop ${key}: segs[${i}] ja / en are strings`);
+      ids.add(o.id); });
+    const span = def.segs.map(g => Array.isArray(g) ? [g[1], g[2]] : [g.from, g.to]).map(([a, b]) => [Math.min(a, b), Math.max(a, b)]).sort((a, b) => a[0] - b[0]);
+    for (let i = 1; i < span.length; i++) if (span[i][0] < span[i - 1][1]) throw new Error(`prop ${key}: segs overlap`);
+  }
+  if (def.segAxis !== undefined && !["x", "y", "z"].includes(def.segAxis)) throw new Error(`prop ${key}: segAxis is "x", "y" or "z"`);
+  if (def.segAnchor !== undefined && !isFinite(def.segAnchor)) throw new Error(`prop ${key}: segAnchor is a number (cm)`);
   if (def.grab && !(Array.isArray(def.grab) && def.grab.every(s => Array.isArray(s) && s.length === 2 && s.every(isPoint))))
     throw new Error(`prop ${key}: grab is a list of [[x, y, z], [x, y, z]] lines`);
 }

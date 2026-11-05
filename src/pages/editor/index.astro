@@ -7,6 +7,7 @@ import Stage from "../../components/editor/Stage.astro";
 import AsideHead from "../../components/editor/AsideHead.astro";
 import PanelPose from "../../components/editor/PanelPose.astro";
 import PanelScene from "../../components/editor/PanelScene.astro";
+import PanelReset from "../../components/editor/PanelReset.astro";
 import PanelJoint from "../../components/editor/PanelJoint.astro";
 import PanelBody from "../../components/editor/PanelBody.astro";
 import PanelCamera from "../../components/editor/PanelCamera.astro";
@@ -59,6 +60,8 @@ import PanelFile from "../../components/editor/PanelFile.astro";
 <aside>
 <AsideHead />
 <PanelPose />
+
+<PanelReset />
 
 <PanelScene />
 
@@ -118,5 +121,9 @@ import PanelFile from "../../components/editor/PanelFile.astro";
 <script is:inline src="pose_share.js"></script>
 <!-- the panel's labels and their sliders in pairs (for the panel above / below the views) -->
 <script is:inline src="ui-layout.js"></script>
+<!-- the edge between the views and the panel (dragged), the modes in two columns, the switches' scroll -->
+<script is:inline src="ui-pane.js"></script>
+<!-- the phone and tablet (upright): the full-screen views, the category bar and the translucent sheets (ui-sheet.js) -->
+<script is:inline src="ui-sheet.js"></script>
 </body>
 </html>

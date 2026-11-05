@@ -4,6 +4,31 @@
 (() => {
   const KEY = "odm-poser-lang";
   const T = {
+    "選んだ物を接地させる": "Put the chosen thing on the ground", "接地させる物を、下の「出ている物」の一覧から選んでください。": "Choose the thing to put on the ground from the list of things out.", "接地させました。": "Put on the ground.",
+    "色は #rrggbb の形で入れてください（例：#e0605a）。": "Type the colour as #rrggbb (e.g. #e0605a).",
+    "持ち方": "Way of holding", "握る": "Grip", "カウチ（脇に挟む）": "Couched (under the arm)", "持つ位置（長い方向）": "Where it is held (along its length)",
+    "↺ 持ち方と持つ位置を戻す": "↺ Way of holding and place to the start", "持ち方と持つ位置を戻しました。": "The way of holding and the place are back to the start.",
+    "持ち方と持つ位置を、この小物の初期値に戻す": "Back to this thing's own start", "棒（ただの棒）": "Plain stick", "何の変哲もない棒。握るか、カウチで持つ": "A plain stick. Grip it, or hold it couched.",
+    "↺ 色を初期状態に": "↺ Colours to the start", "線・床・壁・ワイヤー・小物・物体・オーラの色を、最初の色に戻す": "Back to the first colours: lines, floor, walls, wire, things, solids and auras",
+    "線・床・壁・天井・ワイヤー・小物・物体・オーラの色を、最初の色に戻します（「元に戻す」で取り消せます）。": "Puts the colours of the lines, floor, walls, ceiling, wire, things, solids and auras back to the first ones (Undo takes it back).",
+    "色の記憶": "Saved colours", "名前（例：夜の色）": "Name (e.g. night colours)",
+    "いまの線の色（人物・床・壁・天井・ワイヤー）を名前をつけて記憶し、呼び出せます。小物・物体・オーラの色は含みません。このブラウザに残ります。": "Saves the current line colours (figures, floor, walls, ceiling, wire) under a name, to load again. Things, solids and auras keep their own colours out of it. Kept in this browser.",
+    "ODM-Poserについて": "About ODM-Poser", "ODM-Poser について": "About ODM-Poser", "分類": "Categories",
+    "人物の簡略表示": "The figure, simplified", "操作欄を閉じる・広げる（下へドラッグで閉じる）": "Close or widen the panel (drag down to close)",
+    "下へドラッグで閉じる・タップで広げる": "Drag down to close, tap to widen", "閉じる": "Close",
+    "リセット": "Reset", "人体のリセットを一箇所に（全部・ポーズ・体格・性別・位置・付随物）": "All resets for the figure in one place (all, pose, body, sex, place, attached things)",
+    "この人物を戻す": "Put this figure back", "↺ 全部を初期状態に": "↺ All to the start",
+    "ポーズ・体格・位置・向き・手の形を、新しい人物と同じにします（持ち物・オーラはそのまま）。": "Pose, body, place, turn and hands go to a new figure's (things and auras stay).",
+    "↺ 性別の初期値に": "↺ To the sex's default",
+    "女性・男性（最後に選んだ方）の初期状態に戻します。位置と持ち物はそのままです。": "Back to the female or male start (the one chosen last). Place and things stay.",
+    "↺ ポーズだけ": "↺ Pose only", "立ちポーズに戻します。体格（骨の長さ・太さ）と位置はそのままです。": "Back to the standing pose. Body (bone lengths, thickness) and place stay.",
+    "↺ 体格だけ": "↺ Body only", "骨の長さ・丸の太さ・大きさを初期値にします。ポーズ（骨の向き）と位置はそのままです。身長や脚の長さを変えても、足元は動きません。":
+      "Bone lengths, circle thickness and size go to the start. Pose (bone directions) and place stay. The feet stay on the floor when height or leg length changes.",
+    "↺ 位置と向きだけ": "↺ Place and turn only", "人物を床の中央に立て、向きと傾きを0に戻します。ポーズと体格はそのままです。": "Stands the figure at the floor's centre, turn and tilt to 0. Pose and body stay.",
+    "すべて": "All", "↺ すべて最初の状態に": "↺ Everything to the start",
+    "人物・小物・物体・床と壁・定規・カメラを、最初の状態に戻します（記憶したカメラは残ります）。「元に戻す」で取り消せます。":
+      "Figures, things, objects, floor and walls, ruler and camera go to the start (saved cameras stay). Undo reverts it.",
+    "付随物（持ち物・オーラ・ワイヤー・固定）": "Attached (things, auras, wire, pins)",
     // header, modes, views
     "立体人形装置": "",                         // the header shows "ODM Poser — Omni-Directional Mannequin Poser" after it
     "線と丸の全身アタリを、疑似3Dで動かします。アタリ画像・OpenPose 画像・ポーズ（JSON）を書き出せます。":
@@ -162,8 +187,8 @@
       "Put down on the floor / an object. Drag it in the Place mode.", "持たせました（手の形も合わせました）。": "Held again (the hand shape follows).",
     "接地させました。": "Grounded.", "直径": "Diameter", "長さ": "Length", "底の直径": "Base diameter", "底の一辺": "Base side",
     "外径": "Outer diameter", "太さ": "Thickness",
-    "前腕の向きに突き出す（大盾と組み合わせる）": "thrust along the forearm (pair it with a great shield)",
-    "前腕の向きに突き出す、銃身のある槍": "a lance with a gun barrel, thrust along the forearm",
+    "カウチ（脇に挟んで前へ突き出す）で持つ。柄は細く、先に槍身": "Held couched (under the arm, thrust forward). Thin shaft, the lance head at the end",
+    "銃剣を付けた銃の形。カウチ（脇に挟んで前へ突き出す）で持つ": "A rifle with a bayonet fixed. Held couched (under the arm, thrust forward)",
     "身の丈ほどの、幅広く厚い刃": "a wide, thick blade as tall as a person",
     "腰だめに両手で持ち、左手は上の取っ手": "held at the hip with both hands, the left on the top handle",
     "前腕にはめる筒形の砲（手は中で握る）": "a cannon worn over the forearm (the hand grips inside)",
@@ -220,7 +245,7 @@
     "単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。":
       "Placed on its own. Drag it in Place mode (Shift + drag: up / down, wheel: turn).",
     // touch, pens, phones (index.html)
-    "Shift（その骨だけ・上下）": "Shift (that bone only / up-down)", "固定（ピン）": "Pin", "側面図": "Side view",
+    "固定": "Pin", "タッチ用のキー": "Touch keys", "その骨だけ・上下に動かす（もう一度押すまで）": "Only that bone / up and down (till pressed again)", "丸をタップして関節を固定する（もう一度押すまで）": "Tap a circle to pin its joint (till pressed again)", "カメラを回す・動かすスティックと拡大のスライダー": "Sticks to orbit and pan the camera, a slider to zoom", "側面図": "Side view",
     "タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（カメラモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。":
       "Touch and pen: drag with one finger (or the pen), pinch with two to zoom (the lens in the Camera mode), double-tap to flip a bone toward / away. Shift and Pin are the buttons above (a pen's side button is Shift, its eraser end pins).",
     // the app (PWA, index.html)
@@ -336,6 +361,8 @@
     "ポーズのファイルを開く": "Open a pose file", "「書き出し」で保存したポーズ（.json）を開きます。人物・小物・物体・カメラも戻ります。":
       "Opens a pose (.json) saved with Export; figures, things, objects and the camera come back too.",
     "長辺": "Long side", "アタリ画像": "Rough picture", "ポーズ（.json）": "Pose (.json)", "画像は保存する前に全体を確認できます。": "You see a picture whole before it is saved.",
+    "書き出したファイルは、商用・AI の学習も含めて自由に使えます。クレジットは任意です。": "Exported files are free to use, commercially and with AI too. Credit is optional.",
+    "利用条件（CC0 1.0）": "Terms (CC0 1.0)",
     "構図の画像に含める": "In the composition picture", "環境": "Surroundings", "白": "White", "透明": "Transparent", "テーマ": "Theme", "構図の画像": "Composition picture",
     "保存する画像": "The picture to save", "やめる": "Cancel", "保存する": "Save", "保存をやめました。": "Not saved.",
     "人物の位置と向き": "The figure's place and direction", "左右（＋人物の左）": "Left-right (+ the figure's left)", "前後（＋前）": "Front-back (+ front)",
@@ -357,9 +384,9 @@
     "側面図の置き場所": "Where the side (depth) view goes",
     "操作欄": "Panel", "操作欄をしまう": "Hide the panel", "操作欄を出す": "Show the panel", "操作欄をしまう・出す": "Hide / show the panel",
     "側面図を出す・隠す": "Show / hide the side view",
-    "側面図を出しました。": "The side view is shown.", "側面図を隠しました。": "The side view is hidden.",
+    "側面図を出しました（置き場所は側面図の隅で）。": "The side view is shown (where it goes: on the side view's corner).", "側面図を隠しました。": "The side view is hidden.",
     "置き場所": "Place", "操作欄の位置": "Panel", "分割表示": "Split screen", "操作欄をしまいました。": "The panel is put away.", "操作欄を出しました。": "The panel is shown.",
-    "側面図を出す・隠す（置き場所は側面図の右下で）": "Show / hide the side (depth) view (where it goes: on the side view, bottom right)",
+    "側面図を出す・隠す（置き場所は側面図の隅で）": "Show / hide the side (depth) view (where it goes: on the side view's corner)",
     "操作欄を出す・しまう（置き場所は操作欄の上で）": "Show / put away the panel (where it goes: at the top of the panel)",
     "図と操作欄を画面の半分ずつに分ける（スマホ・タブレット）": "The views and the panel on half the screen each (phones, tablets)",
     "表示の明るさ（押すたびに 自動 → ライト → ダーク）": "Light or dark (each press: auto → light → dark)", "操作欄を上・下に置いたとき、メニューを置く側": "With the panel above / below: the side the menu goes on",

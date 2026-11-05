@@ -66,14 +66,20 @@ cast.innerHTML = `<div class="ctx-name">人物の管理</div><div class="ctx-btn
   <div class="ctx-btns"><button type="button" class="ctx-btn" id="fcAdd">＋ 人物を追加</button><button type="button" class="ctx-btn" id="fcDup">複製</button>
     <button type="button" class="ctx-btn" id="fcDel" title="編集している人物を削除">削除</button></div>
   <div class="ctx-name">持ち物・身に着けた物</div><div class="ctx-btns" id="fcItems"></div>
-  <div class="ctx-name">付随物のリセット</div>
+  `;
+box.appendChild(cast);
+// 付随物のリセット: in the リセット tab (作る › 人物 › リセット), made here and added to the panel
+const rbox = document.createElement("section");
+rbox.dataset.menu = "reset";
+rbox.id = "resetAttached";
+rbox.innerHTML = `<h2>付随物（持ち物・オーラ・ワイヤー・固定）</h2>
   <div class="ctx-btns fc-pick" role="group" aria-label="リセットするもの"><label><input type="checkbox" data-fr="items" checked> 持ち物・身に着けた物</label>
     <label><input type="checkbox" data-fr="auras" checked> オーラ</label><label><input type="checkbox" data-fr="wire" checked> ワイヤー</label>
     <label><input type="checkbox" data-fr="pins" checked> 関節の固定</label></div>
-  <div class="ctx-btns"><button type="button" class="ctx-btn" id="frStrip" title="チェックしたものを、この人物からすべて外す">↺ 外す</button>
-    <button type="button" class="ctx-btn" id="frTune" title="付けたまま、大きさ・色・向き・位置・ワイヤーの高さを初期値に戻す">↺ 大きさ・色などを戻す</button></div>
+  <div class="btns"><button type="button" id="frStrip" title="チェックしたものを、この人物からすべて外す">↺ 外す</button>
+    <button type="button" id="frTune" title="付けたまま、大きさ・色・向き・位置・ワイヤーの高さを初期値に戻す">↺ 大きさ・色などを戻す</button></div>
   <div class="hint">チェックしたものだけに効きます（関節の固定は「外す」だけ）。床に単体で置いた物は含みません。</div>`;
-box.appendChild(cast);
+document.querySelector("aside").appendChild(rbox);
 const fcBtn = (label, cls, fn, title) => { const b = document.createElement("button"); b.type = "button"; b.className = "ctx-btn" + (cls ? " " + cls : "");
   b.textContent = label; if (title){ b.title = title; b.setAttribute("aria-label", title); } b.addEventListener("click", fn); return b; };
 cast.querySelector("#fcAdd").addEventListener("click", () => addFigure(false));
@@ -83,7 +89,7 @@ cast.querySelector("#fcDel").addEventListener("click", () => removeFigure());
 // the kinds ticked: take them all off, or keep them and put their size, colour, turn, place and the
 // wire's height back
 const mineOf = () => (S.items || []).map((it, n) => [it, n]).filter(([it]) => !(typeof loose === "function" && loose(it)));
-const picked = () => { const o = {}; cast.querySelectorAll("[data-fr]").forEach(c => { o[c.dataset.fr] = c.checked; }); return o; };
+const picked = () => { const o = {}; rbox.querySelectorAll("[data-fr]").forEach(c => { o[c.dataset.fr] = c.checked; }); return o; };
 function hasExtra(k, tune){
   return k.items && mineOf().length > 0 || k.auras && (S.auras || []).length > 0 || k.wire && !!(S.wire && S.wire.on) ||
     !tune && k.pins && Object.keys(S.pins || {}).length > 0;
@@ -103,24 +109,24 @@ function tuneFigure(){
   const k = picked(); if (!hasExtra(k, true)) return;
   remember();
   if (k.items) mineOf().forEach(([it]) => { it.off = [0, 0, 0]; it.rot = [0, 0, 0]; it.scale = 1; delete it.color;
-    delete it.dims; delete it.len; delete it.thick; delete it.stretch; });
+    delete it.dims; delete it.len; delete it.thick; delete it.stretch; delete it.segs; });
   if (k.auras) (S.auras || []).forEach(a => { a.size = 14; a.color = (AURA_KINDS[a.kind] || AURA_KINDS.flame)[1];
     for (const kk of ["even", "sharp", "round", "angle", "height", "thick", "fine", "spread", "density"]) delete a[kk]; });
   if (k.wire && S.wire && S.wire.on){ S.wire.height = 300; if (typeof syncScene === "function") syncScene(); setWire(false); }
   afterEdit(); fillItemList(); if (typeof syncStyle === "function") syncStyle(); draw();
   say("この人物の付随物の大きさ・色などを初期値に戻しました。");
 }
-cast.querySelector("#frStrip").addEventListener("click", stripFigure);
-cast.querySelector("#frTune").addEventListener("click", tuneFigure);
-cast.querySelectorAll("[data-fr]").forEach(c => c.addEventListener("change", () => { castKey = ""; updateCast(); }));
+rbox.querySelector("#frStrip").addEventListener("click", stripFigure);
+rbox.querySelector("#frTune").addEventListener("click", tuneFigure);
+rbox.querySelectorAll("[data-fr]").forEach(c => c.addEventListener("change", () => { castKey = ""; updateCast(); }));
 let castKey = "";
 function updateCast(){
   if (typeof takeFigure !== "function") return;
   const figs = [{k: -1, id: S.figId || 1, name: S.figName || "1人目"}, ...(S.others || []).map((f, k) => ({k, id: f.figId || k + 2, name: f.figName || `${f.figId || k + 2}人目`}))]
     .sort((a, b) => a.id - b.id);
   const mine = mineOf(), pk = picked();
-  cast.querySelector("#frStrip").disabled = !hasExtra(pk, false);
-  cast.querySelector("#frTune").disabled = !hasExtra(pk, true);
+  rbox.querySelector("#frStrip").disabled = !hasExtra(pk, false);
+  rbox.querySelector("#frTune").disabled = !hasExtra(pk, true);
   const k = JSON.stringify([figs, mine.map(([it, n]) => [it.key, n, it.where || "", it.hand || ""]), typeof scSel === "number" ? scSel : -1]);
   if (k === castKey) return; castKey = k;
   const list = cast.querySelector("#fcList"), items = cast.querySelector("#fcItems");

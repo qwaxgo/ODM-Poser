@@ -19,7 +19,8 @@ How to give a figure things to hold or wear, and how to put objects (boxes, wall
 
 To put a thing on the floor held by no one, use **Things on their own** in the **Objects** tab (see
 Objects below). What a figure holds and wears also shows under the body map in the **Figure** menu
-(Figures), where it can be taken off. Below it, **Reset what the figure has** works on the kinds ticked
+(Figures), where it can be taken off. The **Reset** tab (Figure menu) has every reset of the figure in one
+place; there **Attached things** works on the kinds ticked
 (held and worn things, auras, the wire, pinned joints): **Take off** removes them all, **Size, colour ... back**
 keeps them and puts their size, colour, turn, place and the wire's height back. Things put on the floor on
 their own are left alone.
@@ -42,6 +43,27 @@ Pick it in **In the scene** to:
 held thing, Y is the way the thumb points (a sword's blade), Z the way the arm points (a gun's
 barrel), X across both. The grip stays; the far end grows. The preview's fields set the size before
 it is placed, too.
+
+### Section lengths (grip and blade ...)
+
+A thing made of sections, such as a weapon, has **A thing's sections, each its length** in the **Sizes** tab: choose a
+section and change its length alone. The chosen section is drawn heavier. A longer grip moves the blade out along
+it while the hand's hold stays; the other hand of a two-handed thing and a bayonet move along too.
+
+| Things | Sections |
+|--------|----------|
+| Swords, katana, knives, kunai | Grip, Blade |
+| Axes, hammers, halberd | Grip, Head |
+| Spear | Grip, Tip (Lance) |
+| Huge lance | Shaft, Lance |
+| Gun lance (bayonet type) | Stock, Barrel, Bayonet |
+| Double-bladed sword | Grip, Upper blade, Lower blade |
+| Guns (rifle, shotgun ...) | Stock, Barrel |
+| Claws | (Grip), Claws |
+
+Lances and the gun lance are held couched by default (under the arm, thrust forward); the gun lance is one-handed. Long weapons (spears, polearms, staffs, sticks) can be gripped or couched: the **Way of holding** choice in the Equip tab. **Where it is held** moves the grip along the thing; **↺ Way of holding and place to the start** puts both back. A plain stick is among the one-handed weapons.
+
+**↺ This section back** and **↺ All sections back** restore the lengths. A mod's props can have sections too (`segs` in the mod docs).
 
 ### Moving things put down
 

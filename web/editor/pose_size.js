@@ -10,6 +10,8 @@
 //    height and how far forward, each on its own
 //  - the selected thing (装備): its own three axes stretched one by one, the hand's grip staying
 //    where it is (the root holds, the tip moves)
+//  - its sections (def.segs, pose_scene.js: a sword's grip and blade ...): one chosen, its length
+//    alone; the chosen one is drawn heavier while the tab shows
 (() => {
 const $ = id => document.getElementById(id);
 // the part each bone (its child joint) and each joint's circle belongs to
@@ -28,7 +30,7 @@ const parts = [
   sec("身長と頭身", `<label>保つもの</label><select id="szKeep"><option value="none">なし（頭の大きさはそのまま）</option>
       <option value="heads">頭身を保つ（全身が同じ割合で）</option><option value="height">身長を保つ（残りの体で合わせる）</option></select>` +
     ctl("szHeight", "身長", 60, 240, 0.5, "cm") + ctl("szHeads", "頭身", 2, 10, 0.1, "頭身") +
-    `<div class="hint">「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。</div>`),
+    `<div class="hint">「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。</div>`, "size body"),
   sec("部位の固定", `<label><input type="checkbox" id="szLock_head"> 頭と首</label><label><input type="checkbox" id="szLock_torso"> 胴体</label>
     <label><input type="checkbox" id="szLock_arms"> 腕</label><label><input type="checkbox" id="szLock_legs"> 脚</label>
     <div class="hint">固定した部位は、身長・頭身を変えても長さと太さが変わりません。</div>`),
@@ -46,6 +48,14 @@ const parts = [
     ctl("szSX", "X 方向（赤）", 20, 400, 1, "%") + ctl("szSY", "Y 方向（緑）", 20, 400, 1, "%") + ctl("szSZ", "Z 方向（青）", 20, 400, 1, "%") +
     `<div class="btns"><button type="button" id="szItemReset">↺ 3軸の大きさを戻す</button></div>
     <div class="hint">手に持つ物は Y が親指の向き（剣の刃）、Z が腕の向き（銃身）、X がそれと直角です。持つ所（握り）はそのままで、先の方が伸び縮みします。全体の大きさは装備のタブで変えます。</div>`)];
+parts.push(sec("頭の形", ctl("hsX", "幅（左右）", 50, 200, 1, "%") + ctl("hsY", "高さ（上下）", 50, 250, 1, "%") + ctl("hsZ", "奥行き（前後）", 50, 200, 1, "%") +
+    `<label>伸ばした形</label><select id="hsMode"><option value="ball">球のまま伸ばす</option><option value="cyl">円柱でつなぐ</option></select>
+    <div class="btns"><button type="button" id="hsReset">↺ 頭の形を戻す</button></div>
+    <div class="hint">頭の大きさ（頭身）は変わりません。見た目の形だけを変えます。</div>`));
+parts.push(sec("小物の部位ごとの長さ", `<div class="hint" id="szSegNone">選んだ小物に分けられる部位（柄・刀身など）があると、ここで1つずつ長さを変えられます。</div>
+    <div id="szSegBox"><label>部位</label><select id="szSeg"></select>` + ctl("szSegL", "長さ", 1, 100, 0.5, "cm") +
+    `<div class="btns"><button type="button" id="szSegReset">↺ この部位を戻す</button><button type="button" id="szSegAll">↺ すべての部位を戻す</button></div>
+    <div class="hint">選んだ部位は図で太く表示されます。部位を伸ばすと、その先（柄なら刀身）も一緒に動き、手で持つ所はそのままです。</div></div>`));
 const old = document.querySelector('aside > section[data-menu="size"]');
 old.replaceWith(...parts);
 
@@ -148,6 +158,30 @@ function setHeadsTo(H){
 const curItem = () => (typeof scSel === "number" && scSel >= 0 && S.items) ? S.items[scSel] : null;
 const axisItem = a => [it => Math.round((stretchOf(it) || [1, 1, 1])[a] * 100), (it, v) => { foldStretch(it)[a] = v / 100; }];
 const ITEM = {szSX: axisItem(0), szSY: axisItem(1), szSZ: axisItem(2)};
+// a section's length in cm as seen (the item's size and its stretch along the sections' axis)
+const segK = it => { const sg = segsOf((window.PROPS || {})[it.key]); return (it.scale || 1) * (sg ? (stretchOf(it) || [1, 1, 1])[sg.axis] : 1); };
+let segKey = "";
+function showSegs(it){
+  const sg = it && segsOf((window.PROPS || {})[it.key]);
+  $("szSegNone").style.display = sg ? "none" : ""; $("szSegBox").style.display = sg ? "" : "none";
+  if (!sg){ segSel = ""; return; }
+  const key = it.key + "|" + scSel, fresh = key !== segKey;
+  if (fresh){ segKey = key; $("szSeg").innerHTML = sg.list.map(g => `<option value="${g.id}">${g.ja}</option>`).join(""); }
+  if (!sg.list.some(g => g.id === $("szSeg").value)) $("szSeg").value = sg.list[0].id;
+  segSel = $("szSeg").value;
+  const L = segLength(it, segSel), k = segK(it), r = $("szSegL"), n = $("szSegLN");
+  r.min = fmt(L.base * k * 0.2); r.max = fmt(L.base * k * 4);
+  if (rangeHeld !== r) r.value = fmt(L.now * k);
+  if (document.activeElement !== n) n.value = fmt(L.now * k);
+  $("szSegReset").disabled = !(it.segs && it.segs[segSel] && it.segs[segSel] !== 1);
+  $("szSegAll").disabled = !(it.segs && Object.values(it.segs).some(v => v !== 1));
+  // the names in English (last: in English, adding redraws, and so comes back here)
+  if (fresh && window.ODMPoserI18n) ODMPoserI18n.add(Object.fromEntries(sg.list.map(g => [g.ja, g.en])));
+}
+function setSeg(it, v){
+  const L = segLength(it, segSel); if (!L || !(v > 0)) return;
+  it.segs = Object.assign({}, it.segs); it.segs[segSel] = Math.round(Math.max(0.05, v / (L.base * segK(it))) * 1000) / 1000;
+}
 
 // ---- wiring --------------------------------------------------------------------------------------
 const fmt = v => Math.round(v * 10) / 10;
@@ -168,6 +202,7 @@ function show(){
     if (it){ if (rangeHeld !== r) r.value = get(it); if (document.activeElement !== n) n.value = get(it); }
   }
   $("szItemReset").disabled = !it;
+  showSegs(it);
 }
 function apply(id, v){
   if (!isFinite(v)) return;
@@ -176,11 +211,12 @@ function apply(id, v){
   if (id === "szHeight") fromBottom(() => setHeight(v));
   else if (id === "szHeads") fromBottom(() => setHeadsTo(v));
   else if (ITEM[id]){ const it = curItem(); if (!it) return; ITEM[id][1](it, v); }
+  else if (id === "szSegL"){ const it = curItem(); if (!it) return; setSeg(it, v); }
   else fromBottom(() => { SIZE[id][1](v); if (/^sz(Shoulder|Hip)/.test(id)) keepTorsoShape(); hold(h0, n0, SIZE[id][2]); });
   if (typeof afterEdit === "function") afterEdit();
   draw();
 }
-for (const id of ["szHeight", "szHeads", ...Object.keys(SIZE), ...Object.keys(ITEM)]){
+for (const id of ["szHeight", "szHeads", ...Object.keys(SIZE), ...Object.keys(ITEM), "szSegL"]){
   const r = $(id), n = $(id + "N");
   r.addEventListener("pointerdown", () => remember());
   r.addEventListener("keydown", () => remember());
@@ -188,6 +224,30 @@ for (const id of ["szHeight", "szHeads", ...Object.keys(SIZE), ...Object.keys(IT
   n.addEventListener("change", () => { remember(); apply(id, +n.value); });
 }
 $("szKeep").addEventListener("change", show);
+$("szSeg").addEventListener("change", () => { segSel = $("szSeg").value; draw(); });
+// 頭の形: the head's width, height and depth as shares of its size (S.headShape, pose_main.js)
+const HS = {hsX: "x", hsY: "y", hsZ: "z"};
+function headShapeSync(){
+  const h = S.headShape || {x: 1, y: 1, z: 1, mode: "ball"};
+  for (const [id, k] of Object.entries(HS)){ const v = Math.round((h[k] || 1) * 100);
+    if (rangeHeld !== $(id)) $(id).value = v; if (document.activeElement !== $(id + "N")) $(id + "N").value = v; }
+  $("hsMode").value = h.mode || "ball";
+}
+function headShapeSet(k, v){ S.headShape = Object.assign({x: 1, y: 1, z: 1, mode: "ball"}, S.headShape || {}); S.headShape[k] = v; }
+for (const [id, k] of Object.entries(HS)){
+  const r = $(id), n = $(id + "N");
+  r.addEventListener("pointerdown", () => remember());
+  r.addEventListener("input", () => { headShapeSet(k, +r.value / 100); n.value = r.value; afterEdit(); draw(); });
+  n.addEventListener("change", () => { remember(); const v = +n.value; if (!isFinite(v)) return; r.value = v; headShapeSet(k, v / 100); afterEdit(); draw(); });
+}
+$("hsMode").addEventListener("change", e => { remember(); S.headShape = Object.assign({x: 1, y: 1, z: 1, mode: "ball"}, S.headShape || {}); S.headShape.mode = e.target.value; afterEdit(); draw(); });
+$("hsReset").addEventListener("click", () => { remember(); delete S.headShape; headShapeSync(); afterEdit(); draw(); say("頭の形を戻しました。"); });
+{ const d1 = draw; draw = function(){ d1.apply(this, arguments); if (parts.some(s => s.classList.contains("active"))) headShapeSync(); }; }
+$("szSegReset").addEventListener("click", () => { const it = curItem(); if (!it || !it.segs) return;
+  remember(); delete it.segs[segSel]; if (!Object.keys(it.segs).length) delete it.segs;
+  if (typeof afterEdit === "function") afterEdit(); draw(); say("部位の長さを戻しました。"); });
+$("szSegAll").addEventListener("click", () => { const it = curItem(); if (!it || !it.segs) return;
+  remember(); delete it.segs; if (typeof afterEdit === "function") afterEdit(); draw(); say("すべての部位の長さを戻しました。"); });
 $("szSide").addEventListener("change", show);
 $("szItemReset").addEventListener("click", () => { const it = curItem(); if (!it) return;
   remember(); delete it.len; delete it.thick; delete it.stretch; if (typeof afterEdit === "function") afterEdit(); draw(); say("小物の3軸の大きさを戻しました。"); });
@@ -195,7 +255,7 @@ for (const g of ["head", "torso", "arms", "legs"]) $("szLock_" + g).addEventList
   say(`${GROUP_JA[g]}を${e.target.checked ? "固定しました（身長・頭身を変えても、長さと太さはそのまま）" : "固定から外しました"}。`));
 // the numbers follow every edit (dragging in the body mode too), while the tab shows
 { const d0 = draw; draw = function(){ d0.apply(this, arguments);
-    if (parts.some(s => s.classList.contains("active"))) show(); }; }
+    if (parts.some(s => s.classList.contains("active"))) show(); else if (segSel){ segSel = ""; d0.apply(this, arguments); } }; }
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
 (window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"身長と頭身": "Height and heads", "保つもの": "Keep",
@@ -217,6 +277,12 @@ for (const g of ["head", "torso", "arms", "legs"]) $("szLock_" + g).addEventList
     "For a held thing, Y is the way the thumb points (a sword's blade), Z the way the arm points (a gun's barrel), X across both. The grip stays where it is; the far end grows and shrinks. The whole size is in the Equip tab.",
   "固定した部位は、身長・頭身を変えても長さと太さが変わりません。": "Locked parts keep their lengths and thickness when the height or heads count changes.",
   "「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。": "With “The height”, changing the head or a part makes the other unlocked parts make up the height.",
-  "小物の3軸の大きさを戻しました。": "The thing's size on the 3 axes is back to default."});
+  "小物の3軸の大きさを戻しました。": "The thing's size on the 3 axes is back to default.",
+  "小物の部位ごとの長さ": "A thing's sections, each its length", "部位": "Section", "長さ": "Length",
+  "選んだ小物に分けられる部位（柄・刀身など）があると、ここで1つずつ長さを変えられます。": "When the selected thing has sections (grip, blade ...), their lengths change here one by one.",
+  "↺ この部位を戻す": "↺ This section back", "↺ すべての部位を戻す": "↺ All sections back",
+  "選んだ部位は図で太く表示されます。部位を伸ばすと、その先（柄なら刀身）も一緒に動き、手で持つ所はそのままです。":
+    "The chosen section is drawn heavier. Lengthening a section moves what lies beyond it (the blade, for the grip); where the hand holds stays.",
+  "部位の長さを戻しました。": "The section's length is back.", "すべての部位の長さを戻しました。": "All sections' lengths are back."});
 show();
 })();

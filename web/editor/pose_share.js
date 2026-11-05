@@ -34,7 +34,7 @@ function plainFigure(f, ids){
     const placed = it.where === "world" || (d && (d.place === "world" || d.place === "grab"));
     if (!d || (!placed && d.place !== "hand")) return null;
     const out = Object.assign({}, it, {key: placed ? "prim_box" : "prim_cylinder"});
-    delete out.dims; delete out.bayonet;
+    delete out.dims; delete out.bayonet; delete out.segs;
     if (placed) out.where = "world";
     return out;
   }).filter(Boolean);
@@ -114,20 +114,22 @@ const NETS = [
   {id: "x", name: "X に投稿", main: true, url: p => "https://x.com/intent/post?text=" + enc(p.text)},
   {id: "bsky", name: "Bluesky", main: true, url: p => "https://bsky.app/intent/compose?text=" + enc(p.text)},
   {id: "threads", name: "Threads", main: true, max: 500, url: p => "https://www.threads.net/intent/post?text=" + enc(p.text)},
-  {id: "misskey", name: "Misskey", main: true, server: true, url: (p, h) => `https://${h}/share?text=` + enc(p.text)},
+  {id: "misskeyio", name: "Misskey.io", main: true, url: p => "https://misskey.io/share?text=" + enc(p.text)},
+  {id: "misskeydev", name: "Misskey.dev", main: true, url: p => "https://misskey.dev/share?text=" + enc(p.text)},
+  {id: "misskey", name: "Misskey（サーバーを選ぶ）", main: true, server: true, url: (p, h) => `https://${h}/share?text=` + enc(p.text)},
   {id: "mastodon", name: "Mastodon", main: true, server: true, url: (p, h) => `https://${h}/share?text=` + enc(p.text)},
-  {id: "facebook", name: "Facebook", copy: true, url: p => "https://www.facebook.com/sharer/sharer.php?u=" + enc(p.link)},
-  {id: "reddit", name: "Reddit（英文）", url: p => "https://www.reddit.com/submit?url=" + enc(p.link) + "&title=" + enc(english(p.words))},
-  {id: "line", name: "LINE", url: p => document.body.classList.contains("touch")
+  {id: "facebook", name: "Facebook", main: true, copy: true, url: p => "https://www.facebook.com/sharer/sharer.php?u=" + enc(p.link)},
+  {id: "reddit", name: "Reddit（英文）", main: true, url: p => "https://www.reddit.com/submit?url=" + enc(p.link) + "&title=" + enc(english(p.words))},
+  {id: "line", name: "LINE", main: true, url: p => document.body.classList.contains("touch")
     ? "https://line.me/R/share?text=" + enc(p.text) : "https://social-plugins.line.me/lineit/share?url=" + enc(p.link)},
   {id: "openchat", name: "オープンチャット", url: p => "https://line.me/R/share?text=" + enc(p.text)},
   {id: "teams", name: "Teams", url: p => "https://teams.microsoft.com/share?href=" + enc(p.link) + "&msgText=" + enc(p.head)},
   {id: "pinterest", name: "Pinterest", url: p => "https://www.pinterest.com/pin/create/button/?url=" + enc(p.link)
     + "&media=" + enc(SITE + "og-card.png") + "&description=" + enc(p.head)},
-  {id: "instagram", name: "Instagram", app: true, open: "https://www.instagram.com/"},
+  {id: "instagram", name: "Instagram", main: true, app: true, open: "https://www.instagram.com/"},
   {id: "tiktok", name: "TikTok", app: true, open: "https://www.tiktok.com/"},
   {id: "kakao", name: "カカオトーク", app: true},
-  {id: "discord", name: "Discord", app: true, open: "https://discord.com/app"},
+  {id: "discord", name: "Discord", main: true, app: true, open: "https://discord.com/app"},
   {id: "slack", name: "Slack", app: true, open: "https://app.slack.com/client"},
   {id: "yay", name: "Yay!", app: true, open: "https://yay.space/"},
 ];

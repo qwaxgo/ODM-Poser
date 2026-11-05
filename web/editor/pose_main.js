@@ -156,6 +156,25 @@ function headFrame(){
   const up2 = norm(cross(fwd, side));
   return {fwd, side, up: up2, r: S.R[IX.head]};
 }
+// the head's shape (サイズ › 頭の形): S.headShape {x, y, z, mode}: the width (x), the height (y) and the
+// depth (z) each a share of the head's size; mode "ball" stretches the ball, "cyl" joins the stretched
+// ends with a cylinder of the head's width (drawn in headOutline)
+const headShaped = () => { const h = S.headShape; return !!h && (h.x !== 1 || h.y !== 1 || h.z !== 1); };
+function headOutline(ctx, p, r, side){
+  const hs = S.headShape, sx = hs.x || 1, sy = hs.y || 1, sz = hs.z || 1;
+  const w = r * (side ? sz : sx), v = r * sy;                 // the drawn width and height in px
+  if (hs.mode !== "cyl" || sy <= 1){
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, w, v, 0, 0, 2 * Math.PI); ctx.stroke(); return;
+  }
+  // the cylinder: a half-ball at each end, the sides joining them (screen up = the head's up)
+  const L = v - w;                                            // how far each end is drawn out from the centre
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y - L, w, w, 0, Math.PI, 2 * Math.PI);
+  ctx.ellipse(p.x, p.y + L, w, w, 0, 0, Math.PI);
+  ctx.moveTo(p.x - w, p.y - L); ctx.lineTo(p.x - w, p.y + L);
+  ctx.moveTo(p.x + w, p.y - L); ctx.lineTo(p.x + w, p.y + L);
+  ctx.stroke();
+}
 function facePoints(){
   const h = headFrame(), c = S.P[IX.head], r = h.r;
   const at = (f, s, u) => add(add(add(c, mul(h.fwd, f*r)), mul(h.side, s*r)), mul(h.up, u*r));
@@ -320,7 +339,9 @@ function drawAtari(ctx, W, H, opts = {}){
         ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.fill(); ctx.globalAlpha = 1; }
       const hid = S.hiddenDashed && hiddenAt(S.P[i], W, H, skipJoint(i));
       if (hid) ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2.5]);
-      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.stroke(); ctx.setLineDash([]);
+      if (i === IX.head && headShaped()) headOutline(ctx, p, r, opts.side);
+      else { ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.stroke(); }
+      ctx.setLineDash([]);
       if (opts.sel === i){ ctx.strokeStyle = cssVar("--sel"); ctx.lineWidth = lw * 2;
         ctx.beginPath(); ctx.arc(p.x, p.y, r + 3*lw, 0, 2*Math.PI); ctx.stroke(); }
     }
@@ -524,18 +545,19 @@ function viewChrome(){
   if (sec && key !== chromeKey){ chromeKey = key; chromeH = Math.max(0, sec.offsetHeight - views.offsetHeight); }
   return chromeH;
 }
-// the side view above or below the front one: placed so (側面図の置き場所), or on a phone held
-// upright, where it goes under the front one when asked for
+// the side view above or below the front one (側面図の置き場所; on a phone too)
 const PHONE = "(max-width:700px)";
 function sideStacked(){
   if (!side.parentElement.getClientRects().length) return false;
-  return matchMedia(PHONE).matches || /\bside-(top|bottom)\b/.test(front.closest(".views").className);
+  return /\bside-(top|bottom)\b/.test(front.closest(".views").className);
 }
 const ONE_COLUMN = "(max-width:900px), (orientation:portrait) and (max-aspect-ratio:4/5)";
 // The views' height (maxH) and whether they have a room of their own (room: beside the panel, a
 // strip, split screen, put away), else (one column, the page scrolls) a view is as tall as the
 // picture's shape asks, up to its share of the window.
 function viewsRoom(){
+  // the phone's sheet layout (ui-sheet.js): the front view takes the whole screen
+  if (document.body.classList.contains("sheet")) return {maxH: Math.round(innerHeight), room: true};
   // the views stay on screen as the page scrolls: beside the panels they may take the window's
   // height, above them (one column) part of it, so the panels show underneath
   const short = innerHeight <= 520 && innerWidth >= 700;          // a phone held sideways: panels beside
@@ -967,9 +989,11 @@ let wheelMem = 0;
 function wheelStep(x, y, step, e){
   if (WHEEL_HOOKS.some(h => h(x, y, step, e))){ draw(); return; }
   if (mode !== "body" && !S.camLock){ const t = performance.now(); if (t - wheelMem > 800) remember(); wheelMem = t; }
-  if (mode === "persp"){ if (camHeld()) return; S.cam.lens = Math.max(14, Math.min(200, S.cam.lens * (step > 0 ? 1.1 : 1/1.1))); syncUI(); }
-  else if (mode === "body"){ const i = pick(front, x, y);
-    if (i >= 0){ remember(); const k = step > 0 ? 1.08 : 1/1.08; for (const q of thickJoints(i, true)) S.R[q] *= k; } }
+  // Ctrl+Alt+wheel: the lens (パース, as Blender's focal length); the wheel alone zooms the camera
+  // (as Blender's view zoom). In body mode over a part, the wheel changes that part's thickness
+  if (e && e.ctrlKey && e.altKey){ if (camHeld()) return; S.cam.lens = Math.max(14, Math.min(200, S.cam.lens * (step > 0 ? 1.1 : 1/1.1))); syncUI(); }
+  else if (mode === "body" && pick(front, x, y) >= 0){ const i = pick(front, x, y);
+    remember(); const k = step > 0 ? 1.08 : 1/1.08; for (const q of thickJoints(i, true)) S.R[q] *= k; }
   else { if (camHeld()) return; S.cam.zoom = Math.max(0.3, Math.min(4, S.cam.zoom * (step > 0 ? 1.1 : 1/1.1))); }
   draw();
 }
@@ -1520,13 +1544,9 @@ try { for (const k of ["theme", "lang", "editor-v1", "editor-v1-limits"]){
   if (o !== null && localStorage.getItem("odm-poser-" + k) === null) localStorage.setItem("odm-poser-" + k, o);
 } } catch (e) {}
 // the hints under the views: open where there is room (two columns, a tall window)
-// the on-screen keys (shown on touch screens and narrow windows)
+// the keys a keyboard would give (touch screens: on the view under the modes), on until pressed again
 for (const [id, key] of [["vShift", "shift"], ["vAlt", "alt"]])
   $(id).addEventListener("click", () => { VMOD[key] = !VMOD[key]; $(id).setAttribute("aria-pressed", String(VMOD[key])); $(id).classList.toggle("on", VMOD[key]); });
-$("vUndo").addEventListener("click", undo);
-$("vRedo").addEventListener("click", redo);
-$("vSide").addEventListener("click", () => { const on = document.body.classList.toggle("show-side");
-  $("vSide").setAttribute("aria-pressed", String(on)); if (matchMedia(PHONE).matches) $("ovSide").setAttribute("aria-pressed", String(on)); draw(); });
 if (navigator.maxTouchPoints > 0 || "ontouchstart" in window || matchMedia("(any-pointer: coarse)").matches)
   document.body.classList.add("touch");
 const UNITS = {scaleAll: 1, scaleHead: 1, scaleThick: 1, lens: 1, yaw: 1, pitch: 1, roll: 1};
@@ -1798,6 +1818,8 @@ for (const [id, set] of [["lens", v => S.cam.lens = v], ["yaw", v => S.cam.yaw =
   $(id).addEventListener("input", e => { set(+e.target.value); syncUI(); draw(); });
 }
 $("camReset").addEventListener("click", () => { remember(); S.cam = fresh().cam; syncUI(); draw(); });
+// the same reset in the リセット tab: the camera back to its first place (saved cameras and the lock stay)
+$("resetCam").addEventListener("click", () => { remember(); const f = fresh(); S.cam = f.cam; S.center = f.center.slice(); syncUI(); draw(); say("カメラを初期状態に戻しました。"); });
 for (const [id, key, fn] of [["scaleAll", "all", scaleAbout], ["scaleHead", "head", scaleHead],
     ["scaleThick", "thick", k => { S.R = S.R.map(r => r * k); }]]){
   $(id).addEventListener("pointerdown", remember);
@@ -2042,16 +2064,27 @@ function syncCams(){
   for (const id of ["camLoad", "camDel"]) $(id).disabled = !list.length;
   camLockUI();
 }
+// the position and the look point: a slider (dragged, one step to the undo) and a number, each the other's
+let camSlide = false;
+for (const id of [...CAM_P, ...CAM_T]){
+  const r = $(id + "R");
+  if (r){
+    r.addEventListener("pointerdown", () => remember());
+    r.addEventListener("input", () => { $(id).value = r.value; camSlide = true; $(id).dispatchEvent(new Event("change")); camSlide = false; });
+  }
+}
 for (const id of [...CAM_P, ...CAM_T]) $(id).addEventListener("change", () => {
   if (camHeld()) return;
   const v = ids => ids.map(k => +$(k).value);
   if (![...v(CAM_P), ...v(CAM_T)].every(isFinite)) return;
-  remember();
+  if (!camSlide) remember();
   if (CAM_T.includes(id)){ const pos = camPos(); S.center = v(CAM_T); setCamPos(pos); }
   else if (!setCamPos(v(CAM_P))) say("カメラが見る点に近すぎます。", true);
   syncUI(); draw();
 });
-{ const sync0 = syncUI; syncUI = function(){ sync0(); syncCams(); }; }
+{ const sync0 = syncUI; syncUI = function(){ sync0(); syncCams(); syncCamRanges(); }; }
+// the sliders follow the numbers (the camera moved by the view, the lock, a saved camera)
+function syncCamRanges(){ for (const id of [...CAM_P, ...CAM_T]){ const r = $(id + "R"); if (r && document.activeElement !== r) r.value = $(id).value; } }
 $("camLock").addEventListener("change", e => { remember(); S.camLock = e.target.checked; camLockUI();
   say(S.camLock ? "カメラを固定しました（スライダー・座標も動きません。「呼出」は使えます）。" : "カメラの固定を外しました。"); });
 $("camSave").addEventListener("click", () => {
@@ -2067,13 +2100,13 @@ $("camList").addEventListener("dblclick", camRecall);
 $("camDel").addEventListener("click", () => { const i = +$("camList").value; if (!(S.cams || [])[i]) return;
   remember(); const [c] = S.cams.splice(i, 1); syncCams(); say(`${c.name}を削除しました。`); });
 syncCams();
-// the side view (横から): right (the default), left, above, below or hidden; kept in this browser
-// The button on the view (two panes) hides it and brings it back where it was.
+// the side view (横から): right (the default; hidden on a phone till asked for), left, above, below
+// or hidden; kept in this browser. The button on the view (two panes) hides it and brings it back
+// where it was.
 { const views = document.querySelector(".views"), el = $("sidePos"), btn = $("ovSide");
   const set = p => { views.classList.remove("side-left", "side-top", "side-bottom", "side-hide");
     if (p !== "right") views.classList.add("side-" + p); el.value = p;
-    // a phone shows it on request (show-side), wherever it is placed
-    btn.setAttribute("aria-pressed", String(matchMedia(PHONE).matches ? document.body.classList.contains("show-side") : p !== "hide"));
+    btn.setAttribute("aria-pressed", String(p !== "hide"));
     // twice: the front view's room is measured with the side view already at its new size
     chromeKey = ""; draw(); chromeKey = ""; draw(); };
   const get = (k, d) => { try { return localStorage.getItem(KEY + k) || d; } catch (e) { return d; } };
@@ -2081,11 +2114,11 @@ syncCams();
   const choose = v => { put("-side", v); if (v !== "hide") put("-sidelast", v); set(v); };
   el.addEventListener("change", () => choose(el.value));
   btn.addEventListener("click", () => {
-    // phones show it on request (the 側面図 key): the same here
-    if (matchMedia("(max-width: 700px)").matches){ $("vSide").click(); return; }
     const show = el.value === "hide";
-    choose(show ? get("-sidelast", "right") : "hide"); toast(show ? "側面図を出しました。" : "側面図を隠しました。"); });
-  const p = get("-side", "right");
+    // shown again where it was; a phone, the first time: under the front view
+    choose(show ? get("-sidelast", matchMedia(PHONE).matches ? "bottom" : "right") : "hide");
+    toast(show ? "側面図を出しました（置き場所は側面図の隅で）。" : "側面図を隠しました。"); });
+  const p = get("-side", matchMedia(PHONE).matches ? "hide" : "right");
   set(["right", "left", "top", "bottom", "hide"].includes(p) ? p : "right");
 }
 // the panel (操作欄): right (the default), left, above or below the views; kept in this browser
@@ -2144,3 +2177,16 @@ window.addEventListener("beforeunload", () => { try { localStorage.setItem(KEY, 
 try { const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d && d.P){ migrate(d); if (d.P.length === J.length) S = Object.assign(fresh(), d); } } catch (e) {}
 for (const id of ["scaleAll", "scaleHead", "scaleThick"]) $(id + "V").value = 100;
 syncUI(); draw();
+// the setting 「クリックで自動的にモードを切り替える」 (kept in this browser): a press on a thing goes
+// to 配置 (where things move), a press on the body to ポーズ (from 配置 or カメラ; 体格 stays)
+const AUTO_KEY = KEY + "-automode";
+let autoMode = false; try { autoMode = localStorage.getItem(AUTO_KEY) === "1"; } catch (e) {}
+function modeTo(m){ const b = document.querySelector(`#modes [data-mode="${m}"]`); if (b && mode !== m) b.click(); }
+DOWN_HOOKS.unshift((cv, x, y) => {
+  if (!autoMode || cv !== front) return null;
+  if (pick(cv, x, y) >= 0){ if (mode === "place" || mode === "persp") modeTo("pose"); return null; }
+  if ((typeof solidUnder === "function" && solidUnder(x, y)) || (typeof itemUnder === "function" && itemUnder(x, y))) modeTo("place");
+  return null;
+});
+document.getElementById("autoMode").checked = autoMode;
+document.getElementById("autoMode").addEventListener("change", e => { autoMode = e.target.checked; try { localStorage.setItem(AUTO_KEY, autoMode ? "1" : "0"); } catch (err) {} });

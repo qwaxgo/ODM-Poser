@@ -119,11 +119,12 @@ held sideways, and one screen each on dual-screen devices.
 - **Touch**: tap a circle to pick it, then drag the picked circle; a one-finger swipe anywhere
   else turns the camera; two fingers pinch to zoom and move the view (the lens and the objects in
   the Perspective and Place modes); the camera pad on the front view (a stick to turn, a stick to
-  move, a zoom slider); double-tap to flip a bone; the on-screen 「Shift」「固定」 keys stand for
-  Shift and Alt.
-- **Split screen** (on by itself on phones and tablets, "Split screen" at the top to switch): the
+  move, a zoom slider); double-tap to flip a bone; the 「Shift」「固定」 keys on the view's left,
+  under the modes, stand for Shift and Alt.
+- **Split screen** (on by itself on phones and tablets, "Split screen" among the view's switches): the
   views stay on the top half (the left half when held sideways) and the panels scroll on the other;
-  "Hide panels" gives the views the whole screen.
+  "Panel" gives the views the whole screen. Drag the grip on the edge between the views and the panel
+  (on a computer too) for more room on either side; a double click puts it back.
 - **Pens** (Apple Pencil, Galaxy S Pen, Wacom tablets and pen displays such as MovinkPad, on
   Windows, macOS and Linux): the tip drags, the barrel button is Shift, the eraser end pins.
 - **Mac**: ⌘Z undoes; a trackpad pinch or scroll zooms smoothly.
@@ -200,7 +201,13 @@ Anthropic's AI coding tool, under qwaxgo's design and direction.
 
 ## License
 
-MIT, (c) 2026 qwaxgo. All shapes and code are original to this project.
+- **The tool** (code and docs): MIT, (c) 2026 qwaxgo ([LICENSE](LICENSE)).
+- **Exported files** (pictures and pose files): [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). Use them
+  commercially, change them, use them with AI (training, ControlNet); credit is optional. What mods add follows each
+  mod's terms. Details: [docs/LICENSE.md](docs/LICENSE.md).
+- The figure's shapes, the built-in props, objects, auras and poses, and the code are original to this project. Some
+  menu icons are pixiv's Charcoal Icons (Apache License 2.0, via melta UI:
+  [web/editor/THIRD_PARTY_LICENSES.md](web/editor/THIRD_PARTY_LICENSES.md)); they are not in exported files.
 
 ---
 
@@ -219,7 +226,7 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
   コントローラー・スポーツ用具・椅子・机・乗り物・蔓や枝や鉄棒、エフェクト、大きさ自由の立体図形、手提げ・バッグ・かご、
   頭・胴体・腰・背中・脚に身に着ける物など）。床・壁・天井と接地、面に手足を着ける、つかまる、ぶら下がる、ワイヤーで吊る。
 - **持つ・背負う・置く**：持たせると手の形が自動で握りに変わり、外すと戻ります。手に持つ物は背負え、どの小物も床や物体の上に置けます（接地）。置いた物は配置モードでドラッグ。ライフル類には銃剣を付けられます。
-- **線の色**：頭・胴体・腕・手・脚ごと、小物・物体ごと、床と壁、ワイヤーの色を変えられます（書き出すアタリにも反映）。
+- **線の色**：頭・胴体・腕・手・脚ごと、小物・物体ごと、床と壁、ワイヤーの色を変えられます（書き出すアタリにも反映）。「色」のタブの「↺ 色を初期状態に」で最初の色に戻せ、「色の記憶」で名前をつけて保存・呼び出しできます（このブラウザに残ります）。
 - **オーラ**：全身や部位に、立ちのぼる気（炎）・なめらかな光・プラズマ（電撃）をまとえます。
 - **パース定規**：1点・2点・3点透視の線、アイレベル、直方体のガイド（幅・高さ・奥行きと位置を cm で）。消失点はカメラから決まるので人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードではカメラはそのままで消失点をつかむと定規が回ります。エディタ上だけの表示で、「定規の画像」で透明な PNG を保存できます。
 - **カメラの傾き**：パースモードで Shift＋ドラッグ（または「傾き」）で水平でなくできます（±90°）。
@@ -234,8 +241,8 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **端末**：Windows・macOS・Linux（Ubuntu など）・iOS／iPadOS・Android・Fire OS の今のブラウザ（Chrome・Edge・Safari・Firefox・Vivaldi・Brave・Samsung Internet・Silk）。画面に合わせて、横長は左右に、縦置きモニターとタブレットは図の下に欄を段組みで、スマホは横の図をボタンで、横向きのスマホは図の横に欄を、2画面の端末は画面ごとに並べます。
 - **カメラ（パースモード以外でも。レンズはそのまま）**：Blender と同じく、中ボタンのドラッグで回す、Shift＋中ボタンで動かす、Ctrl＋中ボタンかホイールで拡大縮小（中ボタンがなければ何もない所を Alt＋ドラッグ）。テンキー：1・3・7 で正面・右・上（Ctrl で反対側）、2・4・6・8 で15°ずつ回す（Ctrl で動かす）、9 で裏へ、＋－ で拡大縮小、. で選んだ関節を中心に、Home で人物を中心に。
 - **カメラの固定と記憶**（どのモードでも出る欄）：固定すると、ドラッグ・スワイプ・2本指・ホイール・テンキー・カメラパッドではカメラが動きません。今のカメラ（向き・高さ・傾き・レンズ・拡大・中心）をいくつでも記憶して呼び出せます（ポーズと一緒に保存）。カメラパッドの表示・非表示もここで（パソコンでも出せます）。
-- **タッチ**：丸をタップして選び、選んだ丸をドラッグして動かす。それ以外の所を1本指でスワイプするとカメラが回り、2本指でつまむと拡大縮小、そのまま動かすと移動（パース・配置モードはレンズ・物体のまま）。正面の図のカメラパッド（回すスティック・動かすスティック・拡大のスライダー）でも動かせます。ダブルタップで骨の手前と奥を入れ替え。画面の「Shift」「固定」ボタンが Shift と Alt の代わり。
-- **分割表示**（スマホ・タブレットでは自動でオン。上の「分割表示」で切り替え）：図を画面の上半分（横向きは左半分）に固定し、もう半分で操作欄をスクロール。「操作欄を隠す」で図を全画面に。
+- **タッチ**：丸をタップして選び、選んだ丸をドラッグして動かす。それ以外の所を1本指でスワイプするとカメラが回り、2本指でつまむと拡大縮小、そのまま動かすと移動（パース・配置モードはレンズ・物体のまま）。正面の図のカメラパッド（回すスティック・動かすスティック・拡大のスライダー）でも動かせます。ダブルタップで骨の手前と奥を入れ替え。図の左（モードの下）の「Shift」「固定」ボタンが Shift と Alt の代わり。
+- **分割表示**（スマホ・タブレットでは自動でオン。図の右上の「分割表示」で切り替え）：図を画面の上半分（横向きは左半分）に固定し、もう半分で操作欄をスクロール。「操作欄」で図を全画面に。図と操作欄の境目のつまみをドラッグすると広さを変えられます（PC でも。ダブルクリックで戻す）。
 - **ペン**：Apple Pencil、Galaxy の S ペン、ワコムのペンタブレット・液晶ペンタブ（MovinkPad など。Windows・macOS・Linux）。ペン先でドラッグ、サイドボタンは Shift、消しゴム側は固定。
 - **大きな書き出し**：端末が描ける大きさ（iOS／iPadOS は約 1670 万画素）を超えるときは、比率を保って小さくし、そのことを表示します。
 - **言語**：ブラウザの言語に合わせて日本語／英語。右上のボタンで切り替え（覚えます）。`?lang=en` でも指定できます。
@@ -245,4 +252,4 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **画面の作り**：見た目は [melta UI](https://github.com/tsubotax/melta-ui)（サブモジュール `design/melta-ui`）に従います。エディタのマークアップは `src/pages/editor/index.astro` と `src/components/editor/`、CSS（`web/editor/ui.css`）は `web/editor/ui.src.css` から Tailwind CSS 4 で作ってコミットしています。変えるときは Node.js 22 で `npm install` のあと `npm run css`、確認は `python tools/lint_ui.py`（melta の lint）。AI 向けの注意は `AGENTS.md`。
 - **サイトと開発コンテナ**：サイトは [Astro](https://astro.build) で作ります。ページは `src/pages`（エディタ、`docs/` から作るドキュメント、サイトのトップ）、`web/` はそのまま出します（Astro の `publicDir`：エディタのスクリプト・スタイル・画像）。サーバーなしで使う HTML 版は `python tools/make_release_html.py` で作り（`release/`）、タグ `v<version>` を push するとそれを入れたリリースの下書きができます（`.github/workflows/release.yml`）。アプリ版（Tauri、`src-tauri/`）は専用のコンテナで作ります（Docker のある所で実行。開発コンテナの中ではありません）：`HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose -f docker-compose.tauri.yml run --rm tauri [linux|windows|all]` で `release/` に AppImage と Windows の zip ができるので、リリースの下書きに手で足します。`npm run dev` で http://localhost:4321/ODM-Poser/editor/（ドキュメントは /ODM-Poser/docs/）、`npm run build` で `dist/`（GitHub Pages に出すもの）。開発コンテナ（`.devcontainer/`：Node 24、Playwright 入りの Python、Claude Code、zsh）は、WSL2（または Linux・macOS）から VS Code の「コンテナーで再度開く」で開きます（`~/.ssh`・`~/.gitconfig`・`~/.claude`・`~/.config/gh`（gh のログイン）・zsh の設定をマウント）。VS Code なしなら `docker compose up dev`（`preview`・`serve` も）、確認は `docker compose -f docker-compose.test.yml run --rm lint-ui`（`syntax`・`build` も）。
 - **Claude Code での実装**：このリポジトリのコードとドキュメントは、qwaxgo の設計と指示のもとで、Anthropic の AI コーディングツール [Claude Code](https://claude.com/claude-code) が実装しました。
-- **ライセンス**：MIT（c）2026 qwaxgo。
+- **ライセンス**：ツール（コードとドキュメント）は MIT（c）2026 qwaxgo。書き出したファイル（画像・ポーズのファイル）は [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/deed.ja) で、商用・加工・AI の学習や ControlNet への利用も自由、クレジットは任意です（MOD で足したものは各 MOD の条件）。詳しくは [docs/LICENSE-JA.md](docs/LICENSE-JA.md)。メニューのアイコンの一部は pixiv の Charcoal Icons（Apache License 2.0、melta UI 経由。[web/editor/THIRD_PARTY_LICENSES.md](web/editor/THIRD_PARTY_LICENSES.md)）で、書き出したファイルには入りません。
