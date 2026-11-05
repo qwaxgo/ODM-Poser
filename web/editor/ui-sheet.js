@@ -28,6 +28,10 @@ const GROUPS = [["make", "作る", "PencilDraw"], ["look", "見る", "View"], ["
 const bar = document.createElement("nav");
 bar.id = "sheetBar"; bar.setAttribute("aria-label", "分類"); bar.dataset.ui = "skip";
 bar.innerHTML = GROUPS.map(([id, name, ic]) => `<button type="button" data-g="${id}" aria-pressed="false" title="${name}">${IC.svg(ic)}<span>${name.replace("について", " について")}</span></button>`).join("");
+// the tall layout (an upright tablet or monitor): the bar goes below or above (kept in this browser)
+bar.insertAdjacentHTML("beforeend", `<button type="button" data-g="flip" class="bar-flip" title="分類バーとメニューを画面の上へ・下へ"><span>⇅ 上下</span></button>`);
+const BAR_KEY = KEY + "-barpos";
+const barTop = () => { try { return localStorage.getItem(BAR_KEY) === "top"; } catch (e) { return false; } };
 document.getElementById("stage").after(bar);
 
 // the about sheet: the page's header (title, version, links), kept out of the way on phones
@@ -47,7 +51,7 @@ function open(on){
   syncBar(); draw();
 }
 function syncBar(){
-  const g = body.classList.contains("sheet-open") && !body.classList.contains("about-open") ? ODMUI.groupOf() : "";
+  const g = (body.classList.contains("sheet-open") || body.classList.contains("sheet-tall")) && !body.classList.contains("about-open") ? ODMUI.groupOf() : "";
   const ab = body.classList.contains("about-open");
   bar.querySelectorAll("button").forEach(b => { const on = b.dataset.g === "about" ? ab : b.dataset.g === g;
     b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
@@ -61,6 +65,10 @@ function aboutOpen(on){
 bar.addEventListener("click", e => {
   const b = e.target.closest("button[data-g]"); if (!b) return;
   if (b.dataset.g === "about"){ aboutOpen(!body.classList.contains("about-open")); return; }
+  if (b.dataset.g === "flip"){ const top = !body.classList.contains("bar-top"); body.classList.toggle("bar-top", top);
+    try { localStorage.setItem(BAR_KEY, top ? "top" : "bottom"); } catch (err) {} chromeKey = ""; draw(); chromeKey = ""; draw(); return; }
+  // the tall layout keeps its menu in sight: a category only switches it
+  if (body.classList.contains("sheet-tall")){ body.classList.remove("about-open"); ODMUI.showGroup(b.dataset.g); syncBar(); return; }
   const on = body.classList.contains("sheet-open") && ODMUI.groupOf() === b.dataset.g;
   if (on){ open(false); return; }
   ODMUI.showGroup(b.dataset.g);            // opens the sheet (ui-menu.js choose)
@@ -97,6 +105,7 @@ function sync(){
   const on = SHEET.matches;
   body.classList.toggle("sheet", on);
   body.classList.toggle("sheet-tall", on && TALL.matches);
+  body.classList.toggle("bar-top", on && TALL.matches && barTop());
   if (on){ body.classList.remove("split", "full"); }
   if (!on){ body.classList.remove("sheet-open", "about-open"); }
   syncBar(); draw();

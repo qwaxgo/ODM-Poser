@@ -9,7 +9,8 @@
 (() => {
 const $ = id => document.getElementById(id);
 const grip = $("paneGrip"), stage = $("stage"), main = document.querySelector(".app-main"), aside = document.querySelector("aside");
-const bc = document.body.classList, KEYS = {r: "-panew", l: "-panew", b: "-splitk", s: "-splitw"};
+// tb / tt: the tall layout's edge under / over the views (bar below / above), its share in --tall-k
+const bc = document.body.classList, KEYS = {r: "-panew", l: "-panew", b: "-splitk", s: "-splitw", tb: "-tallk", tt: "-tallk"};
 const get = k => { try { return localStorage.getItem(KEY + k); } catch (e) { return null; } };
 const put = (k, v) => { try { if (v === null) localStorage.removeItem(KEY + k); else localStorage.setItem(KEY + k, v); } catch (e) {} };
 const relayout = () => { chromeKey = ""; draw(); chromeKey = ""; draw(); };
@@ -18,7 +19,7 @@ const relayout = () => { chromeKey = ""; draw(); chromeKey = ""; draw(); };
 // the views, right or left), "" (none: the panel above or below, put away, one column)
 function side(){
   // the phone's sheet has no edge; the tall layout's is under the views (their height, as split upright)
-  if (bc.contains("sheet")) return bc.contains("sheet-tall") ? "b" : "";
+  if (bc.contains("sheet")) return bc.contains("sheet-tall") ? (bc.contains("bar-top") ? "tt" : "tb") : "";
   if (bc.contains("split")) return bc.contains("full") ? "" : innerWidth > innerHeight ? "s" : "b";
   if (bc.contains("aside-off") || !aside.getClientRects().length) return "";
   const a = aside.getBoundingClientRect(), v = stage.getBoundingClientRect();
@@ -30,21 +31,25 @@ function side(){
 function apply(k, v){
   const W = innerWidth, H = innerHeight;
   if (k === "b"){ const f = Math.min(0.8, Math.max(0.25, v)); document.body.style.setProperty("--split-k", f.toFixed(3)); return f; }
+  // the tall layout: the views keep at least half the height (up to 85 %)
+  if (k === "tb" || k === "tt"){ const f = Math.min(0.85, Math.max(0.5, v)); document.body.style.setProperty("--tall-k", f.toFixed(3)); return f; }
   if (k === "s"){ const w = Math.round(Math.min(W - 260, Math.max(200, v))); document.body.style.setProperty("--split-aside-user", w + "px"); return w; }
   const w = Math.round(Math.min(Math.min(720, W - 420), Math.max(240, v)));
   main.style.setProperty("--aside-w", w + "px"); return w;
 }
 function restore(){
-  for (const k of ["b", "s", "r"]){ const v = parseFloat(get(KEYS[k])); if (isFinite(v)) apply(k, v); }
+  for (const k of ["b", "s", "r", "tb"]){ const v = parseFloat(get(KEYS[k])); if (isFinite(v)) apply(k, v); }
 }
 function value(k, x, y){                       // the value for the pointer at x, y
-  if (k === "b") return y / innerHeight;
+  if (k === "b" || k === "tb") return y / innerHeight;
+  if (k === "tt") return 1 - y / innerHeight;
   if (k === "s") return innerWidth - x;
   const m = main.getBoundingClientRect(), gap = parseFloat(getComputedStyle(main).columnGap) || 16;
   return k === "r" ? m.right - parseFloat(getComputedStyle(main).paddingRight) - x - gap / 2
     : x - m.left - parseFloat(getComputedStyle(main).paddingLeft) - gap / 2;
 }
-const now = k => k === "b" ? parseFloat(getComputedStyle(document.body).getPropertyValue("--split-k")) || 0.5
+const now = k => k === "tb" || k === "tt" ? parseFloat(getComputedStyle(document.body).getPropertyValue("--tall-k")) || 0.6
+  : k === "b" ? parseFloat(getComputedStyle(document.body).getPropertyValue("--split-k")) || 0.5
   : k === "s" ? (parseFloat(getComputedStyle(document.body).getPropertyValue("--split-aside")) || aside.offsetWidth)
   : aside.offsetWidth;
 let held = null, queued = false;
@@ -59,10 +64,11 @@ grip.addEventListener("pointermove", e => {
 });
 const end = () => { if (!held) return;
   const k = held.k; held = null; grip.classList.remove("held");
-  put(KEYS[k], String(k === "b" ? now(k) : Math.round(now(k)))); relayout(); };
+  put(KEYS[k], String(k === "b" || k === "tb" || k === "tt" ? now(k) : Math.round(now(k)))); relayout(); };
 grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end); grip.addEventListener("lostpointercapture", end);
 grip.addEventListener("dblclick", () => { const k = grip.dataset.side; if (!k) return;
   if (k === "b") document.body.style.removeProperty("--split-k");
+  else if (k === "tb" || k === "tt") document.body.style.removeProperty("--tall-k");
   else if (k === "s") document.body.style.removeProperty("--split-aside-user");
   else main.style.removeProperty("--aside-w");
   put(KEYS[k], null); relayout(); });
@@ -71,7 +77,7 @@ grip.addEventListener("keydown", e => {
   const d = {ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1}[e.key]; if (!d) return;
   e.preventDefault();
   // the arrow moves the edge: right / down gives the views more room
-  const v = k === "b" ? now(k) + d * 0.03 : now(k) + (k === "l" ? d : -d) * 24;
+  const v = k === "b" || k === "tb" ? now(k) + d * 0.03 : k === "tt" ? now(k) - d * 0.03 : now(k) + (k === "l" ? d : -d) * 24;
   put(KEYS[k], String(apply(k, v))); relayout();
 });
 
@@ -94,8 +100,9 @@ opts.querySelectorAll(".ov-more").forEach(b => b.addEventListener("click", () =>
 let key = "";
 function update(){
   const k = side();
-  if (k !== grip.dataset.side){ grip.dataset.side = k; grip.className = "pane-grip" + (k ? " " + (k === "s" ? "r" : k) : "");
-    grip.setAttribute("aria-orientation", k === "b" ? "horizontal" : "vertical"); }
+  if (k !== grip.dataset.side){ grip.dataset.side = k;
+    grip.className = "pane-grip" + (k ? " " + ({s: "r", tb: "b", tt: "t"}[k] || k) : "");
+    grip.setAttribute("aria-orientation", k === "b" || k === "tb" || k === "tt" ? "horizontal" : "vertical"); }
   const s = [innerWidth, innerHeight, document.body.className, stage.offsetHeight].join("|");
   if (s !== key){ key = s; columns(); }
   more();

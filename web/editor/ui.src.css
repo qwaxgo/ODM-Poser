@@ -632,28 +632,52 @@ body.sheet .ov-toast { bottom: calc(var(--bar-h) + 12px); }
 /* the camera pad's sticks and the sheet's bar: the sticks lie above the bar */
 body.sheet .campad .stick, body.sheet .campad .zoomer { bottom: calc(var(--bar-h) + 12px + env(safe-area-inset-bottom)); }
 
-/* ---- the tall layout (docs/UI-LAYOUT-VERTICAL.md: an upright tablet or monitor): the views on top,
-   always in sight (their height set with the grip on the edge below them, --split-k); under them the
-   sidebar at the left (the groups, categories and tabs stacked, as they are) and the tab's controls at
-   the right, side by side in a row that scrolls sideways (the sidebar stays). Sliders stand upright ---- */
-body.sheet-tall { --tall-h: calc(var(--split-k, 0.55) * 100vh); --tall-h: calc(var(--split-k, 0.55) * 100dvh); }
-body.sheet-tall #sheetBar, body.sheet-tall .sheet-grab, body.sheet-tall #sheetView { display: none !important; }
-body.sheet-tall #stage { bottom: auto; height: var(--tall-h); }
-body.sheet-tall aside.sheet-panel { top: var(--tall-h); bottom: 0; left: 0; right: 0; width: auto; max-width: none; max-height: none;
+/* ---- the tall layout (an upright tablet or monitor; docs/UI-LAYOUT-VERTICAL.md as agreed): the views take
+   at least half the height (--tall-k, 50-85 %, the grip on their edge); the rest, from the edge of the
+   screen inward: the category bar (作る・見る・出す・ODM-Poserについて), the categories' row, the tabs' row,
+   then the tab's controls side by side (scrolling sideways, sliders upright). The bar and the menu go at
+   the bottom (as on a phone) or at the top (body.bar-top, the ⇅ button) ---- */
+body.sheet-tall { --tabs-h: 6rem; --tk: clamp(0.5, var(--tall-k, 0.6), 0.85); }
+@media (pointer: coarse) { body.sheet-tall { --tabs-h: 6.75rem; } }
+body.sheet-tall .sheet-grab, body.sheet-tall #sheetView { display: none !important; }
+body.sheet-tall #stage { top: 0; bottom: auto; height: calc(var(--tk) * 100vh); height: calc(var(--tk) * 100dvh); }
+body.sheet-tall aside.sheet-panel { top: calc(var(--tk) * 100vh); top: calc(var(--tk) * 100dvh);
+  bottom: calc(var(--bar-h) + var(--tabs-h) + env(safe-area-inset-bottom)); left: 0; right: 0; width: auto; max-width: none; max-height: none;
   display: flex !important; flex-direction: row; align-items: stretch; padding: 0; overflow-x: auto; overflow-y: hidden;
-  background: var(--bg-page); border-radius: 0; border-top: 1px solid var(--border-default); box-shadow: none; transform: none; visibility: visible; }
-body.sheet-tall #asideHead { flex: none; position: sticky; left: 0; z-index: 2; width: 190px; height: 100%; overflow-y: auto; padding: 10px 8px;
-  background: var(--bg-page); border-right: 1px solid var(--border-default); }
-body.sheet-tall #menuBar .menu-row { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
-/* the groups (作る・見る・出す) show in the sidebar; the phone's bar at the bottom is not used here */
-body.sheet-tall #menuBar .menu-top { display: flex !important; }
-body.sheet-tall #menuBar .menu-top, body.sheet-tall #menuBar .menu-mid { margin: 0 0 6px; }
-body.sheet-tall #menuBar .menu-leaf .menu-btn { width: 100%; }
+  background: var(--bg-page); border-radius: 0; border-top: 1px solid var(--border-default); box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none; transform: none; visibility: visible; }
+/* the categories and tabs: two rows, each scrolling sideways, next to the bar */
+body.sheet-tall #asideHead { position: fixed; left: 0; right: 0; bottom: calc(var(--bar-h) + env(safe-area-inset-bottom)); z-index: 31;
+  height: var(--tabs-h); padding: 4px 8px; overflow: hidden; background: var(--bg-surface); border-top: 1px solid var(--border-default); }
+body.sheet-tall #menuBar { display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 4px; height: 100%; margin: 0; }
+body.sheet-tall #menuBar .menu-row { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; margin: 0; flex: none; }
+body.sheet-tall #menuBar .menu-leaf { border-left: 0; }
+body.sheet-tall #menuBar .menu-leaf .menu-btn { width: auto; border-left: 0; border-radius: 8px; margin: 0; }
+body.sheet-tall #menuBar .menu-leaf .menu-btn.active { background: color-mix(in srgb, var(--sel) 12%, transparent); }
+body.sheet-tall #menuBar .menu-btn { flex: none; white-space: nowrap; }
+body.sheet-tall #menuBar .menu-top, body.sheet-tall #menuBar .menu-burger, body.sheet-tall #figCtx, body.sheet-tall #status,
+body.sheet-tall #panelPlace, body.sheet-tall #globalBar { display: none !important; }
+/* the tab's controls: side by side */
 body.sheet-tall aside.sheet-panel > section { display: none; }
 body.sheet-tall aside.sheet-panel > section.active { display: block; flex: none; width: min(340px, 75vw); height: 100%; margin: 0;
   overflow-y: auto; padding: 12px; border-radius: 0; border-right: 1px solid var(--border-default); background: var(--bg-surface); box-shadow: none; }
-body.sheet-tall aside.sheet-panel > section.active input[type=range] { writing-mode: vertical-lr; direction: rtl; width: 26px; height: 130px; margin: 0; }
+body.sheet-tall aside.sheet-panel > section.active input[type=range] { writing-mode: vertical-lr; direction: rtl; width: 26px; height: 110px; margin: 0; }
 body.sheet-tall aside.sheet-panel > section.active .row { align-items: flex-end; }
-/* the camera pad and messages keep to the views (no bar at the bottom here) */
+/* the bar and the menu at the top: the order turned over, the views below them */
+body.sheet-tall.bar-top #sheetBar { top: 0; bottom: auto; padding: env(safe-area-inset-top) 4px 0; border-top: 0; border-bottom: 1px solid var(--border-default); }
+body.sheet-tall.bar-top #asideHead { top: calc(var(--bar-h) + env(safe-area-inset-top)); bottom: auto; border-top: 0; border-bottom: 1px solid var(--border-default); }
+body.sheet-tall.bar-top #menuBar { flex-direction: column; }
+body.sheet-tall.bar-top aside.sheet-panel { top: calc(var(--bar-h) + var(--tabs-h) + env(safe-area-inset-top));
+  bottom: calc(var(--tk) * 100vh); bottom: calc(var(--tk) * 100dvh); border-top: 0; border-bottom: 1px solid var(--border-default); }
+body.sheet-tall.bar-top #stage { top: auto; bottom: 0; }
+body.sheet-tall.bar-top #aboutSheet { top: calc(var(--bar-h) + env(safe-area-inset-top)); bottom: 0; }
+/* the ⇅ button: the tall layout only */
+#sheetBar .bar-flip { display: none; flex: 0 0 auto; padding: 0 10px; }
+body.sheet-tall #sheetBar .bar-flip { display: flex; }
+/* the edge over the views (the bar at the top) */
+.pane-grip.t { display: flex; left: 0; right: 0; top: 0; height: 18px; cursor: row-resize; }
+.pane-grip.t i { width: 44px; height: 4px; }
+@media (pointer: coarse) { .pane-grip.t { height: 24px; } .pane-grip.t i { width: 56px; height: 5px; } }
+/* the camera pad and messages keep to the views */
 body.sheet-tall .campad .stick, body.sheet-tall .campad .zoomer { bottom: 12px; }
 body.sheet-tall .ov-toast { bottom: 12px; }
