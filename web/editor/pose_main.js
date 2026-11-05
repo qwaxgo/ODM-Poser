@@ -557,7 +557,11 @@ const ONE_COLUMN = "(max-width:900px), (orientation:portrait) and (max-aspect-ra
 // picture's shape asks, up to its share of the window.
 function viewsRoom(){
   // the phone's sheet layout (ui-sheet.js): the front view takes the whole screen
-  if (document.body.classList.contains("sheet")) return {maxH: Math.round(innerHeight), room: true};
+  // (the tall layout: the views' own part on top, its height set by the grip; ui-sheet.js)
+  if (document.body.classList.contains("sheet")){
+    const st = document.getElementById("stage");
+    return {maxH: Math.round(document.body.classList.contains("sheet-tall") ? st.clientHeight : innerHeight), room: true};
+  }
   // the views stay on screen as the page scrolls: beside the panels they may take the window's
   // height, above them (one column) part of it, so the panels show underneath
   const short = innerHeight <= 520 && innerWidth >= 700;          // a phone held sideways: panels beside

@@ -17,6 +17,8 @@ const relayout = () => { chromeKey = ""; draw(); chromeKey = ""; draw(); };
 // which edge the grip is on: "b" (split, upright), "s" (split, sideways), "r" / "l" (the panel beside
 // the views, right or left), "" (none: the panel above or below, put away, one column)
 function side(){
+  // the phone's sheet has no edge; the tall layout's is under the views (their height, as split upright)
+  if (bc.contains("sheet")) return bc.contains("sheet-tall") ? "b" : "";
   if (bc.contains("split")) return bc.contains("full") ? "" : innerWidth > innerHeight ? "s" : "b";
   if (bc.contains("aside-off") || !aside.getClientRects().length) return "";
   const a = aside.getBoundingClientRect(), v = stage.getBoundingClientRect();

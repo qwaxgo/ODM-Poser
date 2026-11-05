@@ -42,7 +42,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 「クリックで自動的にモードを切り替える」（ポーズの欄）：物を押すと配置モード、人体の関節を押すとポーズモード（配置・カメラから。体格は残す）。このブラウザに残ります
 - 物（設置物）の幅・高さ・奥行き・角の数・位置・向き、床と天井の高さ、壁の位置と向き、ワイヤーの支点、人物の位置（castX/Z）、オーラの大きさにもスライダーを付けました（数値欄と連動、ドラッグは取り消し1回分）
 - カメラの位置と見る点を、XYZ それぞれスライダーと数値欄で調整できるように（スライダーを動かしても取り消し履歴は1回分）
-- 縦のタブレットと PC の縦モニター：分類とタブを画面左端の縦の列に置き、選んだタブの中身を右に横へ並べてスクロールします。スライダーは縦型に
+- 縦のタブレットと PC の縦モニター（docs/UI-LAYOUT-VERTICAL-JA.md）：キャンバスを画面の上部に常に表示し、その下に、左のサイドバー（分類とタブを縦に積む）と右のメニュー（選んだタブの欄を横に並べてスクロール）を置きます。キャンバスとメニューの境目はドラッグで高さを変えられます（ダブルクリックで戻す）。スライダーは縦型
 - 両手持ちの武器：利き手（右手・左手）を装備の欄で切り替えられます。持つ手を動かしても武器が手を支点に回らず、もう片方の手が向きを保って付いてくるように
 - 3軸ハンドル：左側のメニューの「3軸ハンドル」を押すと出て、「解除」で隠します（右側の欄のコピーは削除）。掴んだ軸は太く強調され、ドラッグはその軸だけに動きます
 - 身長と頭身の欄を体格タブにも出しました（頭身は直接入力可）
@@ -101,7 +101,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Click to switch mode (in the Pose tab): a press on a thing goes to Place, a press on the body to Pose (from Place or Camera; Body stays). Kept in this browser
 - Sliders beside the numbers of objects (size, sides, position, turn), the floor and ceiling heights, the wall, the wire's height, the figure's place and the aura size (linked with the number; a drag is one undo step)
 - The camera's position and look point: X, Y and Z each with a slider and a number (a slider drag is one undo step)
-- Upright tablets and tall monitors: the categories and tabs are a column at the left edge, the controls of the tab chosen sit beside it in a row (scrolling sideways), and the sliders stand upright
+- Upright tablets and tall monitors (docs/UI-LAYOUT-VERTICAL.md): the views stay on top, always in sight; below them the sidebar at the left (categories and tabs stacked) and the menu at the right (the tab's controls side by side, scrolling sideways). The edge between the views and the menu is dragged to set their heights (double click: back). Sliders stand upright
 - Two-handed weapons: the main hand (right or left) is chosen in the Equip tab. Moving the holding hand no longer swings the weapon about it: the other hand follows and the weapon keeps its direction
 - The 3-axis handles: the 3軸ハンドル button on the left turns them on and 解除 off (the copies in the panel are gone). The axis taken is drawn heavier, and a drag moves along that axis only
 - The height and heads are in the Body tab too (heads can be typed)

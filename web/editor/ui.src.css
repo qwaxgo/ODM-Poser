@@ -632,21 +632,28 @@ body.sheet .ov-toast { bottom: calc(var(--bar-h) + 12px); }
 /* the camera pad's sticks and the sheet's bar: the sticks lie above the bar */
 body.sheet .campad .stick, body.sheet .campad .zoomer { bottom: calc(var(--bar-h) + 12px + env(safe-area-inset-bottom)); }
 
-/* ---- the tall layout (ui-sheet.js: an upright tablet or monitor): the categories and their tabs in a
-   column at the left, the controls of the tab chosen beside it (scrolling sideways), sliders upright ---- */
+/* ---- the tall layout (docs/UI-LAYOUT-VERTICAL.md: an upright tablet or monitor): the views on top,
+   always in sight (their height set with the grip on the edge below them, --split-k); under them the
+   sidebar at the left (the groups, categories and tabs stacked, as they are) and the tab's controls at
+   the right, side by side in a row that scrolls sideways (the sidebar stays). Sliders stand upright ---- */
+body.sheet-tall { --tall-h: calc(var(--split-k, 0.55) * 100vh); --tall-h: calc(var(--split-k, 0.55) * 100dvh); }
 body.sheet-tall #sheetBar, body.sheet-tall .sheet-grab, body.sheet-tall #sheetView { display: none !important; }
-body.sheet-tall aside.sheet-panel { top: 0; bottom: 0; left: 0; right: auto; width: auto; max-width: 72vw; max-height: none; display: flex !important;
-  flex-direction: row; align-items: stretch; padding: 0; overflow-x: auto; overflow-y: hidden; background: var(--bg-page);
-  border-radius: 0; box-shadow: 4px 0 18px rgb(0 0 0 / 0.14); transform: none; visibility: visible; }
-body.sheet-tall #asideHead { flex: none; width: 210px; height: 100%; overflow-y: auto; padding: 12px 8px; border-right: 1px solid var(--border-default); }
+body.sheet-tall #stage { bottom: auto; height: var(--tall-h); }
+body.sheet-tall aside.sheet-panel { top: var(--tall-h); bottom: 0; left: 0; right: 0; width: auto; max-width: none; max-height: none;
+  display: flex !important; flex-direction: row; align-items: stretch; padding: 0; overflow-x: auto; overflow-y: hidden;
+  background: var(--bg-page); border-radius: 0; border-top: 1px solid var(--border-default); box-shadow: none; transform: none; visibility: visible; }
+body.sheet-tall #asideHead { flex: none; position: sticky; left: 0; z-index: 2; width: 190px; height: 100%; overflow-y: auto; padding: 10px 8px;
+  background: var(--bg-page); border-right: 1px solid var(--border-default); }
 body.sheet-tall #menuBar .menu-row { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
-/* the groups (作る・見る・出す) show in the column too; the bar at the bottom is not used here */
-body.sheet #menuBar .menu-top { display: flex !important; }
+/* the groups (作る・見る・出す) show in the sidebar; the phone's bar at the bottom is not used here */
+body.sheet-tall #menuBar .menu-top { display: flex !important; }
 body.sheet-tall #menuBar .menu-top, body.sheet-tall #menuBar .menu-mid { margin: 0 0 6px; }
 body.sheet-tall #menuBar .menu-leaf .menu-btn { width: 100%; }
 body.sheet-tall aside.sheet-panel > section { display: none; }
-body.sheet-tall aside.sheet-panel > section.active { display: block; flex: none; width: min(380px, 62vw); height: 100%; margin: 0;
-  overflow-y: auto; padding: 12px; border-radius: 0; border-right: 1px solid var(--border-default); background: var(--bg-surface); }
-/* sliders stand upright in the tall layout */
-body.sheet-tall aside.sheet-panel > section.active input[type=range] { writing-mode: vertical-lr; direction: rtl; width: 26px; height: 150px; margin: 0; }
+body.sheet-tall aside.sheet-panel > section.active { display: block; flex: none; width: min(340px, 75vw); height: 100%; margin: 0;
+  overflow-y: auto; padding: 12px; border-radius: 0; border-right: 1px solid var(--border-default); background: var(--bg-surface); box-shadow: none; }
+body.sheet-tall aside.sheet-panel > section.active input[type=range] { writing-mode: vertical-lr; direction: rtl; width: 26px; height: 130px; margin: 0; }
 body.sheet-tall aside.sheet-panel > section.active .row { align-items: flex-end; }
+/* the camera pad and messages keep to the views (no bar at the bottom here) */
+body.sheet-tall .campad .stick, body.sheet-tall .campad .zoomer { bottom: 12px; }
+body.sheet-tall .ov-toast { bottom: 12px; }

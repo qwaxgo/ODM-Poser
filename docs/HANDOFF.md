@@ -60,7 +60,7 @@ web/editor/pose_solids.js        solids; pose_style.js line colours and auras; p
 web/editor/pose_cast.js          more than one figure; pose_sets.js the saved poses (pose + things + place) and bodies
 web/editor/pose_gizmo.js         the 3-axis handles (tools per mode); ui-figure.js the body map and 人物の管理 under it; its 付随物 block is in the リセット tab (PanelReset.astro holds the other resets)
 web/editor/ui-pane.js            the grip between the views and the panel (--aside-w, --split-k, --split-aside-user), the modes' two columns, the switches' ▲ ▼
-web/editor/ui-sheet.js           the phone and upright tablet: full-screen views, the category bar, the translucent sheets (aside.sheet-panel), the simplified view (#sheetMini), the About sheet (#aboutSheet). Upright and narrow only (`(max-width: 900px) and (orientation: portrait)`); sideways and computers keep the panel as before
+web/editor/ui-sheet.js           the phone (bottom bar and sheets) and the tall layout (body.sheet-tall, docs/UI-LAYOUT-VERTICAL.md: views on top, sidebar + sideways menu below, the edge set by ui-pane.js as --split-k); the phone: full-screen views, the category bar, the translucent sheets (aside.sheet-panel), the simplified view (#sheetMini), the About sheet (#aboutSheet). Upright and narrow only (`(max-width: 900px) and (orientation: portrait)`); sideways and computers keep the panel as before
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
 web/editor/pose_share.js         posting (X, Bluesky, Misskey, Mastodon, share menu) and #pose= links;
