@@ -681,3 +681,8 @@ body.sheet-tall #sheetBar .bar-flip { display: flex; }
 /* the camera pad and messages keep to the views */
 body.sheet-tall .campad .stick, body.sheet-tall .campad .zoomer { bottom: 12px; }
 body.sheet-tall .ov-toast { bottom: 12px; }
+
+/* a slider needs room to move: a cell of a two-column grid holding one takes both columns, and the
+   slider keeps a width of its own beside its number (a grid cell is too narrow for both) */
+.grid2 > div:has(input[type=range]) { grid-column: 1 / -1; }
+.row > input[type=range] { flex: 1 1 auto; min-width: 96px; }

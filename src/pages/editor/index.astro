@@ -2,6 +2,9 @@
 // The editor. The page is made here (the markup in src/components/editor); its scripts and styles
 // are plain files in web/editor (Astro's publicDir), loaded as they are (is:inline): classic
 // scripts sharing one global scope, in this order. ui.css is made from ui.src.css (npm run css).
+// a mark that changes with every build, after each script's and style's name: a browser that kept an
+// older copy (a site's files may be kept for hours) takes the new one when the page is new
+const V = Date.now().toString(36);
 import Header from "../../components/editor/Header.astro";
 import Stage from "../../components/editor/Stage.astro";
 import AsideHead from "../../components/editor/AsideHead.astro";
@@ -49,8 +52,8 @@ import PanelFile from "../../components/editor/PanelFile.astro";
 <meta name="twitter:card" content="summary_large_image">
 <!-- the look: melta UI (design/melta-ui) through Tailwind CSS; ui.css is made from ui.src.css
      (npm run css), ui.js gives the controls their classes -->
-<link rel="stylesheet" href="ui.css">
-<script is:inline src="ui.js"></script>
+<link rel="stylesheet" href={"ui.css?v=" + V}>
+<script is:inline src={"ui.js?v=" + V}></script>
 </head>
 <body class="mode-pose">
 <Header />
@@ -77,53 +80,53 @@ import PanelFile from "../../components/editor/PanelFile.astro";
 </aside>
 </main>
 
-<script is:inline src="pose_props.js"></script>
+<script is:inline src={"pose_props.js?v=" + V}></script>
 <!-- effects, simple solids, bags, and things worn on the head, body and feet -->
-<script is:inline src="pose_props_more.js"></script>
+<script is:inline src={"pose_props_more.js?v=" + V}></script>
 <!-- the editor's own script: the figure, its state, the views, the panel -->
-<script is:inline src="pose_main.js"></script>
+<script is:inline src={"pose_main.js?v=" + V}></script>
 <!-- floor / walls / ceiling, holding and placing things, wires (uses the editor's state above) -->
-<script is:inline src="pose_scene.js"></script>
+<script is:inline src={"pose_scene.js?v=" + V}></script>
 <!-- the second figure and more (the one being edited is S; the others wait in S.others) -->
-<script is:inline src="pose_cast.js"></script>
+<script is:inline src={"pose_cast.js?v=" + V}></script>
 <!-- presets kept apart: a pose with its things and place, and a body (in this browser) -->
-<script is:inline src="pose_sets.js"></script>
+<script is:inline src={"pose_sets.js?v=" + V}></script>
 <!-- boxes, prisms, cylinders, pyramids, cones and poles to stand on and touch -->
-<script is:inline src="pose_solids.js"></script>
+<script is:inline src={"pose_solids.js?v=" + V}></script>
 <!-- サイズ: the parts' lengths and widths, keeping the height / the heads count, locked parts; a thing's length and thickness -->
-<script is:inline src="pose_size.js"></script>
+<script is:inline src={"pose_size.js?v=" + V}></script>
 <!-- line colours and auras -->
-<script is:inline src="pose_style.js"></script>
+<script is:inline src={"pose_style.js?v=" + V}></script>
 <!-- 置く前のプレビュー: the chosen thing / object drawn faintly before it is put, at the size set beside it -->
-<script is:inline src="pose_preview.js"></script>
+<script is:inline src={"pose_preview.js?v=" + V}></script>
 <!-- the perspective ruler and the box guide (uses the editor's camera) -->
-<script is:inline src="pose_ruler.js"></script>
+<script is:inline src={"pose_ruler.js?v=" + V}></script>
 <!-- 3軸の操作ハンドル: move / stretch / turn the selected joint, object, thing or ruler box -->
-<script is:inline src="pose_gizmo.js"></script>
+<script is:inline src={"pose_gizmo.js?v=" + V}></script>
 <!-- Japanese / English -->
 <script is:inline src="i18n.js"></script>
 <!-- the menu: its icons (Charcoal Icons, THIRD_PARTY_LICENSES.md) and its groups, categories and tabs
      (before the MOD API, so a mod can add a tab) -->
-<script is:inline src="ui-icons.js"></script>
-<script is:inline src="ui-menu.js"></script>
+<script is:inline src={"ui-icons.js?v=" + V}></script>
+<script is:inline src={"ui-menu.js?v=" + V}></script>
 <!-- 全身図 and the touched part's menu, at the top of the panel -->
-<script is:inline src="ui-figure.js"></script>
+<script is:inline src={"ui-figure.js?v=" + V}></script>
 <!-- the 管理 tab's list of what is in the scene; the hints behind the ? button -->
-<script is:inline src="pose_tree.js"></script>
-<script is:inline src="ui-help.js"></script>
+<script is:inline src={"pose_tree.js?v=" + V}></script>
+<script is:inline src={"ui-help.js?v=" + V}></script>
 <!-- 作業ログ: every edit with its time; any point can be brought back -->
-<script is:inline src="ui-log.js"></script>
+<script is:inline src={"ui-log.js?v=" + V}></script>
 <!-- mods: the list of mods/*.js (web/mods.js written by tools/make_mods_list.py, or given by the page that hosts the editor) -->
 <script is:inline src="../mods.js"></script>
 <!-- the MOD API; it loads the mods (docs/MODDING.md) -->
-<script is:inline src="pose_api.js"></script>
+<script is:inline src={"pose_api.js?v=" + V}></script>
 <!-- posting to X, Bluesky, Misskey, Mastodon; links that open a pose -->
-<script is:inline src="pose_share.js"></script>
+<script is:inline src={"pose_share.js?v=" + V}></script>
 <!-- the panel's labels and their sliders in pairs (for the panel above / below the views) -->
-<script is:inline src="ui-layout.js"></script>
+<script is:inline src={"ui-layout.js?v=" + V}></script>
 <!-- the edge between the views and the panel (dragged), the modes in two columns, the switches' scroll -->
-<script is:inline src="ui-pane.js"></script>
+<script is:inline src={"ui-pane.js?v=" + V}></script>
 <!-- the phone and tablet (upright): the full-screen views, the category bar and the translucent sheets (ui-sheet.js) -->
-<script is:inline src="ui-sheet.js"></script>
+<script is:inline src={"ui-sheet.js?v=" + V}></script>
 </body>
 </html>

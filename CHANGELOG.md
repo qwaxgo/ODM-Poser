@@ -42,6 +42,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 「クリックで自動的にモードを切り替える」（ポーズの欄）：物を押すと配置モード、人体の関節を押すとポーズモード（配置・カメラから。体格は残す）。このブラウザに残ります
 - 物（設置物）の幅・高さ・奥行き・角の数・位置・向き、床と天井の高さ、壁の位置と向き、ワイヤーの支点、人物の位置（castX/Z）、オーラの大きさにもスライダーを付けました（数値欄と連動、ドラッグは取り消し1回分）
 - カメラの位置と見る点を、XYZ それぞれスライダーと数値欄で調整できるように（スライダーを動かしても取り消し履歴は1回分）
+- スライダーが動かせなかった（幅がなかった）不具合を修正：物体の大きさ・位置・向き・角の数・天面、持つ位置、オーラの大きさ、床・天井・壁・ワイヤー、人物の位置。2列の欄の中のスライダーは2列分の幅を使います
+- 公開サイトを更新したとき、ブラウザに残った古いスクリプト・CSS が使われないように：読み込みにビルドごとの印を付け、アプリ（PWA）のサービスワーカーは毎回サーバーで新しさを確かめます（オフラインでは今までどおり開けます）
 - 操作欄の位置・メニューの側・操作欄をしまう設定を、縦画面と横画面で別々に覚えるように。画面の向きを変えると、その向きの設定（初めては初期値）に切り替わります
 - 縦のタブレットと PC の縦モニター：キャンバスを画面の 50〜85%（既定 60%、境目のドラッグで調整）に取り、残りに、画面の端から順に分類バー（作る・見る・出す・ODM-Poser について）、カテゴリーの行、タブの行、選んだタブの欄（横に並べてスクロール、スライダーは縦型）を置きます。分類バーとメニューは、バーの「⇅ 上下」で画面の下か上かを切り替えられます（このブラウザに残ります）
 - 両手持ちの武器：利き手（右手・左手）を装備の欄で切り替えられます。持つ手を動かしても武器が手を支点に回らず、もう片方の手が向きを保って付いてくるように
@@ -102,6 +104,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Click to switch mode (in the Pose tab): a press on a thing goes to Place, a press on the body to Pose (from Place or Camera; Body stays). Kept in this browser
 - Sliders beside the numbers of objects (size, sides, position, turn), the floor and ceiling heights, the wall, the wire's height, the figure's place and the aura size (linked with the number; a drag is one undo step)
 - The camera's position and look point: X, Y and Z each with a slider and a number (a slider drag is one undo step)
+- Sliders that could not move (no width) fixed: the objects' size, place, turn, sides and top, where a thing is held, the aura size, the floor, ceiling, wall and wire, the figure's place. A slider in a two-column grid takes both columns
+- After the site is updated, browsers no longer run older kept scripts and styles: each load carries the build's mark, and the app's (PWA) service worker asks the server each time (offline it still opens)
 - The panel's place, the menu's side and the panel put away are kept apart for an upright and a sideways screen: turning the screen brings that way's own (the defaults the first time)
 - Upright tablets and tall monitors: the views take 50-85 % of the height (60 % by default, set by dragging the edge); the rest, from the screen's edge inward, holds the category bar (Make, View, Output, About ODM-Poser), the categories' row, the tabs' row and the tab's controls side by side (scrolling sideways, sliders upright). The bar and the menu go at the bottom or the top (the bar's ⇅ button; kept in this browser)
 - Two-handed weapons: the main hand (right or left) is chosen in the Equip tab. Moving the holding hand no longer swings the weapon about it: the other hand follows and the weapon keeps its direction
