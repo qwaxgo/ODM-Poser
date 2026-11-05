@@ -2128,9 +2128,12 @@ syncCams();
 // the panel (操作欄): right (the default), left, above or below the views; kept in this browser
 // Above or below, the menu and tabs stack in a column on the left or right (メニュー) and the
 // tab's controls run across, sliders upright. Any place: the panel can be put away (しまう).
+// kept apart for an upright and a sideways screen: turning the screen brings that way's own settings
+// (the defaults, the first time), so a place chosen for one does not carry over to the other
 { const el = $("asidePos"), side = $("menuSide"), all = ["right", "left", "top", "bottom"], bc = document.body.classList;
-  const get = (k, d) => { try { return localStorage.getItem(KEY + k) || d; } catch (e) { return d; } };
-  const put = (k, v) => { try { localStorage.setItem(KEY + k, v); } catch (e) {} };
+  const UPRIGHT = matchMedia("(orientation: portrait)"), way = () => UPRIGHT.matches ? "-p" : "-l";
+  const get = (k, d) => { try { return localStorage.getItem(KEY + k + way()) || d; } catch (e) { return d; } };
+  const put = (k, v) => { try { localStorage.setItem(KEY + k + way(), v); } catch (e) {} };
   const redraw = () => { chromeKey = ""; draw(); chromeKey = ""; draw(); };
   const set = p => { bc.remove("aside-left", "aside-top", "aside-bottom");
     if (p !== "right") bc.add("aside-" + p); el.value = p; redraw(); };
@@ -2144,9 +2147,11 @@ syncCams();
     if (bc.contains("split")){ const full = bc.toggle("full"); $("ovAside").setAttribute("aria-pressed", String(!full)); draw();
       toast(full ? "操作欄をしまいました。" : "操作欄を出しました。"); return; }
     flip(); toast(bc.contains("aside-off") ? "操作欄をしまいました。" : "操作欄を出しました。"); });
-  const p = get("-aside", "right"); set(all.includes(p) ? p : "right");
-  setSide(get("-menuside", "left") === "right" ? "right" : "left");
-  setOff(get("-asideoff", "0") === "1");
+  const load = () => { const p = get("-aside", "right"); set(all.includes(p) ? p : "right");
+    setSide(get("-menuside", "left") === "right" ? "right" : "left");
+    setOff(get("-asideoff", "0") === "1"); };
+  load();
+  UPRIGHT.addEventListener("change", load);
 }
 // a message from the view's own switches: shown for a moment in the view's corner, not in the panel
 let toastTimer = 0;
