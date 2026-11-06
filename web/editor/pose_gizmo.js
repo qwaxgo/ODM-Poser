@@ -1,7 +1,7 @@
 // 3軸の操作ハンドル (index.html, loaded after pose_preview.js), like Blender's: one tool at a time,
 // chosen with 移動 / 回転 / 変形 (on the view under the modes, in the joint's and the objects'
 // sections, or the keys G / R / S). Each mode has its own tools; the others are greyed out and the
-// tool switches to one the mode has:
+// tool switches to one the mode has (in 配置 the handles keep to the world's X, Y, Z however a thing is turned):
 //  - ポーズ: 回転 turns what hangs on the selected joint about it (the elbow: the forearm; the hips:
 //    the whole figure; a hand, a toe or the head, having nothing after them: their own bone about
 //    the joint before). 移動 only for the arms and legs (elbow, wrist, knee, ankle ...: they reach).
@@ -122,6 +122,14 @@ document.addEventListener("keydown", e => {
 
 const tabOn = id => { const el = $(id), s = el && el.closest("section"); return !!(s && s.classList.contains("active")); };
 const UP = [0, 1, 0], WORLD = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+// the handles stay along the world's X, Y, Z however the thing is turned; a scale handle stretches the
+// thing's own side nearest to its axis (loc: the thing's own axes in the world)
+const PERMS = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+function worldSc(loc){
+  let best = PERMS[0], bs = -1;
+  for (const p of PERMS){ const s = p.reduce((a, n, j) => a + Math.abs(dot(loc[n], WORLD[j])), 0); if (s > bs + 1e-9){ bs = s; best = p; } }
+  return best.map((n, j) => [WORLD[j], n, "XYZ"[j]]);
+}
 // two directions across u (for a ring about u, and the joint's thickness)
 function across(u){ const r = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], a = norm(cross(r, u)); return [a, norm(cross(u, a))]; }
 // what the handles act on: {c: centre, ax: the move axes, rings: [axis index], pivot, sc: [[u, n, label]],
@@ -177,21 +185,24 @@ function target(any){
   }
   if (mode !== "place") return null;
   const O = OBJ(), group = O ? O.group() : [];
-  // several selected (a box, or Ctrl+click): moved together, turned together about up round their middle
+  // several selected (a box, or Ctrl+click): moved together, and turned together as one on all three
+  // axes about the pivot of the one that leads (the last one clicked; Ctrl+Shift+click changes it)
   if (group.length > 1){
     const ref = k => k[0] === "s" ? S.solids[+k.slice(1)] : S.items[+k.slice(1)];
     const at = k => { const r = ref(k); return k[0] === "s" ? r.pos : r.base; };
-    const c = group.map(O.pivWorld).reduce((a, p) => add(a, p), [0, 0, 0]).map(v => v / group.length);
-    const wrap = v => ((v + 540) % 360) - 180;
-    return {c, ax: WORLD, pivot: c, rings: [1], sc: [], lacks: ["scale"],
-      save: () => group.map(k => ({k, at: at(k).slice(), yaw: ref(k).yaw || 0})),
+    const ang = k => { const r = ref(k), t = r.rot || [0, 0, 0];
+      return k[0] === "s" ? [r.yaw || 0, r.pitch || 0, r.roll || 0] : [(r.yaw || 0) + (t[1] || 0), t[0] || 0, t[2] || 0]; };
+    const c = O.pivWorld(O.lead() || group[0]);
+    return {c, ax: WORLD, pivot: c, rings: [0, 1, 2], sc: [], lacks: ["scale"],
+      save: () => group.map(k => ({k, at: at(k).slice(), ang: ang(k)})),
       move: (s0, d) => { for (const e of s0){ const r = ref(e.k), p = add(e.at, d);
           if (e.k[0] === "s"){ r.pos = p; if (r.ground && typeof groundSolid === "function") groundSolid(r); }
           else { r.base = p; if (d[1]) r.grounded = false; else if (r.grounded) groundItem(r); } }
         afterEdit(); if (typeof syncSolids === "function") syncSolids(); },
-      turn: (s0, k, dg) => { for (const e of s0){ const r = ref(e.k), p = add(c, rotY(sub(e.at, c), deg(dg)));
-          if (e.k[0] === "s") r.pos = p; else { r.base = p; if (r.grounded) groundItem(r); }
-          r.yaw = Math.round(wrap(e.yaw + dg)); }
+      turn: (s0, k, dg) => { for (const e of s0){ const r = ref(e.k), p = add(c, rotAxis(sub(e.at, c), WORLD[k], deg(dg)));
+          const [a, pp, rr] = O.worldTurn(e.ang, k, dg);
+          if (e.k[0] === "s"){ r.pos = p; r.yaw = a; r.pitch = pp; r.roll = rr; }
+          else { r.base = p; r.yaw = a; r.rot = [pp, 0, rr]; r.grounded = false; } }
         afterEdit(); if (typeof syncSolids === "function") syncSolids(); }};
   }
   // 支点: the move handles move the selected object's pivot, the object stays
@@ -203,41 +214,41 @@ function target(any){
   }
   const so = S.solids && S.solids[soSel];
   if (so){
-    const a = deg(so.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)];
+    const ax = WORLD;
     const fin = () => { if (typeof snapSolid === "function") snapSolid(so); afterEdit(); if (typeof syncSolids === "function") syncSolids(); };
     const c = add(so.pos, [0, so.size[1] / 2, 0]), key = "s" + soSel;
-    // turned on all three: the ring about up its yaw, those about x and z its pitch and roll; about its
-    // pivot (支点; the middle unless moved)
-    const wrap = v => Math.round(((v + 540) % 360) - 180);
-    return {c, ax, pivot: O ? O.pivWorld(key) : c, rings: [0, 1, 2], sc: ax.map((u, n) => [u, n, "XYZ"[n]]),
+    // turned about the world's X, Y, Z through its pivot (支点; the middle unless moved)
+    return {c, ax, pivot: O ? O.pivWorld(key) : c, rings: [0, 1, 2], sc: worldSc(O ? O.axesOf(key) : WORLD),
       save: () => ({pos: so.pos.slice(), size: so.size.slice(), yaw: so.yaw || 0, pitch: so.pitch || 0, roll: so.roll || 0}),
       move: (s0, d) => { so.pos = add(s0.pos, d); fin(); },
       scale: (s0, f, n) => { so.size[n] = Math.max(1, Math.round(s0.size[n] * f)); fin(); },
       turn: (s0, k, dg) => { so.pos = s0.pos.slice(); so.yaw = s0.yaw; so.pitch = s0.pitch; so.roll = s0.roll;
-        const set = () => { if (k === 1) so.yaw = wrap(s0.yaw + dg); else if (k === 0) so.pitch = wrap(s0.pitch + dg); else so.roll = wrap(s0.roll + dg); };
+        const set = () => { if (!O){ so.yaw = s0.yaw + (k === 1 ? dg : 0); return; }
+          const [a, p, r] = O.worldTurn([s0.yaw, s0.pitch, s0.roll], k, dg); so.yaw = a; so.pitch = p; so.roll = r; };
         if (O) O.keepPivot(key, set); else set(); fin(); }};
   }
   const it = S.items && S.items[scSel];
   if (it && it.base && (it.where === "world" || (PROPS_[it.key] || {}).place === "world" || (PROPS_[it.key] || {}).place === "grab")){
-    const a = deg(it.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)], f0 = frameOf(it);
+    const a = deg(it.yaw || 0), ax = WORLD, f0 = frameOf(it);
     // stretched along its own axes (as turned), each on its own
-    const own = [0, 1, 2].map(n => { const e = [0, 0, 0]; e[n] = 1; const v = dirToWorld(f0, it, e); return len(v) > 1e-6 ? norm(v) : ax[n]; });
-    // turned on all three, as when held: about up its yaw, about x and z its own turn (it.rot)
+    const own = [0, 1, 2].map(n => { const e = [0, 0, 0]; e[n] = 1; const v = dirToWorld(f0, it, e); return len(v) > 1e-6 ? norm(v) : rotY(WORLD[n], a); });
+    // turned about the world's X, Y, Z through its pivot (kept as yaw and its own turn, it.rot)
     const key = "i" + scSel;
-    return {c: it.base, ax, pivot: O ? O.pivWorld(key) : it.base, rings: [0, 1, 2], sc: own.map((u, n) => [u, n, "XYZ"[n]]),
+    return {c: it.base, ax, pivot: O ? O.pivWorld(key) : it.base, rings: [0, 1, 2], sc: worldSc(own),
       save: () => ({base: it.base.slice(), st: (stretchOf(it) || [1, 1, 1]).slice(), yaw: it.yaw || 0, rot: (it.rot || [0, 0, 0]).slice()}),
       move: (s0, d) => { it.base = add(s0.base, d); if (typeof snapItem === "function") snapItem(it); afterEdit(); },
       scale: (s0, f, n) => { foldStretch(it)[n] = Math.max(0.05, Math.round(s0.st[n] * f * 100) / 100); afterEdit(); },
       turn: (s0, k, dg) => { const w = v => ((v + 540) % 360) - 180;
         it.base = s0.base.slice(); it.yaw = s0.yaw; it.rot = s0.rot.slice();
-        const set = () => { if (k === 1) it.yaw = w(s0.yaw + dg); else { it.rot = s0.rot.slice(); it.rot[k] = Math.round(w(s0.rot[k] + dg)); } };
+        const set = () => { if (!O){ if (k === 1) it.yaw = w(s0.yaw + dg); return; }
+          const [ya, p, r] = O.worldTurn([s0.yaw + (s0.rot[1] || 0), s0.rot[0] || 0, s0.rot[2] || 0], k, dg); it.yaw = ya; it.rot = [p, 0, r]; };
         if (O) O.keepPivot(key, set); else set();
         if (it.grounded) groundItem(it); afterEdit(); }};
   }
   const r = typeof rulerState === "function" ? rulerState() : null;
   if (r && r.on && r.cube && tabOn("rulerN")){
     const ax = rulerAxes(), c = add(r.pos, [0, r.box[1] / 2, 0]), sync = () => { if (typeof syncRuler === "function") syncRuler(); };
-    return {c, ax, pivot: c, rings: r.n === 1 ? [] : [1], sc: ax.map((u, n) => [u, n, "XYZ"[n]]), ruler: true,
+    return {c, ax: WORLD, pivot: c, rings: r.n === 1 ? [] : [1], sc: worldSc(ax), ruler: true,
       save: () => ({pos: r.pos.slice(), box: r.box.slice(), yaw: r.yaw || 0}),
       move: (s0, d) => { r.pos = add(s0.pos, d); sync(); },
       scale: (s0, f, n) => { r.box[n] = Math.max(5, Math.round(s0.box[n] * f)); sync(); },
@@ -252,7 +263,7 @@ function layout(t, W, H){
   const dpr = devicePixelRatio || 1, k = gzScale(), c = project(t.c, W, H), L = ARROW_PX * k * dpr / Math.max(1e-6, c.s);
   const out = {c, L, dpr, lines: [], rings: []};
   if (tool === "move") t.ax.forEach((u, k) => out.lines.push({k, u, n: k, col: COL[k], label: "XYZ"[k], e: project(add(t.c, mul(u, L)), W, H)}));
-  else if (tool === "scale") t.sc.forEach(([u, n, label], k) => out.lines.push({k, u, n, col: t.joint !== undefined ? (n ? "#f5a524" : "#8e4ec6") : COL[n], label,
+  else if (tool === "scale") t.sc.forEach(([u, n, label], k) => out.lines.push({k, u, n, col: t.joint !== undefined ? (n ? "#f5a524" : "#8e4ec6") : COL[k], label,
     e: project(add(t.c, mul(u, L)), W, H)}));
   else {
     const pc = project(t.pivot, W, H), R = RING_PX * k * dpr / Math.max(1e-6, pc.s);

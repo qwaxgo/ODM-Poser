@@ -54,6 +54,19 @@ function pivWorld(k){ return add(origin(k), rotOf(k)(pivRel(k))); }
 function setPivRel(k, rel){ objOf(k).piv = rel.map(v => Math.round(v * 100) / 100); }
 function setPivAbs(k, p){ setPivRel(k, rotOf(k, true)(sub(p, origin(k)))); }
 function resetPiv(k, where){ const o = objOf(k); if (where === "bottom") o.piv = pivDefault(k, "bottom"); else delete o.piv; }
+// a turn by dg degrees about the world's axis k (0 x, 1 y, 2 z) on top of [yaw, pitch, roll] (the solids'
+// order: roll, pitch, then yaw; a thing's yaw + rot[1], rot[0], rot[2] are the same), as [yaw, pitch, roll]
+const SY = rotY(Z, deg(30))[0] > 0 ? 1 : -1, SP = rotAxis(Z, X, deg(30))[1] > 0 ? 1 : -1, SR = rotAxis(X, Z, deg(30))[1] > 0 ? 1 : -1;
+function worldTurn(ang, k, dg){
+  const R = solidR({yaw: ang[0], pitch: ang[1], roll: ang[2]}), w = v => rotAxis(v, [X, Y, Z][k], deg(dg));
+  const vz = w(R(Z)), vx = w(R(X));
+  const a = Math.atan2(SY * vz[0], vz[2]), p = Math.atan2(SP * vz[1], Math.hypot(vz[0], vz[2]));
+  const q = rotAxis(rotY(vx, -a), X, -p), r = Math.atan2(SR * q[1], q[0]);
+  const d = v => Math.round(v * 1800 / Math.PI) / 10;
+  return [d(a), d(p), d(r)];
+}
+// the object's own axes in the world (a solid's width, height, depth; a thing's x, y, z)
+const axesOf = k => [X, Y, Z].map(rotOf(k));
 // fn changes the object's turn; the object then shifts so its pivot stays where it was
 function keepPivot(k, fn){
   if (!exists(k)){ fn(); return; }
@@ -149,12 +162,17 @@ function under(x, y){                         // the object under the pointer: i
   if (u && t) return project(u.hit, front.width, front.height).s >= project(t.p, front.width, front.height).s ? "s" + u.k : "i" + t.n;
   return u ? "s" + u.k : t ? "i" + t.n : "";
 }
-// 配置: Ctrl (⌘) + click adds an object to the selection or takes it out; a joint lets the objects go
+// 配置: Ctrl (⌘) + click adds an object to the selection or takes it out (the one added leads: the group
+// turns about its pivot; Ctrl+Shift+click on one selected makes it lead); Ctrl + the body takes the
+// figure by its hips and moves it; a joint lets the objects go
 DOWN_HOOKS.unshift((cv, x, y, e) => {
   if (cv !== front || mode !== "place") return null;
   if (e && (e.ctrlKey || e.metaKey)){
+    if (pick(cv, x, y) >= 0) return takeFigure(cv, x, y);
     const k = under(x, y); if (!k) return null;
-    const cur = selected(), next = cur.includes(k) ? cur.filter(c => c !== k) : [...cur, k];
+    const cur = selected();
+    if (e.shiftKey && cur.includes(k)){ setSel([k, ...cur.filter(c => c !== k)]); toast("この物を中心にまとめて動かします。"); return {move(){}}; }
+    const next = cur.includes(k) ? cur.filter(c => c !== k) : [...cur, k];
     setSel(next.includes(k) ? [k, ...next.filter(c => c !== k)] : next);
     return {move(){}};
   }
@@ -174,6 +192,23 @@ tapClick = t => {
   if (cursor === "hand" || !t.shift || i < 0) return;           // the hand's click did it already
   if (t.mode === "pose") modeTo("body"); else if (t.mode === "body") modeTo("pose"); else if (t.mode === "place") modeTo("body");
 };
+// the figure by its hips: selected (the 3-axis handles move and turn it), or dragged along the floor
+// as the hips are in 配置 (Shift: up and down)
+function takeFigure(cv, x, y){
+  picks = []; soSel = -1; if (loose(itemOfKey("i" + scSel))) scSel = -1;
+  sel = IX.pelvis; draw(); toast("人物全体を動かします（腰）。");
+  if (gizmoHolds()) return {move(){}};
+  const W = cv.width, H = cv.height, flat = v => norm([v[0], 0, v[2]]);
+  const right = flat(camRotInv([1, 0, 0])), away = flat(camRotInv([0, 0, -1]));
+  let lx = x, ly = y;
+  return {move(mx, my, ev){
+    const k = 1 / Math.max(1e-6, project(S.P[IX.pelvis], W, H).s), dx = (mx - lx) * k, dy = (ly - my) * k; lx = mx; ly = my;
+    const d = ev && ev.shiftKey ? [0, dy, 0] : add(mul(right, dx), mul(away, dy));
+    moveAll(d, false);
+    for (const n of Object.keys(S.pins || {})) S.pins[n] = add(S.pins[n], d);
+    if (S.wire && S.wire.anchor) S.wire.anchor = add(S.wire.anchor, d);
+    afterEdit(IX.pelvis); }};
+}
 emptyClick = () => {
   if (mode === "place"){ if (selected().length) setSel([]); return; }
   if (autoMode && (mode === "pose" || mode === "body")) modeTo("persp");
@@ -239,7 +274,7 @@ function handClick(i, x, y, shift){
   drawAtari = function(ctx, W, H, opts = {}){
     atari0(ctx, W, H, opts);
     if (opts.export || ctx.canvas !== front || mode !== "place") return;
-    const k = single(); if (!k) return;
+    const k = single() || (group().length ? primary() : ""); if (!k) return;     // a group: the one it turns about
     const s = project(pivWorld(k), W, H), dpr = devicePixelRatio || 1, r = 6 * dpr;
     ctx.save(); ctx.strokeStyle = "#f5a524"; ctx.lineWidth = 1.5 * dpr; ctx.setLineDash([]); ctx.globalAlpha = 0.95;
     ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, 2 * Math.PI);
@@ -300,7 +335,7 @@ function syncEdit(){
 addEventListener("DOMContentLoaded", () => { if (!window.ODMICONS) return;
   editBar.querySelectorAll("button[data-gzicon]").forEach(b => { if (!b.querySelector("svg")) b.insertAdjacentHTML("afterbegin", ODMICONS.svg(b.dataset.gzicon)); }); });
 
-window.ODMObj = {key: single, group, selected, setSel, pivWorld, pivRel, setPivRel, setPivAbs, resetPiv, keepPivot,
+window.ODMObj = {key: single, group, selected, lead: primary, worldTurn, axesOf, setSel, pivWorld, pivRel, setPivRel, setPivAbs, resetPiv, keepPivot,
   remove: removeKeys, copy: copyKeys, paste, hasClip: () => !!clipNow(), cursor: () => cursor, setCursor};
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
@@ -312,7 +347,8 @@ window.ODMObj = {key: single, group, selected, setSel, pivWorld, pivRel, setPivR
   "ハンド：ドラッグでカメラを回す・Shift＋ドラッグで動かす（Hキー）": "Hand: drag to turn the camera, Shift+drag to move it (H)",
   "ハンド：ドラッグでカメラを動かします。": "Hand: dragging moves the camera.", "ドラッグ：何もない所からドラッグで範囲選択します。": "Drag: drag from an empty place to box-select.",
   "選んだ物を外しました。": "Took the selected one away.", "切り取りました。": "Cut.", "コピーしました。": "Copied.", "貼り付けました。": "Pasted.",
-  "1個の物を選びました。": "Selected one object.",
+  "1個の物を選びました。": "Selected one object.", "この物を中心にまとめて動かします。": "The group now turns about this one.",
+  "人物全体を動かします（腰）。": "Moving the whole figure (by the hips).",
   "クリックで自動的にモードを切り替える": "Switch modes by what is clicked",
   "物を押すと配置モード、関節を押すとポーズモード（配置・カメラから）、何もない所をクリックするとカメラモード（ポーズ・体格から）に切り替えます":
     "A thing: Place mode; a joint: Pose mode (from Place or Camera); an empty place: Camera mode (from Pose or Body)"});
