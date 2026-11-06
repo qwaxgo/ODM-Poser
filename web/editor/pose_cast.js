@@ -7,10 +7,12 @@
 // 配置 mode moves them whoever is edited. Each figure can be moved and turned as a whole, and the
 // pictures can show everyone or one figure (書き出す人物).
 //
-// S.others: [{P, R, hands, head, body, twist, pins, items, auras, wire, scale, shape, sex, figId, figName}]
-const FIG_KEYS = ["P", "R", "hands", "head", "body", "twist", "pins", "items", "auras", "wire", "scale", "shape", "sex", "figId", "figName"];
+// S.others: [{P, R, hands, head, body, twist, pins, items, auras, wire, scale, shape, sex, figId, figName, torso3d}]
+// 胴体を立体 (torso3d) is each figure's own; a figure from before it was takes the one edited then
+const FIG_KEYS = ["P", "R", "hands", "head", "body", "twist", "pins", "items", "auras", "wire", "scale", "shape", "sex", "figId", "figName", "torso3d"];
 function takeFigure(){ const f = {}; for (const k of FIG_KEYS) f[k] = S[k]; return f; }
-function putFigure(f){ const d = fresh(); for (const k of FIG_KEYS) S[k] = f[k] !== undefined ? f[k] : d[k]; }
+function putFigure(f){ const d = fresh(), keep = S.torso3d;
+  for (const k of FIG_KEYS) S[k] = f[k] !== undefined ? f[k] : k === "torso3d" && keep !== undefined ? keep : d[k]; }
 function withFigure(f, fn){ const keep = takeFigure(); putFigure(f); try { return fn(); } finally { putFigure(keep); } }
 // every figure, the farthest first: fn(active, first)
 function everyFigure(fn){

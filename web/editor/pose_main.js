@@ -848,6 +848,8 @@ function down(cv, e){
     if (camHeld()) return;
     remember(); drag = {nav: e.ctrlKey ? "zoom" : e.shiftKey ? "pan" : "orbit", lx: x, ly: y}; return; }
   if (e.altKey){ const i = pick(cv, x, y); if (i >= 0){ remember(); sel = i; togglePin(i); draw(); } return; }
+  // the hand cursor (pose_objects.js): every drag on the front view moves the camera; a click still picks
+  if (cv === front && handHook){ const d = handHook(cv, x, y, e); if (d){ drag = d; return; } }
   for (const h of DOWN_HOOKS){
     const d = h(cv, x, y, e);
     if (d){ remember(); drag = d; draw(); return; }
@@ -875,6 +877,8 @@ function down(cv, e){
   // a joint is dragged (a finger: the one already picked) unless: 配置 (picked only), the 3-axis
   // handles show (they do the moving), or ポーズ's hips (moving the figure is 配置's)
   const drags = i >= 0 && mode !== "place" && !gizmoHolds() && !(mode === "pose" && i === IX.pelvis);
+  // the drag cursor (pose_objects.js): a drag from an empty place draws a box that selects the objects in it
+  if (i < 0 && cv === front && emptyDrag){ const d = emptyDrag(cv, x, y, e); if (d){ drag = d; return; } }
   if (e.pointerType === "touch"){
     if (drags && i === sel){ remember(); drag = {cv, i, single: e.shiftKey}; }
     else drag = {tapPick: i, cv, x, y};
@@ -887,6 +891,9 @@ function down(cv, e){
 }
 // 3軸ハンドル (pose_gizmo.js): while they show, joints and things are moved by the handles only
 let gizmoHolds = () => false;
+// the cursor's tools (pose_objects.js): the hand's press, the drag cursor's press on an empty place,
+// and a click on an empty place (配置: the objects let go; ポーズ・体格: カメラ, when switching is on)
+let handHook = null, emptyDrag = null, emptyClick = null;
 function move(cv, e){
   if (!drag) return;
   const [x, y] = evPos(cv, e), W = cv.width, H = cv.height;
@@ -923,6 +930,8 @@ function move(cv, e){
   drawSoon();
 }
 function up(){
+  if (drag && drag.end){ const d = drag; drag = null; d.end(); return; }
+  if (drag && drag.tapPick === -1 && drag.cv === front && emptyClick) emptyClick();
   if (drag && drag.tapPick !== undefined && !(mode === "place" && drag.cv === side)){ sel = drag.tapPick; draw(); }
   if (drag && drag.nav) syncUI();
   drag = null;
@@ -2173,7 +2182,7 @@ $("splitBtn").addEventListener("click", () => { const on = !document.body.classL
 $("symPose").addEventListener("change", e => { try { localStorage.setItem(KEY + "-sympose", e.target.checked ? "1" : "0"); } catch (err) {}
   if (e.target.checked && sel >= 0 && MIRROR[sel] !== sel){ remember(); afterEdit(sel); draw(); say("反対側をそろえました。"); } });
 $("torso3d").addEventListener("change", e => { remember(); S.torso3d = e.target.checked; draw();
-  toast(e.target.checked ? "胴体を立体（厚みのある台形）で描きます。" : "胴体を平らな台形で描きます。"); });
+  toast(e.target.checked ? "編集中の人物の胴体を立体（厚みのある台形）で描きます。" : "編集中の人物の胴体を平らな台形で描きます。"); });
 $("hiddenDashed").addEventListener("change", e => { remember(); S.hiddenDashed = e.target.checked; draw();
   toast(e.target.checked ? "物陰に隠れた線を破線で描きます（書き出しにも）。" : "隠れた線を破線にするのをやめました。"); });
 $("limits").addEventListener("change", e => { try { localStorage.setItem(KEY + "-limits", e.target.checked ? "1" : "0"); } catch (err) {}
@@ -2186,10 +2195,11 @@ window.addEventListener("beforeunload", () => { try { localStorage.setItem(KEY, 
 try { const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d && d.P){ migrate(d); if (d.P.length === J.length) S = Object.assign(fresh(), d); } } catch (e) {}
 for (const id of ["scaleAll", "scaleHead", "scaleThick"]) $(id + "V").value = 100;
 syncUI(); draw();
-// the setting 「クリックで自動的にモードを切り替える」 (kept in this browser): a press on a thing goes
-// to 配置 (where things move), a press on the body to ポーズ (from 配置 or カメラ; 体格 stays)
+// the setting 「クリックで自動的にモードを切り替える」 (on at first, kept in this browser): a press on a
+// thing goes to 配置 (where things move), a press on a joint to ポーズ (from 配置 or カメラ; 体格 keeps
+// its joints), a click on an empty place to カメラ (from ポーズ or 体格; pose_objects.js)
 const AUTO_KEY = KEY + "-automode";
-let autoMode = false; try { autoMode = localStorage.getItem(AUTO_KEY) === "1"; } catch (e) {}
+let autoMode = true; try { autoMode = localStorage.getItem(AUTO_KEY) !== "0"; } catch (e) {}
 function modeTo(m){ const b = document.querySelector(`#modes [data-mode="${m}"]`); if (b && mode !== m) b.click(); }
 DOWN_HOOKS.unshift((cv, x, y) => {
   if (!autoMode || cv !== front) return null;

@@ -150,7 +150,8 @@ function drawSolids(ctx, W, H, opts, proj, lw, toViewer){
   list.forEach((o, k) => {
     const m = solidMesh(o), P = m.V.map(p => proj(p, W, H));
     const seen = m.faces.map(f => dot(f.n, toViewer(m.V[f.v[0]])) > 0);
-    const color = !opts.export && k === soSel && mode === "place" ? cssVar("--sel") : o.color || (opts.export ? "#8a8a8a" : cssVar("--accent"));
+    const chosen = k === soSel || (typeof objPicked === "function" && objPicked("s" + k));
+    const color = !opts.export && chosen && mode === "place" ? cssVar("--sel") : o.color || (opts.export ? "#8a8a8a" : cssVar("--accent"));
     const dashed = S.hiddenDashed && !opts.side && typeof strokeSeen === "function";
     for (const hidden of [true, false]){
       if (hidden && opts.export && !dashed) continue;
@@ -204,7 +205,9 @@ function solidUnder(x, y){
 DOWN_HOOKS.push((cv, x, y) => {
   if (mode !== "place" || cv !== front || pick(cv, x, y) >= 0) return null;
   const u = solidUnder(x, y); if (!u) return null;
-  soSel = u.k; sel = -1; syncSolids();
+  soSel = u.k; sel = -1;
+  if (S.items && S.items[scSel] && movable(S.items[scSel])) scSel = -1;    // one object selected: this one
+  syncSolids();
   if (gizmoHolds()) return {move(){}};       // the 3-axis handles move it
   return dragFrom(u.hit, cv.width, cv.height, dlt => {
     // snapping (pose_ruler.js) moves the solid itself, so the drag keeps its own, unsnapped place

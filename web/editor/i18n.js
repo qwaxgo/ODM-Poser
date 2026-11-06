@@ -68,6 +68,9 @@
     "リンクを開く前の編集に戻しました（元に戻すで、リンクの編集データに戻れます）。": "Back to the editing before the link (Undo goes back to the link's).",
     "胴体を立体に": "Solid torso", "胴体を立体（厚みのある台形）で描きます。": "The torso is drawn as solid blocks.",
     "胴体を平らな台形で描きます。": "The torso is drawn as flat trapezoids.",
+    "編集中の人物の胴体を立体（厚みのある台形）で描きます。": "This figure's torso is drawn as solid blocks.",
+    "編集中の人物の胴体を平らな台形で描きます。": "This figure's torso is drawn as flat trapezoids.",
+    "編集中の人物の胴体を厚みのある台形で描く（人物ごとに切り替え）": "Draw this figure's torso as thick trapezoids (each figure its own)",
     "右手": "Right hand", "左手": "Left hand",
     "手首の曲げ（＋前へ）": "Bend the wrist (+ forward)", "手首の左右（＋外へ）": "Wrist sideways (+ outward)",
     "手のひらの向き（前腕のひねり）": "Palm direction (the forearm's twist)",
@@ -472,6 +475,7 @@
     [/^(.+)を編集しています。$/, m => `Editing ${figEn(m[1])}.`],
     [/^構図を (\d+)×(\d+) で保存しました。$/, m => `Composition saved at ${m[1]} × ${m[2]}.`],
     // objects (pose_solids.js); before the general rules below
+    [/^(\d+)個の物を(外しました|切り取りました|コピーしました|貼り付けました|選びました)。$/, m => `${{外しました: "Took away", 切り取りました: "Cut", コピーしました: "Copied", 貼り付けました: "Pasted", 選びました: "Selected"}[m[2]]} ${m[1]} objects.`],
     [/^(.+)を置きました。配置モードでドラッグして動かせます。$/, m => `Placed: ${T[m[1]] || m[1]}. Drag it in the Place mode.`],
     [/^(.+)の大きさ・向きを戻しました。$/, m => `${T[m[1]] || m[1]}: size and turn reset.`],
     [/^(床|壁|天井)を初期値に戻しました。$/, m => `${T[m[1]]} back to the defaults.`],

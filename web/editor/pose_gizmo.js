@@ -10,7 +10,9 @@
 //    (an arm's or a leg's circles together, unless 太さを部位ごとに連動 is off; 左右対称 follows).
 //  - 配置: an object, a thing put down, the ruler's box (while the 定規 tab shows), or the figure by
 //    its hips: 移動, 回転 about up, 変形 (its width / height / depth; not the figure).
-// While the handles show (the 3軸ハンドル switch), dragging a joint or a thing only selects it.
+// While the handles show (3軸ハンドル / 解除 in the menu on the left), dragging a joint or a thing only
+// selects it. 支点: the move handles move the selected object's pivot (pose_objects.js); several objects
+// selected move together and turn together about up.
 (() => {
 const $ = id => document.getElementById(id);
 const COL = ["#e5484d", "#30a46c", "#3e63dd"], ARROW_PX = 64, RING_PX = 52;
@@ -19,6 +21,8 @@ const COL = ["#e5484d", "#30a46c", "#3e63dd"], ARROW_PX = 64, RING_PX = 52;
   lab.className = "ov-item"; lab.dataset.icon = "axes";
   lab.title = "選んだ関節・物体に、移動・回転・変形の3軸ハンドルを出す";
   lab.innerHTML = `<input type="checkbox" id="gizmoOn" checked><span>3軸ハンドル</span>`;
+  // the menu on the left (3軸ハンドル / 解除) turns them on and off; the switch keeps the state, unseen
+  lab.hidden = true;
   $("viewOpts").insertBefore(lab, $("ovSide"));
   try { const v = localStorage.getItem(KEY + "-gizmo"); if (v !== null) $("gizmoOn").checked = v === "1"; } catch (e) {}
   $("gizmoOn").addEventListener("change", e => { try { localStorage.setItem(KEY + "-gizmo", e.target.checked ? "1" : "0"); } catch (err) {}
@@ -32,7 +36,20 @@ gizmoHolds = () => $("gizmoOn").checked && mode !== "persp";
 const bars = [];
 // the handles on or off (the switch in the views' corner, the 3軸ハンドル button and 解除)
 function setOn(on){ const c = $("gizmoOn"); if (c.checked === on) return; c.checked = on; c.dispatchEvent(new Event("change")); }
-let gzDrag = -1;                              // the axis being dragged (drawn heavier)
+let pivEdit = false;                          // 支点 on: the move handles move the pivot
+const OBJ = () => window.ODMObj || null;      // pose_objects.js: the objects' selection and pivots
+function setPiv(on){
+  const o = OBJ(); if (on && !(mode === "place" && o && o.key())){ toast("配置モードで物体を1つ選ぶと、支点を動かせます。", true); return; }
+  pivEdit = on; if (on) setOn(true); barKey = ""; syncBars(); draw();
+  toast(on ? "支点を動かします（移動ハンドル）。もう一度押すと戻ります。" : "支点の移動を終えました。");
+}
+let gzDrag = -1, gzRing = -1;                 // the axis / the ring being dragged (drawn heavier; the others fade)
+// the handles' size for the screen: a phone half again as big as at first, a tablet 1.5 times, a large
+// screen 1.75 times (a finger needs room, a large view needs them to show)
+function gzScale(){
+  const short = Math.min(innerWidth, innerHeight);
+  return short <= 520 ? 1.35 : short >= 900 ? 1.75 : 1.5;
+}
 function bar(cls){
   const d = document.createElement("div");
   d.className = "gz-tools " + cls; d.setAttribute("role", "group"); d.setAttribute("aria-label", "3軸ハンドルの操作"); d.dataset.ui = "skip";
@@ -48,6 +65,11 @@ function bar(cls){
     b.addEventListener("click", () => setTool(id, true));
     d.appendChild(b);
   }
+  // 支点: while on, 移動 moves the selected object's pivot (what it turns about), not the object
+  const pv = document.createElement("button"); pv.type = "button"; pv.className = "gz-piv"; pv.dataset.gzicon = "pivot";
+  pv.title = "支点（回転の中心）を移動ハンドルで動かす"; pv.innerHTML = "<span>支点</span>"; pv.setAttribute("aria-pressed", "false");
+  pv.addEventListener("click", () => setPiv(!pivEdit));
+  d.appendChild(pv);
   d.appendChild(off);
   bars.push(d); return d;
 }
@@ -60,6 +82,7 @@ const LIMB = new Set(["elbow", "wrist", "hand", "knee", "ankle", "toe"].flatMap(
 function tools(){
   if (mode === "pose") return sel >= 0 && LIMB.has(J[sel]) ? ["move", "rotate"] : ["rotate"];
   if (mode === "body") return ["scale"];
+  if (mode === "place" && pivEdit) return ["move"];
   if (mode === "place"){ const t = target(true); return t ? TOOLS.map(x => x[0]).filter(id => !t.lacks || !t.lacks.includes(id)) : ["move", "rotate", "scale"]; }
   return [];
 }
@@ -68,10 +91,14 @@ function syncBars(){
   icons();
   const on = $("gizmoOn").checked, can = tools();
   tool = can.includes(pref) ? pref : can[0] || pref;
-  const k = [on, tool, can.join()].join("|"); if (k === barKey) return; barKey = k;
+  // 支点 ends with 配置 or with nothing (or several things) selected
+  if (pivEdit && !(mode === "place" && OBJ() && OBJ().key())) pivEdit = false;
+  const k = [on, tool, can.join(), pivEdit, mode === "place"].join("|"); if (k === barKey) return; barKey = k;
   for (const d of bars){ d.classList.toggle("off", !on);
     d.querySelectorAll("button[data-gz]").forEach(b => { const me = b.dataset.gz === tool && can.includes(tool);
-      b.disabled = !can.includes(b.dataset.gz); b.classList.toggle("on", me); b.setAttribute("aria-pressed", String(me)); }); }
+      b.disabled = !can.includes(b.dataset.gz); b.classList.toggle("on", me); b.setAttribute("aria-pressed", String(me)); });
+    const pv = d.querySelector(".gz-piv"); if (pv){ pv.classList.toggle("on", pivEdit); pv.setAttribute("aria-pressed", String(pivEdit));
+      pv.disabled = mode !== "place"; } }
 }
 function setTool(id, tell){
   if (!tools().includes(id)){ if (tell) toast(`${modeName()}では「${TOOLS.find(t => t[0] === id)[1]}」は使えません。`, true); return; }
@@ -149,18 +176,46 @@ function target(any){
         placeFigure([0, 0, 0], dg); afterEdit(IX.pelvis); }};
   }
   if (mode !== "place") return null;
+  const O = OBJ(), group = O ? O.group() : [];
+  // several selected (a box, or Ctrl+click): moved together, turned together about up round their middle
+  if (group.length > 1){
+    const ref = k => k[0] === "s" ? S.solids[+k.slice(1)] : S.items[+k.slice(1)];
+    const at = k => { const r = ref(k); return k[0] === "s" ? r.pos : r.base; };
+    const c = group.map(O.pivWorld).reduce((a, p) => add(a, p), [0, 0, 0]).map(v => v / group.length);
+    const wrap = v => ((v + 540) % 360) - 180;
+    return {c, ax: WORLD, pivot: c, rings: [1], sc: [], lacks: ["scale"],
+      save: () => group.map(k => ({k, at: at(k).slice(), yaw: ref(k).yaw || 0})),
+      move: (s0, d) => { for (const e of s0){ const r = ref(e.k), p = add(e.at, d);
+          if (e.k[0] === "s"){ r.pos = p; if (r.ground && typeof groundSolid === "function") groundSolid(r); }
+          else { r.base = p; if (d[1]) r.grounded = false; else if (r.grounded) groundItem(r); } }
+        afterEdit(); if (typeof syncSolids === "function") syncSolids(); },
+      turn: (s0, k, dg) => { for (const e of s0){ const r = ref(e.k), p = add(c, rotY(sub(e.at, c), deg(dg)));
+          if (e.k[0] === "s") r.pos = p; else { r.base = p; if (r.grounded) groundItem(r); }
+          r.yaw = Math.round(wrap(e.yaw + dg)); }
+        afterEdit(); if (typeof syncSolids === "function") syncSolids(); }};
+  }
+  // 支点: the move handles move the selected object's pivot, the object stays
+  if (pivEdit && O && O.key()){
+    const key = O.key(), c = O.pivWorld(key);
+    return {c, ax: WORLD, pivot: c, rings: [], sc: [], lacks: ["rotate", "scale"], piv: true,
+      save: () => ({p: c.slice()}),
+      move: (s0, d) => { O.setPivAbs(key, add(s0.p, d)); afterEdit(); }};
+  }
   const so = S.solids && S.solids[soSel];
   if (so){
     const a = deg(so.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)];
     const fin = () => { if (typeof snapSolid === "function") snapSolid(so); afterEdit(); if (typeof syncSolids === "function") syncSolids(); };
-    const c = add(so.pos, [0, so.size[1] / 2, 0]);
-    // turned on all three: the ring about up its yaw, those about x and z its pitch and roll
+    const c = add(so.pos, [0, so.size[1] / 2, 0]), key = "s" + soSel;
+    // turned on all three: the ring about up its yaw, those about x and z its pitch and roll; about its
+    // pivot (支点; the middle unless moved)
     const wrap = v => Math.round(((v + 540) % 360) - 180);
-    return {c, ax, pivot: c, rings: [0, 1, 2], sc: ax.map((u, n) => [u, n, "XYZ"[n]]),
+    return {c, ax, pivot: O ? O.pivWorld(key) : c, rings: [0, 1, 2], sc: ax.map((u, n) => [u, n, "XYZ"[n]]),
       save: () => ({pos: so.pos.slice(), size: so.size.slice(), yaw: so.yaw || 0, pitch: so.pitch || 0, roll: so.roll || 0}),
       move: (s0, d) => { so.pos = add(s0.pos, d); fin(); },
       scale: (s0, f, n) => { so.size[n] = Math.max(1, Math.round(s0.size[n] * f)); fin(); },
-      turn: (s0, k, dg) => { if (k === 1) so.yaw = wrap(s0.yaw + dg); else if (k === 0) so.pitch = wrap(s0.pitch + dg); else so.roll = wrap(s0.roll + dg); fin(); }};
+      turn: (s0, k, dg) => { so.pos = s0.pos.slice(); so.yaw = s0.yaw; so.pitch = s0.pitch; so.roll = s0.roll;
+        const set = () => { if (k === 1) so.yaw = wrap(s0.yaw + dg); else if (k === 0) so.pitch = wrap(s0.pitch + dg); else so.roll = wrap(s0.roll + dg); };
+        if (O) O.keepPivot(key, set); else set(); fin(); }};
   }
   const it = S.items && S.items[scSel];
   if (it && it.base && (it.where === "world" || (PROPS_[it.key] || {}).place === "world" || (PROPS_[it.key] || {}).place === "grab")){
@@ -168,12 +223,15 @@ function target(any){
     // stretched along its own axes (as turned), each on its own
     const own = [0, 1, 2].map(n => { const e = [0, 0, 0]; e[n] = 1; const v = dirToWorld(f0, it, e); return len(v) > 1e-6 ? norm(v) : ax[n]; });
     // turned on all three, as when held: about up its yaw, about x and z its own turn (it.rot)
-    return {c: it.base, ax, pivot: it.base, rings: [0, 1, 2], sc: own.map((u, n) => [u, n, "XYZ"[n]]),
+    const key = "i" + scSel;
+    return {c: it.base, ax, pivot: O ? O.pivWorld(key) : it.base, rings: [0, 1, 2], sc: own.map((u, n) => [u, n, "XYZ"[n]]),
       save: () => ({base: it.base.slice(), st: (stretchOf(it) || [1, 1, 1]).slice(), yaw: it.yaw || 0, rot: (it.rot || [0, 0, 0]).slice()}),
       move: (s0, d) => { it.base = add(s0.base, d); if (typeof snapItem === "function") snapItem(it); afterEdit(); },
       scale: (s0, f, n) => { foldStretch(it)[n] = Math.max(0.05, Math.round(s0.st[n] * f * 100) / 100); afterEdit(); },
       turn: (s0, k, dg) => { const w = v => ((v + 540) % 360) - 180;
-        if (k === 1) it.yaw = w(s0.yaw + dg); else { it.rot = s0.rot.slice(); it.rot[k] = Math.round(w(s0.rot[k] + dg)); }
+        it.base = s0.base.slice(); it.yaw = s0.yaw; it.rot = s0.rot.slice();
+        const set = () => { if (k === 1) it.yaw = w(s0.yaw + dg); else { it.rot = s0.rot.slice(); it.rot[k] = Math.round(w(s0.rot[k] + dg)); } };
+        if (O) O.keepPivot(key, set); else set();
         if (it.grounded) groundItem(it); afterEdit(); }};
   }
   const r = typeof rulerState === "function" ? rulerState() : null;
@@ -191,13 +249,13 @@ function target(any){
 // point lists; L: the handle's length in cm (ARROW_PX on screen)
 function layout(t, W, H){
   syncBars();
-  const dpr = devicePixelRatio || 1, c = project(t.c, W, H), L = ARROW_PX * dpr / Math.max(1e-6, c.s);
+  const dpr = devicePixelRatio || 1, k = gzScale(), c = project(t.c, W, H), L = ARROW_PX * k * dpr / Math.max(1e-6, c.s);
   const out = {c, L, dpr, lines: [], rings: []};
   if (tool === "move") t.ax.forEach((u, k) => out.lines.push({k, u, n: k, col: COL[k], label: "XYZ"[k], e: project(add(t.c, mul(u, L)), W, H)}));
   else if (tool === "scale") t.sc.forEach(([u, n, label], k) => out.lines.push({k, u, n, col: t.joint !== undefined ? (n ? "#f5a524" : "#8e4ec6") : COL[n], label,
     e: project(add(t.c, mul(u, L)), W, H)}));
   else {
-    const pc = project(t.pivot, W, H), R = RING_PX * dpr / Math.max(1e-6, pc.s);
+    const pc = project(t.pivot, W, H), R = RING_PX * k * dpr / Math.max(1e-6, pc.s);
     out.pc = pc;
     for (const k of t.rings){
       const [a, b] = across(WORLD[k]), pts = [];
@@ -209,23 +267,28 @@ function layout(t, W, H){
 }
 function draw3(ctx, W, H){
   const t = target(); if (!t) return;
-  const g = layout(t, W, H), lw = 2 * g.dpr;
+  const sk = gzScale(), g = layout(t, W, H), lw = 2 * g.dpr * Math.sqrt(sk);
+  // while one is held, the others fade (the one held is drawn heavier)
+  const holding = gzDrag >= 0 || gzRing >= 0, FADE = 0.2;
   ctx.save(); ctx.lineCap = "round"; ctx.setLineDash([]); ctx.globalAlpha = 0.95;
-  ctx.font = `${Math.round(11 * g.dpr)}px sans-serif`;
+  ctx.font = `${Math.round(11 * g.dpr * Math.sqrt(sk))}px sans-serif`;
   for (const r of g.rings){
-    ctx.strokeStyle = COL[r.k]; ctx.lineWidth = lw * 1.2; ctx.beginPath();
+    ctx.globalAlpha = holding && gzRing !== r.k ? FADE : 0.95;
+    ctx.strokeStyle = COL[r.k]; ctx.lineWidth = lw * (gzRing === r.k ? 3 : 1.2); ctx.beginPath();
     r.pts.forEach((q, m) => m ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)); ctx.stroke();
   }
   for (const h of g.lines){
+    ctx.globalAlpha = holding && gzDrag !== h.k ? FADE : 0.95;
     const e = h.e; ctx.strokeStyle = ctx.fillStyle = h.col; ctx.lineWidth = lw * (gzDrag === h.k ? 3.4 : 1.2);
     ctx.beginPath(); ctx.moveTo(g.c.x, g.c.y); ctx.lineTo(e.x, e.y); ctx.stroke();
-    const dx = e.x - g.c.x, dy = e.y - g.c.y, l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, s = 9 * g.dpr;
+    const dx = e.x - g.c.x, dy = e.y - g.c.y, l = Math.hypot(dx, dy) || 1, ux = dx / l, uy = dy / l, s = 9 * g.dpr * sk;
     if (tool === "scale") ctx.fillRect(e.x - s / 2, e.y - s / 2, s, s);
     else { ctx.beginPath(); ctx.moveTo(e.x + ux * s, e.y + uy * s); ctx.lineTo(e.x - uy * s * 0.5, e.y + ux * s * 0.5);
       ctx.lineTo(e.x + uy * s * 0.5, e.y - ux * s * 0.5); ctx.closePath(); ctx.fill(); }
     ctx.fillText(h.label, e.x + ux * s * 1.6 - 4 * g.dpr, e.y + uy * s * 1.6 + 4 * g.dpr);
   }
   const mid = g.pc || g.c;
+  ctx.globalAlpha = 0.95;
   ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#333"; ctx.lineWidth = g.dpr;
   ctx.beginPath(); ctx.arc(mid.x, mid.y, 3.5 * g.dpr, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
   ctx.restore();
@@ -239,7 +302,7 @@ const segDist = (x, y, a, b) => { const dx = b.x - a.x, dy = b.y - a.y, l2 = dx 
 DOWN_HOOKS.unshift((cv, x, y) => {
   if (cv !== front) return null;
   const t = target(); if (!t) return null;
-  const W = cv.width, H = cv.height, g = layout(t, W, H), near = 9 * g.dpr * (typeof pointerScale === "function" ? pointerScale() : 1);
+  const W = cv.width, H = cv.height, g = layout(t, W, H), near = 9 * g.dpr * gzScale() * (typeof pointerScale === "function" ? pointerScale() : 1);
   const s0 = t.save(), x0 = x, y0 = y;
   // a ring: the drag along the ring's direction on screen where it was taken turns it
   for (const r of g.rings){
@@ -249,6 +312,9 @@ DOWN_HOOKS.unshift((cv, x, y) => {
       const t2 = Math.max(tx * tx + ty * ty, (24 * g.dpr) ** 2);     // a ring seen edge-on does not spin wildly
       // which way the ring's own angle turns the thing about its axis (a, b, axis: right-handed or not)
       const sgn = Math.sign(dot(cross(r.a, r.b), WORLD[r.k])) || 1;
+      gzRing = r.k; draw();
+      addEventListener("pointerup", () => { gzRing = -1; draw(); }, {once: true});
+      addEventListener("pointercancel", () => { gzRing = -1; draw(); }, {once: true});
       return {move(mx, my){ t.turn(s0, r.k, sgn * ((mx - x0) * tx + (my - y0) * ty) / t2 * 180 / Math.PI); }};
     }
   }
@@ -276,6 +342,11 @@ DOWN_HOOKS.unshift((cv, x, y) => {
   "3軸ハンドルを出します。": "Showing the 3-axis handles.", "3軸ハンドルを隠しました。": "The 3-axis handles are hidden.",
   "移動": "Move", "回転": "Rotate", "変形": "Scale", "移動（Gキー）": "Move (G)", "回転（Rキー）": "Rotate (R)", "変形（Sキー）": "Scale (S)",
   "3軸ハンドルの操作": "3-axis handle tool", "3軸ハンドル：移動": "3-axis handles: move", "3軸ハンドル：回転": "3-axis handles: rotate",
-  "3軸ハンドル：変形": "3-axis handles: scale", "長さ": "Length", "太さ": "Thickness", "大きさ": "Size", "幅": "Width", "高さ": "Height", "前後": "Front / back"});
+  "3軸ハンドル：変形": "3-axis handles: scale", "長さ": "Length", "太さ": "Thickness", "大きさ": "Size", "幅": "Width", "高さ": "Height", "前後": "Front / back",
+  "解除": "Off", "3軸ハンドルを隠す": "Hide the 3-axis handles", "3軸ハンドルを出す": "Show the 3-axis handles",
+  "支点": "Pivot", "支点（回転の中心）を移動ハンドルで動かす": "Move the pivot (what it turns about) with the move handles",
+  "配置モードで物体を1つ選ぶと、支点を動かせます。": "Select one object in Place mode to move its pivot.",
+  "支点を動かします（移動ハンドル）。もう一度押すと戻ります。": "Moving the pivot (move handles). Press again to go back.",
+  "支点の移動を終えました。": "Done moving the pivot."});
 draw();
 })();

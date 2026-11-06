@@ -46,6 +46,9 @@ window.ODMICONS = {
   shiftKey: ["0 0 24 24", '<path d="M12 3.5l8 8.5h-4.5v7.5h-7V12H4l8-8.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'],
   pin: ["0 0 24 24", '<path d="M9 3.5h6M10 3.5v6L6.5 13h11L14 9.5v-6M12 13v7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'],
   pad: ["0 0 24 24", '<rect x="2.5" y="6" width="19" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'],
+  cursor: ["0 0 24 24", '<path d="M5.5 2.8l13.2 8.1a.6.6 0 01-.2 1.1l-5.3 1.1 3.1 6.3a.8.8 0 01-.4 1.1l-1.5.7a.8.8 0 01-1.1-.4l-3-6.3-3.9 3.6a.6.6 0 01-1-.4V3.3a.6.6 0 01.9-.5z" fill="currentColor"/>'],
+  hand: ["0 0 24 24", '<path d="M8 11.5V5.5a1.5 1.5 0 013 0V10h.6V4a1.5 1.5 0 013 0v6h.6V5.5a1.5 1.5 0 013 0V14c0 4.1-2.8 7-6.6 7-2.6 0-4.3-1.2-5.6-3.3L3.9 13.7a1.4 1.4 0 012.3-1.6L8 14.6z" fill="currentColor"/>'],
+  pivot: ["0 0 24 24", '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 2a1 1 0 011 1v3.1A6 6 0 0117.9 11H21a1 1 0 110 2h-3.1A6 6 0 0113 17.9V21a1 1 0 11-2 0v-3.1A6 6 0 016.1 13H3a1 1 0 110-2h3.1A6 6 0 0111 6.1V3a1 1 0 011-1zm0 6a4 4 0 100 8 4 4 0 000-8zm0 2.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" fill="currentColor"/>']
 };
 // an icon as an element: ODMICONS.svg("Camera", "w-5 h-5")
 window.ODMICONS.svg = (name, cls = "") => {

@@ -126,7 +126,8 @@
   .ov-body { display: flex; flex-direction: column; gap: 2px; padding: 4px; border-radius: 10px;
     background: color-mix(in srgb, var(--bg-surface) 88%, transparent); border: 1px solid var(--border-default); box-shadow: 0 1px 3px rgb(0 0 0 / 0.12); }
   .ov.folded .ov-body:not(.ov-keep) { display: none; }
-  .ov-stack { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+  .ov-stack { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; pointer-events: none; }
+  .ov-stack > * { pointer-events: auto; }        /* the gaps between the groups leave the view pressable */
   .ov-row { flex-direction: row; }
   /* not enough height for one column (a phone's split screen): the handles' tools and the touch keys
      go to a second column beside the modes (ui-pane.js measures) */
@@ -197,7 +198,10 @@
   .gz-tools { display: flex; flex-direction: column; align-items: stretch; gap: 2px; }
   /* off: only the 3軸ハンドル button shows; on: the tools and 解除 */
   .gz-tools.off button[data-gz] { display: none; }
-  .gz-tools:not(.off) .gz-on, .gz-tools.off .gz-off { display: none; }
+  .gz-tools:not(.off) .gz-on, .gz-tools.off .gz-off, .gz-tools.off .gz-piv { display: none; }
+  /* the cursor (pose_objects.js): ドラッグ / ハンド, under the handles' tools */
+  .cur-tools { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--border-default); }
+  canvas.hand-cursor { cursor: grab; } canvas.hand-cursor:active { cursor: grabbing; }
   .gz-tools .gz-on, .gz-tools .gz-off { font-weight: 600; }
   #ovGizmo { flex-direction: column; }
   .gz-tools button { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 3px 8px 3px 5px; border: 0; border-radius: 8px;

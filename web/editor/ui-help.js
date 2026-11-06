@@ -8,7 +8,9 @@ const PC = [
     [["中ボタンでドラッグ", "Middle-button drag"], ["カメラを回す", "Orbit the camera"]],
     [["Shift＋中ボタンでドラッグ", "Shift + middle-button drag"], ["カメラを動かす", "Pan the camera"]],
     [["Ctrl＋中ボタンでドラッグ／ホイール", "Ctrl + middle-button drag / wheel"], ["拡大・縮小", "Zoom"]],
-    [["何もない所をドラッグ（Alt＋でも）", "Drag on empty space (Alt + too)"], ["カメラを回す（Shift＋で動かす）", "Orbit the camera (Shift: pan)"]],
+    [["Alt＋何もない所をドラッグ", "Alt + drag on empty space"], ["カメラを回す（Shift＋で動かす）", "Orbit the camera (Shift: pan)"]],
+    [["H キー（ハンド）で、どこでもドラッグ", "H key (Hand), then drag anywhere"], ["カメラを回す（Shift＋で動かす）。V キーでドラッグに戻る", "Orbit the camera (Shift: pan). V goes back to Drag"]],
+    [["何もない所をクリック（ポーズ・体格）", "Click empty space (Pose, Body)"], ["カメラモードへ（自動切り替えがオンのとき）", "To Camera mode (with automatic switching on)"]],
     [["テンキー 1・3・7", "Numpad 1, 3, 7"], ["正面・右から・上から（Ctrl で反対側）", "Front, right, top (Ctrl: the other side)"]],
     [["テンキー 2・4・6・8", "Numpad 2, 4, 6, 8"], ["15°ずつ回す（Ctrl で動かす）", "Turn by 15° (Ctrl: pan)"]],
     [["テンキー 9", "Numpad 9"], ["裏へ回る", "Go round to the back"]],
@@ -16,6 +18,7 @@ const PC = [
     [["テンキー .", "Numpad ."], ["選んだ関節を中心に", "Centre on the selected joint"]],
     [["Home", "Home"], ["人物を中心に", "Centre on the figure"]],
     [["Ctrl＋Z ／ Ctrl＋Y", "Ctrl + Z / Ctrl + Y"], ["元に戻す／やり直す", "Undo / redo"]],
+    [["何もない所からドラッグ（V キー：ドラッグ）", "Drag from empty space (V key: Drag)"], ["囲んだ物体・小物を選ぶ（Shift＋で足す）", "Box-select objects and things (Shift: add)"]],
     [["?", "?"], ["このヒントを開く", "Open these hints"]]]},
   {mode: "pose", title: ["ポーズモード", "Pose mode"], rows: [
     [["丸をドラッグ（3軸ハンドルを隠したとき）", "Drag a circle (with the 3-axis handles hidden)"], ["関節を動かす（骨の長さは保つ。寄せた分だけ手前・奥へ傾く）", "Move the joint (bone lengths kept; it leans toward / away as you bring it in)"]],
@@ -45,7 +48,12 @@ const PC = [
     [["消失点をドラッグ", "Drag a vanishing point"], ["定規の向きを変える", "Turn the ruler"]],
     [["丸をクリック", "Click a circle"], ["関節を選ぶ（物体に着ける用）", "Select a joint (to put it on an object)"]],
     [["腰の丸をドラッグ（または選んで矢印・輪）", "Drag the hips' circle (or select it: arrows, ring)"], ["人物全体を動かす・回す", "Move / turn the whole figure"]],
-    [["矢印・輪・四角をドラッグ（G・R・S で切り替え）", "Drag an arrow, the ring or a square (G, R, S switch)"], ["選んだ物体を軸に沿って動かす・回す・伸ばす（3軸ハンドル）", "Move, turn or stretch the selected object along an axis (3-axis handles)"]]]}];
+    [["矢印・輪・四角をドラッグ（G・R・S で切り替え）", "Drag an arrow, the ring or a square (G, R, S switch)"], ["選んだ物体を軸に沿って動かす・回す・伸ばす（3軸ハンドル）", "Move, turn or stretch the selected object along an axis (3-axis handles)"]],
+    [["Ctrl＋クリック", "Ctrl + click"], ["物体・小物を選ぶ物に足す・外す（いくつか選ぶと、まとめて動かす・回す）", "Add an object or thing to the selection or take it out (several move and turn together)"]],
+    [["Delete（Backspace）", "Delete (Backspace)"], ["選んだ物を外す", "Take the selected away"]],
+    [["Ctrl＋X ／ Ctrl＋C ／ Ctrl＋V", "Ctrl + X / Ctrl + C / Ctrl + V"], ["選んだ物を切り取る／コピー／貼り付ける", "Cut / copy / paste the selected"]],
+    [["3軸ハンドルの「支点」", "The handles' Pivot button"], ["回転の中心を移動ハンドルで動かす（数値は設置のタブ）", "Move what it turns about with the move handles (numbers in the Objects tab)"]],
+    [["何もない所をクリック", "Click empty space"], ["物の選択を外す", "Let the objects go"]]]}];
 const TOUCH = [
   {title: ["人物と関節", "The figure and its joints"], rows: [
     [["1本指でタップ", "Tap with one finger"], ["丸", "A circle"], ["関節を選ぶ", "Select the joint"]],
@@ -55,7 +63,9 @@ const TOUCH = [
     [["「固定」を押してから丸をタップ", "Press “Pin”, then tap a circle"], ["図の左（モードの下）", "The view's left (under the modes)"], ["関節を固定する（ピン）", "Pin the joint"]],
     [["境目のつまみをドラッグ", "Drag the grip on the edge"], ["図と操作欄の間", "Between the views and the panel"], ["図と操作欄の広さを変える（ダブルタップで戻す）", "Give the views or the panel more room (double-tap: back)"]]]},
   {title: ["カメラ", "Camera"], rows: [
-    [["1本指でスワイプ", "Swipe with one finger"], ["丸のない所", "Where there is no circle"], ["カメラを回す", "Orbit the camera"]],
+    [["1本指でスワイプ（ハンド）", "Swipe with one finger (Hand)"], ["どこでも", "Anywhere"], ["カメラを回す", "Orbit the camera"]],
+    [["1本指でスワイプ（ドラッグ）", "Swipe with one finger (Drag)"], ["丸・物のない所", "Where there is no circle or object"], ["囲んだ物体・小物を選ぶ", "Box-select objects and things"]],
+    [["タップ（ポーズ・体格）", "Tap (Pose, Body)"], ["何もない所", "Empty space"], ["カメラモードへ（そこでスワイプでカメラを回す）", "To Camera mode (swipe there to turn the camera)"]],
     [["2本指でつまむ・広げる", "Pinch / spread two fingers"], ["画面のどこでも", "Anywhere on the view"], ["拡大・縮小（カメラモードではレンズ）", "Zoom (the lens in the perspective mode)"]],
     [["2本指でそのまま動かす", "Move two fingers together"], ["画面のどこでも", "Anywhere on the view"], ["カメラを動かす（ポーズ・体格モード）", "Pan the camera (pose and build modes)"]],
     [["左のスティックを倒す", "Push the left stick"], ["カメラパッド（左下）", "Camera pad (bottom left)"], ["カメラを回す", "Orbit the camera"]],

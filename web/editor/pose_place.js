@@ -23,7 +23,10 @@ const ROT = [["plRX", "回転（前後に倒す・X）", -180, 180, 1, "°"], ["
 const SOLID_SIZE = [["plW", "幅", 1, 600, 1, "cm"], ["plH", "高さ", 1, 600, 1, "cm"], ["plD", "奥行き", 1, 600, 1, "cm"],
   ["plSides", "角の数", 3, 24, 1, ""], ["plTop", "天面の大きさ（底面に対して）", 0, 200, 1, "%"]];
 const ITEM_SIZE = [["plScale", "大きさ", 20, 400, 1, "%"], ["plSX", "X 方向", 20, 400, 1, "%"], ["plSY", "Y 方向", 20, 400, 1, "%"], ["plSZ", "Z 方向", 20, 400, 1, "%"]];
-const ALL = [...POS, ...ROT, ...SOLID_SIZE, ...ITEM_SIZE];
+// the pivot (支点, what it turns about): relative to the object (its own turned axes) or in the world
+const PIV_REL = [["plVX", "支点（本体から）X", -300, 300, 1, "cm"], ["plVY", "支点（本体から）Y", -300, 300, 1, "cm"], ["plVZ", "支点（本体から）Z", -300, 300, 1, "cm"]];
+const PIV_ABS = [["plAX", "支点（絶対座標）X", -600, 600, 1, "cm"], ["plAY", "支点（絶対座標）Y", -100, 500, 1, "cm"], ["plAZ", "支点（絶対座標）Z", -600, 600, 1, "cm"]];
+const ALL = [...POS, ...ROT, ...PIV_REL, ...PIV_ABS, ...SOLID_SIZE, ...ITEM_SIZE];
 const ctl = ([id, label, min, max, step, unit]) => `<div id="${id}Box"><label>${label}</label><div class="row"><input type="range" id="${id}R" min="${min}" max="${max}" step="${step}">` +
   `<input type="number" class="num" id="${id}" step="${step}"><span class="unit">${unit}</span></div></div>`;
 
@@ -37,7 +40,13 @@ sec.innerHTML = `<h2>設置（図形・床・壁・天井・小物）</h2>
   <select id="plList" size="5"></select>
   <div class="btns" style="margin-top:6px"><button id="plDel">外す</button><button id="plDup">複製</button><button id="plGround" title="いちばん低い所で、床や下の物の上に着ける（回転していても）">接地させる</button></div>
   <div id="plCtl">
-    ${POS.map(ctl).join("")}${ROT.map(ctl).join("")}${SOLID_SIZE.map(ctl).join("")}${ITEM_SIZE.map(ctl).join("")}
+    ${POS.map(ctl).join("")}${ROT.map(ctl).join("")}
+    <details id="plPiv" style="margin-top:6px"><summary>支点（回転の中心）</summary>
+      ${PIV_REL.map(ctl).join("")}${PIV_ABS.map(ctl).join("")}
+      <div class="btns" style="margin-top:6px"><button id="plPivMid" title="支点を物の真ん中に戻す">中心に戻す</button><button id="plPivLow" title="支点を物の底の真ん中にする">底の中心に</button></div>
+      <div class="hint">「本体から」は物と一緒に動き・回る位置、「絶対座標」は場面の中の位置です。3軸ハンドルの「支点」で動かすこともできます。</div>
+    </details>
+    ${SOLID_SIZE.map(ctl).join("")}${ITEM_SIZE.map(ctl).join("")}
     <div class="btns" id="plItemBtns" style="margin-top:6px"><button id="plSegs">部位ごとの長さ（サイズのタブ）</button></div>
     <div class="btns" id="plSolidBtns" style="margin-top:6px"><button id="plTouch">選んだ関節を着ける</button><button id="plStand">この上に立つ</button></div>
   </div>
@@ -97,6 +106,9 @@ $("plGround").addEventListener("click", () => {
   if (o) groundSolid(o); else { it.grounded = true; groundItem(it); }
   afterEdit(); sync(); draw(); say("接地させました（いちばん低い所で）。");
 });
+for (const [id, where] of [["plPivMid", "mid"], ["plPivLow", "bottom"]]) $(id).addEventListener("click", () => {
+  if (!window.ODMObj || !(solidOf(sel) || itemOf(sel))) return;
+  remember(); ODMObj.resetPiv(sel, where); afterEdit(); sync(); draw(); });
 $("plSegs").addEventListener("click", () => { const it = itemOf(sel); if (!it) return; scSel = +sel.slice(1); if (window.ODMUI) ODMUI.showMenu("size"); draw(); });
 $("plTouch").addEventListener("click", () => { if (solidOf(sel)) touchSolid(); });
 $("plStand").addEventListener("click", () => { if (solidOf(sel)) standOnSolid(); });
@@ -104,7 +116,9 @@ $("plStand").addEventListener("click", () => { if (solidOf(sel)) standOnSolid();
 // ---- one control: read from and written to the chosen one
 const wrap = v => ((v + 540) % 360) - 180;
 function value(id){
-  const o = solidOf(sel), it = itemOf(sel);
+  const o = solidOf(sel), it = itemOf(sel), O = window.ODMObj;
+  if ((o || it) && O && /^pl[VA][XYZ]$/.test(id)){
+    const p = id[2] === "V" ? O.pivRel(sel) : O.pivWorld(sel); return p["XYZ".indexOf(id[3])]; }
   if (o){ const top = o.top == null ? 1 : o.top;
     return {plPX: o.pos[0], plPY: o.pos[1], plPZ: o.pos[2], plRX: o.pitch || 0, plRY: o.yaw || 0, plRZ: o.roll || 0,
       plW: o.size[0], plH: o.size[1], plD: o.size[2], plSides: o.sides || solidKind(o).sides || 4, plTop: top * 100}[id]; }
@@ -113,10 +127,19 @@ function value(id){
       plScale: (it.scale || 1) * 100, plSX: st[0] * 100, plSY: st[1] * 100, plSZ: st[2] * 100}[id]; }
 }
 function setValue(id, v){
-  const o = solidOf(sel), it = itemOf(sel), a = {plPX: 0, plPY: 1, plPZ: 2}[id];
+  const o = solidOf(sel), it = itemOf(sel), a = {plPX: 0, plPY: 1, plPZ: 2}[id], O = window.ODMObj;
+  // the pivot: the object stays, its pivot moves
+  if ((o || it) && O && /^pl[VA][XYZ]$/.test(id)){
+    const n = "XYZ".indexOf(id[3]);
+    if (id[2] === "V"){ const p = O.pivRel(sel); p[n] = v; O.setPivRel(sel, p); }
+    else { const p = O.pivWorld(sel); p[n] = v; O.setPivAbs(sel, p); }
+    afterEdit(); draw(); return;
+  }
+  // a turn: about the pivot (the object shifts so its pivot stays)
+  const turn = fn => { if (O) O.keepPivot(sel, fn); else fn(); };
   if (o){
     if (a !== undefined){ o.pos = o.pos.slice(); o.pos[a] = v; }
-    else if (id === "plRX") o.pitch = wrap(v); else if (id === "plRY") o.yaw = wrap(v); else if (id === "plRZ") o.roll = wrap(v);
+    else if (id === "plRX") turn(() => { o.pitch = wrap(v); }); else if (id === "plRY") turn(() => { o.yaw = wrap(v); }); else if (id === "plRZ") turn(() => { o.roll = wrap(v); });
     else if (id === "plW") o.size[0] = Math.max(1, v); else if (id === "plH") o.size[1] = Math.max(1, v); else if (id === "plD") o.size[2] = Math.max(1, v);
     else if (id === "plSides") o.sides = Math.max(3, Math.min(24, Math.round(v)));
     else if (id === "plTop") o.top = Math.max(0, Math.min(2, v / 100));
@@ -124,9 +147,9 @@ function setValue(id, v){
     afterEdit(); if (typeof syncSolids === "function") syncSolids();
   } else if (it){
     if (a !== undefined){ it.base = (it.base || [0, 0, 0]).slice(); it.base[a] = v; if (a === 1) it.grounded = false; }
-    else if (id === "plRX"){ it.rot = (it.rot || [0, 0, 0]).slice(); it.rot[0] = wrap(v); }
-    else if (id === "plRY") it.yaw = wrap(v);
-    else if (id === "plRZ"){ it.rot = (it.rot || [0, 0, 0]).slice(); it.rot[2] = wrap(v); }
+    else if (id === "plRX") turn(() => { it.rot = (it.rot || [0, 0, 0]).slice(); it.rot[0] = wrap(v); });
+    else if (id === "plRY") turn(() => { it.yaw = wrap(v); });
+    else if (id === "plRZ") turn(() => { it.rot = (it.rot || [0, 0, 0]).slice(); it.rot[2] = wrap(v); });
     else if (id === "plScale") it.scale = Math.max(0.2, v / 100);
     else { const k = {plSX: 0, plSY: 1, plSZ: 2}[id]; if (k !== undefined) foldStretch(it)[k] = Math.max(0.2, v / 100); }
     if (it.grounded && a !== 1) groundItem(it);
@@ -145,6 +168,9 @@ for (const [id] of ALL){
 // ---- the list and the controls follow the scene (every drawing, keyed)
 function sync(){
   const list = entries(), key = JSON.stringify(list);
+  // what is selected on the view (a click, a box, the handles) is the one shown here
+  const onView = window.ODMObj ? ODMObj.key() : "";
+  if (onView && list.some(([k]) => k === onView)) sel = onView;
   if (!list.some(([k]) => k === sel)) sel = soSel >= 0 && S.solids && S.solids[soSel] ? "s" + soSel : (scSel >= 0 && S.items && S.items[scSel] && loose(S.items[scSel]) ? "i" + scSel : (list[0] ? list[0][0] : ""));
   if (key !== listKey){ listKey = key; $("plList").innerHTML = list.map(([k, n]) => `<option value="${k}">${esc2(n)}</option>`).join(""); }
   $("plList").value = sel;
@@ -174,5 +200,11 @@ function sync(){
   "選んだ関節を着ける": "Put the selected joint on it", "この上に立つ": "Stand on it",
   "置いた物は、配置モードでドラッグ・3軸ハンドル（移動・回転・変形）でも動かせます。小物の大きさは、手に持つときと同じ決まりで変わります。":
     "In Place mode, things out are dragged or moved, turned and scaled with the 3-axis handles too. A thing's size changes as it does when held.",
-  "接地させました（いちばん低い所で）。": "Put on the ground (by its lowest point).", "天井（板）": "Ceiling slab"});
+  "接地させました（いちばん低い所で）。": "Put on the ground (by its lowest point).",
+  "支点（回転の中心）": "Pivot (what it turns about)", "支点（本体から）X": "Pivot (from the object) X", "支点（本体から）Y": "Pivot (from the object) Y",
+  "支点（本体から）Z": "Pivot (from the object) Z", "支点（絶対座標）X": "Pivot (world) X", "支点（絶対座標）Y": "Pivot (world) Y", "支点（絶対座標）Z": "Pivot (world) Z",
+  "中心に戻す": "To the middle", "底の中心に": "To the bottom's middle", "支点を物の真ん中に戻す": "The pivot back to the object's middle",
+  "支点を物の底の真ん中にする": "The pivot to the middle of the object's bottom",
+  "「本体から」は物と一緒に動き・回る位置、「絶対座標」は場面の中の位置です。3軸ハンドルの「支点」で動かすこともできます。":
+    "\"From the object\" moves and turns with it; \"world\" is the place in the scene. The 3-axis handles' Pivot button moves it too.", "天井（板）": "Ceiling slab"});
 })();

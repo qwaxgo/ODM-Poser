@@ -385,7 +385,8 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
   if (!opts.noItems) (S.items || []).forEach((it, n) => {
     const def = PROPS_[it.key]; if (!def) return;
     const col = it.color || def.color, sets = partSets(it);
-    const stroke = opts.export ? col || ink : n === scSel ? cssVar("--sel") : col || cssVar("--accent");
+    const picked = n === scSel || (mode === "place" && typeof objPicked === "function" && objPicked("i" + n));
+    const stroke = opts.export ? col || ink : picked ? cssVar("--sel") : col || cssVar("--accent");
     for (const glow of def.glow ? [true, false] : [false]){
       ctx.strokeStyle = stroke; ctx.globalAlpha = glow ? 0.22 : 1;
       ctx.lineWidth = lw * (opts.side ? 0.9 : 1.1) * (glow ? 5 : 1);
@@ -761,7 +762,8 @@ function itemUnder(x, y){
 DOWN_HOOKS.push((cv, x, y) => {
   if (mode !== "place" || cv !== front || pick(cv, x, y) >= 0) return null;
   const u = itemUnder(x, y); if (!u) return null;
-  scSel = u.n; sel = -1; fillItemList();
+  scSel = u.n; sel = -1; if (typeof soSel === "number") soSel = -1;     // one object selected: this one
+  fillItemList();
   if (gizmoHolds()) return {move(){}};       // the 3-axis handles move it
   const it = S.items[u.n];
   return dragFrom(u.p, cv.width, cv.height, d => {
