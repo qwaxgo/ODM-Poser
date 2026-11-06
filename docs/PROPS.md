@@ -104,6 +104,8 @@ In Place mode they are also dragged and moved, turned and scaled with the 3-axis
 | Drag from an empty place (cursor: Drag) | Select what the box takes in (Shift: add to the selection) |
 | Ctrl (⌘) + click (Place mode) | Add it to the selection or take it out |
 | Click an empty place (Place mode) | Let the selection go |
+| Click (Camera mode: always the hand cursor) | A joint: to Pose mode (Shift: Body mode); a thing: to Place mode. A drag turns the camera |
+| Shift + click a joint (Pose, Body mode) | Switch between Pose and Body |
 | Delete (Backspace) | Take the selected away |
 | Ctrl + X / Ctrl + C / Ctrl + V | Cut / copy / paste (put a little apart; the copy stays in this browser) |
 
