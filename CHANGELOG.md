@@ -57,6 +57,11 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 3軸ハンドルの矢印・輪・四角を、物の向きによらず場面の X・Y・Z に揃えました（回転もその軸のまわり、変形は軸にいちばん近い辺を伸ばす）
 - 配置モードで Ctrl＋人体をクリックすると、腰を選んで人物全体を動かせるように
 - いくつか選んだ物を、1つの物（最後に足した物、Ctrl＋Shift＋クリックで変更）の支点を中心に、X・Y・Z でまとめて回せるように
+- カメラのタブの名前を整理：「カメラの向き」（左右・上下・傾き）、「カメラの位置」「見る点」（左右・上下・前後）
+- パース定規のガイドを図形に：設置のタブで「ガイドとして置く」にすると、どの図形でも、いくつでも、定規の向きにそろえて置けます（辺は消失点まで延び、アタリには入らない）。前の「ガイド立方体」はガイドの直方体に移ります
+- ガイド図形を3軸ハンドルで動かせるように（辺の向きに沿って）。「変形」は引いた側の辺だけを延ばし、透視していない辺（高さ・幅）も変えられます
+- 置く前に大きさを決められるように：設置のタブでプレビューを見ながら、図形の幅・高さ・奥行き・角の数・天面、小物の大きさ・X・Y・Z・部位ごとの長さ。装備のタブにも部位ごとの長さを追加
+- 英語表示で日本語のまま残っていた所を英訳（縦長画面のバー、頭の形、色の対象、オーラの放物線、小物の分類、部位の名前、ガイド図形、カメラのリセットなど）
 - カメラモードはいつもハンド：ドラッグでカメラ、クリックで関節ならポーズモード・物なら配置モードへ。Shift＋関節のクリックで体格モード（ポーズ・体格の間は Shift＋クリックで切り替え）
 - 操作のヒントに、これまでに変わった操作（ホイールで拡大・Ctrl＋Alt＋ホイールでレンズ、3軸ハンドルの出し方、モードの自動切り替え、境目・⇅ 上下・メニューの位置、スマホのメニューの閉じ方など）を追加
 - 設置のタブを1つにまとめました：図形・床・壁・天井と小物を同じ「置く物」の一覧から置き、「置いた物」の一覧で、位置（XYZ）・回転（XYZ）・大きさ（図形は幅・高さ・奥行き、小物は手に持つときと同じ大きさと3軸）を変えます。「接地させる」は回転していても、いちばん低い所で地面や下の物に着けます
@@ -139,6 +144,11 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The 3-axis handles' arrows, rings and squares follow the scene's X, Y, Z however the thing is turned (it turns about those axes; a square stretches the side nearest its axis)
 - In Place mode, Ctrl + clicking the body takes the figure by its hips to move it
 - Several selected things turn together on X, Y, Z about one thing's pivot (the last one added; Ctrl + Shift + click changes it)
+- The Camera tab's names sorted: Camera direction (left-right, up-down, roll), Camera position and Looks at (left-right, up-down, front-back)
+- The perspective ruler's guides are shapes: with “Put as a guide” in the Objects tab, any shape, as many as you like, turned to the ruler (edges carried on to the vanishing points; not in the rough picture). The box guide of before becomes a guide box
+- Guide shapes move with the 3-axis handles (along their edges); Scale lengthens only the side pulled, and the edges without a vanishing point (height, width) change too
+- Sizes before putting: in the Objects tab, with the preview, a shape's width, height, depth, sides and top, a thing's size, X, Y, Z and section lengths; section lengths in the Equip tab too
+- English for what was still in Japanese (the tall layout's bar, head shape, colour targets, the aura's parabola, prop categories, section names, guide shapes, the camera reset ...)
 - Camera mode is always the hand: a drag turns the camera; a click goes to Pose mode on a joint, to Place mode on a thing. Shift + a click on a joint goes to Body mode (Shift + click switches Pose and Body)
 - The hints show the operations changed before too (the wheel zooms, Ctrl+Alt+wheel the lens, showing the 3-axis handles, switching modes, the edge, ⇅, the menu's place, closing a phone's menu ...)
 - The Objects tab is one place: shapes, floors, walls, ceilings and things are put from one "What to put" list, and from "Out in the scene" each one's place (XYZ), turn (XYZ) and size (a shape's width, height, depth; a thing's size and 3 axes as when held) are changed. "Put on the ground" sets it down by its lowest point, turned or not

@@ -38,10 +38,11 @@ open `index.html`; mods go in its `mods` folder), and an app (an AppImage for Li
 - **Perspective mode**: camera direction, height, roll (Shift+drag tilts the camera off level),
   and lens (wide angle = strong perspective). Grabbing a vanishing point or the eye level of the
   ruler moves the camera to match.
-- **Place mode**: the camera stays; drag a vanishing point to turn the ruler, drag the box guide
+- **Place mode**: the camera stays; drag a vanishing point to turn the ruler, drag the guide shapes
   and objects over the floor (Shift+drag: up and down, wheel: turn).
-- **Perspective ruler**: 1-, 2- or 3-point guide lines, the eye level and a box guide (width,
-  height, depth and position in cm). The vanishing points come from the camera, so the ruler has
+- **Perspective ruler**: 1-, 2- or 3-point guide lines, the eye level and guide shapes (any of the
+  Objects tab's shapes, as many as you like, turned to the ruler; their edges carried on to the vanishing
+  points; "Put as a guide" in the Objects tab). The vanishing points come from the camera, so the ruler has
   the figure's perspective. Editor only; "Ruler picture" saves it as a transparent PNG.
 - **Human joint limits** (on by default) keep knees, elbows, neck and so on in a human range.
 - **Several figures**: "Add a figure" / "Duplicate" in the Figures box. The one selected is edited
@@ -228,7 +229,7 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **持つ・背負う・置く**：持たせると手の形が自動で握りに変わり、外すと戻ります。手に持つ物は背負え、どの小物も床や物体の上に置けます（接地）。置いた物は配置モードでドラッグ。ライフル類には銃剣を付けられます。
 - **線の色**：頭・胴体・腕・手・脚ごと、小物・物体ごと、床と壁、ワイヤーの色を変えられます（書き出すアタリにも反映）。「色」のタブの「↺ 色を初期状態に」で最初の色に戻せ、「色の記憶」で名前をつけて保存・呼び出しできます（このブラウザに残ります）。
 - **オーラ**：全身や部位に、立ちのぼる気（炎）・なめらかな光・プラズマ（電撃）をまとえます。
-- **パース定規**：1点・2点・3点透視の線、アイレベル、直方体のガイド（幅・高さ・奥行きと位置を cm で）。消失点はカメラから決まるので人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードではカメラはそのままで消失点をつかむと定規が回ります。エディタ上だけの表示で、「定規の画像」で透明な PNG を保存できます。
+- **パース定規**：1点・2点・3点透視の線、アイレベル、ガイド図形（設置のタブの図形を「ガイドとして置く」で、いくつでも、定規の向きにそろえて。辺は消失点まで延びます）。消失点はカメラから決まるので人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードではカメラはそのままで消失点をつかむと定規が回ります。エディタ上だけの表示で、「定規の画像」で透明な PNG を保存できます。
 - **カメラの傾き**：パースモードで Shift＋ドラッグ（または「傾き」）で水平でなくできます（±90°）。
 - **物体**：直方体（箱・床・壁・建物・段差）、角柱、円柱、角錐、円錐、支柱を cm の大きさで置けます。配置モードでドラッグして動かし（Shift で上下、ホイールで向き）、接地をオンにすると上に立ちます（40cm までの段は乗り上げ）。選んだ関節を面に着けて固定する、上に立たせる、もできます。
 - **複数の人物**：「人物」の欄の「人物を追加」「複製」。編集するのは選んだ人物だけ（ポーズ・体格・小物・オーラ・ワイヤー）で、ほかの人物は薄く表示され、その丸をクリックすると切り替わります。床・壁・物体・定規・カメラは共通。アタリ・OpenPose（1人ずつ）・構図の画像には全員が入ります。

@@ -75,7 +75,24 @@ Ctrl + click the body (Place mode): takes the figure by its hips to move it (dra
 
 On a narrow screen (a phone sideways) the menu on the left does not fit even in two columns, so “…” swaps the 3-axis handles with the cursor and edit buttons.
 
+## Perspective ruler and guide shapes
+
+The Ruler tab shows 1-, 2- or 3-point lines. In the Objects tab, tick **Put as a guide (perspective ruler)** and put a
+shape: it becomes a guide shape turned to the ruler (boxes, cylinders, prisms, pyramids ..., as many as you like).
+
+- Guides show only while the ruler does, drawn in its colours with their edges carried on to the vanishing points; they are not in the rough picture, but are in the ruler picture.
+- The 3-axis handles' arrows and squares follow the guide's edges. **Scale** lengthens only the side pulled; the other side stays (the edges without a vanishing point change too, for the height or width).
+- The **box guide** of earlier versions becomes a guide box when a file opens.
+
+## Sizes before putting
+
+In the Objects and Equip tabs, set the sizes before putting (or holding) a thing while its faint dashed preview shows:
+a shape's width, height, depth (a prism's or pyramid's sides and top); a thing's size, X, Y, Z and each section's length. It gets those sizes when put.
+
 ## Camera
+
+In the Camera tab, **Camera direction** is left-right, up-down and roll (degrees); **Camera position** and **Looks at** are left-right, up-down and front-back (cm).
+
 
 | Do | What it does |
 |----|--------------|
