@@ -17,7 +17,7 @@ How to give a figure things to hold or wear, and how to put objects (boxes, wall
 | Wear | On the head, chest, back, waist, feet, ... |
 | Place | Chairs, rides and the like go on the floor; a seat or a ride fits the body to it |
 
-To put a thing on the floor held by no one, use **Things on their own** in the **Objects** tab (see
+To put a thing on the floor held by no one, pick its category under **What to put** in the **Objects** tab (see
 Objects below). What a figure holds and wears also shows under the body map in the **Figure** menu
 (Figures), where it can be taken off. The **Reset** tab (Figure menu) has every reset of the figure in one
 place; there **Attached things** works on the kinds ticked
@@ -79,12 +79,22 @@ wall, building, step, prism, cylinder, pyramid, cone and pole, each sized in cm 
 With grounding on, figures stand on their tops too. Drag them in Place mode; the 3-axis handles set
 their width, height and depth.
 
-### Things on their own
+### Objects (shapes, floors, walls, ceilings and things in one place)
 
-Under **Things on their own** in the **Objects** tab, pick a weapon, tool, hat or the like (anything held
-or worn) and press **Place on its own**: it goes on the floor (or an object) in front of the figure being
-edited, held by no one; a held thing lies flat. **Things put on their own** lists them, to take one away
-or give it to the figure being edited. Move them in Place mode.
+Under **What to put** in the **Objects** tab, pick "Shapes, floors, walls, ceilings" or a thing's category
+(weapons, tools, hats ...), then a kind, and press **Put**. Everything put is listed under **Out in the scene**;
+choose one to change it:
+
+| Field | Shapes, floors, walls, ceilings | Things |
+|-------|--------------------------------|--------|
+| Place | left / right, up / down, front / back | the same |
+| Turn | X (tip forward / back), Y (facing), Z (tip sideways) | the same |
+| Size | width, height, depth (a prism's or pyramid's sides and top too) | size and X, Y, Z (as when held); section lengths in Sizes |
+
+**Put on the ground** sets it on the ground or on what is under it by its lowest point, turned or not; figures
+stand on a tilted face at its height. Walls and ceilings are objects (slabs) too, as many as you like, turned on
+all three axes (the wall and ceiling of the Place tab in earlier versions become slabs when a file opens).
+In Place mode they are also dragged and moved, turned and scaled with the 3-axis handles.
 
 ## Your own (mods)
 

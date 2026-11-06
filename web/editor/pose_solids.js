@@ -4,12 +4,16 @@
 // put on their faces and pinned there. In the 配置 mode they are dragged on the floor (Shift: up
 // and down) and turned with the wheel; the camera stays where it is.
 //
-// S.solids: {kind, pos: [x, y, z] (the middle of the base), size: [w, h, d] cm, yaw (degrees),
-//            sides (prisms and pyramids)}
+// S.solids: {kind, pos: [x, y, z] (the middle of the base), size: [w, h, d] cm, yaw (degrees, about up),
+//            pitch / roll (degrees, about the solid's own x / z: tilted), sides (prisms and pyramids),
+//            top (a prism's / pyramid's top as a share of its base)}
+// The walls and the ceiling are solids too (the old S.env.wall / ceiling are moved here: migrateEnv);
+// the ground (S.env.floor) stays as the level everything stands on.
 const SOLID_KINDS = {
   box:      {ja: "直方体（箱・台）", en: "Box", shape: "box", size: [100, 60, 60], at: [90, 0, 0]},
   floor:    {ja: "床（板）", en: "Floor slab", shape: "box", size: [300, 10, 300], at: [0, -10, 0]},
   wall:     {ja: "壁（板）", en: "Wall slab", shape: "box", size: [300, 250, 12], at: [0, 0, -80]},
+  ceiling:  {ja: "天井（板）", en: "Ceiling slab", shape: "box", size: [300, 10, 300], at: [0, 230, 0]},
   building: {ja: "建物", en: "Building", shape: "box", size: [400, 900, 400], at: [0, 0, -600]},
   step:     {ja: "段差", en: "Step", shape: "box", size: [120, 20, 40], at: [0, 0, 50]},
   prism:    {ja: "角柱", en: "Prism", shape: "prism", size: [60, 120, 60], sides: 6, at: [90, 0, 0]},
@@ -33,7 +37,9 @@ function solidMesh(o){
     if (n === 4 && !smooth) ring.push([[-1, 1, 1, -1][i] * w/2, [-1, -1, 1, 1][i] * d/2]);
     else { const a = 2 * Math.PI * i / n + Math.PI / 2; ring.push([Math.cos(a) * w/2, Math.sin(a) * d/2]); }
   }
-  const a = deg(o.yaw || 0), at = (x, y, z) => add(o.pos, rotY([x, y, z], a));
+  // turned: first its roll (about z), then its pitch (about x), then its yaw (about up), about the base's middle
+  const a = deg(o.yaw || 0), rp = deg(o.pitch || 0), rr = deg(o.roll || 0);
+  const at = (x, y, z) => add(o.pos, rotY(rotAxis(rotAxis([x, y, z], [0, 0, 1], rr), [1, 0, 0], rp), a));
   const V = ring.map(([x, z]) => at(x, 0, z));
   const tk = k.shape === "prism" || k.shape === "pyr" ? top : 1;      // only prisms and pyramids have a top size
   if (apex) V.push(at(0, h, 0)); else ring.forEach(([x, z]) => V.push(at(x * tk, h, z * tk)));
@@ -219,6 +225,26 @@ WHEEL_HOOKS.push((x, y, step, e) => {
 });
 
 // ---- adding, contact, standing on top -----------------------------------------------------------
+// 接地: the solid's lowest point onto the ground or the top of another solid under it
+function groundSolid(o){
+  const V = solidMesh(o).V, low = Math.min(...V.map(p => p[1]));
+  const c = V.reduce((s, p) => add(s, p), [0, 0, 0]).map(v => v / V.length);
+  const others = S.solids, mine = others.indexOf(o);
+  S.solids = others.filter((_, k) => k !== mine);                // its own top is not under it
+  let support;
+  try { support = supportUnder([c[0], low, c[2]], low); } finally { S.solids = others; }
+  if (isFinite(support)) o.pos = add(o.pos, [0, support - low, 0]);
+}
+// the old wall and ceiling (S.env.wall / ceiling, one of each) become solids, once
+function migrateEnv(){
+  const E = S.env; if (!E) return;
+  S.solids = S.solids || [];
+  if (E.wall){ const k = SOLID_KINDS.wall;
+    S.solids.push({kind: "wall", pos: [+E.wallX || 0, +E.floorY || 0, +E.wallZ || -40], size: k.size.slice(), yaw: +E.wallYaw || 0}); }
+  if (E.ceiling){ const k = SOLID_KINDS.ceiling;
+    S.solids.push({kind: "ceiling", pos: [0, +E.ceilingY || 230, 0], size: k.size.slice(), yaw: 0}); }
+  E.wall = false; E.ceiling = false;
+}
 function solidName(o){ return solidKind(o).ja.replace(/（.*$/, ""); }
 function addSolid(kind){
   const k = SOLID_KINDS[kind]; if (!k) return;
@@ -325,6 +351,7 @@ function buildSolidPanel(){
   $("soStand").addEventListener("click", standOnSolid);
 }
 function syncSolids(){
+  migrateEnv();
   const list = S.solids = S.solids || [];
   if (soSel >= list.length) soSel = list.length - 1;
   $("soList").innerHTML = list.map((o, k) => `<option value="${k}">${k + 1}. ${solidKind(o).ja}</option>`).join("");

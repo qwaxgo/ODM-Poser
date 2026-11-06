@@ -4,6 +4,7 @@
 (() => {
   const KEY = "odm-poser-lang";
   const T = {
+    "地面と接地": "The ground and grounding", "壁と天井は、設置タブで物体（板）として置きます（いくつでも置け、3軸で回転できます）。": "Walls and ceilings are put in the Objects tab as slabs (as many as you like, turned on all three axes).",
     "選んだ物を接地させる": "Put the chosen thing on the ground", "接地させる物を、下の「出ている物」の一覧から選んでください。": "Choose the thing to put on the ground from the list of things out.", "接地させました。": "Put on the ground.",
     "色は #rrggbb の形で入れてください（例：#e0605a）。": "Type the colour as #rrggbb (e.g. #e0605a).",
     "持ち方": "Way of holding", "握る": "Grip", "カウチ（脇に挟む）": "Couched (under the arm)", "持つ位置（長い方向）": "Where it is held (along its length)",
@@ -438,7 +439,7 @@
     [/^(.+)を固定しました（身長・頭身を変えても、長さと太さはそのまま）。$/,
       m => `Locked: ${name(m[1]).toLowerCase()} (changing the height or heads leaves their lengths and thickness).`],
     [/^(.+)を固定から外しました。$/, m => `Unlocked: ${name(m[1]).toLowerCase()}.`],
-    [/^(選んだ小物|小物|物体|オーラ)：(.+)$/, m => ({"選んだ小物": "Selected prop", "小物": "Prop", "物体": "Object", "オーラ": "Aura"})[m[1]]
+    [/^(選んだ小物|小物|物体|図形|オーラ)：(.+)$/, m => ({"選んだ小物": "Selected prop", "小物": "Prop", "物体": "Object", "図形": "Shape", "オーラ": "Aura"})[m[1]]
       + ": " + m[2].split(/・(?![^（]*）)/).map(name).join(", ")],                       // "全身・気（炎…）": split outside the brackets
     [/^(.*?)\s*「(.+)」の時点に戻しました。$/, m => `Back to "${tr(m[2]) || m[2]}"${m[1] ? " (" + m[1] + ")" : ""}.`],
     [/^このアドレスの MOD を、エディタを開くたびに読み込んで実行します。信頼できるものだけを追加してください。\n\n([\s\S]+)$/,

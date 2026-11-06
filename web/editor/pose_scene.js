@@ -541,9 +541,12 @@ function groundLift(stick){                   // how far to move the figure up (
 function surfaces(){
   const E = S.env || {}, out = [];
   if (E.floor) out.push({name: "床", p: [0, +E.floorY || 0, 0], n: [0, 1, 0]});
-  if (E.ceiling) out.push({name: "天井", p: [0, +E.ceilingY || 230, 0], n: [0, -1, 0]});
-  if (E.wall){ const a = deg(+E.wallYaw || 0);
-    out.push({name: "壁", p: [+E.wallX || 0, 0, +E.wallZ || -40], n: rotY([0, 0, 1], a)}); }
+  // the faces of the solids (walls and ceilings are solids, turned any way): an upright face is a 壁,
+  // one facing down a 天井, one facing up a 床
+  if (typeof solidMesh === "function") for (const o of S.solids || []) for (const f of solidMesh(o).faces){
+    const ny = f.n[1], name = ny > 0.7 ? "床" : ny < -0.7 ? "天井" : Math.abs(ny) < 0.35 ? "壁" : null;
+    if (name) out.push({name, p: mul(f.n, f.d), n: f.n});
+  }
   return out;
 }
 function flatFoot(side, fy){                  // the toe on the floor too
@@ -890,7 +893,8 @@ function buildScenePanel(){
     </div>
     <div id="scItemCtl">${ITEM_CTL.map(rng).join("")}
       <div class="btns" style="margin-top:6px"><button id="scReset" title="位置・向き・大きさを戻す">↺ 戻す</button></div></div>
-    <h2 style="margin-top:14px">床・壁・天井</h2>
+    <h2 style="margin-top:14px">地面と接地</h2>
+    <div class="hint">壁と天井は、設置タブで物体（板）として置きます（いくつでも置け、3軸で回転できます）。</div>
     <div class="grid2">
       <label><input type="checkbox" id="scFloor"> 床</label><div class="row"><input type="number" class="num" id="scFloorY" step="1"><span class="unit">cm</span></div>
       <label><input type="checkbox" id="scCeil"> 天井</label><div class="row"><input type="number" class="num" id="scCeilY" step="1"><span class="unit">cm</span></div>

@@ -42,6 +42,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 「クリックで自動的にモードを切り替える」（ポーズの欄）：物を押すと配置モード、人体の関節を押すとポーズモード（配置・カメラから。体格は残す）。このブラウザに残ります
 - 物（設置物）の幅・高さ・奥行き・角の数・位置・向き、床と天井の高さ、壁の位置と向き、ワイヤーの支点、人物の位置（castX/Z）、オーラの大きさにもスライダーを付けました（数値欄と連動、ドラッグは取り消し1回分）
 - カメラの位置と見る点を、XYZ それぞれスライダーと数値欄で調整できるように（スライダーを動かしても取り消し履歴は1回分）
+- 設置のタブを1つにまとめました：図形・床・壁・天井と小物を同じ「置く物」の一覧から置き、「置いた物」の一覧で、位置（XYZ）・回転（XYZ）・大きさ（図形は幅・高さ・奥行き、小物は手に持つときと同じ大きさと3軸）を変えます。「接地させる」は回転していても、いちばん低い所で地面や下の物に着けます
+- すべての物体を3軸で回転できるように（3軸ハンドルも3つの輪）。傾いた面には人物も足元の高さを合わせて立ちます
+- 壁と天井は物体（板）に。いくつでも置け、回転できます。前の版の配置タブの壁・天井は、開くと物体に移ります（地面は配置タブに残ります）
 - スライダーが動かせなかった（幅がなかった）不具合を修正：物体の大きさ・位置・向き・角の数・天面、持つ位置、オーラの大きさ、床・天井・壁・ワイヤー、人物の位置。2列の欄の中のスライダーは2列分の幅を使います
 - 公開サイトを更新したとき、ブラウザに残った古いスクリプト・CSS が使われないように：読み込みにビルドごとの印を付け、アプリ（PWA）のサービスワーカーは毎回サーバーで新しさを確かめます（オフラインでは今までどおり開けます）
 - 操作欄の位置・メニューの側・操作欄をしまう設定を、縦画面と横画面で別々に覚えるように。画面の向きを変えると、その向きの設定（初めては初期値）に切り替わります
@@ -104,6 +107,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Click to switch mode (in the Pose tab): a press on a thing goes to Place, a press on the body to Pose (from Place or Camera; Body stays). Kept in this browser
 - Sliders beside the numbers of objects (size, sides, position, turn), the floor and ceiling heights, the wall, the wire's height, the figure's place and the aura size (linked with the number; a drag is one undo step)
 - The camera's position and look point: X, Y and Z each with a slider and a number (a slider drag is one undo step)
+- The Objects tab is one place: shapes, floors, walls, ceilings and things are put from one "What to put" list, and from "Out in the scene" each one's place (XYZ), turn (XYZ) and size (a shape's width, height, depth; a thing's size and 3 axes as when held) are changed. "Put on the ground" sets it down by its lowest point, turned or not
+- Every object turns on all three axes (the 3-axis handles have three rings); figures stand on a tilted face at its height
+- Walls and ceilings are objects (slabs), as many as you like, turned any way; the old Place tab's wall and ceiling become slabs when a file opens (the ground stays in the Place tab)
 - Sliders that could not move (no width) fixed: the objects' size, place, turn, sides and top, where a thing is held, the aura size, the floor, ceiling, wall and wire, the figure's place. A slider in a two-column grid takes both columns
 - After the site is updated, browsers no longer run older kept scripts and styles: each load carries the build's mark, and the app's (PWA) service worker asks the server each time (offline it still opens)
 - The panel's place, the menu's side and the panel put away are kept apart for an upright and a sideways screen: turning the screen brings that way's own (the defaults the first time)

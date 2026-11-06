@@ -154,22 +154,27 @@ function target(any){
     const a = deg(so.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)];
     const fin = () => { if (typeof snapSolid === "function") snapSolid(so); afterEdit(); if (typeof syncSolids === "function") syncSolids(); };
     const c = add(so.pos, [0, so.size[1] / 2, 0]);
-    return {c, ax, pivot: c, rings: [1], sc: ax.map((u, n) => [u, n, "XYZ"[n]]),
-      save: () => ({pos: so.pos.slice(), size: so.size.slice(), yaw: so.yaw || 0}),
+    // turned on all three: the ring about up its yaw, those about x and z its pitch and roll
+    const wrap = v => Math.round(((v + 540) % 360) - 180);
+    return {c, ax, pivot: c, rings: [0, 1, 2], sc: ax.map((u, n) => [u, n, "XYZ"[n]]),
+      save: () => ({pos: so.pos.slice(), size: so.size.slice(), yaw: so.yaw || 0, pitch: so.pitch || 0, roll: so.roll || 0}),
       move: (s0, d) => { so.pos = add(s0.pos, d); fin(); },
       scale: (s0, f, n) => { so.size[n] = Math.max(1, Math.round(s0.size[n] * f)); fin(); },
-      turn: (s0, k, dg) => { so.yaw = Math.round(((s0.yaw + dg) + 540) % 360 - 180); fin(); }};
+      turn: (s0, k, dg) => { if (k === 1) so.yaw = wrap(s0.yaw + dg); else if (k === 0) so.pitch = wrap(s0.pitch + dg); else so.roll = wrap(s0.roll + dg); fin(); }};
   }
   const it = S.items && S.items[scSel];
   if (it && it.base && (it.where === "world" || (PROPS_[it.key] || {}).place === "world" || (PROPS_[it.key] || {}).place === "grab")){
     const a = deg(it.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)], f0 = frameOf(it);
     // stretched along its own axes (as turned), each on its own
     const own = [0, 1, 2].map(n => { const e = [0, 0, 0]; e[n] = 1; const v = dirToWorld(f0, it, e); return len(v) > 1e-6 ? norm(v) : ax[n]; });
-    return {c: it.base, ax, pivot: it.base, rings: [1], sc: own.map((u, n) => [u, n, "XYZ"[n]]),
-      save: () => ({base: it.base.slice(), st: (stretchOf(it) || [1, 1, 1]).slice(), yaw: it.yaw || 0}),
+    // turned on all three, as when held: about up its yaw, about x and z its own turn (it.rot)
+    return {c: it.base, ax, pivot: it.base, rings: [0, 1, 2], sc: own.map((u, n) => [u, n, "XYZ"[n]]),
+      save: () => ({base: it.base.slice(), st: (stretchOf(it) || [1, 1, 1]).slice(), yaw: it.yaw || 0, rot: (it.rot || [0, 0, 0]).slice()}),
       move: (s0, d) => { it.base = add(s0.base, d); if (typeof snapItem === "function") snapItem(it); afterEdit(); },
       scale: (s0, f, n) => { foldStretch(it)[n] = Math.max(0.05, Math.round(s0.st[n] * f * 100) / 100); afterEdit(); },
-      turn: (s0, k, dg) => { it.yaw = ((s0.yaw + dg) + 540) % 360 - 180; afterEdit(); }};
+      turn: (s0, k, dg) => { const w = v => ((v + 540) % 360) - 180;
+        if (k === 1) it.yaw = w(s0.yaw + dg); else { it.rot = s0.rot.slice(); it.rot[k] = Math.round(w(s0.rot[k] + dg)); }
+        if (it.grounded) groundItem(it); afterEdit(); }};
   }
   const r = typeof rulerState === "function" ? rulerState() : null;
   if (r && r.on && r.cube && tabOn("rulerN")){
