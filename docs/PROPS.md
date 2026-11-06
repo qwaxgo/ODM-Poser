@@ -96,6 +96,28 @@ stand on a tilted face at its height. Walls and ceilings are objects (slabs) too
 all three axes (the wall and ceiling of the Place tab in earlier versions become slabs when a file opens).
 In Place mode they are also dragged and moved, turned and scaled with the 3-axis handles.
 
+### Selecting, moving together, copying
+
+| Do | What it does |
+|----|--------------|
+| Click a thing | Select it (to Place mode with automatic switching on) |
+| Drag from an empty place (cursor: Drag) | Select what the box takes in (Shift: add to the selection) |
+| Ctrl (⌘) + click (Place mode) | Add it to the selection or take it out |
+| Click an empty place (Place mode) | Let the selection go |
+| Delete (Backspace) | Take the selected away |
+| Ctrl + X / Ctrl + C / Ctrl + V | Cut / copy / paste (put a little apart; the copy stays in this browser) |
+
+With several selected, the 3-axis handles move them together and turn them together about up (scaling is one at a
+time). **Drag** and **Hand** on the view's left switch the cursor (V and H keys); with Hand, a drag anywhere turns
+the camera (Shift: moves it).
+
+### Pivot (what it turns about)
+
+A thing turns about its pivot, its middle unless moved. Under **Pivot** in the Objects tab, set it as numbers
+**from the object** (it moves and turns with the thing) or in the **world** (the place in the scene);
+**To the middle** and **To the bottom's middle** put it back. While the 3-axis handles' **Pivot** is pressed,
+the move handles move only the pivot.
+
 ## Your own (mods)
 
 Props, object kinds, auras and hand shapes the editor lacks can come from a mod. A prop is made of

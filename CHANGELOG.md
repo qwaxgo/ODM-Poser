@@ -42,6 +42,15 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 「クリックで自動的にモードを切り替える」（ポーズの欄）：物を押すと配置モード、人体の関節を押すとポーズモード（配置・カメラから。体格は残す）。このブラウザに残ります
 - 物（設置物）の幅・高さ・奥行き・角の数・位置・向き、床と天井の高さ、壁の位置と向き、ワイヤーの支点、人物の位置（castX/Z）、オーラの大きさにもスライダーを付けました（数値欄と連動、ドラッグは取り消し1回分）
 - カメラの位置と見る点を、XYZ それぞれスライダーと数値欄で調整できるように（スライダーを動かしても取り消し履歴は1回分）
+- 3軸ハンドル：掴んだ矢印・輪は太く、ほかは薄く表示します。ハンドルの大きさは画面に合わせて、スマホで約1.35倍、タブレットで1.5倍、大きい画面で1.75倍に（掴める範囲も同じだけ広く）
+- 物体・小物を範囲選択（何もない所からドラッグ、Shift＋で足す）と Ctrl＋クリックでいくつも選べるように。まとめて3軸ハンドルで動かす・回すことができます
+- 選んだ物を Delete（Backspace）で外し、Ctrl＋X／C／V で切り取り・コピー・貼り付けできるように（コピーはこのブラウザに残ります）
+- 図の左に「ドラッグ」「ハンド」のカーソルを追加（V・H キー）。ハンドではどこをドラッグしてもカメラが回ります
+- クリックでのモードの自動切り替えを最初からオンに。何もない所をクリックすると、ポーズ・体格からカメラモードへ。配置モードでは物の選択を外します
+- 物の回転の支点（中心）を動かせるように：3軸ハンドルの「支点」、設置のタブの数値（本体からの相対座標・絶対座標）、「中心に戻す」「底の中心に」
+- 図の右上の「3軸ハンドル」のスイッチを外しました（左のメニューで出す・隠す）
+- 「胴体を立体」を人物ごとの設定に
+- 図の左のメニューのすき間をクリックしても、図が操作できるように
 - 設置のタブを1つにまとめました：図形・床・壁・天井と小物を同じ「置く物」の一覧から置き、「置いた物」の一覧で、位置（XYZ）・回転（XYZ）・大きさ（図形は幅・高さ・奥行き、小物は手に持つときと同じ大きさと3軸）を変えます。「接地させる」は回転していても、いちばん低い所で地面や下の物に着けます
 - すべての物体を3軸で回転できるように（3軸ハンドルも3つの輪）。傾いた面には人物も足元の高さを合わせて立ちます
 - 壁と天井は物体（板）に。いくつでも置け、回転できます。前の版の配置タブの壁・天井は、開くと物体に移ります（地面は配置タブに残ります）
@@ -107,6 +116,15 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Click to switch mode (in the Pose tab): a press on a thing goes to Place, a press on the body to Pose (from Place or Camera; Body stays). Kept in this browser
 - Sliders beside the numbers of objects (size, sides, position, turn), the floor and ceiling heights, the wall, the wire's height, the figure's place and the aura size (linked with the number; a drag is one undo step)
 - The camera's position and look point: X, Y and Z each with a slider and a number (a slider drag is one undo step)
+- The 3-axis handles: the arrow or ring held is drawn heavier, the others fade. Their size fits the screen: about 1.35 times on a phone, 1.5 on a tablet, 1.75 on a large screen (the reach grows the same)
+- Objects and things are box-selected (a drag from an empty place, Shift adds) and Ctrl+clicked to select several; the 3-axis handles move and turn them together
+- Delete (Backspace) takes the selected away; Ctrl+X / C / V cut, copy and paste them (the copy stays in this browser)
+- The Drag and Hand cursors on the view's left (V, H keys); with Hand, a drag anywhere turns the camera
+- Switching modes by what is clicked is on at first; a click on an empty place goes from Pose or Body to Camera, and in Place mode lets the objects go
+- A thing's pivot (what it turns about) can be moved: the handles' Pivot button, numbers in the Objects tab (from the object or in the world), To the middle, To the bottom's middle
+- The 3-axis handles' switch on the view's top right is gone (the menu on the left shows and hides them)
+- Solid torso is each figure's own
+- A click in the gaps of the menu on the view's left reaches the view
 - The Objects tab is one place: shapes, floors, walls, ceilings and things are put from one "What to put" list, and from "Out in the scene" each one's place (XYZ), turn (XYZ) and size (a shape's width, height, depth; a thing's size and 3 axes as when held) are changed. "Put on the ground" sets it down by its lowest point, turned or not
 - Every object turns on all three axes (the 3-axis handles have three rings); figures stand on a tilted face at its height
 - Walls and ceilings are objects (slabs), as many as you like, turned any way; the old Place tab's wall and ceiling become slabs when a file opens (the ground stays in the Place tab)
