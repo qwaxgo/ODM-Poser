@@ -56,6 +56,7 @@ The setting of that name in the Pose tab (on at first) changes the mode to fit w
 
 Arrows and rings (move, rotate, scale) on the selected joint or thing. **3-axis handles** / **Off** on the view's left show and hide them; **Move**, **Rotate**, **Scale** (G, R, S keys) switch the tool.
 
+- The arrows, rings and squares always follow the scene's X, Y, Z, however the thing is turned, and it turns about those axes. A square (scale) stretches the thing's side nearest to its axis.
 - The arrow or ring held is drawn heavier, the others fade.
 - Their size fits the screen (about 1.35 times on a phone, 1.5 on a tablet, 1.75 on a large screen).
 - While they show, dragging a joint or a thing only selects it; the handles do the moving.
@@ -63,7 +64,9 @@ Arrows and rings (move, rotate, scale) on the selected joint or thing. **3-axis 
 
 ## Selecting and editing things (Place mode)
 
-Select by clicking, by a box, or Ctrl (⌘) + click to add or take out. Several selected move together and turn together about up.
+Select by clicking, by a box, or Ctrl (⌘) + click to add or take out. Several selected move together and turn together on X, Y, Z about one thing's pivot: the last one added; Ctrl + Shift + click on another selected one makes it the centre (until the selection goes).
+
+Ctrl + click the body (Place mode): takes the figure by its hips to move it (drag along the floor, or with the 3-axis handles' arrows and ring).
 
 | Do | Key | Button on the view's left |
 |----|-----|---------------------------|

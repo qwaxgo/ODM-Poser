@@ -54,6 +54,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 選んだ物の「削除」「切り取り」「コピー」「貼り付け」ボタンを図の左に（物を選んだときと、貼り付ける物があるときだけ。タッチでも使えます）
 - 図の左のメニューが2列でも収まらないとき（スマホの横向きなど）は、2列目を「…」で3軸ハンドルとカーソル・編集に切り替え、Shift・固定はモードの下へ
 - ドキュメントに「操作マニュアル」を追加（モード、カーソル、3軸ハンドル、自動切り替え、端末ごとの並び、カメラ操作）。README の「胴体を立体」を人物ごとの説明に
+- 3軸ハンドルの矢印・輪・四角を、物の向きによらず場面の X・Y・Z に揃えました（回転もその軸のまわり、変形は軸にいちばん近い辺を伸ばす）
+- 配置モードで Ctrl＋人体をクリックすると、腰を選んで人物全体を動かせるように
+- いくつか選んだ物を、1つの物（最後に足した物、Ctrl＋Shift＋クリックで変更）の支点を中心に、X・Y・Z でまとめて回せるように
 - カメラモードはいつもハンド：ドラッグでカメラ、クリックで関節ならポーズモード・物なら配置モードへ。Shift＋関節のクリックで体格モード（ポーズ・体格の間は Shift＋クリックで切り替え）
 - 操作のヒントに、これまでに変わった操作（ホイールで拡大・Ctrl＋Alt＋ホイールでレンズ、3軸ハンドルの出し方、モードの自動切り替え、境目・⇅ 上下・メニューの位置、スマホのメニューの閉じ方など）を追加
 - 設置のタブを1つにまとめました：図形・床・壁・天井と小物を同じ「置く物」の一覧から置き、「置いた物」の一覧で、位置（XYZ）・回転（XYZ）・大きさ（図形は幅・高さ・奥行き、小物は手に持つときと同じ大きさと3軸）を変えます。「接地させる」は回転していても、いちばん低い所で地面や下の物に着けます
@@ -133,6 +136,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Delete, Cut, Copy and Paste buttons for the selected on the view's left (shown with something selected or to paste; for touch too)
 - When the menu on the view's left does not fit in two columns (a phone sideways), … switches its second column between the 3-axis handles and the cursor and edit buttons; Shift and Pin go under the modes
 - A Manual page in the docs (modes, cursors, 3-axis handles, automatic switching, the layout on each device, the camera); the README's Solid torso is each figure's own
+- The 3-axis handles' arrows, rings and squares follow the scene's X, Y, Z however the thing is turned (it turns about those axes; a square stretches the side nearest its axis)
+- In Place mode, Ctrl + clicking the body takes the figure by its hips to move it
+- Several selected things turn together on X, Y, Z about one thing's pivot (the last one added; Ctrl + Shift + click changes it)
 - Camera mode is always the hand: a drag turns the camera; a click goes to Pose mode on a joint, to Place mode on a thing. Shift + a click on a joint goes to Body mode (Shift + click switches Pose and Body)
 - The hints show the operations changed before too (the wheel zooms, Ctrl+Alt+wheel the lens, showing the 3-axis handles, switching modes, the edge, ⇅, the menu's place, closing a phone's menu ...)
 - The Objects tab is one place: shapes, floors, walls, ceilings and things are put from one "What to put" list, and from "Out in the scene" each one's place (XYZ), turn (XYZ) and size (a shape's width, height, depth; a thing's size and 3 axes as when held) are changed. "Put on the ground" sets it down by its lowest point, turned or not

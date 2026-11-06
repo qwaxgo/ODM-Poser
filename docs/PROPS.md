@@ -102,7 +102,8 @@ In Place mode they are also dragged and moved, turned and scaled with the 3-axis
 |----|--------------|
 | Click a thing | Select it (to Place mode with automatic switching on) |
 | Drag from an empty place (cursor: Drag) | Select what the box takes in (Shift: add to the selection) |
-| Ctrl (⌘) + click (Place mode) | Add it to the selection or take it out |
+| Ctrl (⌘) + click (Place mode) | Add it to the selection or take it out (the last one added is what the group turns about) |
+| Ctrl + Shift + click (on one selected) | The group turns about this one |
 | Click an empty place (Place mode) | Let the selection go |
 | Click (Camera mode: always the hand cursor) | A joint: to Pose mode (Shift: Body mode); a thing: to Place mode. A drag turns the camera |
 | Shift + click a joint (Pose, Body mode) | Switch between Pose and Body |
@@ -112,7 +113,7 @@ In Place mode they are also dragged and moved, turned and scaled with the 3-axis
 
 Switching modes by what is clicked (“Switch modes by what is clicked” in the Pose tab, on at first) is set out in the [manual](MANUAL.md).
 
-With several selected, the 3-axis handles move them together and turn them together about up (scaling is one at a
+With several selected, the 3-axis handles move them together and turn them together on X, Y, Z about the leading one's pivot (scaling is one at a
 time). **Drag** and **Hand** on the view's left switch the cursor (V and H keys); with Hand, a drag anywhere turns
 the camera (Shift: moves it).
 
