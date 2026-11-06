@@ -112,6 +112,7 @@ function copyKeys(keys){
   clip = {solids: keys.filter(k => k[0] === "s").map(k => deep(solidOfKey(k))), items: keys.filter(k => k[0] === "i").map(k => deep(itemOfKey(k)))};
   pasted = 0;
   try { localStorage.setItem(CLIP_KEY, JSON.stringify(clip)); } catch (e) {}
+  draw();                                     // the paste button comes on
   return true;
 }
 function paste(){
@@ -160,6 +161,19 @@ DOWN_HOOKS.unshift((cv, x, y, e) => {
   if (pick(cv, x, y) >= 0 && selected().length){ picks = []; soSel = -1; if (loose(itemOfKey("i" + scSel))) scSel = -1; }
   return null;
 });
+// a click let go without a drag. カメラ (always the hand): a joint goes to ポーズ (Shift: 体格), an object
+// to 配置. Elsewhere (the drag cursor): Shift + a joint goes between ポーズ and 体格 (配置: to 体格)
+tapClick = t => {
+  if (!autoMode) return;
+  const [x, y] = t.at, i = pick(front, x, y);
+  if (t.mode === "persp"){
+    if (i >= 0){ sel = i; modeTo(t.shift ? "body" : "pose"); draw(); return; }
+    const k = under(x, y); if (k){ modeTo("place"); setSel([k]); }
+    return;
+  }
+  if (cursor === "hand" || !t.shift || i < 0) return;           // the hand's click did it already
+  if (t.mode === "pose") modeTo("body"); else if (t.mode === "body") modeTo("pose"); else if (t.mode === "place") modeTo("body");
+};
 emptyClick = () => {
   if (mode === "place"){ if (selected().length) setSel([]); return; }
   if (autoMode && (mode === "pose" || mode === "body")) modeTo("persp");
@@ -192,13 +206,20 @@ function finishBox(b){
 handHook = (cv, x, y, e) => {
   if (cursor !== "hand" || mode === "persp") return null;
   const i = pick(cv, x, y);
-  return {tapPick: i, cv, x, y, pan: !!(e && e.shiftKey), end(){ handClick(i, x, y); }};
+  const shift = !!(e && e.shiftKey);
+  return {tapPick: i, cv, x, y, pan: shift, end(){ handClick(i, x, y, shift); }};
 };
-function handClick(i, x, y){
+// a joint clicked: ポーズ, or with Shift 体格 (from ポーズ or 体格, Shift goes to the other one)
+function jointMode(shift){
+  if (!autoMode) return;
+  if (shift) modeTo(mode === "body" ? "pose" : "body");
+  else if (mode === "place" || mode === "persp") modeTo("pose");
+}
+function handClick(i, x, y, shift){
   if (i >= 0){
     sel = i;
     if (mode === "place"){ picks = []; soSel = -1; if (loose(itemOfKey("i" + scSel))) scSel = -1; }
-    if (autoMode && (mode === "place" || mode === "persp")) modeTo("pose");
+    jointMode(shift);
     draw(); return;
   }
   const k = under(x, y);
@@ -234,24 +255,59 @@ curBar.innerHTML = `<button type="button" data-cur="drag" data-gzicon="cursor" t
   `<button type="button" data-cur="hand" data-gzicon="hand" title="ハンド：ドラッグでカメラを回す・Shift＋ドラッグで動かす（Hキー）"><span>ハンド</span></button>`;
 ($("ovGizmo") || $("modes")).appendChild(curBar);
 curBar.addEventListener("click", e => { const b = e.target.closest("button[data-cur]"); if (b) setCursor(b.dataset.cur, true); });
+// カメラ mode is always the hand (a drag turns the camera); the buttons show it
+let curKey = "";
 function syncCursor(){
-  curBar.querySelectorAll("button[data-cur]").forEach(b => { const on = b.dataset.cur === cursor; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
-  front.classList.toggle("hand-cursor", cursor === "hand");
+  const now = mode === "persp" ? "hand" : cursor; if (now + mode === curKey) return; curKey = now + mode;
+  curBar.querySelectorAll("button[data-cur]").forEach(b => { const on = b.dataset.cur === now; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on));
+    b.disabled = mode === "persp" && b.dataset.cur === "drag"; });
+  front.classList.toggle("hand-cursor", now === "hand");
 }
+{ const d0 = draw; draw = function(){ d0.apply(this, arguments); syncCursor(); }; }
 function setCursor(c, tell){
   cursor = c; try { localStorage.setItem(CUR_KEY, c); } catch (e) {}
-  syncCursor(); if (tell) toast(c === "hand" ? "ハンド：ドラッグでカメラを動かします。" : "ドラッグ：何もない所からドラッグで範囲選択します。");
+  curKey = ""; syncCursor(); if (tell) toast(c === "hand" ? "ハンド：ドラッグでカメラを動かします。" : "ドラッグ：何もない所からドラッグで範囲選択します。");
 }
 addEventListener("DOMContentLoaded", () => { if (!window.ODMICONS) return;
   curBar.querySelectorAll("button[data-gzicon]").forEach(b => { if (!b.querySelector("svg")) b.insertAdjacentHTML("afterbegin", ODMICONS.svg(b.dataset.gzicon)); }); });
 syncCursor();
+
+// ---- the objects' edit buttons (for touch, and the mouse too): under the cursor, while something is
+// selected in 配置 or there is something to paste
+const editBar = document.createElement("div");
+editBar.className = "gz-tools edit-tools"; editBar.id = "ovEdit"; editBar.setAttribute("role", "group"); editBar.setAttribute("aria-label", "選んだ物の編集"); editBar.dataset.ui = "skip";
+editBar.hidden = true;
+editBar.innerHTML = [["del", "trash", "削除", "選んだ物を外す（Delete）"], ["cut", "cut", "切り取り", "選んだ物を切り取る（Ctrl+X）"],
+  ["copy", "copy", "コピー", "選んだ物をコピーする（Ctrl+C）"], ["paste", "paste", "貼り付け", "コピーした物を貼り付ける（Ctrl+V）"]]
+  .map(([id, ic, name, tip]) => `<button type="button" data-ed="${id}" data-gzicon="${ic}" title="${tip}"><span>${name}</span></button>`).join("");
+curBar.after(editBar);
+editBar.addEventListener("click", e => {
+  const b = e.target.closest("button[data-ed]"); if (!b || b.disabled) return;
+  const keys = mode === "place" ? selected() : [], n = keys.length;
+  if (b.dataset.ed === "del") removeKeys(keys);
+  else if (b.dataset.ed === "cut"){ if (copyKeys(keys)){ removeKeys(keys, true); say(n > 1 ? `${n}個の物を切り取りました。` : "切り取りました。"); } }
+  else if (b.dataset.ed === "copy"){ if (copyKeys(keys)) say(n > 1 ? `${n}個の物をコピーしました。` : "コピーしました。"); }
+  else paste();
+});
+let editKey = "";
+function syncEdit(){
+  const n = mode === "place" ? selected().length : 0, clip = mode === "place" && !!clipNow();
+  const k = n + "|" + clip; if (k === editKey) return; editKey = k;
+  editBar.hidden = !(n || clip);
+  editBar.querySelectorAll("button[data-ed]").forEach(b => { b.disabled = b.dataset.ed === "paste" ? !clip : !n; });
+}
+{ const d0 = draw; draw = function(){ d0.apply(this, arguments); syncEdit(); }; }
+addEventListener("DOMContentLoaded", () => { if (!window.ODMICONS) return;
+  editBar.querySelectorAll("button[data-gzicon]").forEach(b => { if (!b.querySelector("svg")) b.insertAdjacentHTML("afterbegin", ODMICONS.svg(b.dataset.gzicon)); }); });
 
 window.ODMObj = {key: single, group, selected, setSel, pivWorld, pivRel, setPivRel, setPivAbs, resetPiv, keepPivot,
   remove: removeKeys, copy: copyKeys, paste, hasClip: () => !!clipNow(), cursor: () => cursor, setCursor};
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
 (window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({
-  "カーソル": "Cursor", "ドラッグ": "Drag", "ハンド": "Hand",
+  "カーソル": "Cursor", "選んだ物の編集": "Edit the selected", "削除": "Delete", "切り取り": "Cut", "コピー": "Copy", "貼り付け": "Paste",
+  "選んだ物を外す（Delete）": "Take the selected away (Delete)", "選んだ物を切り取る（Ctrl+X）": "Cut the selected (Ctrl+X)",
+  "選んだ物をコピーする（Ctrl+C）": "Copy the selected (Ctrl+C)", "コピーした物を貼り付ける（Ctrl+V）": "Paste what was copied (Ctrl+V)", "ドラッグ": "Drag", "ハンド": "Hand",
   "ドラッグ：何もない所からドラッグで物を範囲選択（Vキー）": "Drag: drag from an empty place to box-select objects (V)",
   "ハンド：ドラッグでカメラを回す・Shift＋ドラッグで動かす（Hキー）": "Hand: drag to turn the camera, Shift+drag to move it (H)",
   "ハンド：ドラッグでカメラを動かします。": "Hand: dragging moves the camera.", "ドラッグ：何もない所からドラッグで範囲選択します。": "Drag: drag from an empty place to box-select.",

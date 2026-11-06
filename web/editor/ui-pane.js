@@ -83,11 +83,26 @@ grip.addEventListener("keydown", e => {
 
 // the modes' column in one or two columns, and the switches' ▲ ▼
 const stack = document.querySelector("#ovModes .ov-stack"), opts = $("viewOpts");
+// two columns still too tall (a phone sideways): the second column folds; … switches it between the
+// handles' tools and the cursor and the objects' edit buttons, and Shift / 固定 go under the modes
+const moreBox = document.createElement("div");
+moreBox.className = "gz-tools more-tools"; moreBox.dataset.ui = "skip";
+moreBox.innerHTML = `<button type="button" id="ovMore" aria-expanded="false" title="カーソル・選んだ物の編集を出す">…</button>`;
+($("ovGizmo") || stack).appendChild(moreBox);
+$("ovMore").addEventListener("click", () => { const on = !stack.classList.contains("more-open");
+  stack.classList.toggle("more-open", on); $("ovMore").setAttribute("aria-expanded", String(on));
+  $("ovMore").textContent = on ? "‹" : "…"; $("ovMore").title = on ? "3軸ハンドルに戻す" : "カーソル・選んだ物の編集を出す"; });
 function columns(){
   const room = stack.parentElement.clientHeight; if (!room) return;
+  stack.classList.remove("tight");
   const kids = [...stack.children].filter(c => c.getClientRects().length);
   const one = kids.reduce((h, c) => h + c.offsetHeight, 0) + 4 * Math.max(0, kids.length - 1);
-  stack.classList.toggle("two", one > room + 1);
+  const two = one > room + 1;
+  stack.classList.toggle("two", two);
+  const h = id => { const el = $(id); return el && el.getClientRects().length ? el.offsetHeight : 0; };
+  const tight = two && h("ovUndoRow") + 4 + Math.max(h("modes"), h("ovGizmo") + 4 + h("ovTouch")) > room + 1;
+  stack.classList.toggle("tight", tight);
+  if (!tight) stack.classList.remove("more-open");
 }
 function more(){
   const top = opts.scrollTop, rest = opts.scrollHeight - opts.clientHeight - top;
@@ -103,14 +118,17 @@ function update(){
   if (k !== grip.dataset.side){ grip.dataset.side = k;
     grip.className = "pane-grip" + (k ? " " + ({s: "r", tb: "b", tt: "t"}[k] || k) : "");
     grip.setAttribute("aria-orientation", k === "b" || k === "tb" || k === "tt" ? "horizontal" : "vertical"); }
-  const s = [innerWidth, innerHeight, document.body.className, stage.offsetHeight].join("|");
+  // the groups shown come and go (the objects' edit buttons): the columns are measured again
+  const s = [innerWidth, innerHeight, document.body.className, stage.offsetHeight, stack.querySelectorAll("[hidden]").length].join("|");
   if (s !== key){ key = s; columns(); }
+  // folded: a dot on … while the objects' edit buttons wait there
+  const ed = $("ovEdit"); $("ovMore").classList.toggle("has-edit", !!ed && !ed.hidden);
   more();
 }
 restore();
 { const d0 = draw; draw = function(){ d0.apply(this, arguments); update(); }; }
 addEventListener("resize", () => { key = ""; });
 if (window.ODMPoserI18n) ODMPoserI18n.add({"図と操作欄の境目（ドラッグで広さを変える）": "The edge between the views and the panel (drag it for more room)",
-  "上へ": "Up", "下へ": "Down"});
+  "上へ": "Up", "下へ": "Down", "カーソル・選んだ物の編集を出す": "Show the cursor and the edit buttons", "3軸ハンドルに戻す": "Back to the 3-axis handles"});
 relayout();
 })();

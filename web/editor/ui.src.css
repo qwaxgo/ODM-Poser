@@ -200,7 +200,21 @@
   .gz-tools.off button[data-gz] { display: none; }
   .gz-tools:not(.off) .gz-on, .gz-tools.off .gz-off, .gz-tools.off .gz-piv { display: none; }
   /* the cursor (pose_objects.js): ドラッグ / ハンド, under the handles' tools */
-  .cur-tools { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--border-default); }
+  .cur-tools, .edit-tools { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--border-default); }
+  .edit-tools[hidden] { display: none; }
+  /* folded (ui-pane.js): two columns still too tall; Shift / 固定 under the modes, the second column
+     shows the handles' tools or (…) the cursor and the edit buttons */
+  .more-tools { display: none; margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--border-default); }
+  .ov-stack.tight .more-tools { display: flex; }
+  #ovMore { justify-content: center; font-weight: 700; position: relative; }
+  .ov-stack.more-open #ovMore.has-edit::after { display: none; }
+  #ovMore.has-edit::after { content: ""; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--sel); }
+  .ov-stack.two.tight { grid-template-areas: "undo undo" "modes gz" "touch gz"; }
+  .ov-stack.tight:not(.more-open) #ovGizmo :is(.cur-tools, .edit-tools) { display: none; }
+  .ov-stack.tight.more-open #ovGizmo .gz-ov { display: none; }
+  .ov-stack.tight.more-open .cur-tools { margin-top: 0; padding-top: 0; border-top: 0; }
+  .ov-stack.tight.more-open :is(.cur-tools, .edit-tools):not([hidden]) { display: grid; grid-template-columns: auto auto; }
+  .ov-stack.tight :is(#modes, #ovTouch) button, .ov-stack.tight .gz-tools button { min-height: 40px; }
   canvas.hand-cursor { cursor: grab; } canvas.hand-cursor:active { cursor: grabbing; }
   .gz-tools .gz-on, .gz-tools .gz-off { font-weight: 600; }
   #ovGizmo { flex-direction: column; }

@@ -893,7 +893,7 @@ function down(cv, e){
 let gizmoHolds = () => false;
 // the cursor's tools (pose_objects.js): the hand's press, the drag cursor's press on an empty place,
 // and a click on an empty place (配置: the objects let go; ポーズ・体格: カメラ, when switching is on)
-let handHook = null, emptyDrag = null, emptyClick = null;
+let handHook = null, emptyDrag = null, emptyClick = null, tapClick = null;
 function move(cv, e){
   if (!drag) return;
   const [x, y] = evPos(cv, e), W = cv.width, H = cv.height;
@@ -1037,7 +1037,7 @@ for (const cv of [front, side]){
       }
       if (touches.size > 2 || pinch) return;
     }
-    tap = {cv, x: e.clientX, y: e.clientY, t: performance.now(), type: e.pointerType};
+    tap = {cv, x: e.clientX, y: e.clientY, t: performance.now(), type: e.pointerType, mode, shift: evMods(e).shiftKey, at: evPos(cv, e)};
     down(cv, evMods(e));
   });
   cv.addEventListener("pointermove", e => {
@@ -1059,6 +1059,8 @@ for (const cv of [front, side]){
     touches.delete(e.pointerId);
     if (pinch){ if (touches.size === 0){ if (pinch.cam) syncUI(); pinch = null; } return; }
     up();
+    // a click (no drag) on the front view: the mode follows what was clicked (pose_objects.js)
+    if (e.type === "pointerup" && tap && tap.cv === front && tapClick) tapClick(tap);
     // a double tap (finger or pen) flips the bone, as a double-click does
     if (e.type === "pointerup" && tap && tap.cv === front && tap.type !== "mouse" && performance.now() - tap.t < 300){
       const now = {x: e.clientX, y: e.clientY, t: performance.now()};
@@ -2202,7 +2204,8 @@ const AUTO_KEY = KEY + "-automode";
 let autoMode = true; try { autoMode = localStorage.getItem(AUTO_KEY) !== "0"; } catch (e) {}
 function modeTo(m){ const b = document.querySelector(`#modes [data-mode="${m}"]`); if (b && mode !== m) b.click(); }
 DOWN_HOOKS.unshift((cv, x, y) => {
-  if (!autoMode || cv !== front) return null;
+  // カメラ: a drag turns the camera; a click switches (on letting go, pose_objects.js tapClick)
+  if (!autoMode || cv !== front || mode === "persp") return null;
   if (pick(cv, x, y) >= 0){ if (mode === "place" || mode === "persp") modeTo("pose"); return null; }
   if ((typeof solidUnder === "function" && solidUnder(x, y)) || (typeof itemUnder === "function" && itemUnder(x, y))) modeTo("place");
   return null;
