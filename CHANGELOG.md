@@ -57,7 +57,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 3軸ハンドルの矢印・輪・四角を、物の向きによらず場面の X・Y・Z に揃えました（回転もその軸のまわり、変形は軸にいちばん近い辺を伸ばす）
 - 配置モードで Ctrl＋人体をクリックすると、腰を選んで人物全体を動かせるように
 - いくつか選んだ物を、1つの物（最後に足した物、Ctrl＋Shift＋クリックで変更）の支点を中心に、X・Y・Z でまとめて回せるように
-- カメラのタブの名前を整理：「カメラの向き」（左右・上下・傾き）、「カメラの位置」「見る点」（左右・上下・前後）
+- カメラのタブを「カメラの向き」（左右・上下・傾き：その場でカメラを回す）と「カメラの位置」（左右・上下・前後：向きを変えずに動かす）の2つに。「見る点」の欄はなくしました
 - パース定規のガイドを図形に：設置のタブで「ガイドとして置く」にすると、どの図形でも、いくつでも、定規の向きにそろえて置けます（辺は消失点まで延び、アタリには入らない）。前の「ガイド立方体」はガイドの直方体に移ります
 - ガイド図形を3軸ハンドルで動かせるように（辺の向きに沿って）。「変形」は引いた側の辺だけを延ばし、透視していない辺（高さ・幅）も変えられます
 - 置く前に大きさを決められるように：設置のタブでプレビューを見ながら、図形の幅・高さ・奥行き・角の数・天面、小物の大きさ・X・Y・Z・部位ごとの長さ。装備のタブにも部位ごとの長さを追加
@@ -144,7 +144,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The 3-axis handles' arrows, rings and squares follow the scene's X, Y, Z however the thing is turned (it turns about those axes; a square stretches the side nearest its axis)
 - In Place mode, Ctrl + clicking the body takes the figure by its hips to move it
 - Several selected things turn together on X, Y, Z about one thing's pivot (the last one added; Ctrl + Shift + click changes it)
-- The Camera tab's names sorted: Camera direction (left-right, up-down, roll), Camera position and Looks at (left-right, up-down, front-back)
+- The Camera tab is Camera direction (left-right, up-down, roll: turns the camera where it stands) and Camera position (left-right, up-down, front-back: moves it without turning it); the Looks at fields are gone
 - The perspective ruler's guides are shapes: with “Put as a guide” in the Objects tab, any shape, as many as you like, turned to the ruler (edges carried on to the vanishing points; not in the rough picture). The box guide of before becomes a guide box
 - Guide shapes move with the 3-axis handles (along their edges); Scale lengthens only the side pulled, and the edges without a vanishing point (height, width) change too
 - Sizes before putting: in the Objects tab, with the preview, a shape's width, height, depth, sides and top, a thing's size, X, Y, Z and section lengths; section lengths in the Equip tab too

@@ -957,9 +957,10 @@ function camSync(){
   for (const id of ["yaw", "pitch", "roll"]){ const v = Math.round(S.cam[id]); $(id).value = v;
     if (document.activeElement !== $(id + "V")) $(id + "V").value = v; }
 }
-// the camera as coordinates (cm): where it is and the point it looks at (S.center). Its distance
-// is camDist(), so the place sets the zoom too; pitch and zoom keep to their ranges.
-const CAM_P = ["camPX", "camPY", "camPZ"], CAM_T = ["camTX", "camTY", "camTZ"];
+// the camera as coordinates (cm): where it is (camPos). The panel's direction turns it where it
+// stands and its position moves it as it faces: the point it looks at (S.center, what the view's
+// drags orbit) goes along. CAM_T (the look point's own numbers) is no longer on the panel.
+const CAM_P = ["camPX", "camPY", "camPZ"], CAM_T = [];
 function camDist1(){ const [W, H] = exportSize(); return camDist(W, H) * S.cam.zoom; }   // at zoom 1
 function camPos(){
   const p = deg(S.cam.pitch), y = deg(S.cam.yaw), D = camDist1() / S.cam.zoom;
@@ -1831,7 +1832,10 @@ for (const [id, whole] of [["symJoint", false], ["symLimb", true]])
     remember(); symmetrize(sel, whole); afterEdit(); draw(); say("反対側をそろえました。"); });
 for (const [id, set] of [["lens", v => S.cam.lens = v], ["yaw", v => S.cam.yaw = v], ["pitch", v => S.cam.pitch = v],
     ["roll", v => S.cam.roll = v]]){
-  $(id).addEventListener("input", e => { set(+e.target.value); syncUI(); draw(); });
+  // カメラの向き: turned where it stands (the camera stays put, what it looks at moves)
+  $(id).addEventListener("input", e => { const pos = camPos(); set(+e.target.value);
+    if (id === "yaw" || id === "pitch") S.center = add(S.center, sub(pos, camPos()));
+    syncUI(); draw(); });
 }
 $("camReset").addEventListener("click", () => { remember(); S.cam = fresh().cam; syncUI(); draw(); });
 // the same reset in the リセット tab: the camera back to its first place (saved cameras and the lock stay)
@@ -2094,8 +2098,8 @@ for (const id of [...CAM_P, ...CAM_T]) $(id).addEventListener("change", () => {
   const v = ids => ids.map(k => +$(k).value);
   if (![...v(CAM_P), ...v(CAM_T)].every(isFinite)) return;
   if (!camSlide) remember();
-  if (CAM_T.includes(id)){ const pos = camPos(); S.center = v(CAM_T); setCamPos(pos); }
-  else if (!setCamPos(v(CAM_P))) say("カメラが見る点に近すぎます。", true);
+  // カメラの位置: moved as it faces (the point it looks at goes along)
+  S.center = add(S.center, sub(v(CAM_P), camPos()));
   syncUI(); draw();
 });
 { const sync0 = syncUI; syncUI = function(){ sync0(); syncCams(); syncCamRanges(); }; }

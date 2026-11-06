@@ -91,7 +91,7 @@ a shape's width, height, depth (a prism's or pyramid's sides and top); a thing's
 
 ## Camera
 
-In the Camera tab, **Camera direction** is left-right, up-down and roll (degrees); **Camera position** and **Looks at** are left-right, up-down and front-back (cm).
+In the Camera tab, **Camera direction** (left-right, up-down, roll; degrees) turns the camera where it stands; **Camera position** (left-right, up-down, front-back; cm) moves it without turning it.
 
 
 | Do | What it does |

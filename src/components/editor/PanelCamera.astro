@@ -1,5 +1,5 @@
 ---
-// カメラ: lens, turn, place and target; locking and remembered cameras.
+// カメラ: lens, direction (turned where it stands) and position (moved as it faces); locking and remembered cameras.
 ---
 
   <section data-menu="camera">
@@ -20,14 +20,7 @@
     <div class="row"><input type="range" id="camPYR" min="-100" max="400" step="5"><input type="number" class="num" id="camPY" step="5"><span class="unit">cm</span></div>
     <label>前後</label>
     <div class="row"><input type="range" id="camPZR" min="-600" max="600" step="5"><input type="number" class="num" id="camPZ" step="5"><span class="unit">cm</span></div>
-    <h3>見る点</h3>
-    <label>左右</label>
-    <div class="row"><input type="range" id="camTXR" min="-600" max="600" step="5"><input type="number" class="num" id="camTX" step="5"><span class="unit">cm</span></div>
-    <label>上下</label>
-    <div class="row"><input type="range" id="camTYR" min="-100" max="400" step="5"><input type="number" class="num" id="camTY" step="5"><span class="unit">cm</span></div>
-    <label>前後</label>
-    <div class="row"><input type="range" id="camTZR" min="-600" max="600" step="5"><input type="number" class="num" id="camTZ" step="5"><span class="unit">cm</span></div>
-    <div class="hint">床の中心が 0。前後は人物の正面側が＋。位置を変えると、見る点を向いたまま向き（左右・上下）と拡大が決まります（傾きはそのまま）。</div>
+    <div class="hint">「カメラの向き」はその場でカメラの角度を変え、「カメラの位置」は角度を変えずにカメラを動かします。位置は床の中心が 0、前後は人物の正面側が＋です。</div>
     <div class="btns"><button id="camReset">↺ リセット</button></div>
   </section>
 

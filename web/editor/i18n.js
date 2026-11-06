@@ -11,8 +11,10 @@
     "伸ばした形": "When stretched", "球のまま伸ばす": "Stretch the ball", "円柱でつなぐ": "Join with a cylinder", "↺ 頭の形を戻す": "↺ Default head shape",
     "頭の大きさ（頭身）は変わりません。見た目の形だけを変えます。": "The head's size (heads tall) stays; only its shape changes.",
     "↺ カメラを初期状態に": "↺ Reset the camera", "カメラを初期状態に戻しました。": "The camera is back to the start.", "頭の形を戻しました。": "Head shape reset.",
-    "カメラの向き（左右・上下・傾き）・レンズ・位置・見る点を、最初のカメラに戻します（記憶したカメラと固定は残ります）。":
-      "Puts the camera's direction (left-right, up-down, roll), lens, position and look-at point back to the first camera (remembered cameras and the lock stay).",
+    "カメラの向き（左右・上下・傾き）・レンズ・位置を、最初のカメラに戻します（記憶したカメラと固定は残ります）。":
+      "Puts the camera's direction (left-right, up-down, roll), lens and position back to the first camera (remembered cameras and the lock stay).",
+    "「カメラの向き」はその場でカメラの角度を変え、「カメラの位置」は角度を変えずにカメラを動かします。位置は床の中心が 0、前後は人物の正面側が＋です。":
+      "Camera direction turns the camera where it stands; Camera position moves it without turning it. Positions: 0 is the middle of the floor, front-back is + toward the figure's front.",
     "利き手（両手持ちの主に持つ手）": "Main hand (the one that holds a two-handed thing)",
     "対象": "Target", "人物（体の部位）": "Figure (body parts)",
     "対象（人物・床・物・オーラなど）を選び、色を変えるものにチェックを入れて色を選ぶか、#rrggbb のコードを入力します。チェックしていないものは既定の色のままです（書き出すアタリ画像にも反映）。":
