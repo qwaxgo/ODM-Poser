@@ -108,6 +108,9 @@ In Place mode they are also dragged and moved, turned and scaled with the 3-axis
 | Shift + click a joint (Pose, Body mode) | Switch between Pose and Body |
 | Delete (Backspace) | Take the selected away |
 | Ctrl + X / Ctrl + C / Ctrl + V | Cut / copy / paste (put a little apart; the copy stays in this browser) |
+| **Delete**, **Cut**, **Copy**, **Paste** on the view's left | The same as buttons (for phones and tablets; shown only with something selected or to paste; behind “…” on a narrow screen) |
+
+Switching modes by what is clicked (“Switch modes by what is clicked” in the Pose tab, on at first) is set out in the [manual](MANUAL.md).
 
 With several selected, the 3-axis handles move them together and turn them together about up (scaling is one at a
 time). **Drag** and **Hand** on the view's left switch the cursor (V and H keys); with Hand, a drag anywhere turns

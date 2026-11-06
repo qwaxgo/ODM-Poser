@@ -53,8 +53,8 @@ open `index.html`; mods go in its `mods` folder), and an app (an AppImage for Li
 - **Composition picture**: "Save composition" saves what the front view shows at that size, with
   the parts you tick (figures, props, objects, floor and walls, the ruler, auras) on white, clear or
   the screen's background.
-- **Solid torso** (a switch above the views, on by default): the chest and pelvis are drawn as
-  blocks with depth; off, as flat trapezoids.
+- **Solid torso** (a switch on the view's top right, on by default; each figure has its own): the chest and
+  pelvis are drawn as blocks with depth; off, as flat trapezoids.
 - **Hidden lines dashed** (a switch above the views): what lies behind a body or an object is drawn
   dashed, in the view and in every export. With a clear background the composition picture is lines
   only (auras as outlines).
@@ -234,7 +234,7 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **複数の人物**：「人物」の欄の「人物を追加」「複製」。編集するのは選んだ人物だけ（ポーズ・体格・小物・オーラ・ワイヤー）で、ほかの人物は薄く表示され、その丸をクリックすると切り替わります。床・壁・物体・定規・カメラは共通。アタリ・OpenPose（1人ずつ）・構図の画像には全員が入ります。
 - **書き出しの比率と解像度**：比率（1:1・3:4・16:9・A判・2.35:1・自分で指定）と長い辺（最大 8192 px）から幅と高さを決めます。画面の図もその比率になります。
 - **構図の画像**：「構図を保存」で、正面の図をその大きさで保存。入れるもの（人物・小物・物体・床と壁・パース定規・オーラ）と背景（白・透明・画面と同じ色）を選べます。
-- **胴体を立体に**（図の上のスイッチ、最初はオン）：胸と骨盤を厚みのある台形の箱で描きます。オフにすると平らな台形。
+- **胴体を立体に**（図の右上のスイッチ、最初はオン。人物ごとの設定）：胸と骨盤を厚みのある台形の箱で描きます。オフにすると平らな台形。
 - **隠れた線を破線に**（図の上のスイッチ）：体や物体の陰に隠れた線を破線で描きます（画面と書き出しの両方）。構図の画像を背景「透明」で保存すると、線だけの透過画像になります（オーラも輪郭だけ）。
 - **ライト／ダーク**：右上のボタンで切り替え（自動はシステムの設定に合わせる）。
 - **SNS に投稿**：X・Bluesky・Threads・Misskey（misskey.io・misskey.dev・みすてむず、ほかは自分で登録）・Mastodon（Pawoo・mstdn.jp・Fedibird、ほかは自分で登録）・Facebook・Reddit（英文のタイトル）・LINE とオープンチャット・Teams・Pinterest に投稿画面を開いて、Instagram・TikTok・カカオトーク・Discord・Slack・Yay! にはスマホの共有メニューから（パソコンでは文をコピーしてサービスを開きます）、そのほかのアプリには共有メニューで、#ODMPoser #立体人形装置 とリンクを付けて投稿（Threads は文字数に収まらないときサイトのリンクに）。リンクは画像付きのカードで表示されます。リンクには編集データを入れられ（`#pose=` 以降）、開くと同じ人物・小物・物体・カメラになります（そのブラウザの前の編集は保存され、戻せます）。リンクに入る MOD は公式（GitHub の qwaxgo）のものだけで、開いた人がボタンを押したときだけ追加されます。ほかの MOD の小物・物体は単純な図形や棒になります。

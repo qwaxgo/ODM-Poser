@@ -650,7 +650,7 @@ body.sheet .ov-toast { bottom: calc(var(--bar-h) + 12px); }
 /* the camera pad's sticks and the sheet's bar: the sticks lie above the bar */
 body.sheet .campad .stick, body.sheet .campad .zoomer { bottom: calc(var(--bar-h) + 12px + env(safe-area-inset-bottom)); }
 
-/* ---- the tall layout (an upright tablet or monitor; docs/UI-LAYOUT-VERTICAL.md as agreed): the views take
+/* ---- the tall layout (an upright tablet or monitor; docs/MANUAL.md): the views take
    at least half the height (--tall-k, 50-85 %, the grip on their edge); the rest, from the edge of the
    screen inward: the category bar (作る・見る・出す・ODM-Poserについて), the categories' row, the tabs' row,
    then the tab's controls side by side (scrolling sideways, sliders upright). The bar and the menu go at
