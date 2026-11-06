@@ -14,19 +14,33 @@ const scBox = document.createElement("div");
 scBox.className = "pv-box";
 scBox.innerHTML = `<label title="持つ・置く前にプレビュー"><input type="checkbox" id="scPrevOn" checked> プレビュー</label>` +
   ctl("scPreSize", "大きさ", 30, 300, 1, "%", 100) +
-  ctl("scPreX", "X 方向（赤）", 20, 400, 1, "%", 100) + ctl("scPreY", "Y 方向（緑）", 20, 400, 1, "%", 100) + ctl("scPreZ", "Z 方向（青）", 20, 400, 1, "%", 100);
+  ctl("scPreX", "X 方向（赤）", 20, 400, 1, "%", 100) + ctl("scPreY", "Y 方向（緑）", 20, 400, 1, "%", 100) + ctl("scPreZ", "Z 方向（青）", 20, 400, 1, "%", 100) +
+  `<div id="scPreSegs"></div>`;
 $("scAddR").closest(".btns").before(scBox);
 for (const id of ["scPreSize", "scPreX", "scPreY", "scPreZ"]) linkRange(id);
 $("scPrevOn").addEventListener("change", draw);
-$("scKey").addEventListener("change", draw);
+// each section's length (柄・刀身 ...), as in サイズ, for the kind chosen
+let segKey = "";
+function segRows(){
+  const key = $("scKey").value; if (key === segKey) return; segKey = key;
+  const sg = typeof segsOf === "function" ? segsOf(PROPS_[key]) : null;
+  $("scPreSegs").innerHTML = sg ? sg.list.map(g => ctl("scPreSeg_" + g.id, `部位の長さ：${g.ja}`, 20, 400, 1, "%", 100)).join("") : "";
+  if (sg) for (const g of sg.list) linkRange("scPreSeg_" + g.id);
+}
+$("scKey").addEventListener("change", () => { segRows(); draw(); });
 const pre = id => (+$(id).value || 100) / 100;
 function sized(it){                            // the sizes set before, on a new thing
   it.scale = pre("scPreSize");
   const st = ["scPreX", "scPreY", "scPreZ"].map(pre);
   if (st.some(v => v !== 1)) it.stretch = st;
+  const segs = {}; $("scPreSegs").querySelectorAll("input[type=range]").forEach(r => { const v = +r.value / 100;
+    if (isFinite(v) && v !== 1) segs[r.id.slice(9)] = Math.max(0.05, v); });
+  if (Object.keys(segs).length) it.segs = segs;
   return it;
 }
+segRows();
 function ghostItem(hand){
+  segRows();                                   // the list was refilled (another category)
   const key = $("scKey").value, def = PROPS_[key]; if (!def) return null;
   const it = sized({key, off: [0, 0, 0], rot: [0, 0, 0], scale: 1});
   if (def.place === "hand") it.hand = hand;

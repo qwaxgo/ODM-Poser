@@ -27,11 +27,9 @@ function rows(){
     (f.auras || []).forEach((a, n) => out.push({kind: "aura", fig: k, n, depth: 1, icon: "Glow",
       name: (AURA_KINDS[a.kind] || AURA_KINDS.flame)[0].replace(/（.*$/, ""), note: (AURA_PARTS[a.part] || AURA_PARTS.body)[0]}));
   }
-  (S.solids || []).forEach((o, n) => apart.push({kind: "solid", n, depth: 0, name: solidName(o), icon: "Home"}));
+  (S.solids || []).forEach((o, n) => apart.push({kind: "solid", n, depth: 0, name: (o.guide ? "ガイド：" : "") + solidName(o), icon: o.guide ? "ruler" : "Home"}));
   const E = S.env || {};
   for (const [key, ja] of ENV) if (E[key]) apart.push({kind: "env", n: key, depth: 0, name: ja, icon: "FrameSize"});
-  const r = S.ruler || {};
-  if (r.on && r.cube) apart.push({kind: "cube", depth: 0, name: "定規の立方体", icon: "ruler"});
   return {figs: out, apart};
 }
 // the row's own figure becomes the one being edited, and its panel selects it

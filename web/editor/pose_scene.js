@@ -544,7 +544,7 @@ function surfaces(){
   if (E.floor) out.push({name: "床", p: [0, +E.floorY || 0, 0], n: [0, 1, 0]});
   // the faces of the solids (walls and ceilings are solids, turned any way): an upright face is a 壁,
   // one facing down a 天井, one facing up a 床
-  if (typeof solidMesh === "function") for (const o of S.solids || []) for (const f of solidMesh(o).faces){
+  if (typeof solidMesh === "function") for (const o of S.solids || []) if (!o.guide) for (const f of solidMesh(o).faces){
     const ny = f.n[1], name = ny > 0.7 ? "床" : ny < -0.7 ? "天井" : Math.abs(ny) < 0.35 ? "壁" : null;
     if (name) out.push({name, p: mul(f.n, f.d), n: f.n});
   }

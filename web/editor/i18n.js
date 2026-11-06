@@ -4,6 +4,31 @@
 (() => {
   const KEY = "odm-poser-lang";
   const T = {
+    // added later (the tall layout, head shape, colours, auras, the ruler's guide shapes ...)
+    "⇅ 上下": "⇅ Top / bottom", "分類バーとメニューを画面の上へ・下へ": "The category bar and the menu to the top / bottom of the screen",
+    "下へドラッグ・タップで閉じる": "Drag down or tap to close", "操作欄を閉じる（下へドラッグでも閉じられます）": "Close the panel (dragging it down closes it too)",
+    "頭の形": "Head shape", "幅（左右）": "Width (left-right)", "高さ（上下）": "Height (up-down)", "奥行き（前後）": "Depth (front-back)",
+    "伸ばした形": "When stretched", "球のまま伸ばす": "Stretch the ball", "円柱でつなぐ": "Join with a cylinder", "↺ 頭の形を戻す": "↺ Default head shape",
+    "頭の大きさ（頭身）は変わりません。見た目の形だけを変えます。": "The head's size (heads tall) stays; only its shape changes.",
+    "↺ カメラを初期状態に": "↺ Reset the camera", "カメラを初期状態に戻しました。": "The camera is back to the start.", "頭の形を戻しました。": "Head shape reset.",
+    "カメラの向き（左右・上下・傾き）・レンズ・位置・見る点を、最初のカメラに戻します（記憶したカメラと固定は残ります）。":
+      "Puts the camera's direction (left-right, up-down, roll), lens, position and look-at point back to the first camera (remembered cameras and the lock stay).",
+    "利き手（両手持ちの主に持つ手）": "Main hand (the one that holds a two-handed thing)",
+    "対象": "Target", "人物（体の部位）": "Figure (body parts)",
+    "対象（人物・床・物・オーラなど）を選び、色を変えるものにチェックを入れて色を選ぶか、#rrggbb のコードを入力します。チェックしていないものは既定の色のままです（書き出すアタリ画像にも反映）。":
+      "Pick a target (figure, floor, things, auras ...), tick what to recolour and choose a colour or type a #rrggbb code. What is not ticked keeps its default colour (the exported rough picture too).",
+    "頭の色": "Head colour", "頭の色コード": "Head colour code", "胴体の色": "Torso colour", "胴体の色コード": "Torso colour code",
+    "右腕の色": "Right arm colour", "右腕の色コード": "Right arm colour code", "左腕の色": "Left arm colour", "左腕の色コード": "Left arm colour code",
+    "右手の色": "Right hand colour", "右手の色コード": "Right hand colour code", "左手の色": "Left hand colour", "左手の色コード": "Left hand colour code",
+    "右脚の色": "Right leg colour", "右脚の色コード": "Right leg colour code", "左脚の色": "Left leg colour", "左脚の色コード": "Left leg colour code",
+    "放物線（炎の先が根元の中心から放射状に）": "Parabola (the flame's tips fan out from the root's middle)",
+    "放物線の原点の高さ（根元の底辺から）": "Parabola origin height (from the root's base)",
+    "炎の先が、根元の底辺中心を原点として放射状に出て、長さが左右の端へ向けて放物線状に短くなる":
+      "The flame's tips fan out from the middle of the root's base and get shorter toward the sides along a parabola",
+    "ガイド図形": "Guide shapes", "ガイドの辺を消失点まで延ばす": "Carry the guides' edges on to the vanishing points", "ガイドを置く": "Put a guide",
+    "設置のタブを「ガイドとして置く」で開く": "Open the Objects tab with “Put as a guide”",
+    "直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。":
+      "Put the Objects tab's shapes (boxes, cylinders, prisms, pyramids ...) as guides turned to the ruler, as many as you like. Guides show only while the ruler does; they are not in the rough picture but are in the ruler picture. The 3-axis handles' Scale lengthens only the side pulled.",
     "地面と接地": "The ground and grounding", "壁と天井は、設置タブで物体（板）として置きます（いくつでも置け、3軸で回転できます）。": "Walls and ceilings are put in the Objects tab as slabs (as many as you like, turned on all three axes).",
     "選んだ物を接地させる": "Put the chosen thing on the ground", "接地させる物を、下の「出ている物」の一覧から選んでください。": "Choose the thing to put on the ground from the list of things out.", "接地させました。": "Put on the ground.",
     "色は #rrggbb の形で入れてください（例：#e0605a）。": "Type the colour as #rrggbb (e.g. #e0605a).",
@@ -353,8 +378,9 @@
     "女性": "Female", "男性": "Male", "身長": "Height", "全体サイズ": "Overall size", "太さ": "Thickness",
     "↺ 体格を初期値に": "↺ Default build", "骨の長さ・丸の太さ・大きさを初期値にします。ポーズ（骨の向き）はそのままです。": "Bone lengths, circle sizes and scale go back to the defaults; the pose (the bones' directions) stays.",
     "カメラの位置（左右・上下・前後）": "Camera position (left-right, up-down, front-back)", "見る点（左右・上下・前後）": "Looks at (left-right, up-down, front-back)",
-    "床の中心が 0。前後は人物の正面側が＋。位置を変えると、見る点を向いたまま向き・高さ・拡大が決まります（傾きはそのまま）。":
-      "0 is the middle of the floor; front-back is + toward the figure's front. A new position keeps looking at the point and sets the direction, height and zoom (the tilt stays).",
+    "床の中心が 0。前後は人物の正面側が＋。位置を変えると、見る点を向いたまま向き（左右・上下）と拡大が決まります（傾きはそのまま）。":
+      "0 is the middle of the floor; front-back is + toward the figure's front. A new position keeps looking at the point and sets the direction (left-right, up-down) and zoom (the tilt stays).",
+    "カメラの向き": "Camera direction", "カメラの位置": "Camera position", "見る点": "Looks at",
     "↺ リセット": "↺ Reset", "固定と記憶": "Lock and memory", "カメラを固定": "Lock the camera", "パッドを表示": "Show the pad",
     "記憶したカメラ（": "Remembered cameras (", "記憶": "Remember", "呼出": "Recall", "削除": "Delete",
     "カメラを固定しました（スライダー・座標も動きません。「呼出」は使えます）。": "Camera locked (sliders and coordinates too; Recall still works).",
@@ -437,6 +463,8 @@
   const RULES = [
     [/^([A-Za-z][\w .]*)（([\w.-]+)）$/, m => `${m[1]} (${m[2]})`],                     // "Pawoo（pawoo.net）"
     [/^カメラ(\d+)$/, m => `Camera ${m[1]}`],
+    [/^ガイド：(.+)$/, m => `Guide: ${T[m[1]] || m[1]}`],
+    [/^部位の長さ：(.+)$/, m => `Section length: ${T[m[1]] || m[1]}`],
     [/^(.+)に体を合わせて、合わせた関節を固定しました。$/, m => `Fitted the body to the ${name(m[1]).toLowerCase()} and pinned the fitted joints.`],
     [/^(.+)を(.+)に着けて固定しました。$/, m => SURFACE[m[2]] ? null : `Put the ${joint(m[1])} on the ${name(m[2]).toLowerCase()} and pinned it.`],
     [/^(.+)を固定しました（身長・頭身を変えても、長さと太さはそのまま）。$/,

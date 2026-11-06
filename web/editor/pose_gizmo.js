@@ -213,6 +213,18 @@ function target(any){
       move: (s0, d) => { O.setPivAbs(key, add(s0.p, d)); afterEdit(); }};
   }
   const so = S.solids && S.solids[soSel];
+  // a guide shape of the perspective ruler: its handles go along its own edges (toward the vanishing
+  // points); 変形 lengthens only the side pulled (the other side stays), on all three edges; it keeps
+  // to the ruler's turn, so no rings
+  if (so && so.guide && typeof rulerAxes === "function"){
+    const a = deg(so.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)];
+    const c = add(so.pos, [0, so.size[1] / 2, 0]), fin = () => { afterEdit(); if (typeof syncSolids === "function") syncSolids(); };
+    return {c, ax, pivot: c, rings: [], sc: ax.map((u, n) => [u, n, "XYZ"[n]]), lacks: ["rotate"],
+      save: () => ({pos: so.pos.slice(), size: so.size.slice()}),
+      move: (s0, d) => { so.pos = add(s0.pos, d); fin(); },
+      scale: (s0, f, n, d) => { const v = Math.max(1, Math.round(s0.size[n] + d));
+        so.size[n] = v; so.pos = n === 1 ? s0.pos.slice() : add(s0.pos, mul(ax[n], (v - s0.size[n]) / 2)); fin(); }};
+  }
   if (so){
     const ax = WORLD;
     const fin = () => { if (typeof snapSolid === "function") snapSolid(so); afterEdit(); if (typeof syncSolids === "function") syncSolids(); };
@@ -244,15 +256,6 @@ function target(any){
           const [ya, p, r] = O.worldTurn([s0.yaw + (s0.rot[1] || 0), s0.rot[0] || 0, s0.rot[2] || 0], k, dg); it.yaw = ya; it.rot = [p, 0, r]; };
         if (O) O.keepPivot(key, set); else set();
         if (it.grounded) groundItem(it); afterEdit(); }};
-  }
-  const r = typeof rulerState === "function" ? rulerState() : null;
-  if (r && r.on && r.cube && tabOn("rulerN")){
-    const ax = rulerAxes(), c = add(r.pos, [0, r.box[1] / 2, 0]), sync = () => { if (typeof syncRuler === "function") syncRuler(); };
-    return {c, ax: WORLD, pivot: c, rings: r.n === 1 ? [] : [1], sc: worldSc(ax), ruler: true,
-      save: () => ({pos: r.pos.slice(), box: r.box.slice(), yaw: r.yaw || 0}),
-      move: (s0, d) => { r.pos = add(s0.pos, d); sync(); },
-      scale: (s0, f, n) => { r.box[n] = Math.max(5, Math.round(s0.box[n] * f)); sync(); },
-      turn: (s0, k, dg) => { r.yaw = ((s0.yaw + dg) + 540) % 360 - 180; sync(); }};
   }
   return null;
 }

@@ -64,10 +64,15 @@ function solidMesh(o){
   }
   return {V, faces, edges};
 }
+// the perspective ruler's guide shapes (o.guide, pose_ruler.js) are solids drawn as the ruler: shown
+// and picked only while the ruler shows, and nothing stands on them, touches them or hides behind them
+const isGuide = o => !!(o && o.guide);
+const solidLive = o => !isGuide(o) || !!(S.ruler && S.ruler.on);
 // heights of the tops (or slopes) of the solids straight above / below p
 function solidTopsAt(p){
   const out = [];
   for (const o of S.solids || []){
+    if (isGuide(o)) continue;
     let hi = Infinity, lo = -Infinity, inside = true;
     for (const f of solidMesh(o).faces){
       const ny = f.n[1], rest = f.d - f.n[0] * p[0] - f.n[2] * p[2];
@@ -148,6 +153,7 @@ function drawSolids(ctx, W, H, opts, proj, lw, toViewer){
   if (!list.length) return;
   ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
   list.forEach((o, k) => {
+    if (isGuide(o)) return;                 // drawn with the ruler
     const m = solidMesh(o), P = m.V.map(p => proj(p, W, H));
     const seen = m.faces.map(f => dot(f.n, toViewer(m.V[f.v[0]])) > 0);
     const chosen = k === soSel || (typeof objPicked === "function" && objPicked("s" + k));
@@ -199,7 +205,7 @@ function eyePoint(W, H){ return add(camRotInv([0, 0, camDist(W, H)]), S.center);
 function solidUnder(x, y){
   const r = pixelRay(x, y, front.width, front.height);
   let best = -1, bt = Infinity;
-  (S.solids || []).forEach((o, k) => { const t = rayHit(solidMesh(o), r); if (t !== null && t < bt){ bt = t; best = k; } });
+  (S.solids || []).forEach((o, k) => { if (!solidLive(o)) return; const t = rayHit(solidMesh(o), r); if (t !== null && t < bt){ bt = t; best = k; } });
   return best < 0 ? null : {k: best, hit: add(r.o, mul(r.dir, bt))};
 }
 DOWN_HOOKS.push((cv, x, y) => {
@@ -262,9 +268,9 @@ function addSolid(kind){
 }
 function targetSolid(q){                      // the selected solid, else the one nearest to q
   const list = S.solids || [];
-  if (soSel >= 0 && list[soSel]) return {k: soSel, c: closestOnSolid(solidMesh(list[soSel]), q)};
+  if (soSel >= 0 && list[soSel] && !isGuide(list[soSel])) return {k: soSel, c: closestOnSolid(solidMesh(list[soSel]), q)};
   let best = null;
-  list.forEach((o, k) => { const c = closestOnSolid(solidMesh(o), q); if (c && (!best || c.d < best.c.d)) best = {k, c}; });
+  list.forEach((o, k) => { if (isGuide(o)) return; const c = closestOnSolid(solidMesh(o), q); if (c && (!best || c.d < best.c.d)) best = {k, c}; });
   return best;
 }
 function touchSolid(){
@@ -285,7 +291,7 @@ function touchSolid(){
 }
 function standOnSolid(){
   const list = S.solids || [];
-  const o = list[soSel]; if (!o) { say("物体を一覧かドラッグで選んでください。", true); return; }
+  const o = list[soSel]; if (!o || isGuide(o)) { say("物体を一覧かドラッグで選んでください。", true); return; }
   const tops = solidTopsAt(o.pos); if (!tops.length) return;
   remember();
   S.pins = {};

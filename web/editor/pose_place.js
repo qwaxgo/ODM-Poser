@@ -35,6 +35,9 @@ sec.dataset.menu = "objects";
 sec.innerHTML = `<h2>設置（図形・床・壁・天井・小物）</h2>
   <label>置く物</label><select id="plCat"></select>
   <select id="plKey" style="margin-top:6px"></select>
+  <label id="plGuideRow" title="パース定規の向きにそろえ、定規の色で描くガイドとして置く（アタリ画像には入らない）"><input type="checkbox" id="plGuide"> ガイドとして置く（パース定規）</label>
+  <div id="plPre" class="pv-box"><label title="置く前に、置く所に薄く描く"><input type="checkbox" id="plPreOn" checked> 置く前のプレビュー</label><div id="plPreRows"></div>
+    <div class="btns"><button id="plPreReset" title="大きさを、その種類の初めの大きさに戻す">↺ 大きさを戻す</button></div></div>
   <div class="btns" style="margin-top:6px"><button id="plPut">置く</button></div>
   <label style="margin-top:10px">置いた物</label>
   <select id="plList" size="5"></select>
@@ -69,7 +72,7 @@ let sel = "", listKey = "";
 const loose = it => it.where === "world" || (PROPS_[it.key] || {}).place === "world" || (PROPS_[it.key] || {}).place === "grab";
 function entries(){
   const out = [];
-  (S.solids || []).forEach((o, k) => out.push(["s" + k, `図形：${solidName(o)}`]));
+  (S.solids || []).forEach((o, k) => out.push(["s" + k, `${o.guide ? "ガイド" : "図形"}：${solidName(o)}`]));
   (S.items || []).forEach((it, n) => { if (loose(it)) out.push(["i" + n, `小物：${(PROPS_[it.key] || {}).ja || it.key}`]); });
   return out;
 }
@@ -85,8 +88,14 @@ $("plList").addEventListener("change", () => choose($("plList").value));
 
 $("plPut").addEventListener("click", () => {
   const c = $("plCat").value, key = $("plKey").value; if (!key) return;
-  if (c === SHAPES){ addSolid(key); choose("s" + (S.solids.length - 1)); }
-  else { placeAlone(key); choose("i" + (S.items.length - 1)); }
+  if (c === SHAPES){
+    addSolid(key); const o = S.solids[S.solids.length - 1]; preSolid(o);
+    if ($("plGuide").checked){                // a guide: turned to the ruler, which shows
+      const r = rulerState(); o.guide = true; o.yaw = rulerYaw(); o.pitch = 0; o.roll = 0;
+      if (!r.on){ r.on = true; if (typeof syncRuler === "function") syncRuler(); }
+    }
+    afterEdit(); syncSolids(); choose("s" + (S.solids.length - 1));
+  } else { placeAlone(key); const it = S.items[S.items.length - 1]; preItem(it); if (it.grounded) groundItem(it); afterEdit(); choose("i" + (S.items.length - 1)); }
 });
 $("plDel").addEventListener("click", () => {
   const o = solidOf(sel), it = itemOf(sel);
@@ -112,6 +121,87 @@ for (const [id, where] of [["plPivMid", "mid"], ["plPivLow", "bottom"]]) $(id).a
 $("plSegs").addEventListener("click", () => { const it = itemOf(sel); if (!it) return; scSel = +sel.slice(1); if (window.ODMUI) ODMUI.showMenu("size"); draw(); });
 $("plTouch").addEventListener("click", () => { if (solidOf(sel)) touchSolid(); });
 $("plStand").addEventListener("click", () => { if (solidOf(sel)) standOnSolid(); });
+
+// ---- before putting: every size the thing will have, with its ghost drawn where it will go
+// shapes: width, height, depth (a prism's or pyramid's sides and top); things: size, X / Y / Z and
+// each section's length (as in サイズ)
+let preKey = "";
+function preRows(){
+  const c = $("plCat").value, key = $("plKey").value, k = c + "|" + key;
+  $("plGuideRow").style.display = c === SHAPES ? "" : "none";
+  if (k === preKey) return; preKey = k;
+  let rows = [];
+  if (c === SHAPES){ const d = SOLID_KINDS[key]; if (d){
+    rows = [["ppW", "幅", 1, 600, 1, "cm", d.size[0]], ["ppH", "高さ", 1, 600, 1, "cm", d.size[1]], ["ppD", "奥行き", 1, 600, 1, "cm", d.size[2]]];
+    if (d.shape === "prism" || d.shape === "pyr") rows.push(["ppSides", "角の数", 3, 24, 1, "", d.sides || 4], ["ppTop", "天面の大きさ（底面に対して）", 0, 200, 1, "%", d.shape === "pyr" ? 0 : 100]); } }
+  else { const def = PROPS_[key]; if (def){
+    rows = [["ppScale", "大きさ", 20, 400, 1, "%", 100], ["ppSX", "X 方向", 20, 400, 1, "%", 100], ["ppSY", "Y 方向", 20, 400, 1, "%", 100], ["ppSZ", "Z 方向", 20, 400, 1, "%", 100]];
+    const sg = typeof segsOf === "function" ? segsOf(def) : null;
+    if (sg) for (const g of sg.list) rows.push(["ppSeg_" + g.id, `部位の長さ：${g.ja}`, 20, 400, 1, "%", 100]); } }
+  $("plPreRows").innerHTML = rows.map(([id, label, min, max, step, unit, v]) =>
+    `<div><label>${label}</label><div class="row"><input type="range" id="${id}R" min="${min}" max="${max}" step="${step}" value="${v}" data-v0="${v}">` +
+    `<input type="number" class="num" id="${id}" step="${step}" value="${v}"><span class="unit">${unit}</span></div></div>`).join("");
+  $("plPreRows").querySelectorAll("input[type=range]").forEach(r => { const n = $(r.id.slice(0, -1));
+    r.addEventListener("input", () => { n.value = r.value; draw(); });
+    n.addEventListener("change", () => { r.value = n.value; draw(); }); });
+}
+const pv = id => { const n = $(id); return n && isFinite(+n.value) ? +n.value : null; };
+function preSolid(o){
+  const w = pv("ppW"), h = pv("ppH"), d = pv("ppD");
+  if (w) o.size = [Math.max(1, w), Math.max(1, h || o.size[1]), Math.max(1, d || o.size[2])];
+  if (pv("ppSides") !== null) o.sides = Math.max(3, Math.min(24, Math.round(pv("ppSides"))));
+  if (pv("ppTop") !== null) o.top = Math.max(0, Math.min(2, pv("ppTop") / 100));
+  return o;
+}
+function preItem(it){
+  if (pv("ppScale") !== null) it.scale = Math.max(0.2, pv("ppScale") / 100);
+  const st = ["ppSX", "ppSY", "ppSZ"].map(id => Math.max(0.2, (pv(id) || 100) / 100));
+  if (st.some(v => v !== 1)) it.stretch = st;
+  const segs = {}; $("plPreRows").querySelectorAll("input[id^=ppSeg_]:not([type=range])").forEach(n => {
+    const v = +n.value / 100; if (isFinite(v) && v !== 1) segs[n.id.slice(6)] = Math.max(0.05, v); });
+  if (Object.keys(segs).length) it.segs = segs;
+  return it;
+}
+$("plPreReset").addEventListener("click", () => { $("plPreRows").querySelectorAll("input[type=range]").forEach(r => {
+  r.value = r.dataset.v0; $(r.id.slice(0, -1)).value = r.dataset.v0; }); draw(); });
+$("plCat").addEventListener("change", preRows); $("plKey").addEventListener("change", preRows);
+$("plPreOn").addEventListener("change", draw); $("plGuide").addEventListener("change", draw);
+preRows();
+// the ghost: where 置く puts it, at the sizes above (a guide turned to the ruler)
+function ghost(){
+  const c = $("plCat").value, key = $("plKey").value, p = S.P[IX.pelvis];
+  if (c === SHAPES){ const k = SOLID_KINDS[key]; if (!k) return null;
+    const fy = S.env && S.env.floor ? +S.env.floorY || 0 : 0;
+    const o = preSolid({kind: key, pos: [Math.round(p[0] + k.at[0]), fy + k.at[1], Math.round(p[2] + k.at[2])], size: k.size.slice(), yaw: 0});
+    if (k.sides && !o.sides) o.sides = k.sides;
+    if ($("plGuide").checked) o.yaw = rulerYaw(); else if (typeof snapSolid === "function") snapSolid(o);
+    return {o}; }
+  const def = PROPS_[key]; if (!def) return null;
+  const f = bodyFront(), fy = +(S.env && S.env.floorY) || 0;
+  const it = preItem({key, off: [0, 0, 0], rot: [0, 0, 0], scale: 1, where: "world", grounded: true, yaw: facingYaw(), base: [p[0] + f[0] * 60, fy, p[2] + f[2] * 60]});
+  if (def.place === "hand"){ const {lo, hi} = localExtent(partsOf(it)); if (hi[1] - lo[1] > hi[2] - lo[2]) it.rot = [0, 0, 90]; }
+  groundItem(it);
+  return {it};
+}
+{ const atari0 = drawAtari;
+  drawAtari = function(ctx, W, H, opts = {}){
+    atari0(ctx, W, H, opts);
+    if (opts.export || ctx.canvas !== front || !sec.classList.contains("active") || !$("plPreOn").checked) return;
+    const g = ghost(); if (!g) return;
+    const lw = Math.max(1.5, W / 540), P = q => project(q, W, H);
+    ctx.save(); ctx.strokeStyle = cssVar("--sel"); ctx.globalAlpha = 0.6; ctx.lineCap = "round"; ctx.setLineDash([lw * 3, lw * 2]); ctx.lineWidth = lw;
+    if (g.o){ const m = solidMesh(g.o), V = m.V.map(P); ctx.beginPath();
+      for (const e of m.edges){ ctx.moveTo(V[e.a].x, V[e.a].y); ctx.lineTo(V[e.b].x, V[e.b].y); } ctx.stroke(); }
+    else { const hd = S.hiddenDashed; S.hiddenDashed = false;
+      try { for (const {f, parts} of partSets(g.it)) for (const sh of parts) drawShape(ctx, sh, g.it, f, P, lw); } finally { S.hiddenDashed = hd; } }
+    ctx.restore();
+  };
+}
+// 定規 › ガイドを置く: here, the shapes, as a guide
+window.ODMPlaceGuide = () => {
+  $("plCat").value = SHAPES; fillKeys(); $("plGuide").checked = true; preRows();
+  if (window.ODMUI && ODMUI.showMenu) ODMUI.showMenu("objects"); draw();
+};
 
 // ---- one control: read from and written to the chosen one
 const wrap = v => ((v + 540) % 360) - 180;
@@ -181,13 +271,19 @@ function sync(){
   $("plSidesBox").style.display = o && (sh === "prism" || sh === "pyr") ? "" : "none";
   $("plTopBox").style.display = o && (sh === "prism" || sh === "pyr") ? "" : "none";
   $("plItemBtns").style.display = it && typeof segsOf === "function" && segsOf(PROPS_[it.key]) ? "" : "none";
-  $("plSolidBtns").style.display = o ? "" : "none";
+  $("plSolidBtns").style.display = o && !o.guide ? "" : "none";
+  for (const [id] of ROT) $(id + "Box").style.display = o && o.guide ? "none" : "";
+  $("plPiv").style.display = o && o.guide ? "none" : "";
   for (const [id] of ALL){ const v = value(id); if (v === undefined) continue;
     const r = $(id + "R"), n = $(id), shown = Math.round(v * 10) / 10;
     if (document.activeElement !== r) r.value = shown; if (document.activeElement !== n) n.value = shown; }
 }
 { const d0 = draw; draw = function(){ d0.apply(this, arguments); if (sec.classList.contains("active")) sync(); }; }
 
+// the categories' and sections' English (from the props' own tables)
+{ const t = {}; for (const [, ja, en] of CATS_) if (en) t[ja] = en;
+  for (const d of Object.values(PROPS_)){ const sg = typeof segsOf === "function" ? segsOf(d) : null; if (sg) for (const g of sg.list) t[g.ja] = g.en; }
+  (window.ODMPoserI18n || {add: x => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(x)}).add(t); }
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
 (window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({
   "設置（図形・床・壁・天井・小物）": "Objects (shapes, floors, walls, ceilings, things)", "置く物": "What to put", "図形・床・壁・天井": "Shapes, floors, walls, ceilings",
@@ -201,6 +297,10 @@ function sync(){
   "置いた物は、配置モードでドラッグ・3軸ハンドル（移動・回転・変形）でも動かせます。小物の大きさは、手に持つときと同じ決まりで変わります。":
     "In Place mode, things out are dragged or moved, turned and scaled with the 3-axis handles too. A thing's size changes as it does when held.",
   "接地させました（いちばん低い所で）。": "Put on the ground (by its lowest point).",
+  "ガイドとして置く（パース定規）": "Put as a guide (perspective ruler)",
+  "パース定規の向きにそろえ、定規の色で描くガイドとして置く（アタリ画像には入らない）": "Put it as a guide turned to the perspective ruler and drawn in its colours (not in the rough picture)",
+  "置く前のプレビュー": "Preview before putting", "置く前に、置く所に薄く描く": "Draw it faintly where it will go, before putting it",
+  "↺ 大きさを戻す": "↺ Default sizes", "大きさを、その種類の初めの大きさに戻す": "The sizes back to the kind's own", "ガイド": "Guide", "図形": "Shape",
   "支点（回転の中心）": "Pivot (what it turns about)", "支点（本体から）X": "Pivot (from the object) X", "支点（本体から）Y": "Pivot (from the object) Y",
   "支点（本体から）Z": "Pivot (from the object) Z", "支点（絶対座標）X": "Pivot (world) X", "支点（絶対座標）Y": "Pivot (world) Y", "支点（絶対座標）Z": "Pivot (world) Z",
   "中心に戻す": "To the middle", "底の中心に": "To the bottom's middle", "支点を物の真ん中に戻す": "The pivot back to the object's middle",

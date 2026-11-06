@@ -68,7 +68,7 @@ function fresh(){
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
           center: [0, 90, 0], cams: [], camLock: false, scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, torso3d: true, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
-          ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: true, box: [60, 60, 60], pos: [70, 0, 0], extend: true, snap: true}};
+          ruler: {on: false, n: 2, yaw: 30, lines: 20, cube: false, box: [60, 60, 60], pos: [70, 0, 0], extend: true, snap: true}};
 }
 // undo / redo: remember() keeps the state before an edit. A step remembered when nothing changed
 // after it (a slider only touched) is skipped; an edit after an undo drops what could be redone.
@@ -219,7 +219,8 @@ function occluders(W, H){
   for (const f of S.others || []){
     if (typeof withFigure === "function") withFigure(f, () => spheres.push(...bodySpheres(f.figId || 0)));
   }
-  const meshes = typeof solidMesh === "function" ? (S.solids || []).map((o, k) => ({mesh: solidMesh(o), solid: k})) : [];
+  // the ruler's guide shapes (o.guide) hide nothing
+  const meshes = typeof solidMesh === "function" ? (S.solids || []).map((o, k) => o.guide ? null : {mesh: solidMesh(o), solid: k}).filter(Boolean) : [];
   const occ = {eye: add(camRotInv([0, 0, camDist(W, H)]), S.center), spheres, meshes};
   occMemo = {key, occ};
   return occ;

@@ -1,5 +1,5 @@
 ---
-// 定規: the perspective ruler and the box guide.
+// 定規: the perspective ruler and its guide shapes (placed in 設置).
 ---
 
   <section data-menu="ruler">
@@ -12,17 +12,10 @@
         <div class="row"><input type="range" id="rulerYaw" min="-180" max="180" value="30"><input type="number" class="num" id="rulerYawV"><span class="unit">°</span></div></div>
       <label>線の数</label>
       <div class="row"><input type="range" id="rulerLines" min="6" max="60" value="20"><span class="val" id="rulerLinesV"></span></div>
-      <label><input type="checkbox" id="cubeOn" checked> ガイド立方体</label>
-      <div id="cubeCtl">
-        <label><input type="checkbox" id="cubeExtend" checked> 辺を消失点まで延ばす</label>
-        <label>幅</label><div class="row"><input type="range" id="boxWR" min="1" max="1000" step="1"><input type="number" class="num" id="boxW" min="1" step="5"><span class="unit">cm</span></div>
-        <label>高さ</label><div class="row"><input type="range" id="boxHR" min="1" max="1000" step="1"><input type="number" class="num" id="boxH" min="1" step="5"><span class="unit">cm</span></div>
-        <label>奥行</label><div class="row"><input type="range" id="boxDR" min="1" max="1000" step="1"><input type="number" class="num" id="boxD" min="1" step="5"><span class="unit">cm</span></div>
-        <label>位置：左右</label><div class="row"><input type="range" id="boxXR" min="-1000" max="1000" step="1"><input type="number" class="num" id="boxX" step="5"><span class="unit">cm</span></div>
-        <label>位置：上下</label><div class="row"><input type="range" id="boxYR" min="-200" max="1000" step="1"><input type="number" class="num" id="boxY" step="5"><span class="unit">cm</span></div>
-        <label>位置：前後</label><div class="row"><input type="range" id="boxZR" min="-1000" max="1000" step="1"><input type="number" class="num" id="boxZ" step="5"><span class="unit">cm</span></div>
-        <div class="btns"><button id="boxCube" title="立方体にする（幅にそろえる）">立方体に</button></div>
-      </div>
+      <h3>ガイド図形</h3>
+      <label><input type="checkbox" id="cubeExtend" checked> ガイドの辺を消失点まで延ばす</label>
+      <div class="btns"><button id="rulerGuideAdd" title="設置のタブを「ガイドとして置く」で開く">ガイドを置く</button></div>
+      <div class="hint">直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。</div>
       <h3>スナップ</h3>
       <label><input type="checkbox" id="rulerSnap" checked> 物体を定規にスナップ</label>
       <div class="btns"><button id="wallToRuler" title="壁を定規の向きにそろえる">壁を定規に</button></div>

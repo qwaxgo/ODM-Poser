@@ -8,13 +8,15 @@
 //   3点透視: as 2点, and the verticals meet at a third point.
 // A camera looking down or up really makes verticals meet (the figure and the box are drawn so);
 // for a strict 1- or 2-point picture the camera height is 0°, and the panel says so.
-// Handles: in the 配置 mode the camera stays and a vanishing point turns the ruler, the box guide
-// is dragged like a solid; in the パース mode a vanishing point, the eye level or a ruler line (its
+// Guide shapes: solids with o.guide (any kind, any number, put in 設置), kept turned to the ruler and
+// drawn in its colours, their edges carried on to the vanishing points; moved and stretched like
+// solids (the 3-axis handles go along the guide's own edges; 変形 lengthens the side pulled).
+// Handles: in the 配置 mode the camera stays and a vanishing point turns the ruler; in the パース mode a vanishing point, the eye level or a ruler line (its
 // vanishing point follows the drag) moves the camera.
 // Shown in the editor only; "定規の画像" saves it as a transparent PNG at the export size.
 //
-// S.ruler: {on, n: 1 | 2 | 3, yaw (degrees, world), lines, cube (the box guide shown),
-//           box: [w, h, d] cm, pos: [x, y, z] (the middle of the box's base)}
+// S.ruler: {on, n: 1 | 2 | 3, yaw (degrees, world), lines, extend, snap; cube / box / pos: the
+//           one box guide of before, made a guide solid when a file opens}
 const RULER_COLORS = ["#e0605a", "#55b86a", "#4c9be8"];       // left-right, vertical, depth
 const HORIZON_COLOR = "#e8a33c";
 const RULER_DEFAULT = fresh().ruler;
@@ -22,7 +24,38 @@ function rulerState(){                        // S.ruler itself (handles keep it
   const r = S.ruler = S.ruler || {};
   if (r.size && !r.box) r.box = [r.size, r.size, r.size];                 // the first version's cube
   for (const [k, v] of Object.entries(RULER_DEFAULT)) if (r[k] === undefined) r[k] = Array.isArray(v) ? v.slice() : v;
+  if (r.cube){                                   // the box guide of before: a guide solid now
+    r.cube = false;
+    if (r.on){ S.solids = S.solids || [];
+      S.solids.push({kind: "box", pos: r.pos.slice(), size: r.box.slice(), yaw: r.n === 1 ? S.cam.yaw : r.yaw, guide: true}); }
+  }
   return r;
+}
+// the guide shapes: [solid, index]; kept turned to the ruler (a quarter turn at a time), upright
+const guides = () => (S.solids || []).map((o, k) => [o, k]).filter(([o]) => o.guide);
+function alignGuides(){
+  for (const [o] of guides()){ o.yaw = Math.round(alignedYaw(o.yaw) * 10) / 10; o.pitch = 0; o.roll = 0; }
+}
+// a guide edge's ruler family (0 left-right, 1 up, 2 depth), or -1
+function edgeFamily(V, e, ax){
+  const d = sub(V[e.b], V[e.a]), l = len(d); if (l < 1e-6) return -1;
+  for (let k = 0; k < 3; k++) if (Math.abs(dot(d, ax[k])) / l > 0.999) return k;
+  return -1;
+}
+// the guides' edges as drawn: {a, b (screen), k (family), carried (on to its vanishing point)}
+function guideEdges(W, H){
+  const ax = rulerAxes(), fams = rulerFamilies(), D = camDist(W, H), eye = eyePoint(W, H), out = [];
+  for (const [o, n] of guides()){
+    const m = solidMesh(o), ok = m.V.map(p => toCam(p)[2] < D - 1), P = m.V.map(p => project(p, W, H));
+    const seen = m.faces.map(f => dot(f.n, sub(eye, m.V[f.v[0]])) > 0);
+    for (const e of m.edges){
+      if (!ok[e.a] || !ok[e.b]) continue;
+      if (e.outline && seen[e.f[0]] === seen[e.f[1]]) continue;      // a curved side's line where it is not the outline
+      const k = edgeFamily(m.V, e, ax);
+      out.push({a: P[e.a], b: P[e.b], k, n, carried: k >= 0 && fams.includes(k)});
+    }
+  }
+  return out;
 }
 const rulerYaw = () => { const r = rulerState(); return r.n === 1 ? S.cam.yaw : r.yaw; };
 
@@ -78,23 +111,13 @@ function fan(ctx, v, W, H, n){
   ctx.stroke();
 }
 const rulerFamilies = () => { const n = rulerState().n; return n === 1 ? [2] : n === 2 ? [0, 2] : [0, 1, 2]; };
-const guideSolid = () => { const r = rulerState(); return {kind: "box", pos: r.pos, size: r.box, yaw: rulerYaw()}; };
-function boxCorners(ax){
-  const r = rulerState(), [w, h, d] = r.box, out = [];
-  for (const sx of [-1, 1]) for (const sy of [0, 1]) for (const sz of [-1, 1])
-    out.push(add(add(add(r.pos, mul(ax[0], sx*w/2)), mul(ax[1], sy*h)), mul(ax[2], sz*d/2)));
-  return out;                                    // index = sx*4 + sy*2 + sz (0 = minus, 1 = plus)
-}
-// 辺を消失点まで延ばす: the box's edges as lines across the picture, [x, y, dx, dy, family] each
+// 辺を消失点まで延ばす: the guides' edges that have a vanishing point, as lines across the picture,
+// [x, y, dx, dy, family] each
 function edgeLines(W, H){
-  const C = boxCorners(rulerAxes()), D = camDist(W, H), fams = rulerFamilies(), out = [];
-  const P = C.map(p => project(p, W, H)), ok = C.map(p => toCam(p)[2] < D - 1);
-  for (let i = 0; i < 8; i++) for (const [bit, k] of [[4, 0], [2, 1], [1, 2]]){
-    if (i & bit || !fams.includes(k)) continue;
-    const j = i | bit; if (!ok[i] || !ok[j]) continue;
-    const dx = P[j].x - P[i].x, dy = P[j].y - P[i].y, l = Math.hypot(dx, dy); if (l < 1e-6) continue;
-    out.push([P[i].x, P[i].y, dx / l, dy / l, k]);
-  }
+  const out = [];
+  for (const e of guideEdges(W, H)){ if (!e.carried) continue;
+    const dx = e.b.x - e.a.x, dy = e.b.y - e.a.y, l = Math.hypot(dx, dy); if (l < 1e-6) continue;
+    out.push([e.a.x, e.a.y, dx / l, dy / l, e.k]); }
   return out;
 }
 function drawRuler(ctx, W, H, opts = {}){
@@ -131,9 +154,9 @@ function drawRuler(ctx, W, H, opts = {}){
     ctx.beginPath(); ctx.arc(v.x, v.y, rad, 0, 2 * Math.PI); ctx.stroke();
     if (handle){ ctx.fillStyle = RULER_COLORS[k]; ctx.globalAlpha = 0.35; ctx.fill(); ctx.globalAlpha = 1; }
   }
-  if (r.cube){
-    const C = boxCorners(ax), D = camDist(W, H);
-    const P = C.map(p => project(p, W, H)), ok = C.map(p => toCam(p)[2] < D - 1);
+  alignGuides();
+  if (guides().length){
+    const edges = guideEdges(W, H);
     // 辺を消失点まで延ばす: each edge's line across the picture (it runs through its vanishing point),
     // stronger than the fan, under the box's own edges. Only the edges whose direction has a
     // vanishing point in this ruler (1点: depth, 2点: + left-right, 3点: + up), 4 lines each
@@ -146,13 +169,11 @@ function drawRuler(ctx, W, H, opts = {}){
       }
       ctx.globalAlpha = 1;
     }
-    ctx.lineWidth = lw * 2.2;
-    for (let i = 0; i < 8; i++) for (const [bit, k] of [[4, 0], [2, 1], [1, 2]]){
-      if (i & bit) continue;
-      const j = i | bit;
-      if (!ok[i] || !ok[j]) continue;
-      ctx.strokeStyle = RULER_COLORS[k];
-      ctx.beginPath(); ctx.moveTo(P[i].x, P[i].y); ctx.lineTo(P[j].x, P[j].y); ctx.stroke();
+    // the guides' own edges: the ruler's colours (others grey); the selected one heavier
+    const chosen = n => !opts.export && mode === "place" && (n === soSel || (typeof objPicked === "function" && objPicked("s" + n)));
+    for (const e of edges){
+      ctx.strokeStyle = e.k >= 0 ? RULER_COLORS[e.k] : "#8a8a8a"; ctx.lineWidth = lw * (chosen(e.n) ? 3.6 : 2.2);
+      ctx.beginPath(); ctx.moveTo(e.a.x, e.a.y); ctx.lineTo(e.b.x, e.b.y); ctx.stroke();
     }
   }
   ctx.restore();
@@ -212,7 +233,7 @@ DOWN_HOOKS.unshift((cv, x, y) => {
     // The strong lines (the box's edges carried on) when they show, else the thin ones: an empty
     // place still turns the camera
     if (camHeld()) return null;
-    const lines = r.cube && r.extend !== false ? edgeLines(W, H)
+    const lines = guides().length && r.extend !== false ? edgeLines(W, H)
       : rulerFamilies().flatMap(k => { const v = vanish(ax[k], W, H); return v.x === undefined ? [] : fanLines(v, W, H, r.lines).map(l => [...l, k]); });
     const near = lines.find(([lx, ly, dx, dy]) => Math.abs((x - lx) * dy - (y - ly) * dx) < reach * 0.5);
     if (!near) return null;
@@ -236,23 +257,6 @@ DOWN_HOOKS.unshift((cv, x, y) => {
     r.yaw = Math.round(wrap180(yaw) * 10) / 10; syncRuler();
   }};
 });
-DOWN_HOOKS.push((cv, x, y) => {                        // the box guide, after the solids
-  const r = rulerState();
-  if (!r.on || !r.cube || mode !== "place" || cv !== front || pick(cv, x, y) >= 0) return null;
-  const ray = pixelRay(x, y, cv.width, cv.height), t = rayHit(solidMesh(guideSolid()), ray);
-  if (t === null) return null;
-  // the 3-axis handles move it (they show on the box while the 定規 tab does)
-  const tab = document.getElementById("rulerN"), shown = tab && tab.closest("section").classList.contains("active");
-  if (gizmoHolds() && shown) return {move(){}};
-  return dragFrom(add(ray.o, mul(ray.dir, t)), cv.width, cv.height, dlt => { r.pos = add(r.pos, dlt); syncRuler(); });
-});
-WHEEL_HOOKS.push((x, y, step, e) => {
-  const r = rulerState();
-  if (!r.on || !r.cube || mode !== "place" || r.n === 1) return false;
-  if (rayHit(solidMesh(guideSolid()), pixelRay(x, y, front.width, front.height)) === null) return false;
-  remember(); r.yaw = wrap180(r.yaw + step * (e.shiftKey ? 15 : 5)); syncRuler(); return true;
-});
-
 // ---- snapping (S.ruler.snap, while the ruler shows) -------------------------------------------------
 // Objects and things dragged in the 配置 mode turn to the ruler's directions (the wheel then turns
 // them 90° at a time). A solid also sticks to the planes set to the ruler: the floor, the ceiling,
@@ -279,7 +283,7 @@ function snapPlanes(except){
   if (E.ceiling) out.push({p: [0, +E.ceilingY || 230, 0], n: [0, -1, 0]});
   if (E.wall && isAligned(+E.wallYaw || 0)) out.push({p: [+E.wallX || 0, 0, +E.wallZ || -40], n: rotY([0, 0, 1], deg(+E.wallYaw || 0))});
   (S.solids || []).forEach(o => {
-    if (o === except || (o.kind !== "floor" && o.kind !== "wall") || !isAligned(o.yaw)) return;
+    if (o === except || o.guide || (o.kind !== "floor" && o.kind !== "wall") || !isAligned(o.yaw)) return;
     const a = deg(o.yaw || 0), c = add(o.pos, [0, o.size[1] / 2, 0]);
     const axes = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)], half = [o.size[0] / 2, o.size[1] / 2, o.size[2] / 2];
     const thin = o.kind === "floor" ? 1 : 2;                // the slab's thin direction: its faces
@@ -292,7 +296,7 @@ function snapPlanes(except){
   return out;
 }
 function snapSolid(o){
-  if (!snapOn() || !o) return;
+  if (!snapOn() || !o || o.guide) return;
   o.yaw = alignedYaw(o.yaw);
   for (const pl of snapPlanes(o)){
     const c = add(o.pos, [0, o.size[1] / 2, 0]);
@@ -322,7 +326,6 @@ const RULER_HINTS = {
   2: "左右と奥行きの線がアイレベル上の2点に集まります。",
   3: "縦の線も3つ目の点に集まります（カメラの高さが0°のときは平行）。"};
 const RULER_TILT = "カメラが俯瞰・あおりなので、縦の線は実際にはわずかに集まります（人物と直方体はそのとおりに描かれます）。厳密な1点・2点透視にするには、カメラの高さを0°にします。";
-const BOX_CTL = [["boxW", "box", 0], ["boxH", "box", 1], ["boxD", "box", 2], ["boxX", "pos", 0], ["boxY", "pos", 1], ["boxZ", "pos", 2]];
 function syncRuler(){
   const r = rulerState();
   $("rulerOn").checked = !!r.on; $("rulerCtl").style.display = r.on ? "" : "none";
@@ -330,11 +333,7 @@ function syncRuler(){
   $("rulerYawRow").style.display = r.n === 1 ? "none" : "";
   $("rulerYaw").value = r.yaw; if (document.activeElement !== $("rulerYawV")) $("rulerYawV").value = Math.round(r.yaw);
   $("rulerLines").value = r.lines; $("rulerLinesV").textContent = r.lines;
-  $("cubeOn").checked = !!r.cube; $("cubeCtl").style.display = r.cube ? "" : "none";
   $("cubeExtend").checked = r.extend !== false; $("rulerSnap").checked = !!r.snap;
-  for (const [id, key, k] of BOX_CTL){ const v = Math.round(r[key][k]);
-    if (document.activeElement !== $(id)) $(id).value = v;
-    const rg = $(id + "R"); if (rangeHeld !== rg){ rg.min = Math.min(+rg.min, v); rg.max = Math.max(+rg.max, v); rg.value = v; } }
   $("rulerHint").textContent = RULER_HINTS[r.n];
   const tilt = r.n < 3 && Math.abs(S.cam.pitch) >= 3;
   $("rulerWarn").textContent = tilt ? RULER_TILT : ""; $("rulerWarn").style.display = tilt ? "" : "none";
@@ -346,12 +345,8 @@ function syncRuler(){
   $("rulerYaw").addEventListener("input", set((r, t) => { r.yaw = +t.value; }));
   $("rulerYawV").addEventListener("change", set((r, t) => { if (isFinite(+t.value)) r.yaw = wrap180(+t.value); }));
   $("rulerLines").addEventListener("input", set((r, t) => { r.lines = +t.value; }));
-  $("cubeOn").addEventListener("change", set((r, t) => { r.cube = t.checked; }));
-  for (const [id, key, k] of BOX_CTL){
-    const put = set((r, t) => { const v = +t.value; if (!isFinite(v)) return;
-      r[key] = r[key].slice(); r[key][k] = key === "box" ? Math.max(1, Math.min(5000, v)) : v; });
-    $(id).addEventListener("change", put); $(id + "R").addEventListener("input", put);
-  }
+  // ガイドを置く: the 設置 tab, its shapes, as a guide
+  $("rulerGuideAdd").addEventListener("click", () => { if (window.ODMPlaceGuide) ODMPlaceGuide(); });
   $("cubeExtend").addEventListener("change", set((r, t) => { r.extend = t.checked; }));
   $("rulerSnap").addEventListener("change", set((r, t) => { r.snap = t.checked; }));
   $("wallToRuler").addEventListener("click", () => {
@@ -359,7 +354,6 @@ function syncRuler(){
     remember(); E.wall = true; E.wallYaw = Math.round(alignedYaw(+E.wallYaw || 0) * 10) / 10;
     if (typeof syncScene === "function") syncScene(); draw(); say("壁を定規の向きにそろえました。");
   });
-  $("boxCube").addEventListener("click", set(r => { r.box = [r.box[0], r.box[0], r.box[0]]; }));
   $("saveRuler").addEventListener("click", () => {
     const [cv, W, H] = exportCanvas();
     drawRuler(cv.getContext("2d"), W, H, {export: true, force: true});
