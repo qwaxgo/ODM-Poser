@@ -111,6 +111,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Ctrl＋クリックで人物も選ぶ物に足す・外すように。人物と物体をいくつか選ぶと、3軸ハンドルでまとめて動かす・回すことができます（中心は最後に足した物の支点、人物なら腰）。選んだ人物は点線の枠で囲まれ、削除・切り取り・コピーは物だけにかかります
 - 面に立つとき、体のいちばん近い所・低い所を面に着けるように：ポーズによって膝・手・頭なども着きます。面を探すのも体のいちばん近い所から。物体の面（上面も）・壁・天井に立っているあいだは、ポーズを変えてもいちばん低い所が面に着いたまま（「この上に立つ」も）
 - 体格の欄と「身長と頭身」の欄で身長が重なっていたので、「体格」の欄に1つにまとめました（身長・頭身のスライダーと「保つもの」）
+- 3軸ハンドルの輪で首・頭を回しても、顔の十字（顔の向き）が回らない不具合を修正：回したぶんだけ顔の向きも回ります（首の縦の軸まわりの回転は、首・頭のねじりになります）
 
 ### English
 
@@ -213,6 +214,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Ctrl + click adds a figure to the selection or takes it out too. Several figures and objects move and turn together with the 3-axis handles (about the pivot of the last one added; a figure's is its hips). A selected figure gets a dashed frame; delete, cut and copy take only the objects
 - Standing on a face puts the body's nearest, lowest point on it: by the pose a knee, a hand, the head and so on. The face is found from the body's nearest point too. While on an object's face (its top too), a wall or the ceiling, the lowest point stays on it however the pose changes (Stand on it too)
 - The height was in both the Body section and "Height and heads"; they are one now, in the Body section (the height and heads sliders and what to keep)
+- Fixed the face's cross (where the face looks) not turning when the neck or head was turned with the 3-axis handles' rings: the face now turns as much (a turn about the neck's own axis becomes the neck's or head's twist)
 
 ## v0.1.0
 
