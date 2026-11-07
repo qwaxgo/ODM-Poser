@@ -115,6 +115,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 首・頭の緑（Y）の輪で、頭がその場で左右を向くように（骨を軸にしたねじり。傾いた頭が首のまわりを回らない）。頭の輪は頭のまわりに出ます
 - 頭に限らず、ポーズモードの関節の緑（Y）の輪を、骨の軸のまわりに出して、その骨を軸にねじるように（関節パネルの「ねじり」と同じ。肘なら上腕を軸に前腕が回る）。輪が重なる所では押した所にいちばん近い輪を掴みます（同じくらいなら緑）
 - 3軸ハンドルの回転（輪）と変形（四角）を、選んだものの向きに沿うように：関節では関節の軸（Y が骨の向き）、物体・小物では物体の向き（回した向き）。移動（矢印）は今までどおり場面の X・Y・Z に沿います
+- ポーズモードで肩・股を3軸ハンドルの矢印で動かせるように：骨の長さを保ち、関節の限界の中で動くので、体格は変わらずに胴体・腰の台形が歪みます
+- 体格モードで頭の四角（長さ・幅・奥行き）を動かすと、頭の球そのものが伸び縮みするように（頭の形。太さは幅と奥行きの両方）。伸ばした頭は頭の向きのとおりに楕円の球として描かれ、顔の十字も沿います
 - 接地の初期値を「床・物体の上にめり込まない」に。面に立つとき、体が面の反対側へ抜けたり、逆さに反転したりしないように：立っている面の裏へ押し込んでも戻り、腰を近づけたときは、腰が裏にある面や体が逆さになる面（天井・物体の下側）には立ちません。「逆さ・裏向きになる面にも立つ」で許可できます（面をクリックしたときは今までどおり）
 
 ### English
@@ -222,6 +224,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The neck's and head's green (Y) ring turns the head left and right where it is (a twist about its bone; a tilted head no longer swings round the neck). The head's rings show round the head
 - Not only the head: every joint's green (Y) ring in Pose mode goes round its bone and twists along it (as Twist in the joint panel: on the elbow the forearm turns about the upper arm). Where rings lie on each other, the one nearest to the press is taken (about as near: the green one)
 - The 3-axis handles' rotate (rings) and scale (squares) keep to the selected thing's own axes: a joint's (Y along its bone), an object's or thing's (as it is turned). Move (arrows) keeps to the scene's X, Y, Z as before
+- In Pose mode the shoulders and thigh roots move with the 3-axis handles' arrows: their bone keeps its length and moves within the joint limits, so the body's sizes stay and the torso's and pelvis' trapezoids lean
+- In Body mode the head's squares (length, width, depth) stretch the head's ball itself (head shape; thickness both across and front to back). A stretched head is drawn as an ellipsoid turned with the head, and the face's cross follows it
 - Grounding starts as "No sinking into the floor or objects". Standing on faces, the body no longer goes through to the other side or turns over: pushed behind the face it stands on, it comes back; bringing the hips near takes no face the hips are behind and none that would turn the body upside down (a ceiling, an object's underside). "Also stand on faces that turn the body over" allows it (clicking a face works as before)
 
 ## v0.1.0

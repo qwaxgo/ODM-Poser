@@ -27,7 +27,7 @@ Switch with the buttons on the view's top left, or by clicking a joint or a thin
 
 | Mode | What it does |
 |------|--------------|
-| Pose | Move joints (the 3-axis handles: rotate, and move for arms and legs) |
+| Pose | Move joints (the 3-axis handles: rotate, and move for arms, legs, shoulders and thigh roots) |
 | Body | Change bone lengths, circle thickness, shoulder and hip widths (handles: scale) |
 | Camera | Move the camera and the lens (perspective) |
 | Place | Move objects, things and the whole figure |
@@ -60,6 +60,8 @@ Arrows and rings (move, rotate, scale) on the selected joint or thing. **3-axis 
 
 - The arrows (move) keep to the scene's X, Y, Z wherever the thing is.
 - The rings (rotate) and squares (scale) keep to the selected thing's own axes: a joint's (Y along its bone, Z toward the body's front), an object's or thing's (as it is turned). A square stretches the object's width, height or depth. With several objects selected, the rings keep to the scene's X, Y, Z.
+- In Pose mode the shoulders and thigh roots have the move arrows too. Their bone from the chest / pelvis keeps its length and moves within the joint limits (a shoulder shrugs and goes forward or back; a thigh root barely), so the body's sizes stay and only the torso's and pelvis' trapezoids lean.
+- In Body mode the head has three squares, **Length**, **Width** and **Depth**, which stretch its ball that way (as **Head shape** in the Body tab; the head's size and the neck's length stay). A stretched head is drawn as an ellipsoid turned with the head, and the face's cross follows it.
 - On a joint in Pose mode, the green (Y) ring twists along the bone (as **Twist** in the joint panel: on the elbow the forearm turns about the upper arm; on the head it looks left and right where it is). The hips' green ring turns the whole body about up.
 - Where rings lie on each other, the one nearest to the press is taken (about as near: the green one).
 - The arrow or ring held is drawn heavier, the others fade.
