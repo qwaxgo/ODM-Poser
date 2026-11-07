@@ -543,16 +543,13 @@ function groundLift(stick){                   // how far to move the figure up (
 
 // ---- standing on any face: the floor, a wall, the ceiling, a solid's face (a slope too) ----------------
 // The whole figure turns about its hips so its up is the face's outward normal (on a wall it stands
-// sideways, on a ceiling upside down), its soles on the face. S.stand = {p, n}: the plane of a face not
-// facing up, which the figure then keeps to (instead of the grounding); on one facing up it stands
-// upright and the grounding above does the rest.
+// sideways, on a ceiling upside down), its lowest point toward the face on it: a sole, or as posed a knee,
+// a hand, the head. S.stand = {p, n}: the plane of the face (any but the scene's floor, whose grounding
+// is the 接地 setting's), which the figure then keeps to instead of the grounding: its lowest point stays
+// on it however it is posed.
 const ATTACH_CM = 15;
 const figUp = () => norm(bodyRot([0, 1, 0]));
 function soleAlong(n){ let m = Infinity; J.forEach((nm, i) => { m = Math.min(m, dot(S.P[i], n) - (CONTACT[nm] || 3)); }); return m; }
-function footPoint(){                          // under the ankles' middle, at the soles' level
-  const up = figUp(), m = mul(add(S.P[IX.r_ankle], S.P[IX.l_ankle]), 0.5);
-  return add(m, mul(up, soleAlong(up) - dot(m, up)));
-}
 function turnFigureUp(n){                      // its facing kept as far as can be; false: it already was
   const up = figUp(), ax = cross(up, n), s = len(ax), c = dot(up, n);
   if (s < 1e-6 && c > 0) return false;
@@ -561,13 +558,34 @@ function turnFigureUp(n){                      // its facing kept as far as can 
   turnBody(axis, ang); S.pins = {};
   return true;
 }
+// the body's lowest point toward a face (n: the face's normal): whatever the pose puts there (a sole, a
+// knee, a hand, the head ...), at its circle's edge
+function lowPoint(n){
+  let best = null, m = Infinity;
+  J.forEach((nm, i) => { const v = dot(S.P[i], n) - (CONTACT[nm] || 3); if (v < m){ m = v; best = sub(S.P[i], mul(n, CONTACT[nm] || 3)); } });
+  return best;
+}
+// kept on the plane: the lowest point along n touches it
 function onPlane(p, n){ const g = soleAlong(n) - dot(p, n); if (Math.abs(g) > 1e-6) moveAll(mul(n, -g)); }
-// slide: moved along the face too, so its feet come to p
+// the scene's floor (not a solid's top): the grounding (接地) setting looks after it
+const isFloor = (p, n) => { const E = S.env || {}; return !!E.floor && n[1] > 0.9999 && Math.abs(p[1] - (+E.floorY || 0)) < 0.5; };
+// slide: moved along the face too, so its lowest point comes to p. On any face but the scene's floor the
+// figure keeps to it (S.stand): however it is posed, its lowest point stays on the face
 function standOnFace(p, n, slide){
   turnFigureUp(n);
-  if (slide){ const d = sub(p, footPoint()); moveAll(sub(d, mul(n, dot(d, n))), true); }
+  if (slide){ const d = sub(p, lowPoint(n)); moveAll(sub(d, mul(n, dot(d, n))), true); }
   onPlane(p, n);
-  if (n[1] > 0.97) delete S.stand; else S.stand = {p: p.map(v => Math.round(v * 100) / 100), n: n.map(v => Math.round(v * 1e5) / 1e5)};
+  if (isFloor(p, n)) delete S.stand; else S.stand = {p: p.map(v => Math.round(v * 100) / 100), n: n.map(v => Math.round(v * 1e5) / 1e5)};
+}
+// the face nearest to the body (any joint's circle, as posed): {c: the face's point, gap}, or null
+function nearestContact(){
+  let best = null;
+  J.forEach((nm, i) => { const r = CONTACT[nm] || 3;
+    for (const c of standFaces(S.P[i])){
+      if (dot(sub(S.P[i], c.p), c.n) < -r - 3) continue;          // behind the face (inside the solid, past the wall)
+      const gap = c.d - r; if (!best || gap < best.gap) best = {c, gap};
+    } });
+  return best;
 }
 // the nearest point of every face to q: [{p, n, d}] (the floor, the ceiling, the wall, the solids' faces)
 function standFaces(q){
@@ -581,24 +599,25 @@ function standFaces(q){
 }
 // a solid's face down on the floor (its bottom): not one to stand on
 const buried = c => { const E = S.env || {}; return !!E.floor && c.n[1] < -0.97 && Math.abs(c.p[1] - (+E.floorY || 0)) < 1; };
-// 近い面に立つ: the solid's face nearest to the figure (by its hips) that it is in front of
+// 近い面に立つ: the solid's face nearest to the body (any joint's circle, as posed) that it is in front of
 function nearFace(o){
-  const m = solidMesh(o), q = S.P[IX.pelvis];
-  let best = null;
-  for (const f of m.faces){
-    const c = closestOnSolid({V: m.V, faces: [f]}, q);
-    if (!c || buried(c) || dot(sub(q, c.p), c.n) < 0) continue;
-    if (!best || c.d < best.d) best = c;
-  }
-  return best || closestOnSolid(m, q);
+  const m = solidMesh(o);
+  let best = null, bg = Infinity;
+  for (const f of m.faces) J.forEach((nm, i) => {
+    const q = S.P[i], c = closestOnSolid({V: m.V, faces: [f]}, q);
+    if (!c || buried(c) || dot(sub(q, c.p), c.n) < 0) return;
+    const g = c.d - (CONTACT[nm] || 3); if (g < bg){ bg = g; best = c; }
+  });
+  return best || closestOnSolid(m, S.P[IX.pelvis]);
 }
+// the hips moved: the figure stands on the face nearest to the body (its nearest point, as posed)
 function attachNear(){
-  const q = footPoint(), f = standFaces(q).filter(c => c.d < ATTACH_CM && dot(sub(q, c.p), c.n) > -3).sort((a, b) => a.d - b.d)[0];
+  const b = nearestContact(), f = b && b.gap < ATTACH_CM ? b.c : null;
   if (!f){                                      // pulled away from the face: it lets go (stays turned)
-    if (S.stand && Math.abs(dot(sub(q, S.stand.p), S.stand.n)) > ATTACH_CM) delete S.stand;
+    if (S.stand && soleAlong(S.stand.n) - dot(S.stand.p, S.stand.n) > ATTACH_CM) delete S.stand;
     return;
   }
-  if (f.n[1] > 0.97 && figUp()[1] > 0.97){ delete S.stand; return; }   // upright over a floor: the grounding's
+  if (isFloor(f.p, f.n) && figUp()[1] > 0.97){ delete S.stand; return; }   // upright over the floor: the grounding's
   standOnFace(f.p, f.n, false);
 }
 // the face under a pixel of the front view: {p, n}, or null
@@ -1007,7 +1026,7 @@ function buildScenePanel(){
     <h3>面に立つ・貼り付く</h3>
     <label title="配置モードで腰を動かして面に近づけると、その面に立つ（壁・天井・斜面では体ごと面に合わせる）"><input type="checkbox" id="scAttach" checked> 腰を動かすと近くの面に立つ</label>
     <div class="btns"><button id="scPickFace" title="次にクリックした面（床・壁・天井・物体の面）に立たせる">面をクリックして立つ</button><button id="scUpright" title="面に合わせて傾いた体を、まっすぐに戻す">体をまっすぐに戻す</button></div>
-    <div class="hint">床・壁・天井と、置いた物体の面（斜面も）に立たせます。壁では横向きに、天井では逆さに、斜面では面に垂直に、体ごと面に合わせます。配置モードで腰を面に近づける（15cm 以内）か、ボタンを押して面をクリックします。立っている面に沿って腰をドラッグでき、面から離すと貼り付きが外れます。</div>
+    <div class="hint">床・壁・天井と、置いた物体の面（斜面も）に立たせます。壁では横向きに、天井では逆さに、斜面では面に垂直に、体ごと面に合わせます。面に着くのは、体のいちばん近い所・低い所です（ポーズによって足の裏・膝・手・頭など）。物体・壁・天井の面では、ポーズを変えてもいちばん低い所が面に着いたままです（床では上の「接地」の設定のとおり）。配置モードで体を面に近づける（15cm 以内）か、ボタンを押して面をクリックします。立っている面に沿って腰をドラッグでき、面から離すと貼り付きが外れます。</div>
     <div class="hint">関節（手首・足首・膝・肘・腰）を選んでから押します。着けた所・つかんだ所は固定（ピン）になり、ほかを動かしても離れません。</div>
     <h2 style="margin-top:14px">ワイヤーアクション</h2>
     <label><input type="checkbox" id="scWire"> ワイヤーで吊る</label>

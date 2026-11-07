@@ -36,9 +36,9 @@
     "面をクリックして立つ": "Click a face to stand on", "体をまっすぐに戻す": "Stand upright again",
     "次にクリックした面（床・壁・天井・物体の面）に立たせる": "Stand the figure on the face clicked next (floor, wall, ceiling or an object's face)",
     "面に合わせて傾いた体を、まっすぐに戻す": "Turn a body tilted to a face upright again",
-    "床・壁・天井と、置いた物体の面（斜面も）に立たせます。壁では横向きに、天井では逆さに、斜面では面に垂直に、体ごと面に合わせます。配置モードで腰を面に近づける（15cm 以内）か、ボタンを押して面をクリックします。立っている面に沿って腰をドラッグでき、面から離すと貼り付きが外れます。":
-      "Stand the figure on the floor, a wall, the ceiling or a face of an object put (slopes too). The whole body turns to the face: sideways on a wall, upside down on a ceiling, square to a slope. Bring the hips near a face in Place mode (within 15 cm), or press the button and click a face. Dragging the hips moves the figure along the face it stands on; pulled away from it, the figure lets go.",
-    "近い面に立つ": "Stand on the near face", "この物体の、人物にいちばん近い面に立たせる（壁のような面では体ごと面に合わせる）": "Stand the figure on this object's face nearest to it (on a wall-like face the whole body turns to it)",
+    "床・壁・天井と、置いた物体の面（斜面も）に立たせます。壁では横向きに、天井では逆さに、斜面では面に垂直に、体ごと面に合わせます。面に着くのは、体のいちばん近い所・低い所です（ポーズによって足の裏・膝・手・頭など）。物体・壁・天井の面では、ポーズを変えてもいちばん低い所が面に着いたままです（床では上の「接地」の設定のとおり）。配置モードで体を面に近づける（15cm 以内）か、ボタンを押して面をクリックします。立っている面に沿って腰をドラッグでき、面から離すと貼り付きが外れます。":
+      "Stand the figure on the floor, a wall, the ceiling or a face of an object put (slopes too). The whole body turns to the face: sideways on a wall, upside down on a ceiling, square to a slope. What touches the face is the body's nearest, lowest point (by the pose: the soles, a knee, a hand, the head ...). On an object's face, a wall or the ceiling, the lowest point stays on the face however the pose changes (on the floor, as the Grounding setting above says). Bring the body near a face in Place mode (within 15 cm), or press the button and click a face. Dragging the hips moves the figure along the face it stands on; pulled away from it, the figure lets go.",
+    "近い面に立つ": "Stand on the near face", "この物体の、人物の体にいちばん近い面に、いちばん近い所を着けて立たせる（壁のような面では体ごと面に合わせる）": "Stand the figure on this object's face nearest to its body, its nearest point on it (on a wall-like face the whole body turns to it)",
     "立たせる面（床・壁・天井・物体の面）をクリックしてください。Esc でやめます。": "Click the face to stand on (floor, wall, ceiling or an object's face). Esc stops.",
     "面のクリックをやめました。": "Stopped picking a face.", "クリックした面に立たせました。": "Stood the figure on the face clicked.",
     "クリックした面に、面に合わせて立たせました（関節の固定は外しました）。": "Stood the figure on the face clicked, turned to it (pins removed).",

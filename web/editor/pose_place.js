@@ -51,7 +51,7 @@ sec.innerHTML = `<h2>設置（図形・床・壁・天井・小物）</h2>
     </details>
     ${SOLID_SIZE.map(ctl).join("")}${ITEM_SIZE.map(ctl).join("")}
     <div class="btns" id="plItemBtns" style="margin-top:6px"><button id="plSegs">部位ごとの長さ（下の欄）</button></div>
-    <div class="btns" id="plSolidBtns" style="margin-top:6px"><button id="plTouch">選んだ関節を着ける</button><button id="plStand">この上に立つ</button><button id="plFace" title="この物体の、人物にいちばん近い面に立たせる（壁のような面では体ごと面に合わせる）">近い面に立つ</button><button id="plPickFace" title="次にクリックした面（床・壁・天井・物体の面）に立たせる">面をクリックして立つ</button></div>
+    <div class="btns" id="plSolidBtns" style="margin-top:6px"><button id="plTouch">選んだ関節を着ける</button><button id="plStand">この上に立つ</button><button id="plFace" title="この物体の、人物の体にいちばん近い面に、いちばん近い所を着けて立たせる（壁のような面では体ごと面に合わせる）">近い面に立つ</button><button id="plPickFace" title="次にクリックした面（床・壁・天井・物体の面）に立たせる">面をクリックして立つ</button></div>
   </div>
   <div class="hint">置いた物は、配置モードでドラッグ・3軸ハンドル（移動・回転・変形）でも動かせます。小物の大きさは、手に持つときと同じ決まりで変わります。</div>`;
 (($("soKind") && $("soKind").closest("section")) || document.querySelector("aside > section:last-of-type")).after(sec);
@@ -138,7 +138,7 @@ $("plSegs").addEventListener("click", () => { const it = itemOf(sel); if (!it) r
   const s = $("szSeg") && $("szSeg").closest("section"); if (s) s.scrollIntoView({block: "start", behavior: "smooth"}); });
 $("plTouch").addEventListener("click", () => { if (solidOf(sel)) touchSolid(); });
 $("plStand").addEventListener("click", () => { if (solidOf(sel)) standOnSolid(); });
-// the figure on this solid's face nearest to its feet, turned to it (pose_scene.js: standOnFace)
+// the figure on this solid's face nearest to its body, turned to it (pose_scene.js: standOnFace)
 $("plFace").addEventListener("click", () => { const o = solidOf(sel); if (!o || o.guide) return;
   const c = nearFace(o); if (!c) return;
   remember(); standOnFace(c.p, c.n, true); afterEdit(); draw();

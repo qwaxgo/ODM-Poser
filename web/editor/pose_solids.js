@@ -288,9 +288,12 @@ function standOnSolid(){
   const tops = solidTopsAt(o.pos); if (!tops.length) return;
   remember();
   S.pins = {};
-  const c = S.P[IX.pelvis];
-  moveAll([o.pos[0] - c[0], 0, o.pos[2] - c[2]], true);
-  moveAll([0, Math.max(...tops) - lowest(), 0], true);
+  // its top over the middle: the figure's lowest point on it, and kept on it (pose_scene.js: standOnFace)
+  const top = typeof standOnFace === "function" ? closestOnSolid(solidMesh(o), [o.pos[0], Math.max(...tops) + 100, o.pos[2]]) : null;
+  if (top && top.n[1] > 0.5) standOnFace(top.p, top.n, true);
+  else { const c = S.P[IX.pelvis];
+    moveAll([o.pos[0] - c[0], 0, o.pos[2] - c[2]], true);
+    moveAll([0, Math.max(...tops) - lowest(), 0], true); }
   afterEdit(); draw();
   say(`${solidName(o)}の上に立たせました（関節の固定は外しました）。`);
 }
