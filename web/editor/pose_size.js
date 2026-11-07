@@ -240,7 +240,7 @@ function headShapeSync(){
     if (rangeHeld !== $(id)) $(id).value = v; if (document.activeElement !== $(id + "N")) $(id + "N").value = v; }
   $("hsMode").value = h.mode || "ball";
 }
-function headShapeSet(k, v){ S.headShape = Object.assign({x: 1, y: 1, z: 1, mode: "ball"}, S.headShape || {}); S.headShape[k] = v; }
+function headShapeSet(k, v){ const h = Object.assign({x: 1, y: 1, z: 1, mode: "ball"}, S.headShape || {}); h[k] = v; headShapeTo(h); }   // from the neck (pose_main.js)
 for (const [id, k] of Object.entries(HS)){
   const r = $(id), n = $(id + "N");
   r.addEventListener("pointerdown", () => remember());
@@ -248,7 +248,7 @@ for (const [id, k] of Object.entries(HS)){
   n.addEventListener("change", () => { remember(); const v = +n.value; if (!isFinite(v)) return; r.value = v; headShapeSet(k, v / 100); afterEdit(); draw(); });
 }
 $("hsMode").addEventListener("change", e => { remember(); S.headShape = Object.assign({x: 1, y: 1, z: 1, mode: "ball"}, S.headShape || {}); S.headShape.mode = e.target.value; afterEdit(); draw(); });
-$("hsReset").addEventListener("click", () => { remember(); delete S.headShape; headShapeSync(); afterEdit(); draw(); say("頭の形を戻しました。"); });
+$("hsReset").addEventListener("click", () => { remember(); headShapeTo(null); headShapeSync(); afterEdit(); draw(); say("頭の形を戻しました。"); });
 { const d1 = draw; draw = function(){ d1.apply(this, arguments); if (parts.some(s => s.classList.contains("active"))) headShapeSync(); }; }
 $("szSegReset").addEventListener("click", () => { const it = curItem(); if (!it || !it.segs) return;
   remember(); delete it.segs[segSel]; if (!Object.keys(it.segs).length) delete it.segs;

@@ -68,7 +68,7 @@ function fresh(){
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: "nopen", wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230, attach: true}, wire: {on: false, joint: "chest", height: 300},
           center: [0, 90, 0], cams: [], camLock: false, scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, torso3d: true, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
-          ruler: {on: false, n: 2, yaw: 30, pitch: 0, roll: 0, lines: 20, cube: false, box: [60, 60, 60], pos: [70, 0, 0], extend: true, snap: true, grid: false}};
+          ruler: {on: false, n: 2, yaw: 30, pitch: 0, roll: 0, lines: 20, cube: false, box: [60, 60, 60], pos: [70, 0, 0], extend: true, snap: true, snapTurn: false, grid: false}};
 }
 // undo / redo: remember() keeps the state before an edit. A step remembered when nothing changed
 // after it (a slider only touched) is skipped; an edit after an undo drops what could be redone.
@@ -177,6 +177,14 @@ function headOutline(ctx, p, r, side){
 }
 // the head as its stretched ball seen (S.headShape: x across, y up, z forward, in the head's own frame):
 // the outline of that ellipsoid on the picture, through project (front view, camera)
+// the head's shape set (hs, or null: a ball again), stretched from where the neck meets it: its bottom
+// stays, so its centre (the head joint, and with it the face, OpenPose's points, what it wears) moves
+// along its up by as much as its height changes
+function headShapeTo(hs){
+  const y0 = (S.headShape && S.headShape.y) || 1, y1 = (hs && hs.y) || 1, d = handleR(IX.head) * (y1 - y0);
+  if (Math.abs(d) > 1e-9) S.P[IX.head] = add(S.P[IX.head], mul(headFrame().up, d));
+  if (hs) S.headShape = hs; else delete S.headShape;
+}
 function headRadii(){ const hs = S.headShape || {}, r = handleR(IX.head); return [r * (hs.x || 1), r * (hs.y || 1), r * (hs.z || 1)]; }
 function headEllipse(ctx, W, H, proj){
   const h = headFrame(), [rx, ry, rz] = headRadii(), c = S.P[IX.head], pc = proj(c, W, H);

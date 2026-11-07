@@ -13,8 +13,8 @@
 // solids (the 3-axis handles go along the guide's own edges; 変形 lengthens the side pulled).
 // Turning a guide turns the ruler with it (and so every guide): the ruler may lean (S.ruler.pitch,
 // roll), and its vanishing points then leave the eye level, as a box tipped over is drawn.
-// S.ruler.grid: the ruler keeps to the floor grid (its turn in quarter turns, the guides' corners on
-// the grid's points).
+// The floor grid turns with the ruler (pose_scene.js envLines). S.ruler.grid: the guides' corners keep
+// to the grid's points. Each guide keeps its own turn about the ruler's up (any angle).
 // Handles: in the 配置 mode the camera stays and a vanishing point turns the ruler; in the パース mode a vanishing point, the eye level or a ruler line (its
 // vanishing point follows the drag) moves the camera.
 // Shown in the editor only; "定規の画像" saves it as a transparent PNG at the export size.
@@ -49,28 +49,31 @@ function turnAngles(vx, vz){
 // the ruler's turn: its direction (in 1点透視 the camera's) and its lean (0, 0: standing on the floor)
 function rulerTurn(){ const r = rulerState(); return {yaw: rulerYaw(), pitch: +r.pitch || 0, roll: +r.roll || 0}; }
 const rulerTilted = () => { const r = rulerState(); return Math.abs(+r.pitch || 0) >= 0.05 || Math.abs(+r.roll || 0) >= 0.05; };
-// 床のグリッドに合わせる: a turn kept in quarter turns
+// 定規を床のグリッドにスナップ: the guides' corners to the grid (which turns with the ruler)
 const gridOn = () => !!rulerState().grid;
-const quarter = a => wrap180(Math.round((a || 0) / 90) * 90);
 function setRulerTurn(t){
-  const r = rulerState(), g = gridOn();
-  if (r.n !== 1) r.yaw = g ? quarter(t.yaw) : Math.round(wrap180(t.yaw) * 10) / 10;
-  r.pitch = g ? quarter(t.pitch) : t.pitch; r.roll = g ? quarter(t.roll) : t.roll;
+  const r = rulerState();
+  if (r.n !== 1) r.yaw = Math.round(wrap180(t.yaw) * 10) / 10;
+  r.pitch = t.pitch; r.roll = t.roll;
   if (!r.pitch) r.pitch = 0; if (!r.roll) r.roll = 0;           // no -0
 }
 
-// the guide shapes: [solid, index]; always turned like the ruler (a quarter turn about its up kept)
+// the guide shapes: [solid, index]; always turned like the ruler, each by its own angle about its up
 const guides = () => (S.solids || []).map((o, k) => [o, k]).filter(([o]) => o.guide);
-// the guide's quarter turn (0..3) about the ruler's up
-function guideQuarter(o){
-  const R = turnOf(rulerTurn()), G = turnOf(o), gx = G(X3), gz = G(Z3);
-  let best = 0, bv = -Infinity;
-  for (let q = 0; q < 4; q++){ const a = q * Math.PI / 2, v = dot(R(rotY(X3, a)), gx) + dot(R(rotY(Z3, a)), gz); if (v > bv){ bv = v; best = q; } }
-  return best;
+// the guide's turn about the ruler's up (degrees, any angle; 0: along the ruler): kept on it (o.gq), so
+// it turns with the ruler; a guide from before: as it is turned now
+const guideQuarter = o => typeof o.gq === "number" ? o.gq : guideMeasure(o);
+// as it is turned now (when it was turned on its own: put, its 向き, the one about to be put)
+function guideMeasure(o){
+  const R = turnOf(rulerTurn()), x = turnOf(o)(X3), u = R(Y3);
+  const v = sub(x, mul(u, dot(x, u))); if (len(v) < 1e-6) return 0;
+  const a = Math.atan2(dot(v, R(rotY(X3, Math.PI / 2))), dot(v, R(X3))) * 180 / Math.PI;
+  return Math.round(a * 10) / 10;
 }
-// the guide turned like the ruler (by q quarter turns about its up), about its middle
+// the guide turned like the ruler (by its angle q about the ruler's up, degrees), about its middle
 function guideToRuler(o, q){
-  const R = turnOf(rulerTurn()), a = q * Math.PI / 2, t = turnAngles(R(rotY(X3, a)), R(rotY(Z3, a)));
+  o.gq = Math.round((q || 0) * 10) / 10;
+  const R = turnOf(rulerTurn()), a = deg(q || 0), t = turnAngles(R(rotY(X3, a)), R(rotY(Z3, a)));
   if (["yaw", "pitch", "roll"].every(k => Math.abs(wrap180((o[k] || 0) - t[k])) < 0.05)) return;
   const mid = add(o.pos, mul(turnOf(o)(Y3), o.size[1] / 2));
   o.yaw = t.yaw; o.pitch = t.pitch || 0; o.roll = t.roll || 0;
@@ -79,26 +82,28 @@ function guideToRuler(o, q){
 function alignGuides(){
   for (const [o] of guides()) guideToRuler(o, guideQuarter(o));
   const g = window.ODMGhost ? ODMGhost() : null;                 // the one about to be put, as a guide
-  if (g && g.o && g.o.guide) guideToRuler(g.o, guideQuarter(g.o));
+  if (g && g.o && g.o.guide) guideToRuler(g.o, guideMeasure(g.o));     // being set: as it is turned
 }
-// a guide was turned (its quarter turn q taken before): the ruler turns with it (the guides follow it)
+// a guide was turned (its angle q taken before): the ruler turns with it (the guides follow it)
 function rulerFromGuide(o, q){
-  const G = turnOf(o), a = -q * Math.PI / 2;
+  const G = turnOf(o), a = -deg(q || 0);
   setRulerTurn(turnAngles(G(rotY(X3, a)), G(rotY(Z3, a))));
   syncRuler();
 }
 // 床のグリッドに合わせる: the guide's corners (a round one's middle) to the floor grid's lines, across and
 // in depth each on its own, its bottom to the floor, when near
 const GRID_STEP = 40;
+// the floor grid's lines across and in depth: turned with the ruler while it shows
+function gridAxes(){ const a = rulerState().on ? deg(rulerYaw()) : 0; return [rotY(X3, a), rotY(Z3, a)]; }
 function snapGuideGrid(o){
   if (!gridOn() || !o) return;
   const m = solidMesh(o), sh = solidKind(o).shape, fy = +((S.env || {}).floorY) || 0;
-  const pts = sh === "cyl" || sh === "cone" ? [o.pos] : m.V;
-  const near = i => { let best = null;
-    for (const p of pts){ const d = Math.round(p[i] / GRID_STEP) * GRID_STEP - p[i]; if (best === null || Math.abs(d) < Math.abs(best)) best = d; }
+  const pts = sh === "cyl" || sh === "cone" ? [o.pos] : m.V, [gu, gw] = gridAxes();
+  const near = ax => { let best = null;
+    for (const p of pts){ const s = dot(p, ax), d = Math.round(s / GRID_STEP) * GRID_STEP - s; if (best === null || Math.abs(d) < Math.abs(best)) best = d; }
     return best !== null && Math.abs(best) < SNAP_CM ? best : 0; };
   const lo = Math.min(...m.V.map(p => p[1]));
-  o.pos = [o.pos[0] + near(0), o.pos[1] + (Math.abs(lo - fy) < SNAP_CM ? fy - lo : 0), o.pos[2] + near(2)];
+  o.pos = add(add(o.pos, add(mul(gu, near(gu)), mul(gw, near(gw)))), [0, Math.abs(lo - fy) < SNAP_CM ? fy - lo : 0, 0]);
 }
 // a guide edge's ruler family (0 left-right, 1 up, 2 depth), or -1
 function edgeFamily(V, e, ax){
@@ -309,7 +314,7 @@ DOWN_HOOKS.unshift((cv, x, y) => {
     return {move(){}};
   }
   // 配置: the camera stays; the ruler turns about its up so that its vanishing point follows the mouse
-  // along its eye level (床のグリッドに合わせる: a quarter turn at a time)
+  // along its eye level
   return {move(mx, my){
     const A = rulerAxes(), up = A[1], d0 = pixelRay(mx, my, W, H).dir, p = sub(d0, mul(up, dot(d0, up)));
     if (len(p) < 1e-6) return;
@@ -321,16 +326,18 @@ DOWN_HOOKS.unshift((cv, x, y) => {
   }};
 });
 // ---- snapping (S.ruler.snap, while the ruler shows) -------------------------------------------------
-// Objects and things turn freely; turned to within ±5° of one of the ruler's directions (a quarter
-// turn apart), they stick to it. A solid also sticks to the planes set to the ruler: the floor, the
+// Objects and things turn freely; with 回転も定規の向きに吸い付く (off at first), turned to within ±5° of
+// one of the ruler's directions (a quarter turn apart), they stick to it. A solid also sticks to the planes set to the ruler: the floor, the
 // ceiling, the wall when it is turned like the ruler, and the faces of floor / wall slabs turned like it.
 const SNAP_CM = 12, SNAP_DEG = 5;
 const snapOn = () => { const r = rulerState(); return !!(r.on && r.snap); };
+// 回転も定規の向きに吸い付く (S.ruler.snapTurn, off at first): the ±5° magnet on the turn
+const turnSnapOn = () => { const r = rulerState(); return !!(r.on && r.snapTurn); };
 const yawOff = y => { const d = wrap180((y || 0) - rulerYaw()); return ((d % 90) + 135) % 90 - 45; };   // -45 .. 45
 const alignedYaw = y => wrap180((y || 0) - yawOff(y));
 const isAligned = y => Math.abs(yawOff(y)) < 0.5;
 // a facing near the ruler's (a leaning ruler has none on the floor): the ruler's, else as it is
-const magnetYaw = y => snapOn() && !rulerTilted() && Math.abs(yawOff(y)) < SNAP_DEG ? Math.round(alignedYaw(y) * 10) / 10 : y;
+const magnetYaw = y => turnSnapOn() && !rulerTilted() && Math.abs(yawOff(y)) < SNAP_DEG ? Math.round(alignedYaw(y) * 10) / 10 : y;
 // half of a solid's size along the direction n (as turned)
 function halfAlong(o, n){
   const R = turnOf(o);
@@ -402,20 +409,21 @@ function syncRuler(){
   $("rulerWarn").textContent = tilt ? (lean ? RULER_LEAN : RULER_TILT) : ""; $("rulerWarn").style.display = tilt ? "" : "none";
   $("rulerLeanRow").style.display = lean ? "" : "none";
   $("rulerLeanV").textContent = `前後 ${Math.round(+r.pitch || 0)}°・横 ${Math.round(+r.roll || 0)}°`;
-  $("rulerGrid").checked = !!r.grid;
+  $("rulerGrid").checked = !!r.grid; $("rulerSnapTurn").checked = !!r.snapTurn;
 }
 const RULER_LEAN = "定規が倒れているので、縦の線も実際には集まります（3点透視で見えます）。";
 { const sync0 = syncUI; syncUI = function(){ sync0(); syncRuler(); }; }
 { const set = fn => e => { if (e.type !== "input") remember(); fn(rulerState(), e.target); syncRuler(); draw(); };
   $("rulerOn").addEventListener("change", set((r, t) => { r.on = t.checked; }));
   $("rulerN").addEventListener("change", set((r, t) => { r.n = +t.value; }));
-  $("rulerYaw").addEventListener("input", set((r, t) => { r.yaw = r.grid ? quarter(+t.value) : +t.value; }));
-  $("rulerYawV").addEventListener("change", set((r, t) => { if (isFinite(+t.value)) r.yaw = r.grid ? quarter(+t.value) : wrap180(+t.value); }));
+  $("rulerYaw").addEventListener("input", set((r, t) => { r.yaw = +t.value; }));
+  $("rulerYawV").addEventListener("change", set((r, t) => { if (isFinite(+t.value)) r.yaw = wrap180(+t.value); }));
   // 定規を床に立てる: no lean (the direction stays)
   $("rulerUpright").addEventListener("click", set(r => { r.pitch = 0; r.roll = 0; }));
-  // 床のグリッドに合わせる: turned to the grid's lines now, and kept so
+  // 定規を床のグリッドにスナップ: the guides' corners to the grid's points now (the grid turns with the ruler)
   $("rulerGrid").addEventListener("change", set((r, t) => { r.grid = t.checked;
-    if (r.grid){ setRulerTurn(rulerTurn()); alignGuides(); for (const [o] of guides()) snapGuideGrid(o); } }));
+    if (r.grid) for (const [o] of guides()) snapGuideGrid(o); }));
+  $("rulerSnapTurn").addEventListener("change", set((r, t) => { r.snapTurn = t.checked; }));
   $("rulerLines").addEventListener("input", set((r, t) => { r.lines = +t.value; }));
   // ガイドを置く: the 設置 tab, its shapes, as a guide
   $("rulerGuideAdd").addEventListener("click", () => { if (window.ODMPlaceGuide) ODMPlaceGuide(); });

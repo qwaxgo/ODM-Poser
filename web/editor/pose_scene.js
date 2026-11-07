@@ -334,17 +334,21 @@ function worldSamples(it){
   }
   return out;
 }
-function envLines(){                          // floor / wall / ceiling as 3D line segments [a, b, which]
+// floor / wall / ceiling as 3D line segments [a, b, which]. The floor's and the ceiling's grids reach far
+// (to 8 m round the figure) and turn with the perspective ruler while it shows (gridAxes, pose_ruler.js)
+function envLines(){
   const E = S.env || {}, c = S.P[IX.pelvis], out = [];
-  const grid = (y, which, n = 4, step = 40) => {
-    const x0 = Math.round(c[0] / step) * step, z0 = Math.round(c[2] / step) * step;
+  const [u, w] = typeof gridAxes === "function" ? gridAxes() : [[1, 0, 0], [0, 0, 1]];
+  const grid = (y, which, n = 20, step = 40) => {
+    const cu = Math.round(dot(c, u) / step) * step, cw = Math.round(dot(c, w) / step) * step;
+    const at = (a, b) => add(add(mul(u, a), mul(w, b)), [0, y, 0]);
     for (let i = -n; i <= n; i++){
-      out.push([[x0 + i*step, y, z0 - n*step], [x0 + i*step, y, z0 + n*step], which]);
-      out.push([[x0 - n*step, y, z0 + i*step], [x0 + n*step, y, z0 + i*step], which]);
+      out.push([at(cu + i*step, cw - n*step), at(cu + i*step, cw + n*step), which]);
+      out.push([at(cu - n*step, cw + i*step), at(cu + n*step, cw + i*step), which]);
     }
   };
   if (E.floor) grid(+E.floorY || 0, "floor");
-  if (E.ceiling) grid(+E.ceilingY || 230, "ceiling", 3);
+  if (E.ceiling) grid(+E.ceilingY || 230, "ceiling", 12);
   if (E.wall){
     const a = deg(+E.wallYaw || 0), o = [+E.wallX || 0, 0, +E.wallZ || -40], y0 = +E.floorY || 0;
     const at = (u, h) => add(o, add(rotY([u, 0, 0], a), [0, y0 + h, 0]));
@@ -363,7 +367,12 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
     const C = S.colors || {}, base = opts.export ? "#b0b0b0" : far;
     ctx.lineWidth = Math.max(1, lw * 0.6);
     ctx.globalAlpha = opts.export ? 1 : 0.55;
-    for (const [a, b, which] of envLines()){ const p = P(a), q = P(b); ctx.strokeStyle = C[which] || C.env || base;
+    // the camera's view: a line reaching behind the camera is cut just before it (it would cross the picture)
+    const D = proj === project ? camDist(W, H) : 0, NEAR = 5, depth = v => D - toCam(v)[2];
+    for (let [a, b, which] of envLines()){
+      if (D){ const da = depth(a), db = depth(b); if (da < NEAR && db < NEAR) continue;
+        if (da < NEAR) a = add(a, mul(sub(b, a), (NEAR - da) / (db - da))); else if (db < NEAR) b = add(b, mul(sub(a, b), (NEAR - db) / (da - db))); }
+      const p = P(a), q = P(b); ctx.strokeStyle = C[which] || C.env || base;
       ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
     ctx.globalAlpha = 1;
   }

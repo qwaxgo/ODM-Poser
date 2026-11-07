@@ -169,9 +169,10 @@ function target(any){
     const h = headFrame(), KEY = ["y", "x", "z"], MAX = {x: 2, y: 2.5, z: 2};
     return {c: S.P[sel], ax: WORLD, joint: sel, pivot: S.P[sel], rings: [], sc: [[h.up, 0, "長さ"], [h.side, 1, "幅"], [h.fwd, 2, "奥行き"]],
       save: () => Object.assign(save(), {hs: Object.assign({x: 1, y: 1, z: 1, mode: "ball"}, S.headShape || {})}),
+      // from where the neck meets the head (headShapeTo, pose_main.js: its bottom stays)
       scale: (s0, f, n) => { const k = KEY[n], hs = Object.assign({}, s0.hs);
         hs[k] = Math.round(Math.max(0.5, Math.min(MAX[k], s0.hs[k] * f)) * 100) / 100;
-        S.headShape = hs; afterEdit(sel); }};
+        S.P = s0.P.map(p => p.slice()); S.headShape = Object.assign({}, s0.hs); headShapeTo(hs); afterEdit(sel); }};
   }
   if (mode === "body" && sel > 0){
     const i = sel, par = PARENT[i], u = norm(sub(S.P[i], S.P[par])), [e1] = across(u);
@@ -291,6 +292,8 @@ function solidTarget(so, key, O, ghost){
       turn: (s0, k, dg) => { so.pos = s0.pos.slice(); so.yaw = s0.yaw; so.pitch = s0.pitch; so.roll = s0.roll;
         const set = () => { const t = O.axisTurn([s0.yaw, s0.pitch, s0.roll], ax[k], dg); so.yaw = t[0]; so.pitch = t[1]; so.roll = t[2]; };
         O.keepPivot(key, set);
+        // the one about to be put, about its up: it alone, to any angle off the ruler
+        if (ghost && k === 1){ O.keepPivot(key, () => guideToRuler(so, guideMeasure(so))); return; }
         rulerFromGuide(so, s0.q);
         O.keepPivot(key, () => guideToRuler(so, s0.q));          // as the ruler allows (1点: its direction is the camera's; the grid: quarter turns)
         if (!ghost) alignGuides(); done(); }};

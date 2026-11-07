@@ -17,13 +17,14 @@
       <h3>ガイド図形</h3>
       <label><input type="checkbox" id="cubeExtend" checked> ガイドの辺を消失点まで延ばす</label>
       <div class="btns"><button id="rulerGuideAdd" title="設置のタブを「ガイドとして置く」で開く">ガイドを置く</button></div>
-      <div class="hint">直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。ガイドを「回転」で回すと、パース定規とほかのガイドも一緒に回ります（前後・横に倒すと、消失点がアイレベルから外れます）。</div>
+      <div class="hint">直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。ガイドを「回転」で回すと、パース定規とほかのガイドも一緒に回ります（前後・横に倒すと、消失点がアイレベルから外れます）。置く前のガイドを回したときと、設置のタブの「回転（向き・Y）」では、そのガイドだけが好きな角度に回ります（定規とずれた角度では、辺は消失点に向かいません）。</div>
       <h3>スナップ</h3>
       <label><input type="checkbox" id="rulerSnap" checked> 物体を定規にスナップ</label>
+      <label><input type="checkbox" id="rulerSnapTurn"> 回転も定規の向きに吸い付く（90° ごと）</label>
       <div class="btns"><button id="wallToRuler" title="壁を定規の向きにそろえる">壁を定規に</button></div>
-      <div class="hint">配置モードで物体・小物を回して、定規の向きから ±5° 以内に来ると、その向きに吸い付きます。物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。</div>
+      <div class="hint">物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。「回転も定規の向きに吸い付く」をオンにすると、物体・小物を回して定規の向き（90° ごと）から ±5° 以内に来たとき、その向きに吸い付きます。</div>
       <label><input type="checkbox" id="rulerGrid"> 定規を床のグリッドにスナップ</label>
-      <div class="hint">定規の向きを床のグリッドの線にそろえ、90° ずつ回るようにします。ガイドを動かすと、角がグリッドの交点（40cm おき）に、底が床に吸い付きます。</div>
+      <div class="hint">床のグリッドは定規の向きに合わせて回ります（定規を出しているとき）。オンにすると、ガイドを動かしたとき、角がグリッドの交点（40cm おき）に、底が床に吸い付きます。</div>
       <div class="btns"><button id="saveRuler">定規の画像</button><button id="rulerReset">↺ 定規を初期値に</button></div>
       <div class="hint" id="rulerHint"></div>
       <div class="hint" id="rulerWarn" style="color:var(--warn);display:none"></div>

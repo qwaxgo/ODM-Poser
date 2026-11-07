@@ -221,6 +221,7 @@ function ghostFresh(){
     const fy = S.env && S.env.floor ? +S.env.floorY || 0 : 0;
     const o = preSolid({kind: key, pos: [Math.round(p[0] + k.at[0]), fy + k.at[1], Math.round(p[2] + k.at[2])], size: k.size.slice(), yaw: 0});
     if (k.sides && !o.sides) o.sides = k.sides;
+    // a guide starts along the ruler (turned on its own after, it keeps its angle: alignGuides)
     if ($("plGuide").checked){ o.guide = true; guideToRuler(o, 0); snapGuideGrid(o); } else if (typeof snapSolid === "function") snapSolid(o);
     return {o}; }
   const def = PROPS_[key]; if (!def) return null;
@@ -273,10 +274,12 @@ function setValue(id, v){
     afterEdit(); draw(); return;
   }
   // a turn: about the pivot (the object shifts so its pivot stays)
-  // a guide's turn turns the ruler with it (and the other guides)
-  const q0 = o && o.guide && typeof guideQuarter === "function" ? guideQuarter(o) : -1;
+  // a guide's lean (X, Z) turns the ruler with it (and the other guides); its 向き (Y) turns it alone, to
+  // any angle off the ruler
+  const q0 = o && o.guide && typeof guideQuarter === "function" ? guideQuarter(o) : null;    // any angle (null: not a guide)
   const turn = fn => { if (O) O.keepPivot(sel, fn); else fn();
-    if (q0 >= 0){ rulerFromGuide(o, q0); if (O) O.keepPivot(sel, () => guideToRuler(o, q0)); else guideToRuler(o, q0); alignGuides(); } };
+    if (q0 !== null && id === "plRY"){ const q = guideMeasure(o); if (O) O.keepPivot(sel, () => guideToRuler(o, q)); else guideToRuler(o, q); }
+    else if (q0 !== null){ rulerFromGuide(o, q0); if (O) O.keepPivot(sel, () => guideToRuler(o, q0)); else guideToRuler(o, q0); alignGuides(); } };
   if (o){
     if (a !== undefined){ o.pos = o.pos.slice(); o.pos[a] = v; }
     else if (id === "plRX") turn(() => { o.pitch = wrap(v); }); else if (id === "plRY") turn(() => { o.yaw = wrap(v); }); else if (id === "plRZ") turn(() => { o.roll = wrap(v); });

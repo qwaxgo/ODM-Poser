@@ -29,8 +29,8 @@
       "The flame's tips fan out from the middle of the root's base and get shorter toward the sides along a parabola",
     "ガイド図形": "Guide shapes", "ガイドの辺を消失点まで延ばす": "Carry the guides' edges on to the vanishing points", "ガイドを置く": "Put a guide",
     "設置のタブを「ガイドとして置く」で開く": "Open the Objects tab with “Put as a guide”",
-    "直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。ガイドを「回転」で回すと、パース定規とほかのガイドも一緒に回ります（前後・横に倒すと、消失点がアイレベルから外れます）。":
-      "Put the Objects tab's shapes (boxes, cylinders, prisms, pyramids ...) as guides turned to the ruler, as many as you like. Guides show only while the ruler does; they are not in the rough picture but are in the ruler picture. The 3-axis handles' Scale lengthens only the side pulled. Turning a guide with Rotate turns the perspective ruler and the other guides with it (tipped forward or sideways, the vanishing points leave the eye level).",
+    "直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。ガイドを「回転」で回すと、パース定規とほかのガイドも一緒に回ります（前後・横に倒すと、消失点がアイレベルから外れます）。置く前のガイドを回したときと、設置のタブの「回転（向き・Y）」では、そのガイドだけが好きな角度に回ります（定規とずれた角度では、辺は消失点に向かいません）。":
+      "Put the Objects tab's shapes (boxes, cylinders, prisms, pyramids ...) as guides turned to the ruler, as many as you like. Guides show only while the ruler does; they are not in the rough picture but are in the ruler picture. The 3-axis handles' Scale lengthens only the side pulled. Turning a guide with Rotate turns the perspective ruler and the other guides with it (tipped forward or sideways, the vanishing points leave the eye level). A guide about to be put, turned, and \"Turn (facing, Y)\" in the Objects tab turn that guide alone, to any angle (at an angle off the ruler its edges do not go to the vanishing points).",
     "面に立つ・貼り付く": "Stand on a face", "腰を動かすと近くの面に立つ": "Stand on a near face when the hips move",
     "配置モードで腰を動かして面に近づけると、その面に立つ（壁・天井・斜面では体ごと面に合わせる）": "In Place mode, hips brought near a face stand the figure on it (on a wall, a ceiling or a slope the whole body turns to it)",
     "面をクリックして立つ": "Click a face to stand on", "体をまっすぐに戻す": "Stand upright again",
@@ -51,8 +51,8 @@
     "倒れをなくして、定規を床に立てる（向きはそのまま）": "Take away the lean and stand the ruler on the floor (its direction stays)",
     "定規が倒れているので、縦の線も実際には集まります（3点透視で見えます）。": "The ruler leans, so its verticals really meet too (3-point shows them).",
     "定規を床のグリッドにスナップ": "Snap the ruler to the floor grid",
-    "定規の向きを床のグリッドの線にそろえ、90° ずつ回るようにします。ガイドを動かすと、角がグリッドの交点（40cm おき）に、底が床に吸い付きます。":
-      "Turns the ruler to the floor grid's lines and keeps it to quarter turns. A guide moved sticks by its corner to the grid's points (every 40 cm) and by its bottom to the floor.",
+    "床のグリッドは定規の向きに合わせて回ります（定規を出しているとき）。オンにすると、ガイドを動かしたとき、角がグリッドの交点（40cm おき）に、底が床に吸い付きます。":
+      "The floor grid turns with the ruler (while the ruler shows). On: a guide moved sticks by its corner to the grid's points (every 40 cm) and by its bottom to the floor.",
     "地面と接地": "The ground and grounding", "壁と天井は、設置タブで物体（板）として置きます（いくつでも置け、3軸で回転できます）。": "Walls and ceilings are put in the Objects tab as slabs (as many as you like, turned on all three axes).",
     "選んだ物を接地させる": "Put the chosen thing on the ground", "接地させる物を、下の「出ている物」の一覧から選んでください。": "Choose the thing to put on the ground from the list of things out.", "接地させました。": "Put on the ground.",
     "色は #rrggbb の形で入れてください（例：#e0605a）。": "Type the colour as #rrggbb (e.g. #e0605a).",
@@ -454,8 +454,9 @@
     "位置：前後": "Place: front-back", "立方体にする（幅にそろえる）": "Make it a cube (the width)", "スナップ": "Snapping",
     "物体を定規にスナップ": "Snap objects to the ruler", "壁を定規の向きにそろえる": "Turn the wall like the ruler",
     "壁を定規の向きにそろえました。": "The wall now turns like the ruler.",
-    "配置モードで物体・小物を回して、定規の向きから ±5° 以内に来ると、その向きに吸い付きます。物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。":
-      "Objects and things turned in the place mode stick to a ruler direction within ±5° of it. Objects stick to the floor, the ceiling and walls turned like the ruler (floor and wall slabs too) when they come near.",
+    "物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。「回転も定規の向きに吸い付く」をオンにすると、物体・小物を回して定規の向き（90° ごと）から ±5° 以内に来たとき、その向きに吸い付きます。":
+      "Objects stick to the floor, the ceiling and walls turned like the ruler (floor and wall slabs too) when they come near. With \"Turns stick to the ruler too\" on, objects and things turned to within ±5° of a ruler direction (every 90°) stick to it.",
+    "回転も定規の向きに吸い付く（90° ごと）": "Turns stick to the ruler too (every 90°)",
     "シーンの一覧": "In the scene", "開く": "Open", "↺ 初期状態に": "↺ Reset",
     "行を選んでから押します（ダブルクリックで開く）。持ち物・オーラは人物の下に、置いた物・物体・床と壁・定規の立方体は外側に並びます。":
       "Pick a row, then press (double-click opens it). Things held and auras sit under their figure; things put down, objects, floor and walls and the ruler's box stand outside.",
