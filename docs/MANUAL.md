@@ -59,6 +59,8 @@ The setting of that name in the Pose tab (on at first) changes the mode to fit w
 Arrows and rings (move, rotate, scale) on the selected joint or thing. **3-axis handles** / **Off** on the view's left show and hide them; **Move**, **Rotate**, **Scale** (G, R, S keys) switch the tool.
 
 - The arrows, rings and squares always follow the scene's X, Y, Z, however the thing is turned, and it turns about those axes. A square (scale) stretches the thing's side nearest to its axis.
+- On a joint in Pose mode, the green (Y) ring alone goes round the bone and twists along it (as **Twist** in the joint panel: on the elbow the forearm turns about the upper arm; on the head it looks left and right where it is). The hips' green ring turns the whole body about up.
+- Where rings lie on each other, the one nearest to the press is taken (about as near: the green one).
 - The arrow or ring held is drawn heavier, the others fade.
 - Their size fits the screen (about 1.35 times on a phone, 1.5 on a tablet, 1.75 on a large screen).
 - While they show, dragging a joint or a thing only selects it; the handles do the moving.
