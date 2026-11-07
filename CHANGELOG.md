@@ -112,6 +112,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 面に立つとき、体のいちばん近い所・低い所を面に着けるように：ポーズによって膝・手・頭なども着きます。面を探すのも体のいちばん近い所から。物体の面（上面も）・壁・天井に立っているあいだは、ポーズを変えてもいちばん低い所が面に着いたまま（「この上に立つ」も）
 - 体格の欄と「身長と頭身」の欄で身長が重なっていたので、「体格」の欄に1つにまとめました（身長・頭身のスライダーと「保つもの」）
 - 3軸ハンドルの輪で首・頭を回しても、顔の十字（顔の向き）が回らない不具合を修正：回したぶんだけ顔の向きも回ります（首の縦の軸まわりの回転は、首・頭のねじりになります）
+- 首・頭の緑（Y）の輪で、頭がその場で左右を向くように（骨を軸にしたねじり。傾いた頭が首のまわりを回らない）。頭の輪は頭のまわりに出ます
+- 接地の初期値を「床・物体の上にめり込まない」に。面に立つとき、体が面の反対側へ抜けたり、逆さに反転したりしないように：立っている面の裏へ押し込んでも戻り、腰を近づけたときは、腰が裏にある面や体が逆さになる面（天井・物体の下側）には立ちません。「逆さ・裏向きになる面にも立つ」で許可できます（面をクリックしたときは今までどおり）
 
 ### English
 
@@ -215,6 +217,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Standing on a face puts the body's nearest, lowest point on it: by the pose a knee, a hand, the head and so on. The face is found from the body's nearest point too. While on an object's face (its top too), a wall or the ceiling, the lowest point stays on it however the pose changes (Stand on it too)
 - The height was in both the Body section and "Height and heads"; they are one now, in the Body section (the height and heads sliders and what to keep)
 - Fixed the face's cross (where the face looks) not turning when the neck or head was turned with the 3-axis handles' rings: the face now turns as much (a turn about the neck's own axis becomes the neck's or head's twist)
+- The neck's and head's green (Y) ring turns the head left and right where it is (a twist about its bone; a tilted head no longer swings round the neck). The head's rings show round the head
+- Grounding starts as "No sinking into the floor or objects". Standing on faces, the body no longer goes through to the other side or turns over: pushed behind the face it stands on, it comes back; bringing the hips near takes no face the hips are behind and none that would turn the body upside down (a ceiling, an object's underside). "Also stand on faces that turn the body over" allows it (clicking a face works as before)
 
 ## v0.1.0
 

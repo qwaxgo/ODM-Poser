@@ -86,6 +86,8 @@ What touches the face is the body's nearest, lowest point. By the pose that may 
 - In Place mode, drag the hips to bring the body near a face (any part within 15 cm) and the figure stands on it (**Stand on a near face when the hips move** in the Place tab turns this on and off).
 - Press **Click a face to stand on** (Place or Objects tab), then click a face (Esc stops).
 - Select an object in the Objects tab and press **Stand on the near face**: the figure stands on that object's face nearest to its body. **Stand on it** also puts the lowest point on the top and keeps the figure on it.
+- The body does not go through to a face's other side or turn over. Pushed behind the face it stands on, it comes back onto it. Bringing the hips near does not take a face the hips are behind, nor one that would turn the body upside down (a ceiling, an object's underside). For those, turn on **Also stand on faces that turn the body over** in the Place tab, or use **Click a face to stand on**.
+- Grounding starts as **No sinking into the floor or objects** (when starting afresh or after a reset).
 - While on any face but the floor, dragging the hips moves the figure along the face. Pulled away from it (with the 3-axis handles, say), the figure lets go.
 - **Stand upright again** turns a tilted body upright.
 
