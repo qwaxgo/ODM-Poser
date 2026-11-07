@@ -109,6 +109,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 体格のタブとサイズのタブを「体格」にまとめました。小物の大きさ（3軸）と部位ごとの長さは、装備と設置のタブへ移しました
 - 範囲選択で人物が選ばれない問題を修正：囲んだ人物（ほかの人物も）を、物体と一緒に選べます
 - Ctrl＋クリックで人物も選ぶ物に足す・外すように。人物と物体をいくつか選ぶと、3軸ハンドルでまとめて動かす・回すことができます（中心は最後に足した物の支点、人物なら腰）。選んだ人物は点線の枠で囲まれ、削除・切り取り・コピーは物だけにかかります
+- 面に立つとき、体のいちばん近い所・低い所を面に着けるように：ポーズによって膝・手・頭なども着きます。面を探すのも体のいちばん近い所から。物体の面（上面も）・壁・天井に立っているあいだは、ポーズを変えてもいちばん低い所が面に着いたまま（「この上に立つ」も）
 
 ### English
 
@@ -209,6 +210,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The Body and Sizes tabs are one tab, Body. A thing's size (3 axes) and its sections' lengths moved to the Equip and Objects tabs
 - Fixed figures not being picked by a box selection: figures in the box (the other figures too) are selected along with the objects
 - Ctrl + click adds a figure to the selection or takes it out too. Several figures and objects move and turn together with the 3-axis handles (about the pivot of the last one added; a figure's is its hips). A selected figure gets a dashed frame; delete, cut and copy take only the objects
+- Standing on a face puts the body's nearest, lowest point on it: by the pose a knee, a hand, the head and so on. The face is found from the body's nearest point too. While on an object's face (its top too), a wall or the ceiling, the lowest point stays on it however the pose changes (Stand on it too)
 
 ## v0.1.0
 

@@ -81,10 +81,12 @@ On a narrow screen (a phone sideways) the menu on the left does not fit even in 
 
 A figure can stand on the floor, a wall, the ceiling or a face of an object put (slopes too). The whole body turns to the face: sideways on a wall, upside down on a ceiling, square to a slope.
 
-- In Place mode, drag the hips near a face (within 15 cm) and the figure stands on it (**Stand on a near face when the hips move** in the Place tab turns this on and off).
+What touches the face is the body's nearest, lowest point. By the pose that may be a knee, a hand, the head or the hips, not only the soles (each joint's circle counted). While the figure is on an object's face (its top too), a wall or the ceiling, its lowest point stays on the face however the pose changes: lift one foot and the other stays on it; kneel and the knees touch. On the floor, the **Grounding** setting in the Place tab decides. A pinned hips joint wins over this.
+
+- In Place mode, drag the hips to bring the body near a face (any part within 15 cm) and the figure stands on it (**Stand on a near face when the hips move** in the Place tab turns this on and off).
 - Press **Click a face to stand on** (Place or Objects tab), then click a face (Esc stops).
-- Select an object in the Objects tab and press **Stand on the near face**: the figure stands on that object's face nearest to it.
-- While on a wall, a ceiling or a slope, dragging the hips moves the figure along the face. Pulled away from it (with the 3-axis handles, say), the figure lets go.
+- Select an object in the Objects tab and press **Stand on the near face**: the figure stands on that object's face nearest to its body. **Stand on it** also puts the lowest point on the top and keeps the figure on it.
+- While on any face but the floor, dragging the hips moves the figure along the face. Pulled away from it (with the 3-axis handles, say), the figure lets go.
 - **Stand upright again** turns a tilted body upright.
 
 ## Body and sizes
