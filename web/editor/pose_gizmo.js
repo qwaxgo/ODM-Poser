@@ -233,19 +233,24 @@ function ghostNow(){
 function solidTarget(so, key, O, ghost){
   const done = () => { if (!ghost){ afterEdit(); if (typeof syncSolids === "function") syncSolids(); } };
   // a guide shape of the perspective ruler: its handles go along its own edges (toward the vanishing
-  // points); 変形 lengthens only the side pulled (the other side stays), on all three edges; it keeps
-  // to the ruler's turn, so no rings
+  // points); 変形 lengthens only the side pulled (the other side stays), on all three edges. Turned
+  // about the world's X, Y, Z through its pivot, it turns the ruler with it (and the other guides)
   if (so.guide && typeof rulerAxes === "function"){
-    const a = deg(so.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)];
-    const c = add(so.pos, [0, so.size[1] / 2, 0]);
-    return {c, ax, pivot: c, rings: [], sc: ax.map((u, n) => [u, n, "XYZ"[n]]), lacks: ["rotate"],
-      save: () => ({pos: so.pos.slice(), size: so.size.slice()}),
-      move: (s0, d) => { so.pos = add(s0.pos, d); done(); },
+    const R = turnOf(so), ax = [R(X3), R(Y3), R(Z3)], c = solidMid(so);
+    return {c, ax, pivot: O ? O.pivWorld(key) : c, rings: [0, 1, 2], sc: ax.map((u, n) => [u, n, "XYZ"[n]]),
+      save: () => ({pos: so.pos.slice(), size: so.size.slice(), yaw: so.yaw || 0, pitch: so.pitch || 0, roll: so.roll || 0, q: guideQuarter(so)}),
+      move: (s0, d) => { so.pos = add(s0.pos, d); snapGuideGrid(so); done(); },
       scale: (s0, f, n, d) => { const v = Math.max(1, Math.round(s0.size[n] + d));
-        so.size[n] = v; so.pos = n === 1 ? s0.pos.slice() : add(s0.pos, mul(ax[n], (v - s0.size[n]) / 2)); done(); }};
+        so.size[n] = v; so.pos = n === 1 ? s0.pos.slice() : add(s0.pos, mul(ax[n], (v - s0.size[n]) / 2)); done(); },
+      turn: (s0, k, dg) => { so.pos = s0.pos.slice(); so.yaw = s0.yaw; so.pitch = s0.pitch; so.roll = s0.roll;
+        const set = () => { const t = O.worldTurn([s0.yaw, s0.pitch, s0.roll], k, dg); so.yaw = t[0]; so.pitch = t[1]; so.roll = t[2]; };
+        O.keepPivot(key, set);
+        rulerFromGuide(so, s0.q);
+        O.keepPivot(key, () => guideToRuler(so, s0.q));          // as the ruler allows (1点: its direction is the camera's; the grid: quarter turns)
+        if (!ghost) alignGuides(); done(); }};
   }
-  const fin = () => { if (typeof snapSolid === "function") snapSolid(so); done(); };
-  const c = add(so.pos, [0, so.size[1] / 2, 0]);
+  const fin = () => { if (typeof snapSolid === "function") snapSolid(so, true); done(); };
+  const c = solidMid(so);
   // turned about the world's X, Y, Z through its pivot (支点; the middle unless moved)
   return {c, ax: WORLD, pivot: O ? O.pivWorld(key) : c, rings: [0, 1, 2], sc: worldSc(O ? O.axesOf(key) : WORLD),
     save: () => ({pos: so.pos.slice(), size: so.size.slice(), yaw: so.yaw || 0, pitch: so.pitch || 0, roll: so.roll || 0}),
@@ -253,7 +258,8 @@ function solidTarget(so, key, O, ghost){
     scale: (s0, f, n) => { so.size[n] = Math.max(1, Math.round(s0.size[n] * f)); fin(); },
     turn: (s0, k, dg) => { so.pos = s0.pos.slice(); so.yaw = s0.yaw; so.pitch = s0.pitch; so.roll = s0.roll;
       const set = () => { if (!O){ so.yaw = s0.yaw + (k === 1 ? dg : 0); return; }
-        const [a, p, r] = O.worldTurn([s0.yaw, s0.pitch, s0.roll], k, dg); so.yaw = a; so.pitch = p; so.roll = r; };
+        const [a, p, r] = O.worldTurn([s0.yaw, s0.pitch, s0.roll], k, dg); so.yaw = a; so.pitch = p; so.roll = r;
+        if (k === 1 && typeof magnetYaw === "function") so.yaw = magnetYaw(so.yaw); };    // near the ruler's direction: sticks
       if (O) O.keepPivot(key, set); else set(); fin(); }};
 }
 function itemTarget(it, key, O, ghost){
@@ -269,7 +275,8 @@ function itemTarget(it, key, O, ghost){
     turn: (s0, k, dg) => { const w = v => ((v + 540) % 360) - 180;
       it.base = s0.base.slice(); it.yaw = s0.yaw; it.rot = s0.rot.slice();
       const set = () => { if (!O){ if (k === 1) it.yaw = w(s0.yaw + dg); return; }
-        const [ya, p, r] = O.worldTurn([s0.yaw + (s0.rot[1] || 0), s0.rot[0] || 0, s0.rot[2] || 0], k, dg); it.yaw = ya; it.rot = [p, 0, r]; };
+        const [ya, p, r] = O.worldTurn([s0.yaw + (s0.rot[1] || 0), s0.rot[0] || 0, s0.rot[2] || 0], k, dg); it.yaw = ya; it.rot = [p, 0, r];
+        if (k === 1 && typeof magnetYaw === "function") it.yaw = magnetYaw(it.yaw); };
       if (O) O.keepPivot(key, set); else set();
       if (it.grounded) groundItem(it); done(); }};
 }

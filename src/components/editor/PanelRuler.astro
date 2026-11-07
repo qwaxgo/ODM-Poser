@@ -10,16 +10,20 @@
       <select id="rulerN"><option value="1">1点</option><option value="2">2点</option><option value="3">3点</option></select>
       <div id="rulerYawRow"><label>向き</label>
         <div class="row"><input type="range" id="rulerYaw" min="-180" max="180" value="30"><input type="number" class="num" id="rulerYawV"><span class="unit">°</span></div></div>
+      <div id="rulerLeanRow" style="display:none"><label>定規の倒れ</label>
+        <div class="row"><span class="val" id="rulerLeanV"></span><button id="rulerUpright" title="倒れをなくして、定規を床に立てる（向きはそのまま）">定規を床に立てる</button></div></div>
       <label>線の数</label>
       <div class="row"><input type="range" id="rulerLines" min="6" max="60" value="20"><span class="val" id="rulerLinesV"></span></div>
       <h3>ガイド図形</h3>
       <label><input type="checkbox" id="cubeExtend" checked> ガイドの辺を消失点まで延ばす</label>
       <div class="btns"><button id="rulerGuideAdd" title="設置のタブを「ガイドとして置く」で開く">ガイドを置く</button></div>
-      <div class="hint">直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。</div>
+      <div class="hint">直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。ガイドを「回転」で回すと、パース定規とほかのガイドも一緒に回ります（前後・横に倒すと、消失点がアイレベルから外れます）。</div>
       <h3>スナップ</h3>
       <label><input type="checkbox" id="rulerSnap" checked> 物体を定規にスナップ</label>
       <div class="btns"><button id="wallToRuler" title="壁を定規の向きにそろえる">壁を定規に</button></div>
-      <div class="hint">配置モードで物体・小物を動かすと、向きが定規の向きにそろいます。物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。</div>
+      <div class="hint">配置モードで物体・小物を回して、定規の向きから ±5° 以内に来ると、その向きに吸い付きます。物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。</div>
+      <label><input type="checkbox" id="rulerGrid"> 定規を床のグリッドにスナップ</label>
+      <div class="hint">定規の向きを床のグリッドの線にそろえ、90° ずつ回るようにします。ガイドを動かすと、角がグリッドの交点（40cm おき）に、底が床に吸い付きます。</div>
       <div class="btns"><button id="saveRuler">定規の画像</button><button id="rulerReset">↺ 定規を初期値に</button></div>
       <div class="hint" id="rulerHint"></div>
       <div class="hint" id="rulerWarn" style="color:var(--warn);display:none"></div>

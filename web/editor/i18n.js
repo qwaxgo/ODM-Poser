@@ -29,8 +29,14 @@
       "The flame's tips fan out from the middle of the root's base and get shorter toward the sides along a parabola",
     "ガイド図形": "Guide shapes", "ガイドの辺を消失点まで延ばす": "Carry the guides' edges on to the vanishing points", "ガイドを置く": "Put a guide",
     "設置のタブを「ガイドとして置く」で開く": "Open the Objects tab with “Put as a guide”",
-    "直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。":
-      "Put the Objects tab's shapes (boxes, cylinders, prisms, pyramids ...) as guides turned to the ruler, as many as you like. Guides show only while the ruler does; they are not in the rough picture but are in the ruler picture. The 3-axis handles' Scale lengthens only the side pulled.",
+    "直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。ガイドを「回転」で回すと、パース定規とほかのガイドも一緒に回ります（前後・横に倒すと、消失点がアイレベルから外れます）。":
+      "Put the Objects tab's shapes (boxes, cylinders, prisms, pyramids ...) as guides turned to the ruler, as many as you like. Guides show only while the ruler does; they are not in the rough picture but are in the ruler picture. The 3-axis handles' Scale lengthens only the side pulled. Turning a guide with Rotate turns the perspective ruler and the other guides with it (tipped forward or sideways, the vanishing points leave the eye level).",
+    "定規の倒れ": "Ruler lean", "定規を床に立てる": "Stand the ruler on the floor",
+    "倒れをなくして、定規を床に立てる（向きはそのまま）": "Take away the lean and stand the ruler on the floor (its direction stays)",
+    "定規が倒れているので、縦の線も実際には集まります（3点透視で見えます）。": "The ruler leans, so its verticals really meet too (3-point shows them).",
+    "定規を床のグリッドにスナップ": "Snap the ruler to the floor grid",
+    "定規の向きを床のグリッドの線にそろえ、90° ずつ回るようにします。ガイドを動かすと、角がグリッドの交点（40cm おき）に、底が床に吸い付きます。":
+      "Turns the ruler to the floor grid's lines and keeps it to quarter turns. A guide moved sticks by its corner to the grid's points (every 40 cm) and by its bottom to the floor.",
     "地面と接地": "The ground and grounding", "壁と天井は、設置タブで物体（板）として置きます（いくつでも置け、3軸で回転できます）。": "Walls and ceilings are put in the Objects tab as slabs (as many as you like, turned on all three axes).",
     "選んだ物を接地させる": "Put the chosen thing on the ground", "接地させる物を、下の「出ている物」の一覧から選んでください。": "Choose the thing to put on the ground from the list of things out.", "接地させました。": "Put on the ground.",
     "色は #rrggbb の形で入れてください（例：#e0605a）。": "Type the colour as #rrggbb (e.g. #e0605a).",
@@ -432,8 +438,8 @@
     "位置：前後": "Place: front-back", "立方体にする（幅にそろえる）": "Make it a cube (the width)", "スナップ": "Snapping",
     "物体を定規にスナップ": "Snap objects to the ruler", "壁を定規の向きにそろえる": "Turn the wall like the ruler",
     "壁を定規の向きにそろえました。": "The wall now turns like the ruler.",
-    "配置モードで物体・小物を動かすと、向きが定規の向きにそろいます。物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。":
-      "Objects and things moved in the place mode turn to the ruler's directions. Objects stick to the floor, the ceiling and walls turned like the ruler (floor and wall slabs too) when they come near.",
+    "配置モードで物体・小物を回して、定規の向きから ±5° 以内に来ると、その向きに吸い付きます。物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。":
+      "Objects and things turned in the place mode stick to a ruler direction within ±5° of it. Objects stick to the floor, the ceiling and walls turned like the ruler (floor and wall slabs too) when they come near.",
     "シーンの一覧": "In the scene", "開く": "Open", "↺ 初期状態に": "↺ Reset",
     "行を選んでから押します（ダブルクリックで開く）。持ち物・オーラは人物の下に、置いた物・物体・床と壁・定規の立方体は外側に並びます。":
       "Pick a row, then press (double-click opens it). Things held and auras sit under their figure; things put down, objects, floor and walls and the ruler's box stand outside.",
@@ -498,6 +504,7 @@
     [/^(.+)を呼び出しました。$/, m => `Recalled ${figEn(m[1])}.`],
     // figures: "2人目" is "Figure 2" (pose_cast.js)
     [/^(\d+)人目$/, m => `Figure ${m[1]}`],
+    [/^前後 (-?\d+)°・横 (-?\d+)°$/, m => `Forward ${m[1]}° · sideways ${m[2]}°`],
     [/^(.+)（編集中）$/, m => `${figEn(m[1])} (editing)`],
     [/^(.+)を(複製して)?追加しました。いま編集しているのは(.+)です。$/,
       m => `Added ${figEn(m[1])}${m[2] ? " (a copy)" : ""}; now editing ${figEn(m[3])}.`],

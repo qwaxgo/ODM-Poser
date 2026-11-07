@@ -63,6 +63,7 @@ const PC = [
     [["消失点をドラッグ", "Drag a vanishing point"], ["定規の向きを変える", "Turn the ruler"]],
     [["設置のタブで何も選ばずに3軸ハンドル", "The 3-axis handles with nothing selected (Objects tab)"], ["置く前の物（プレビュー）を動かす・回す・変形・支点を動かす。「置く」でそのとおりに置く", "Move, turn, stretch or re-pivot the thing about to be put (the preview); Put puts it just so"]],
     [["ガイド図形の矢印・四角をドラッグ", "Drag a guide shape's arrow or square"], ["辺の向き（消失点の方）に動かす・引いた側の辺だけ延ばす", "Move it along its edges (toward the vanishing points) / lengthen only the side pulled"]],
+    [["ガイド図形の輪をドラッグ", "Drag a guide shape's ring"], ["パース定規とほかのガイドも一緒に回す（倒すと消失点がアイレベルから外れる）", "Turn the perspective ruler and the other guides with it (tipped, the vanishing points leave the eye level)"]],
     [["丸をクリック", "Click a circle"], ["関節を選ぶ（物体に着ける用）", "Select a joint (to put it on an object)"]],
     [["腰の丸をドラッグ（または選んで矢印・輪）", "Drag the hips' circle (or select it: arrows, ring)"], ["人物全体を動かす・回す", "Move / turn the whole figure"]],
     [["矢印・輪・四角をドラッグ（G・R・S で切り替え）", "Drag an arrow, the ring or a square (G, R, S switch)"], ["選んだ物体を X・Y・Z（場面の軸。物の向きによらない）に沿って動かす・回す・伸ばす（3軸ハンドル）", "Move, turn or stretch the selected object along X, Y, Z (the scene's axes, however it is turned; 3-axis handles)"]],
