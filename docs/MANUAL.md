@@ -61,7 +61,7 @@ Arrows and rings (move, rotate, scale) on the selected joint or thing. **3-axis 
 - The arrows (move) keep to the scene's X, Y, Z wherever the thing is.
 - The rings (rotate) and squares (scale) keep to the selected thing's own axes: a joint's (Y along its bone, Z toward the body's front), an object's or thing's (as it is turned). A square stretches the object's width, height or depth. With several objects selected, the rings keep to the scene's X, Y, Z.
 - In Pose mode the shoulders and thigh roots have the move arrows too. Their bone from the chest / pelvis keeps its length and moves within the joint limits (a shoulder shrugs and goes forward or back; a thigh root barely), so the body's sizes stay and only the torso's and pelvis' trapezoids lean.
-- In Body mode the head has three squares, **Length**, **Width** and **Depth**, which stretch its ball that way (as **Head shape** in the Body tab; the head's size and the neck's length stay). A stretched head is drawn as an ellipsoid turned with the head, and the face's cross follows it.
+- In Body mode the head has three squares, **Length**, **Width** and **Depth**, which stretch its ball that way (as **Head shape** in the Body tab; the head's size stays). It grows from where the neck meets it (the head's bottom stays), so the neck gets neither shorter nor longer. A stretched head is drawn as an ellipsoid turned with the head, and the face's cross follows it.
 - On a joint in Pose mode, the green (Y) ring twists along the bone (as **Twist** in the joint panel: on the elbow the forearm turns about the upper arm; on the head it looks left and right where it is). The hips' green ring turns the whole body about up.
 - Where rings lie on each other, the one nearest to the press is taken (about as near: the green one).
 - The arrow or ring held is drawn heavier, the others fade.
@@ -112,8 +112,10 @@ shape: it becomes a guide shape turned to the ruler (boxes, cylinders, prisms, p
 - Guides show only while the ruler does, drawn in its colours with their edges carried on to the vanishing points; they are not in the rough picture, but are in the ruler picture.
 - The 3-axis handles' arrows and squares follow the guide's edges. **Scale** lengthens only the side pulled; the other side stays (the edges without a vanishing point change too, for the height or width).
 - Guides are always linked to the perspective ruler. Turning a guide with **Rotate** turns the ruler and the other guides with it. Tipped forward or sideways, the vanishing points leave the eye level, as a box tipped over is drawn. **Stand the ruler on the floor** in the Ruler tab takes the lean away. In 1-point the ruler faces the camera, so it does not turn left or right.
-- With **Snap the ruler to the floor grid** on, the ruler turns to the floor grid's lines and turns a quarter turn at a time. A guide moved sticks by its corner to the grid's points (every 40 cm) and by its bottom to the floor.
-- Objects and things that are not guides turn freely. With **Snap objects to the ruler** on, they stick to a ruler direction only within ±5° of it.
+- A guide can sit at any angle off the ruler. Turn the guide about to be put with the 3-axis handles' green ring, or a guide put with **Turn (facing, Y)** in the Objects tab, and that guide alone turns (the ruler stays). It keeps that angle when the ruler turns. At an angle off the ruler, its edges do not go to the vanishing points.
+- While the ruler shows, the floor grid turns with it, and it is drawn far (8 m round the figure).
+- With **Snap the ruler to the floor grid** on, a guide moved sticks by its corner to the grid's points (every 40 cm) and by its bottom to the floor. The ruler is not kept to quarter turns; it turns freely.
+- Objects and things turn freely. **Snap objects to the ruler** sticks their place to the floor, the ceiling and walls when near. The turn sticks (to a ruler direction, every 90°, within ±5°) only with **Turns stick to the ruler too** on (off at first).
 - When the camera tilts, the perspective ruler tilts with the scene.
 - The **box guide** of earlier versions becomes a guide box when a file opens.
 
