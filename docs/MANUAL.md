@@ -91,7 +91,7 @@ What touches the face is the body's nearest, lowest point. By the pose that may 
 
 ## Body and sizes
 
-The **Body** tab now holds the sex, height and overall size together with each part's size (height and heads, locked parts, head and torso, arms and legs, head shape).
+The **Body** tab now holds the sex, height and overall size together with each part's size (locked parts, head and torso, arms and legs, head shape). The height and the heads count are in one place, the **Body** section, with sliders; **Keep, when the height, heads or a part changes** chooses whether the heads count is kept (the whole body alike) or the height (the rest of the body makes up).
 A thing's size (3 axes) and its sections' lengths are in the Equip and Objects tabs.
 
 Switching **Female** / **Male** keeps your adjustments (part lengths, left-right differences, thickness, head size): each part and the height change only by the difference between the sexes.
