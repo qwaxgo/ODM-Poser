@@ -66,9 +66,9 @@ Arrows and rings (move, rotate, scale) on the selected joint or thing. **3-axis 
 
 ## Selecting and editing things (Place mode)
 
-Select by clicking, by a box, or Ctrl (⌘) + click to add or take out. Several selected move together and turn together on X, Y, Z about one thing's pivot: the last one added; Ctrl + Shift + click on another selected one makes it the centre (until the selection goes).
+Select by clicking, by a box, or Ctrl (⌘) + click to add or take out. Figures can be selected with them too, by a box or Ctrl + click (the other figures as well; a selected figure gets a dashed frame). Several selected move together with the 3-axis handles and turn together on X, Y, Z about one thing's pivot: the last one added (a figure's is its hips); Ctrl + Shift + click on another selected one makes it the centre (until the selection goes). Delete, cut and copy take only the objects; the figures stay. Ctrl + click in another mode goes to Place mode.
 
-Ctrl + click the body (Place mode): takes the figure by its hips to move it (drag along the floor, or with the 3-axis handles' arrows and ring).
+Ctrl + click the body (nothing selected): takes the figure by its hips to move it (drag along the floor, or with the 3-axis handles' arrows and ring).
 
 | Do | Key | Button on the view's left |
 |----|-----|---------------------------|

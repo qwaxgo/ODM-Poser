@@ -107,6 +107,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 腰の真ん中をクリックすると配置モードの人物の移動に（3軸ハンドルは移動）、Shift＋クリックでポーズモードの体ごとの回転に（3軸ハンドルは回転）。配置モードで腰を押しても、ポーズモードに切り替わらないように（そのままドラッグで人物を動かせます）
 - 「女性」「男性」で性別を変えても、体格の調整（部位の長さ・左右の違い・太さ・頭の大きさ）をリセットしないように。性別の差の割合だけ変わります
 - 体格のタブとサイズのタブを「体格」にまとめました。小物の大きさ（3軸）と部位ごとの長さは、装備と設置のタブへ移しました
+- 範囲選択で人物が選ばれない問題を修正：囲んだ人物（ほかの人物も）を、物体と一緒に選べます
+- Ctrl＋クリックで人物も選ぶ物に足す・外すように。人物と物体をいくつか選ぶと、3軸ハンドルでまとめて動かす・回すことができます（中心は最後に足した物の支点、人物なら腰）。選んだ人物は点線の枠で囲まれ、削除・切り取り・コピーは物だけにかかります
 
 ### English
 
@@ -205,6 +207,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Clicking the hips' middle goes to Place mode to move the figure (the 3-axis handles: move); Shift + click goes to Pose mode to turn the whole body (rotate). Pressing the hips in Place mode no longer switches to Pose mode (drag on to move the figure)
 - Switching Female / Male no longer resets the body's adjustments (part lengths, left-right differences, thickness, head size); it changes only by the difference between the sexes
 - The Body and Sizes tabs are one tab, Body. A thing's size (3 axes) and its sections' lengths moved to the Equip and Objects tabs
+- Fixed figures not being picked by a box selection: figures in the box (the other figures too) are selected along with the objects
+- Ctrl + click adds a figure to the selection or takes it out too. Several figures and objects move and turn together with the 3-axis handles (about the pivot of the last one added; a figure's is its hips). A selected figure gets a dashed frame; delete, cut and copy take only the objects
 
 ## v0.1.0
 
