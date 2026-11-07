@@ -40,6 +40,8 @@ The setting of that name in the Pose tab (on at first) changes the mode to fit w
 |---------|------|
 | A joint (from Place or Camera) | Pose |
 | Shift + a joint | Body (switches Pose ⇄ Body) |
+| The hips' middle | Place (moves the whole figure; the 3-axis handles: move) |
+| Shift + the hips' middle | Pose (turns the whole body; the 3-axis handles: rotate) |
 | An object or a thing | Place (and selects it) |
 | Empty space (from Pose or Body) | Camera |
 | Empty space (Place) | Lets the selection go |
@@ -74,6 +76,24 @@ Ctrl + click the body (Place mode): takes the figure by its hips to move it (dra
 | Cut, copy, paste | Ctrl + X, C, V | Cut, Copy, Paste |
 
 On a narrow screen (a phone sideways) the menu on the left does not fit even in two columns, so “…” swaps the 3-axis handles with the cursor and edit buttons.
+
+## Standing on a face
+
+A figure can stand on the floor, a wall, the ceiling or a face of an object put (slopes too). The whole body turns to the face: sideways on a wall, upside down on a ceiling, square to a slope.
+
+- In Place mode, drag the hips near a face (within 15 cm) and the figure stands on it (**Stand on a near face when the hips move** in the Place tab turns this on and off).
+- Press **Click a face to stand on** (Place or Objects tab), then click a face (Esc stops).
+- Select an object in the Objects tab and press **Stand on the near face**: the figure stands on that object's face nearest to it.
+- While on a wall, a ceiling or a slope, dragging the hips moves the figure along the face. Pulled away from it (with the 3-axis handles, say), the figure lets go.
+- **Stand upright again** turns a tilted body upright.
+
+## Body and sizes
+
+The **Body** tab now holds the sex, height and overall size together with each part's size (height and heads, locked parts, head and torso, arms and legs, head shape).
+A thing's size (3 axes) and its sections' lengths are in the Equip and Objects tabs.
+
+Switching **Female** / **Male** keeps your adjustments (part lengths, left-right differences, thickness, head size): each part and the height change only by the difference between the sexes.
+For the sex's own starting body, use **↺ This figure back to its sex's default** in the Reset tab, or a body preset.
 
 ## Perspective ruler and guide shapes
 

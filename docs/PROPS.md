@@ -39,14 +39,14 @@ Pick it in **In the scene** to:
 
 ### Size on three axes
 
-**A thing's size (3 axes)** in the **Sizes** tab stretches X, Y and Z each on its own (20–400 %). For a
+**A thing's size (3 axes)** in the **Equip** and **Objects** tabs stretches X, Y and Z each on its own (20–400 %). For a
 held thing, Y is the way the thumb points (a sword's blade), Z the way the arm points (a gun's
 barrel), X across both. The grip stays; the far end grows. The preview's fields set the size before
 it is placed, too.
 
 ### Section lengths (grip and blade ...)
 
-A thing made of sections, such as a weapon, has **A thing's sections, each its length** in the **Sizes** tab: choose a
+A thing made of sections, such as a weapon, has **A thing's sections, each its length** in the **Equip** and **Objects** tabs: choose a
 section and change its length alone. The chosen section is drawn heavier. A longer grip moves the blade out along
 it while the hand's hold stays; the other hand of a two-handed thing and a bayonet move along too.
 
@@ -89,7 +89,7 @@ choose one to change it:
 |-------|--------------------------------|--------|
 | Place | left / right, up / down, front / back | the same |
 | Turn | X (tip forward / back), Y (facing), Z (tip sideways) | the same |
-| Size | width, height, depth (a prism's or pyramid's sides and top too) | size and X, Y, Z (as when held); section lengths in Sizes |
+| Size | width, height, depth (a prism's or pyramid's sides and top too) | size and X, Y, Z (as when held); section lengths below it |
 
 **Put on the ground** sets it on the ground or on what is under it by its lowest point, turned or not; figures
 stand on a tilted face at its height. Walls and ceilings are objects (slabs) too, as many as you like, turned on

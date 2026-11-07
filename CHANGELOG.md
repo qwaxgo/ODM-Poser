@@ -103,6 +103,10 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - スナップがオンでも、ガイドでない物体・小物を回せるように修正（定規の向きに戻されていました）。定規の向きから ±5° 以内に来たときだけ吸い付きます
 - 「定規を床のグリッドにスナップ」を追加：定規の向きを床のグリッドの線にそろえて90°ずつ回し、ガイドの角をグリッドの交点（40cm おき）に、底を床に吸い付けます
 - 設置・装備のタブの種類に「ニュートラル（何も選ばない）」を追加：開いたときと、置いた（持たせた）あとはニュートラルになり、置く前のプレビューと3軸ハンドルが出ないので、置いた物を動かしやすく。分類を選び直すとその最初の種類になります
+- 人物を、床・壁・天井と置いた物体の面（斜面も）に立たせる機能：体ごと面に合わせ（壁では横向き、天井では逆さ、斜面では垂直）、足の裏を面に着けます。配置モードで腰を面に近づける（15cm 以内）、「面をクリックして立つ」、設置のタブの「近い面に立つ」で。立っている面に沿って腰をドラッグでき、面から離すと外れます。「体をまっすぐに戻す」を追加
+- 腰の真ん中をクリックすると配置モードの人物の移動に（3軸ハンドルは移動）、Shift＋クリックでポーズモードの体ごとの回転に（3軸ハンドルは回転）。配置モードで腰を押しても、ポーズモードに切り替わらないように（そのままドラッグで人物を動かせます）
+- 「女性」「男性」で性別を変えても、体格の調整（部位の長さ・左右の違い・太さ・頭の大きさ）をリセットしないように。性別の差の割合だけ変わります
+- 体格のタブとサイズのタブを「体格」にまとめました。小物の大きさ（3軸）と部位ごとの長さは、装備と設置のタブへ移しました
 
 ### English
 
@@ -197,6 +201,10 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Objects and things that are not guides turn again while snapping is on (they were turned back to the ruler); they stick to a ruler direction only within ±5° of it
 - "Snap the ruler to the floor grid": the ruler turns to the floor grid's lines a quarter turn at a time, and guides stick by a corner to the grid's points (every 40 cm) and by the bottom to the floor
 - The Objects and Equip tabs' kinds get “Neutral (nothing chosen)”: the tabs start there and go back to it after putting (or holding) a thing, so no preview or 3-axis handles get in the way of moving what was put. Choosing a category picks its first kind
+- Figures stand on the floor, walls, the ceiling and the faces of objects put (slopes too): the whole body turns to the face (sideways on a wall, upside down on a ceiling, square to a slope) with the soles on it. Bring the hips near a face in Place mode (within 15 cm), use "Click a face to stand on", or "Stand on the near face" in the Objects tab. Dragging the hips moves the figure along the face; pulled away, it lets go. Adds "Stand upright again"
+- Clicking the hips' middle goes to Place mode to move the figure (the 3-axis handles: move); Shift + click goes to Pose mode to turn the whole body (rotate). Pressing the hips in Place mode no longer switches to Pose mode (drag on to move the figure)
+- Switching Female / Male no longer resets the body's adjustments (part lengths, left-right differences, thickness, head size); it changes only by the difference between the sexes
+- The Body and Sizes tabs are one tab, Body. A thing's size (3 axes) and its sections' lengths moved to the Equip and Objects tabs
 
 ## v0.1.0
 
