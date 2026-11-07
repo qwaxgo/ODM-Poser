@@ -66,7 +66,7 @@ function fresh(){
           head: {yaw: 0, pitch: 0}, cam: {lens: 50, yaw: 0, pitch: 0, roll: 0, zoom: 1},
           body: {yaw: 0, pitch: 0, roll: 0}, twist: REST.map(() => 0),
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
-          wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230}, wire: {on: false, joint: "chest", height: 300},
+          wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230, attach: true}, wire: {on: false, joint: "chest", height: 300},
           center: [0, 90, 0], cams: [], camLock: false, scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, torso3d: true, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
           ruler: {on: false, n: 2, yaw: 30, pitch: 0, roll: 0, lines: 20, cube: false, box: [60, 60, 60], pos: [70, 0, 0], extend: true, snap: true, grid: false}};
 }
@@ -867,8 +867,15 @@ function down(cv, e){
     const right = flat(camRotInv([1, 0, 0])), away = flat(camRotInv([0, 0, -1]));
     let lx = x, ly = y;
     drag = {move(mx, my, ev){
-      const k = 1 / Math.max(1e-6, project(S.P[IX.pelvis], W, H).s), dx = (mx - lx) * k, dy = (ly - my) * k; lx = mx; ly = my;
-      const d = ev && ev.shiftKey ? [0, dy, 0] : add(mul(right, dx), mul(away, dy));
+      const k = 1 / Math.max(1e-6, project(S.P[IX.pelvis], W, H).s), dx = (mx - lx) * k, dy = (ly - my) * k;
+      let d = ev && ev.shiftKey ? [0, dy, 0] : add(mul(right, dx), mul(away, dy));
+      // standing on a wall, a ceiling or a slope (S.stand, pose_scene.js): along that face, under the pointer
+      if (S.stand && !(ev && ev.shiftKey) && typeof pixelRay === "function"){
+        const n = S.stand.n, pv = S.P[IX.pelvis], hit = (X, Y) => { const r = pixelRay(X, Y, W, H), dn = dot(r.dir, n);
+          return Math.abs(dn) < 1e-6 ? null : add(r.o, mul(r.dir, dot(sub(pv, r.o), n) / dn)); };
+        const a = hit(lx, ly), b = hit(mx, my); d = a && b ? sub(b, a) : [0, 0, 0];
+      }
+      lx = mx; ly = my;
       moveAll(d, false);
       for (const n of Object.keys(S.pins || {})) S.pins[n] = add(S.pins[n], d);
       if (S.wire && S.wire.anchor) S.wire.anchor = add(S.wire.anchor, d);
@@ -1162,6 +1169,34 @@ function applySex(sex){
     setLengths(b.len);
     S.R[IX.head] = b.head; S.R[IX.waist] = b.waistR; S.R[IX.r_hip] = S.R[IX.l_hip] = b.hipR;
     scaleAbout(b.height / standingHeight());
+  });
+}
+// the standard body (no sex chosen) as a SEX_BODY entry, from REST
+function sexBase(sex){
+  if (SEX_BODY[sex]) return SEX_BODY[sex];
+  const P0 = S.P, R0 = S.R; S.P = REST.map(p => p.slice()); S.R = REST_R.slice();
+  const lenOf = n => len(sub(REST[IX[n]], REST[PARENT[IX[n]]]));
+  const out = {height: standingHeight(), head: REST_R[IX.head], waistR: REST_R[IX.waist], hipR: REST_R[IX.r_hip],
+    len: Object.fromEntries(Object.keys(SEX_BODY.female.len).map(n => [n, lenOf(n)]))};
+  S.P = P0; S.R = R0;
+  return out;
+}
+// 女性 / 男性 in 体格: the body changes by the two sexes' difference (each bone and width times their
+// ratio, the height too), so what was adjusted (sizes, one side's length, thickness) stays
+function switchSex(sex){
+  const from = sexBase(S.sex), to = SEX_BODY[sex]; if (!to || S.sex === sex) return;
+  S.sex = sex;
+  fromBottom(() => {
+    const h0 = standingHeight(), old = S.P.map(p => p.slice()), out = S.P.map(p => p.slice());
+    for (const i of subtree(0).slice(1)){
+      const p = PARENT[i], name = J[i].startsWith("l_") ? "r_" + J[i].slice(2) : J[i];
+      const k = name in to.len && from.len[name] ? to.len[name] / from.len[name] : 1;
+      out[i] = add(out[p], mul(sub(old[i], old[p]), k));
+    }
+    S.P = out;
+    S.R[IX.head] *= to.head / from.head; S.R[IX.waist] *= to.waistR / from.waistR;
+    S.R[IX.r_hip] *= to.hipR / from.hipR; S.R[IX.l_hip] *= to.hipR / from.hipR;
+    scaleAbout(h0 * (to.height / from.height) / standingHeight());
   });
 }
 // The body's own frame: the whole figure's turn (S.body), so a bone's angles stay the same
@@ -1543,7 +1578,7 @@ const PRESETS = {
 };
 const AXES = {x: [1,0,0], y: [0,1,0], z: [0,0,1]};
 function applyPreset(name){
-  S.P = REST.map(p => p.slice()); S.body = {yaw: 0, pitch: 0, roll: 0}; S.twist = REST.map(() => 0); delete S.shape;
+  S.P = REST.map(p => p.slice()); S.body = {yaw: 0, pitch: 0, roll: 0}; delete S.stand; S.twist = REST.map(() => 0); delete S.shape;
   for (const [joint, ax, d] of PRESETS[name]){
     const i = IX[joint], par = PARENT[i], p = S.P[par];
     for (const k of subtree(i)) S.P[k] = add(p, rotAxis(sub(S.P[k], p), AXES[ax], deg(d)));
@@ -1685,7 +1720,7 @@ function applyUserPreset(t){
     const p = PARENT[i], L = len(sub(cur[i], cur[p]));
     out[i] = add(out[p], mul(norm(sub(Q[i], Q[p])), L));
   }
-  S.P = out; S.body = {yaw: 0, pitch: 0, roll: 0}; S.twist = REST.map(() => 0); S.pins = {};
+  S.P = out; S.body = {yaw: 0, pitch: 0, roll: 0}; delete S.stand; S.twist = REST.map(() => 0); S.pins = {};
   if (typeof sceneAfterEdit === "function") sceneAfterEdit();
 }
 function syncUI(){
@@ -1776,7 +1811,7 @@ function resetToSex(){
   remember();
   const c = S.P[IX.pelvis].slice(), sex = S.sex, f = fresh();
   for (const k of ["P", "R", "hands", "head", "body", "twist", "pins", "scale"]) S[k] = f[k];
-  delete S.shape; delete S.sex;
+  delete S.shape; delete S.sex; delete S.stand;
   if (SEX_BODY[sex]) applySex(sex);
   standOnFloor(c[0], c[2]);
   afterEdit(); syncUI(); draw();
@@ -1866,8 +1901,9 @@ buildJointPanel();
 $("handSel").innerHTML = Object.keys(HANDS).map(k => `<option value="${k}">${HAND_JA[k]}（${k}）</option>`).join("");
 $("handSel").addEventListener("change", e => { if (sel < 0) return; remember(); S.hands[J[sel][0]] = e.target.value; draw(); });
 $("pin").addEventListener("change", () => { if (sel < 0) return; remember(); togglePin(sel); draw(); });
-$("sexF").addEventListener("click", () => { remember(); applySex("female"); draw(); say("女性の体格にしました。"); });
-$("sexM").addEventListener("click", () => { remember(); applySex("male"); draw(); say("男性の体格にしました。"); });
+// the adjustments stay (switchSex); 体格プリセット and リセット put the sex's own body
+$("sexF").addEventListener("click", () => { remember(); switchSex("female"); draw(); say("女性の体格にしました（調整はそのままです）。"); });
+$("sexM").addEventListener("click", () => { remember(); switchSex("male"); draw(); say("男性の体格にしました（調整はそのままです）。"); });
 for (const id of ["W", "H"]) $(id).addEventListener("change", draw);
 window.addEventListener("resize", draw);
 
@@ -2211,7 +2247,9 @@ function modeTo(m){ const b = document.querySelector(`#modes [data-mode="${m}"]`
 DOWN_HOOKS.unshift((cv, x, y) => {
   // カメラ: a drag turns the camera; a click switches (on letting go, pose_objects.js tapClick)
   if (!autoMode || cv !== front || mode === "persp") return null;
-  if (pick(cv, x, y) >= 0){ if (mode === "place" || mode === "persp") modeTo("pose"); return null; }
+  // the hips' middle in 配置 stays (dragged, the figure moves; a click: pose_objects.js hipsClick)
+  const pi = pick(cv, x, y);
+  if (pi >= 0){ if ((mode === "place" && pi !== IX.pelvis) || mode === "persp") modeTo("pose"); return null; }
   if ((typeof solidUnder === "function" && solidUnder(x, y)) || (typeof itemUnder === "function" && itemUnder(x, y))) modeTo("place");
   return null;
 });

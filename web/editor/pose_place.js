@@ -50,11 +50,13 @@ sec.innerHTML = `<h2>設置（図形・床・壁・天井・小物）</h2>
       <div class="hint">「本体から」は物と一緒に動き・回る位置、「絶対座標」は場面の中の位置です。3軸ハンドルの「支点」で動かすこともできます。</div>
     </details>
     ${SOLID_SIZE.map(ctl).join("")}${ITEM_SIZE.map(ctl).join("")}
-    <div class="btns" id="plItemBtns" style="margin-top:6px"><button id="plSegs">部位ごとの長さ（サイズのタブ）</button></div>
-    <div class="btns" id="plSolidBtns" style="margin-top:6px"><button id="plTouch">選んだ関節を着ける</button><button id="plStand">この上に立つ</button></div>
+    <div class="btns" id="plItemBtns" style="margin-top:6px"><button id="plSegs">部位ごとの長さ（下の欄）</button></div>
+    <div class="btns" id="plSolidBtns" style="margin-top:6px"><button id="plTouch">選んだ関節を着ける</button><button id="plStand">この上に立つ</button><button id="plFace" title="この物体の、人物にいちばん近い面に立たせる（壁のような面では体ごと面に合わせる）">近い面に立つ</button><button id="plPickFace" title="次にクリックした面（床・壁・天井・物体の面）に立たせる">面をクリックして立つ</button></div>
   </div>
   <div class="hint">置いた物は、配置モードでドラッグ・3軸ハンドル（移動・回転・変形）でも動かせます。小物の大きさは、手に持つときと同じ決まりで変わります。</div>`;
 (($("soKind") && $("soKind").closest("section")) || document.querySelector("aside > section:last-of-type")).after(sec);
+// a thing's sizes (pose_size.js: 3 axes, each section's length), in this tab and 装備: after this section
+sec.after(...document.querySelectorAll("aside > section[data-size-item]"));
 
 // ---- the kinds to put: ニュートラル ("") first, nothing to put (no preview, no handles on it); the tab
 // starts so and goes back to it after 置く, so the things put are easy to take and move
@@ -132,9 +134,16 @@ $("plGround").addEventListener("click", () => {
 for (const [id, where] of [["plPivMid", "mid"], ["plPivLow", "bottom"]]) $(id).addEventListener("click", () => {
   if (!window.ODMObj || !(solidOf(sel) || itemOf(sel))) return;
   remember(); ODMObj.resetPiv(sel, where); afterEdit(); sync(); draw(); });
-$("plSegs").addEventListener("click", () => { const it = itemOf(sel); if (!it) return; scSel = +sel.slice(1); if (window.ODMUI) ODMUI.showMenu("size"); draw(); });
+$("plSegs").addEventListener("click", () => { const it = itemOf(sel); if (!it) return; scSel = +sel.slice(1); draw();
+  const s = $("szSeg") && $("szSeg").closest("section"); if (s) s.scrollIntoView({block: "start", behavior: "smooth"}); });
 $("plTouch").addEventListener("click", () => { if (solidOf(sel)) touchSolid(); });
 $("plStand").addEventListener("click", () => { if (solidOf(sel)) standOnSolid(); });
+// the figure on this solid's face nearest to its feet, turned to it (pose_scene.js: standOnFace)
+$("plFace").addEventListener("click", () => { const o = solidOf(sel); if (!o || o.guide) return;
+  const c = nearFace(o); if (!c) return;
+  remember(); standOnFace(c.p, c.n, true); afterEdit(); draw();
+  say(`${solidName(o)}の近い面に立たせました。`); });
+$("plPickFace").addEventListener("click", armFacePick);
 
 // ---- before putting: every size the thing will have, with its ghost drawn where it will go
 // shapes: width, height, depth (a prism's or pyramid's sides and top); things: size, X / Y / Z and
@@ -331,7 +340,7 @@ function sync(){
   "位置（左右）": "Place (left / right)", "位置（上下）": "Place (up / down)", "位置（前後）": "Place (front / back)",
   "回転（前後に倒す・X）": "Turn (tip forward / back, X)", "回転（向き・Y）": "Turn (facing, Y)", "回転（横に倒す・Z）": "Turn (tip sideways, Z)",
   "幅": "Width", "高さ": "Height", "奥行き": "Depth", "角の数": "Sides", "天面の大きさ（底面に対して）": "Top size (of the base)",
-  "大きさ": "Size", "X 方向": "X", "Y 方向": "Y", "Z 方向": "Z", "部位ごとの長さ（サイズのタブ）": "Section lengths (Sizes tab)",
+  "大きさ": "Size", "X 方向": "X", "Y 方向": "Y", "Z 方向": "Z", "部位ごとの長さ（下の欄）": "Section lengths (below)",
   "選んだ関節を着ける": "Put the selected joint on it", "この上に立つ": "Stand on it",
   "置いた物は、配置モードでドラッグ・3軸ハンドル（移動・回転・変形）でも動かせます。小物の大きさは、手に持つときと同じ決まりで変わります。":
     "In Place mode, things out are dragged or moved, turned and scaled with the 3-axis handles too. A thing's size changes as it does when held.",

@@ -12,7 +12,7 @@
   const TREE = [
     {id: "make", title: "作る", icon: "PencilDraw", kids: [
       {id: "figure", title: "人物", icon: "Person", kids: [leaf("pose", "ポーズ", "Pose"), leaf("preset", "プリセット", "Collection"),
-        leaf("body", "体格", "Body"), leaf("size", "サイズ", "FrameSize"), leaf("colors", "色", "Palette", "線の色（人物・物・床などをまとめて）"),
+        leaf("body", "体格", "Body", "性別・身長・部位ごとのサイズ"), leaf("colors", "色", "Palette", "線の色（人物・物・床などをまとめて）"),
         leaf("reset", "リセット", "rotate", "人体のリセットを一箇所に（全部・ポーズ・体格・性別・位置・付随物）")]},
       {id: "things", title: "物と場所", icon: "Home", kids: [leaf("equip", "装備", "Fashion", "選んだ人物に持たせる・身に着ける・まとう"),
         leaf("objects", "設置", "AddModel", "人物から離れた物体を置く"), leaf("place", "配置", "Move1", "床・壁・天井、つかまる、ワイヤー")]}]},
@@ -37,7 +37,7 @@
     "線の色（人物・物・床などをまとめて）": "Line colours (figures, things, floor ... in one place)",
     "選んだ人物に持たせる・身に着ける・まとう": "Give the selected figure something to hold, wear or be wrapped in",
     "人物から離れた物体を置く": "Put objects apart from the figure", "床・壁・天井、つかまる、ワイヤー": "Floor, wall, ceiling; grabbing; wire",
-    "出ている人物・物の管理": "The figures and things in the scene", "カメラとパース": "Camera and perspective", "パース定規": "Perspective ruler",
+    "出ている人物・物の管理": "The figures and things in the scene", "性別・身長・部位ごとのサイズ": "Sex, height and each part's size", "カメラとパース": "Camera and perspective", "パース定規": "Perspective ruler",
     "保存したポーズを開く": "Open a saved pose", "画像・ポーズを書き出す": "Export pictures and poses", "SNS に投稿、リンクをコピー": "Post to social media, copy the link",
     "MOD の管理": "Manage mods", "した操作の一覧。どの時点にも戻せる": "What you did, step by step; go back to any point", "メニューを開く・閉じる": "Open / close the menu",
     "骨の長さを保って関節を動かす": "Move the joints, keeping the bone lengths", "骨の長さ・丸の太さを変える": "Change the bone lengths and the circles' sizes",
@@ -129,6 +129,7 @@
     for (const part of split(sec)) part.dataset.menu = menuFor(part);
   }
   function show(name){
+    if (name === "size") name = "body";            // サイズ is in 体格 now (old links, mods)
     const w = where(name); if (!w) return;
     current = name; lastMid[w.t.id] = w.m.id; lastLeaf[w.m.id] = name;
     aside.querySelectorAll(":scope > section").forEach(s => { const m = (s.dataset.menu || "").split(" ");
@@ -136,6 +137,7 @@
     render();
   }
   function choose(name){
+    if (name === "size") name = "body";
     show(name);
     // the phone's sheet (ui-sheet.js): a tab chosen shows its sheet over the full-screen views
     if (document.body.classList.contains("sheet")) document.body.classList.add("sheet-open");

@@ -31,6 +31,19 @@
     "設置のタブを「ガイドとして置く」で開く": "Open the Objects tab with “Put as a guide”",
     "直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。ガイドを「回転」で回すと、パース定規とほかのガイドも一緒に回ります（前後・横に倒すと、消失点がアイレベルから外れます）。":
       "Put the Objects tab's shapes (boxes, cylinders, prisms, pyramids ...) as guides turned to the ruler, as many as you like. Guides show only while the ruler does; they are not in the rough picture but are in the ruler picture. The 3-axis handles' Scale lengthens only the side pulled. Turning a guide with Rotate turns the perspective ruler and the other guides with it (tipped forward or sideways, the vanishing points leave the eye level).",
+    "面に立つ・貼り付く": "Stand on a face", "腰を動かすと近くの面に立つ": "Stand on a near face when the hips move",
+    "配置モードで腰を動かして面に近づけると、その面に立つ（壁・天井・斜面では体ごと面に合わせる）": "In Place mode, hips brought near a face stand the figure on it (on a wall, a ceiling or a slope the whole body turns to it)",
+    "面をクリックして立つ": "Click a face to stand on", "体をまっすぐに戻す": "Stand upright again",
+    "次にクリックした面（床・壁・天井・物体の面）に立たせる": "Stand the figure on the face clicked next (floor, wall, ceiling or an object's face)",
+    "面に合わせて傾いた体を、まっすぐに戻す": "Turn a body tilted to a face upright again",
+    "床・壁・天井と、置いた物体の面（斜面も）に立たせます。壁では横向きに、天井では逆さに、斜面では面に垂直に、体ごと面に合わせます。配置モードで腰を面に近づける（15cm 以内）か、ボタンを押して面をクリックします。立っている面に沿って腰をドラッグでき、面から離すと貼り付きが外れます。":
+      "Stand the figure on the floor, a wall, the ceiling or a face of an object put (slopes too). The whole body turns to the face: sideways on a wall, upside down on a ceiling, square to a slope. Bring the hips near a face in Place mode (within 15 cm), or press the button and click a face. Dragging the hips moves the figure along the face it stands on; pulled away from it, the figure lets go.",
+    "近い面に立つ": "Stand on the near face", "この物体の、人物にいちばん近い面に立たせる（壁のような面では体ごと面に合わせる）": "Stand the figure on this object's face nearest to it (on a wall-like face the whole body turns to it)",
+    "立たせる面（床・壁・天井・物体の面）をクリックしてください。Esc でやめます。": "Click the face to stand on (floor, wall, ceiling or an object's face). Esc stops.",
+    "面のクリックをやめました。": "Stopped picking a face.", "クリックした面に立たせました。": "Stood the figure on the face clicked.",
+    "クリックした面に、面に合わせて立たせました（関節の固定は外しました）。": "Stood the figure on the face clicked, turned to it (pins removed).",
+    "そこには面がありません。床・壁・天井か、置いた物体の面をクリックしてください。": "No face there. Click the floor, a wall, the ceiling or a face of an object put.",
+    "体をまっすぐに戻しました。": "The body is upright again.",
     "ニュートラル（何も選ばない）": "Neutral (nothing chosen)", "持つ・置く": "Hold / put",
     "定規の倒れ": "Ruler lean", "定規を床に立てる": "Stand the ruler on the floor",
     "倒れをなくして、定規を床に立てる（向きはそのまま）": "Take away the lean and stand the ruler on the floor (its direction stays)",
@@ -357,7 +370,7 @@
     "大きさ・向きを戻す": "Default size and turn",
     // messages
     "固定できるのは腰・肘・手首・膝・足首です。": "Only the hips, elbows, wrists, knees and ankles can be pinned.",
-    "女性の体格にしました。": "Female build applied.", "男性の体格にしました。": "Male build applied.",
+    "女性の体格にしました。": "Female build applied.", "男性の体格にしました。": "Male build applied.", "女性の体格にしました（調整はそのままです）。": "Female build applied (your adjustments stay).", "男性の体格にしました（調整はそのままです）。": "Male build applied (your adjustments stay).", "体格・サイズ": "Body & sizes",
     "アタリ画像を保存しました。": "Rough picture saved.", "OpenPose 画像を保存しました。": "OpenPose picture saved.",
     "ポーズを保存しました。": "Pose saved.", "ポーズを読み込みました。": "Pose loaded.", "形式が違います": "wrong format",
     "先に手首・足首・膝・肘・腰のどれかを選んでください。": "Select a wrist, ankle, knee, elbow or the hips first.",
@@ -504,6 +517,7 @@
     [/^カメラ(\d+)として記憶しました。$/, m => `Remembered as Camera ${m[1]}.`],
     [/^(.+)を呼び出しました。$/, m => `Recalled ${figEn(m[1])}.`],
     // figures: "2人目" is "Figure 2" (pose_cast.js)
+    [/^(.+)の近い面に立たせました。$/, m => `Stood the figure on the near face of the ${(T[m[1]] || m[1]).toLowerCase()}.`],
     [/^(\d+)人目$/, m => `Figure ${m[1]}`],
     [/^前後 (-?\d+)°・横 (-?\d+)°$/, m => `Forward ${m[1]}° · sideways ${m[2]}°`],
     [/^(.+)（編集中）$/, m => `${figEn(m[1])} (editing)`],

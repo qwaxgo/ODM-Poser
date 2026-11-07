@@ -23,14 +23,15 @@ const GROUP_JA = {head: "頭と首", torso: "胴体", arms: "腕", legs: "脚"};
 // a circle's part: the shoulders' and hips' circles go with the arms and legs (their thickness)
 const R_GROUP = Object.assign({}, GROUP, {r_shoulder: "arms", l_shoulder: "arms", r_hip: "legs", l_hip: "legs"});
 
-const sec = (h, inner, menu = "size") => { const s = document.createElement("section"); s.dataset.menu = menu; s.innerHTML = `<h2>${h}</h2>` + inner; return s; };
+// the figure's sizes are in 体格 (one tab with it); a thing's, in 装備 and 設置 (data-size-item: after 設置's own section)
+const sec = (h, inner, menu = "body") => { const s = document.createElement("section"); s.dataset.menu = menu; s.innerHTML = `<h2>${h}</h2>` + inner; return s; };
 const ctl = (id, label, min, max, step, unit) => `<label>${label}</label><div class="row"><input type="range" id="${id}" min="${min}" max="${max}" step="${step}">` +
   `<input type="number" class="num" id="${id}N" step="${step}"><span class="unit">${unit}</span></div>`;
 const parts = [
   sec("身長と頭身", `<label>保つもの</label><select id="szKeep"><option value="none">なし（頭の大きさはそのまま）</option>
       <option value="heads">頭身を保つ（全身が同じ割合で）</option><option value="height">身長を保つ（残りの体で合わせる）</option></select>` +
     ctl("szHeight", "身長", 60, 240, 0.5, "cm") + ctl("szHeads", "頭身", 2, 10, 0.1, "頭身") +
-    `<div class="hint">「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。</div>`, "size body"),
+    `<div class="hint">「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。</div>`),
   sec("部位の固定", `<label><input type="checkbox" id="szLock_head"> 頭と首</label><label><input type="checkbox" id="szLock_torso"> 胴体</label>
     <label><input type="checkbox" id="szLock_arms"> 腕</label><label><input type="checkbox" id="szLock_legs"> 脚</label>
     <div class="hint">固定した部位は、身長・頭身を変えても長さと太さが変わりません。</div>`),
@@ -44,7 +45,7 @@ const parts = [
     ctl("szUpper", "上腕", 10, 50, 0.5, "cm") + ctl("szFore", "前腕", 10, 50, 0.5, "cm") + ctl("szHand", "手", 4, 16, 0.5, "cm") +
     ctl("szArmT", "腕の太さ（肘）", 3, 24, 0.5, "cm") + ctl("szThigh", "太もも", 15, 70, 0.5, "cm") + ctl("szShin", "すね", 15, 70, 0.5, "cm") +
     ctl("szFoot", "足", 5, 25, 0.5, "cm") + ctl("szLegT", "脚の太さ（膝）", 4, 30, 0.5, "cm")),
-  sec("小物の大きさ（3軸）", `<div class="hint" id="szItemName">装備のタブで小物を選ぶと、ここで変えられます。</div>` +
+  sec("小物の大きさ（3軸）", `<div class="hint" id="szItemName">装備・設置のタブで小物を選ぶと、ここで変えられます。</div>` +
     ctl("szSX", "X 方向（赤）", 20, 400, 1, "%") + ctl("szSY", "Y 方向（緑）", 20, 400, 1, "%") + ctl("szSZ", "Z 方向（青）", 20, 400, 1, "%") +
     `<div class="btns"><button type="button" id="szItemReset">↺ 3軸の大きさを戻す</button></div>
     <div class="hint">手に持つ物は Y が親指の向き（剣の刃）、Z が腕の向き（銃身）、X がそれと直角です。持つ所（握り）はそのままで、先の方が伸び縮みします。全体の大きさは装備のタブで変えます。</div>`)];
@@ -56,8 +57,11 @@ parts.push(sec("小物の部位ごとの長さ", `<div class="hint" id="szSegNon
     <div id="szSegBox"><label>部位</label><select id="szSeg"></select>` + ctl("szSegL", "長さ", 1, 100, 0.5, "cm") +
     `<div class="btns"><button type="button" id="szSegReset">↺ この部位を戻す</button><button type="button" id="szSegAll">↺ すべての部位を戻す</button></div>
     <div class="hint">選んだ部位は図で太く表示されます。部位を伸ばすと、その先（柄なら刀身）も一緒に動き、手で持つ所はそのままです。</div></div>`));
-const old = document.querySelector('aside > section[data-menu="size"]');
-old.replaceWith(...parts);
+for (const s of parts) if (/^小物/.test(s.querySelector("h2").textContent)){ s.dataset.menu = "equip objects"; s.dataset.sizeItem = "1"; }
+// the old サイズ placeholder goes; the figure's sizes follow 体格's own section
+const old = document.querySelector('aside > section[data-menu="size"]'), body = document.querySelector('aside > section[data-menu="body"]');
+old.remove();
+(body || document.querySelector("aside > section:last-of-type")).after(...parts);
 
 // ---- the body ----------------------------------------------------------------------------------
 const bone = n => { const i = IX[n]; return len(sub(S.P[i], S.P[PARENT[i]])); };
@@ -196,7 +200,7 @@ function show(){
   for (const id of ["szHeight", "szHeightN"]) $(id).disabled = keep === "height";
   for (const id of ["szHeads", "szHeadsN"]) $(id).disabled = keep === "heads";
   const it = curItem(), def = it && (window.PROPS || {})[it.key];
-  $("szItemName").textContent = def ? `選んだ小物：${def.ja}` : "装備のタブで小物を選ぶと、ここで変えられます。";
+  $("szItemName").textContent = def ? `選んだ小物：${def.ja}` : "装備・設置のタブで小物を選ぶと、ここで変えられます。";
   for (const [id, [get]] of Object.entries(ITEM)){
     const r = $(id), n = $(id + "N"); r.disabled = n.disabled = !it;
     if (it){ if (rangeHeld !== r) r.value = get(it); if (document.activeElement !== n) n.value = get(it); }
@@ -272,7 +276,7 @@ for (const g of ["head", "torso", "arms", "legs"]) $("szLock_" + g).addEventList
   "股の高さ（腰から）": "Thigh roots' height (from the pelvis)", "股の前後（腰から）": "Thigh roots forward / back (from the pelvis)",
   "肩幅・腰幅は体の左右の向きだけ、高さ・前後はそれぞれの向きだけで変わります（体格モードで肩・股をドラッグしても、最初に動かした向きだけ動きます）。":
     "The shoulder and hip widths change only across the body, the heights and forward / back only in their own direction (dragging a shoulder or a thigh root in Body mode moves it only the way it first went).",
-  "装備のタブで小物を選ぶと、ここで変えられます。": "Select a thing in the Equip tab to change it here.",
+  "装備・設置のタブで小物を選ぶと、ここで変えられます。": "Select a thing in the Equip or Objects tab to change it here.",
   "手に持つ物は Y が親指の向き（剣の刃）、Z が腕の向き（銃身）、X がそれと直角です。持つ所（握り）はそのままで、先の方が伸び縮みします。全体の大きさは装備のタブで変えます。":
     "For a held thing, Y is the way the thumb points (a sword's blade), Z the way the arm points (a gun's barrel), X across both. The grip stays where it is; the far end grows and shrinks. The whole size is in the Equip tab.",
   "固定した部位は、身長・頭身を変えても長さと太さが変わりません。": "Locked parts keep their lengths and thickness when the height or heads count changes.",

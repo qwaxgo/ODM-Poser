@@ -107,6 +107,8 @@ function setTool(id, tell){
   syncBars(); draw();
   if (tell) toast(`3軸ハンドル：${TOOLS.find(t => t[0] === id)[1]}`);
 }
+// the tool to show when the handles are on (the hips clicked, pose_objects.js); they are not turned on
+window.ODMGizmo = {prefer(id){ pref = id; try { localStorage.setItem(KEY + "-gizmotool", id); } catch (e) {} syncBars(); draw(); }};
 const modeName = () => ({pose: "ポーズ", body: "体格", persp: "カメラ", place: "配置"})[mode] || mode;
 // on the view, under the modes; in the joint's section (ポーズ) and the objects' (設置)
 { const ov = document.createElement("div"); ov.className = "ov-body ov-row"; ov.id = "ovGizmo"; ov.appendChild(bar("gz-ov"));

@@ -186,6 +186,7 @@ DOWN_HOOKS.unshift((cv, x, y, e) => {
 tapClick = t => {
   if (!autoMode) return;
   const [x, y] = t.at, i = pick(front, x, y);
+  if (i === IX.pelvis && (cursor !== "hand" || t.mode === "persp")){ hipsClick(t.shift); return; }   // the hand's click did it already
   if (t.mode === "persp"){
     if (i >= 0){ sel = i; modeTo(t.shift ? "body" : "pose"); draw(); return; }
     const k = under(x, y); if (k){ modeTo("place"); setSel([k]); }
@@ -246,6 +247,14 @@ handHook = (cv, x, y, e) => {
   const shift = !!(e && e.shiftKey);
   return {tapPick: i, cv, x, y, pan: shift, end(){ handClick(i, x, y, shift); }};
 };
+// the hips' middle clicked: the figure moved in 配置 (the 3-axis handles' 移動); with Shift, turned in
+// ポーズ (回転)
+function hipsClick(shift){
+  sel = IX.pelvis; picks = []; soSel = -1; if (loose(itemOfKey("i" + scSel))) scSel = -1;
+  if (autoMode) modeTo(shift ? "pose" : "place");
+  if (window.ODMGizmo) ODMGizmo.prefer(shift ? "rotate" : "move");
+  draw();
+}
 // a joint clicked: ポーズ, or with Shift 体格 (from ポーズ or 体格, Shift goes to the other one)
 function jointMode(shift){
   if (!autoMode) return;
@@ -253,6 +262,7 @@ function jointMode(shift){
   else if (mode === "place" || mode === "persp") modeTo("pose");
 }
 function handClick(i, x, y, shift){
+  if (i === IX.pelvis){ hipsClick(shift); return; }
   if (i >= 0){
     sel = i;
     if (mode === "place"){ picks = []; soSel = -1; if (loose(itemOfKey("i" + scSel))) scSel = -1; }

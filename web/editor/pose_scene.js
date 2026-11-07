@@ -517,7 +517,10 @@ function sceneAfterEdit(moved){
     if (w.joint === "rope") ropeHands();
   }
   const E = S.env;
-  if (E.ground && E.ground !== "off" && !(w && w.on)){
+  // 配置: the hips moved near a face (a wall, a ceiling, a slope, a solid's side): the figure stands on it
+  if (moved === IX.pelvis && mode === "place" && E.attach !== false && !(w && w.on)) attachNear();
+  if (S.stand && !(w && w.on)) onPlane(S.stand.p, S.stand.n);       // stays on the face it stands on
+  else if (E.ground && E.ground !== "off" && !(w && w.on)){
     const lift = groundLift(E.ground === "stick");
     if (lift) moveAll([0, lift, 0]);
   }
@@ -536,6 +539,101 @@ function groundLift(stick){                   // how far to move the figure up (
   J.forEach((n, i) => { const b = S.P[i][1] - (CONTACT[n] || 3); gap = Math.min(gap, b - supportUnder(S.P[i], b)); });
   if (!isFinite(gap)) return 0;
   return stick ? -gap : Math.max(0, -gap);
+}
+
+// ---- standing on any face: the floor, a wall, the ceiling, a solid's face (a slope too) ----------------
+// The whole figure turns about its hips so its up is the face's outward normal (on a wall it stands
+// sideways, on a ceiling upside down), its soles on the face. S.stand = {p, n}: the plane of a face not
+// facing up, which the figure then keeps to (instead of the grounding); on one facing up it stands
+// upright and the grounding above does the rest.
+const ATTACH_CM = 15;
+const figUp = () => norm(bodyRot([0, 1, 0]));
+function soleAlong(n){ let m = Infinity; J.forEach((nm, i) => { m = Math.min(m, dot(S.P[i], n) - (CONTACT[nm] || 3)); }); return m; }
+function footPoint(){                          // under the ankles' middle, at the soles' level
+  const up = figUp(), m = mul(add(S.P[IX.r_ankle], S.P[IX.l_ankle]), 0.5);
+  return add(m, mul(up, soleAlong(up) - dot(m, up)));
+}
+function turnFigureUp(n){                      // its facing kept as far as can be; false: it already was
+  const up = figUp(), ax = cross(up, n), s = len(ax), c = dot(up, n);
+  if (s < 1e-6 && c > 0) return false;
+  const axis = s < 1e-6 ? bodyRot([0, 0, 1]) : ax, ang = Math.atan2(s, c), pv = S.P[IX.pelvis].slice();
+  S.P = S.P.map(q => add(pv, rotAxis(sub(q, pv), axis, ang)));
+  turnBody(axis, ang); S.pins = {};
+  return true;
+}
+function onPlane(p, n){ const g = soleAlong(n) - dot(p, n); if (Math.abs(g) > 1e-6) moveAll(mul(n, -g)); }
+// slide: moved along the face too, so its feet come to p
+function standOnFace(p, n, slide){
+  turnFigureUp(n);
+  if (slide){ const d = sub(p, footPoint()); moveAll(sub(d, mul(n, dot(d, n))), true); }
+  onPlane(p, n);
+  if (n[1] > 0.97) delete S.stand; else S.stand = {p: p.map(v => Math.round(v * 100) / 100), n: n.map(v => Math.round(v * 1e5) / 1e5)};
+}
+// the nearest point of every face to q: [{p, n, d}] (the floor, the ceiling, the wall, the solids' faces)
+function standFaces(q){
+  const E = S.env || {}, out = [];
+  const plane = (p0, n) => { const p = sub(q, mul(n, dot(sub(q, p0), n))); out.push({p, n, d: len(sub(p, q))}); };
+  if (E.floor) plane([0, +E.floorY || 0, 0], [0, 1, 0]);
+  if (E.ceiling) plane([0, +E.ceilingY || 230, 0], [0, -1, 0]);
+  if (E.wall) plane([+E.wallX || 0, 0, +E.wallZ || -40], rotY([0, 0, 1], deg(+E.wallYaw || 0)));
+  if (typeof solidMesh === "function") for (const o of S.solids || []) if (!o.guide){ const c = closestOnSolid(solidMesh(o), q); if (c && !buried(c)) out.push(c); }
+  return out;
+}
+// a solid's face down on the floor (its bottom): not one to stand on
+const buried = c => { const E = S.env || {}; return !!E.floor && c.n[1] < -0.97 && Math.abs(c.p[1] - (+E.floorY || 0)) < 1; };
+// 近い面に立つ: the solid's face nearest to the figure (by its hips) that it is in front of
+function nearFace(o){
+  const m = solidMesh(o), q = S.P[IX.pelvis];
+  let best = null;
+  for (const f of m.faces){
+    const c = closestOnSolid({V: m.V, faces: [f]}, q);
+    if (!c || buried(c) || dot(sub(q, c.p), c.n) < 0) continue;
+    if (!best || c.d < best.d) best = c;
+  }
+  return best || closestOnSolid(m, q);
+}
+function attachNear(){
+  const q = footPoint(), f = standFaces(q).filter(c => c.d < ATTACH_CM && dot(sub(q, c.p), c.n) > -3).sort((a, b) => a.d - b.d)[0];
+  if (!f){                                      // pulled away from the face: it lets go (stays turned)
+    if (S.stand && Math.abs(dot(sub(q, S.stand.p), S.stand.n)) > ATTACH_CM) delete S.stand;
+    return;
+  }
+  if (f.n[1] > 0.97 && figUp()[1] > 0.97){ delete S.stand; return; }   // upright over a floor: the grounding's
+  standOnFace(f.p, f.n, false);
+}
+// the face under a pixel of the front view: {p, n}, or null
+function faceAt(x, y, W, H){
+  const r = pixelRay(x, y, W, H), E = S.env || {};
+  let best = null;
+  const take = (t, n) => { if (t > 0 && (!best || t < best.t)) best = {t, p: add(r.o, mul(r.dir, t)), n}; };
+  const plane = (p0, n) => { const dn = dot(r.dir, n); if (dn < -1e-6) take(dot(sub(p0, r.o), n) / dn, n); };
+  if (E.floor) plane([0, +E.floorY || 0, 0], [0, 1, 0]);
+  if (E.ceiling) plane([0, +E.ceilingY || 230, 0], [0, -1, 0]);
+  if (E.wall) plane([+E.wallX || 0, 0, +E.wallZ || -40], rotY([0, 0, 1], deg(+E.wallYaw || 0)));
+  for (const o of S.solids || []){ if (o.guide) continue;
+    const m = solidMesh(o), t = rayHit(m, r); if (t === null || !(t > 0)) continue;
+    const c = closestOnSolid(m, add(r.o, mul(r.dir, t))); if (c) take(t, c.n); }
+  return best;
+}
+// 面をクリックして立つ: armed by the button, the next press on the front view picks the face
+let facePick = false;
+const faceHook = (cv, x, y) => {
+  if (!facePick || cv !== front) return null;
+  facePick = false; front.style.cursor = ""; unhook();
+  const f = faceAt(x, y, cv.width, cv.height);
+  if (!f){ say("そこには面がありません。床・壁・天井か、置いた物体の面をクリックしてください。", true); return {move(){}}; }
+  remember(); standOnFace(f.p, f.n, true); afterEdit(); draw();
+  say(f.n[1] > 0.97 ? "クリックした面に立たせました。" : "クリックした面に、面に合わせて立たせました（関節の固定は外しました）。");
+  return {move(){}};
+};
+// first of the press hooks while armed (before selecting, the ruler, the handles)
+const unhook = () => { const k = DOWN_HOOKS.indexOf(faceHook); if (k >= 0) DOWN_HOOKS.splice(k, 1); };
+function armFacePick(){ unhook(); DOWN_HOOKS.unshift(faceHook); facePick = true; front.style.cursor = "crosshair";
+  say("立たせる面（床・壁・天井・物体の面）をクリックしてください。Esc でやめます。"); }
+addEventListener("keydown", e => { if (facePick && e.key === "Escape"){ facePick = false; unhook(); front.style.cursor = ""; say("面のクリックをやめました。"); } });
+// 体をまっすぐに戻す: upright again (on the floor or what is under it, by the grounding)
+function standUpright(){
+  remember(); turnFigureUp([0, 1, 0]); delete S.stand; afterEdit(); draw(); say("体をまっすぐに戻しました。");
 }
 
 // ---- surfaces: put the selected hand / foot on the floor, a wall or the ceiling ------------------
@@ -906,6 +1004,10 @@ function buildScenePanel(){
     <div class="btns" style="margin-top:6px"><button id="scGrab">近くの物につかまる</button><button id="scHang">ぶら下がる</button>
       <button id="scView">人物を画面の中心に</button></div>
     <label title="届かないときは体ごと寄せる"><input type="checkbox" id="scPull" checked> 体ごと寄せる</label>
+    <h3>面に立つ・貼り付く</h3>
+    <label title="配置モードで腰を動かして面に近づけると、その面に立つ（壁・天井・斜面では体ごと面に合わせる）"><input type="checkbox" id="scAttach" checked> 腰を動かすと近くの面に立つ</label>
+    <div class="btns"><button id="scPickFace" title="次にクリックした面（床・壁・天井・物体の面）に立たせる">面をクリックして立つ</button><button id="scUpright" title="面に合わせて傾いた体を、まっすぐに戻す">体をまっすぐに戻す</button></div>
+    <div class="hint">床・壁・天井と、置いた物体の面（斜面も）に立たせます。壁では横向きに、天井では逆さに、斜面では面に垂直に、体ごと面に合わせます。配置モードで腰を面に近づける（15cm 以内）か、ボタンを押して面をクリックします。立っている面に沿って腰をドラッグでき、面から離すと貼り付きが外れます。</div>
     <div class="hint">関節（手首・足首・膝・肘・腰）を選んでから押します。着けた所・つかんだ所は固定（ピン）になり、ほかを動かしても離れません。</div>
     <h2 style="margin-top:14px">ワイヤーアクション</h2>
     <label><input type="checkbox" id="scWire"> ワイヤーで吊る</label>
@@ -999,6 +1101,9 @@ function buildScenePanel(){
       if (key === "ground" && E.ground !== "off" && !(S.solids || []).length) E.floor = true;
       afterEdit(); syncScene(); draw(); });
   }
+  $("scAttach").addEventListener("change", e => { remember(); env().attach = e.target.checked; draw(); });
+  $("scPickFace").addEventListener("click", armFacePick);
+  $("scUpright").addEventListener("click", standUpright);
   $("scToFloor").addEventListener("click", () => toSurface("床"));
   $("scToWall").addEventListener("click", () => toSurface("壁"));
   $("scToCeil").addEventListener("click", () => toSurface("天井"));
@@ -1114,7 +1219,7 @@ function syncScene(){
   if (E.ground === true) E.ground = "stick"; else if (E.ground === false) E.ground = "off";
   $("scFloor").checked = !!E.floor; $("scCeil").checked = !!E.ceiling; $("scWall").checked = !!E.wall; $("scShow").checked = !!E.show;
   $("scFloorY").value = E.floorY; $("scCeilY").value = E.ceilingY; $("scWallZ").value = E.wallZ; $("scWallYaw").value = E.wallYaw;
-  $("scGround").value = E.ground || "off";
+  $("scGround").value = E.ground || "off"; $("scAttach").checked = E.attach !== false;
   const w = S.wire || {}; $("scWire").checked = !!w.on; $("scWireJ").value = w.joint || "chest"; $("scWireH").value = w.height || 300;
   fillItemList();
 }
