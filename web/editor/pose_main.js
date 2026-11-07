@@ -65,7 +65,7 @@ function fresh(){
   return {P: REST.map(p => p.slice()), R: REST_R.slice(), hands: {r: "relaxed", l: "relaxed"},
           head: {yaw: 0, pitch: 0}, cam: {lens: 50, yaw: 0, pitch: 0, roll: 0, zoom: 1},
           body: {yaw: 0, pitch: 0, roll: 0}, twist: REST.map(() => 0),
-          pins: {}, items: [], env: {floor: true, floorY: 0, ground: false, wall: false, wallZ: -40,
+          pins: {}, items: [], env: {floor: true, floorY: 0, ground: "nopen", wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230, attach: true}, wire: {on: false, joint: "chest", height: 300},
           center: [0, 90, 0], cams: [], camLock: false, scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, torso3d: true, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
           ruler: {on: false, n: 2, yaw: 30, pitch: 0, roll: 0, lines: 20, cube: false, box: [60, 60, 60], pos: [70, 0, 0], extend: true, snap: true, grid: false}};

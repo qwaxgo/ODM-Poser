@@ -577,11 +577,13 @@ function standOnFace(p, n, slide){
   onPlane(p, n);
   if (isFloor(p, n)) delete S.stand; else S.stand = {p: p.map(v => Math.round(v * 100) / 100), n: n.map(v => Math.round(v * 1e5) / 1e5)};
 }
-// the face nearest to the body (any joint's circle, as posed): {c: the face's point, gap}, or null
-function nearestContact(){
+// the face nearest to the body (any joint's circle, as posed): {c: the face's point, gap}, or null.
+// ok(c): which faces may be taken
+function nearestContact(ok){
   let best = null;
   J.forEach((nm, i) => { const r = CONTACT[nm] || 3;
     for (const c of standFaces(S.P[i])){
+      if (ok && !ok(c)) continue;
       if (dot(sub(S.P[i], c.p), c.n) < -r - 3) continue;          // behind the face (inside the solid, past the wall)
       const gap = c.d - r; if (!best || gap < best.gap) best = {c, gap};
     } });
@@ -610,9 +612,18 @@ function nearFace(o){
   });
   return best || closestOnSolid(m, S.P[IX.pelvis]);
 }
-// the hips moved: the figure stands on the face nearest to the body (its nearest point, as posed)
+// the hips moved: the figure stands on the face nearest to the body (its nearest point, as posed). It
+// does not go through to a face's other side: pushed behind the face it stands on, it stays on it (and
+// comes back to its side); a face with the hips well behind it is not taken; nor (unless 逆さ・裏向きの面にも
+// is on) one that would turn the body over, more than a quarter turn from its up (a ceiling, a solid's
+// underside). 面をクリックして立つ and 近い面に立つ take any face (asked for)
 function attachNear(){
-  const b = nearestContact(), f = b && b.gap < ATTACH_CM ? b.c : null;
+  const E = S.env || {};
+  if (S.stand && soleAlong(S.stand.n) - dot(S.stand.p, S.stand.n) < -0.5) return;     // pushed in: back onto it (onPlane)
+  const hips = S.P[IX.pelvis], up = figUp();
+  // the hips a little in (sunk into a wall): that face, back out to its side; past it: not
+  const ok = c => dot(sub(hips, c.p), c.n) > -ATTACH_CM && (E.under || dot(c.n, up) > -0.1);
+  const b = nearestContact(ok), f = b && b.gap < ATTACH_CM ? b.c : null;
   if (!f){                                      // pulled away from the face: it lets go (stays turned)
     if (S.stand && soleAlong(S.stand.n) - dot(S.stand.p, S.stand.n) > ATTACH_CM) delete S.stand;
     return;
@@ -1025,6 +1036,7 @@ function buildScenePanel(){
     <label title="届かないときは体ごと寄せる"><input type="checkbox" id="scPull" checked> 体ごと寄せる</label>
     <h3>面に立つ・貼り付く</h3>
     <label title="配置モードで腰を動かして面に近づけると、その面に立つ（壁・天井・斜面では体ごと面に合わせる）"><input type="checkbox" id="scAttach" checked> 腰を動かすと近くの面に立つ</label>
+    <label title="腰を動かして近づけたとき、天井や物体の下側のように、体が逆さ・裏向きになる面にも立つ（オフでは、面をクリックしたときだけ）"><input type="checkbox" id="scUnder"> 逆さ・裏向きになる面にも立つ</label>
     <div class="btns"><button id="scPickFace" title="次にクリックした面（床・壁・天井・物体の面）に立たせる">面をクリックして立つ</button><button id="scUpright" title="面に合わせて傾いた体を、まっすぐに戻す">体をまっすぐに戻す</button></div>
     <div class="hint">床・壁・天井と、置いた物体の面（斜面も）に立たせます。壁では横向きに、天井では逆さに、斜面では面に垂直に、体ごと面に合わせます。面に着くのは、体のいちばん近い所・低い所です（ポーズによって足の裏・膝・手・頭など）。物体・壁・天井の面では、ポーズを変えてもいちばん低い所が面に着いたままです（床では上の「接地」の設定のとおり）。配置モードで体を面に近づける（15cm 以内）か、ボタンを押して面をクリックします。立っている面に沿って腰をドラッグでき、面から離すと貼り付きが外れます。</div>
     <div class="hint">関節（手首・足首・膝・肘・腰）を選んでから押します。着けた所・つかんだ所は固定（ピン）になり、ほかを動かしても離れません。</div>
@@ -1121,6 +1133,7 @@ function buildScenePanel(){
       afterEdit(); syncScene(); draw(); });
   }
   $("scAttach").addEventListener("change", e => { remember(); env().attach = e.target.checked; draw(); });
+  $("scUnder").addEventListener("change", e => { remember(); env().under = e.target.checked; draw(); });
   $("scPickFace").addEventListener("click", armFacePick);
   $("scUpright").addEventListener("click", standUpright);
   $("scToFloor").addEventListener("click", () => toSurface("床"));
@@ -1238,7 +1251,7 @@ function syncScene(){
   if (E.ground === true) E.ground = "stick"; else if (E.ground === false) E.ground = "off";
   $("scFloor").checked = !!E.floor; $("scCeil").checked = !!E.ceiling; $("scWall").checked = !!E.wall; $("scShow").checked = !!E.show;
   $("scFloorY").value = E.floorY; $("scCeilY").value = E.ceilingY; $("scWallZ").value = E.wallZ; $("scWallYaw").value = E.wallYaw;
-  $("scGround").value = E.ground || "off"; $("scAttach").checked = E.attach !== false;
+  $("scGround").value = E.ground || "off"; $("scAttach").checked = E.attach !== false; $("scUnder").checked = !!E.under;
   const w = S.wire || {}; $("scWire").checked = !!w.on; $("scWireJ").value = w.joint || "chest"; $("scWireH").value = w.height || 300;
   fillItemList();
 }

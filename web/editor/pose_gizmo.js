@@ -143,13 +143,17 @@ function target(any){
   if (mode === "pose" && sel >= 0){
     // 回転: what hangs on the joint turns about it; a joint with nothing after it, its own bone
     const i = sel, par = PARENT[i], root = i === IX.pelvis || par === undefined || par < 0, own = !root && !KIDS[i].length;
-    const pivot = own ? S.P[par] : S.P[i];
+    // 左右を向く: on the neck and the head, the green ring (Y) twists it about its own bone, so the head
+    // turns where it is (tilted too), as ねじり in the joint panel; the head's rings show round the head
+    const look = i === IX.head || i === IX.neck;
+    const pivot = i === IX.head ? S.P[i] : own ? S.P[par] : S.P[i];
     return {c: S.P[i], ax: WORLD, joint: i, pivot, rings: [0, 1, 2], sc: [], save,
       move: (s0, d) => { const t = add(s0.P[i], d);
         if (IK_END[J[i]]) solveIK(i, t);
         else { const p = S.P[par], L = len(sub(S.P[i], p)); rotateSubtree(i, add(p, mul(norm(sub(t, p)), L))); }
         afterEdit(i); },
       turn: (s0, k, dg) => { S.P = s0.P.map(p => p.slice());
+        if (look && k === 1){ S.twist = s0.twist.slice(); setTwist(i, (s0.twist[i] || 0) + dg); afterEdit(i); return; }
         const pv = own ? s0.P[par] : s0.P[i], who = root ? S.P.map((p, n) => n) : own ? subtree(i) : subtree(i).slice(1);
         for (const n of who) S.P[n] = add(pv, rotAxis(sub(s0.P[n], pv), WORLD[k], deg(dg)));
         // the hips: the body's turn goes with it, so the joints' angles and limits keep to the body
