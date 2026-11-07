@@ -56,16 +56,22 @@ sec.innerHTML = `<h2>設置（図形・床・壁・天井・小物）</h2>
   <div class="hint">置いた物は、配置モードでドラッグ・3軸ハンドル（移動・回転・変形）でも動かせます。小物の大きさは、手に持つときと同じ決まりで変わります。</div>`;
 (($("soKind") && $("soKind").closest("section")) || document.querySelector("aside > section:last-of-type")).after(sec);
 
-// ---- the kinds to put
-function fillKeys(){
-  const c = $("plCat").value;
-  $("plKey").innerHTML = c === SHAPES
+// ---- the kinds to put: ニュートラル ("") first, nothing to put (no preview, no handles on it); the tab
+// starts so and goes back to it after 置く, so the things put are easy to take and move
+const NEUTRAL = `<option value="">ニュートラル（何も選ばない）</option>`;
+function fillKeys(e){
+  const c = $("plCat").value, k0 = $("plKey").value;
+  $("plKey").innerHTML = NEUTRAL + (c === SHAPES
     ? Object.entries(SOLID_KINDS).map(([k, d]) => `<option value="${k}">${d.ja}</option>`).join("")
-    : Object.entries(PROPS_).filter(([, d]) => d.cat === c && ALONE_OK(d)).map(([k, d]) => `<option value="${k}">${d.ja} / ${d.en}</option>`).join("");
+    : Object.entries(PROPS_).filter(([, d]) => d.cat === c && ALONE_OK(d)).map(([k, d]) => `<option value="${k}">${d.ja} / ${d.en}</option>`).join(""));
+  // a category chosen by hand: its first kind (to put one); else as it was, if it is still there
+  const opts = [...$("plKey").options];
+  $("plKey").value = e && e.detail !== "keep" && opts[1] ? opts[1].value : opts.some(o => o.value === k0) ? k0 : "";
 }
 $("plCat").innerHTML = cats().map(([k, ja]) => `<option value="${k}">${ja}</option>`).join("");
 $("plCat").addEventListener("change", fillKeys);
 fillKeys();
+const neutral = () => { $("plKey").value = ""; pend = null; preRows(); };
 
 // ---- what is out: "s3" (S.solids[3]) or "i2" (S.items[2], a thing on its own)
 let sel = "", listKey = "";
@@ -102,7 +108,8 @@ $("plPut").addEventListener("click", () => {
   } else { placeAlone(key); const it = S.items[S.items.length - 1];
     if (g && g.it) copy(it, g.it, ["base", "yaw", "rot", "scale", "stretch", "segs", "piv", "grounded"]);
     afterEdit(); choose("i" + (S.items.length - 1)); }
-  pend = null;                                  // the next ghost starts afresh
+  neutral();                                    // back to ニュートラル: no preview in the way of what was put
+  draw();
 });
 $("plDel").addEventListener("click", () => {
   const o = solidOf(sel), it = itemOf(sel);
@@ -136,6 +143,7 @@ let preKey = "";
 function preRows(){
   const c = $("plCat").value, key = $("plKey").value, k = c + "|" + key;
   $("plGuideRow").style.display = c === SHAPES ? "" : "none";
+  $("plPre").style.display = key ? "" : "none"; $("plPut").disabled = !key;
   if (k === preKey) return; preKey = k;
   let rows = [];
   if (c === SHAPES){ const d = SOLID_KINDS[key]; if (d){
@@ -229,7 +237,7 @@ function ghostFresh(){
 }
 // 定規 › ガイドを置く: here, the shapes, as a guide
 window.ODMPlaceGuide = () => {
-  $("plCat").value = SHAPES; fillKeys(); $("plGuide").checked = true; preRows();
+  $("plCat").value = SHAPES; fillKeys(); if (!$("plKey").value) $("plKey").value = "box"; $("plGuide").checked = true; preRows();
   if (window.ODMUI && ODMUI.showMenu) ODMUI.showMenu("objects"); draw();
 };
 

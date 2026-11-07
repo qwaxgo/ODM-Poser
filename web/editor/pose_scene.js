@@ -918,14 +918,20 @@ function buildScenePanel(){
     <div class="hint">オンにした時の位置の真上に支点ができます。手・足首・ロープで吊ると、その腕を上げる・逆さになるなど、ぶら下がれるポーズになります（体の重さが支点の真下に来る向き）。配置モードで腰をドラッグすると、ワイヤーの長さを保ったまま振れます。</div>`;
   const cam = document.getElementById("camReset").closest("section");
   cam.parentNode.insertBefore(sec, cam);
-  const fillKeys = () => {
-    const cat = $("scCat").value;
-    $("scKey").innerHTML = Object.entries(PROPS_).filter(([, d]) => d.cat === cat)
+  // ニュートラル ("") first: nothing to hold or put (no preview); the tab starts so and goes back to it
+  // after 持つ・置く. A category chosen by hand picks its first kind
+  const fillKeys = e => {
+    const cat = $("scCat").value, k0 = $("scKey").value;
+    $("scKey").innerHTML = `<option value="">ニュートラル（何も選ばない）</option>` + Object.entries(PROPS_).filter(([, d]) => d.cat === cat)
       .map(([k, d]) => `<option value="${k}">${d.ja} / ${d.en}</option>`).join("");
+    const opts = [...$("scKey").options];
+    $("scKey").value = e && e.detail !== "keep" && opts[1] ? opts[1].value : opts.some(o => o.value === k0) ? k0 : "";
     showNote();
   };
   const showNote = () => {
-    const d = PROPS_[$("scKey").value]; if (!d) { $("scNote").textContent = ""; return; }
+    const d = PROPS_[$("scKey").value];
+    $("scAddR").disabled = !d;
+    if (!d) { $("scNote").textContent = ""; $("scAddL").style.display = "none"; $("scAddR").textContent = "持つ・置く"; return; }
     const how = d.place === "hand" ? (d.grip2 ? "両手で持つ" : "片手で持つ") + "（手の形：" + (HAND_JA[d.pose] || d.pose) + "）"
       : d.place === "body" ? "体の前に構える（両手は自動で合わせる）" : d.place === "grab" ? "置いてから、手足でつかまる"
       : d.place === "wear" ? "身に着ける（" + ({head: "頭", chest: "胸・肩", back: "背中", waist: "腰", feet: "両足"}[d.at] || "両足と両手") + "）"
@@ -936,8 +942,11 @@ function buildScenePanel(){
   };
   $("scCat").addEventListener("change", fillKeys);
   $("scKey").addEventListener("change", showNote);
-  $("scAddR").addEventListener("click", () => addItem($("scKey").value, "r"));
-  $("scAddL").addEventListener("click", () => addItem($("scKey").value, "l"));
+  // after holding / putting: back to ニュートラル (the preview no longer in the way)
+  const put = hand => { const k = $("scKey").value; if (!PROPS_[k]) return; addItem(k, hand);
+    $("scKey").value = ""; $("scKey").dispatchEvent(new Event("change")); draw(); };
+  $("scAddR").addEventListener("click", () => put("r"));
+  $("scAddL").addEventListener("click", () => put("l"));
   $("scList").addEventListener("change", () => { scSel = +$("scList").value; showItem(); draw(); });
   $("scDel").addEventListener("click", () => removeItem(scSel));
   $("scMount").addEventListener("click", () => { const it = S.items[scSel]; if (it) mountOn(it); });

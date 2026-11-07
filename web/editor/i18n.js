@@ -31,6 +31,7 @@
     "設置のタブを「ガイドとして置く」で開く": "Open the Objects tab with “Put as a guide”",
     "直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。ガイドを「回転」で回すと、パース定規とほかのガイドも一緒に回ります（前後・横に倒すと、消失点がアイレベルから外れます）。":
       "Put the Objects tab's shapes (boxes, cylinders, prisms, pyramids ...) as guides turned to the ruler, as many as you like. Guides show only while the ruler does; they are not in the rough picture but are in the ruler picture. The 3-axis handles' Scale lengthens only the side pulled. Turning a guide with Rotate turns the perspective ruler and the other guides with it (tipped forward or sideways, the vanishing points leave the eye level).",
+    "ニュートラル（何も選ばない）": "Neutral (nothing chosen)", "持つ・置く": "Hold / put",
     "定規の倒れ": "Ruler lean", "定規を床に立てる": "Stand the ruler on the floor",
     "倒れをなくして、定規を床に立てる（向きはそのまま）": "Take away the lean and stand the ruler on the floor (its direction stays)",
     "定規が倒れているので、縦の線も実際には集まります（3点透視で見えます）。": "The ruler leans, so its verticals really meet too (3-point shows them).",

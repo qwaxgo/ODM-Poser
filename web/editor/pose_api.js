@@ -57,7 +57,7 @@ function refreshPanels(){
   keep("preset", Object.keys(PRESETS).map(n => `<option>${n}</option>`).join(""));
   keep("handSel", Object.keys(HANDS).map(k => `<option value="${k}">${HAND_JA[k] || k}（${k}）</option>`).join(""));
   keep("scCat", PROP_CATS.map(([k, ja, en]) => `<option value="${k}">${ja} / ${en}</option>`).join(""));
-  if ($("scCat")) $("scCat").dispatchEvent(new Event("change"));
+  if ($("scCat")) $("scCat").dispatchEvent(new CustomEvent("change", {detail: "keep"}));   // the kind chosen (or ニュートラル) stays
   keep("soKind", Object.entries(SOLID_KINDS).map(([k, d]) => `<option value="${k}">${d.ja}</option>`).join(""));
   keep("auKind", Object.entries(AURA_KINDS).map(([k, [ja]]) => `<option value="${k}">${ja}</option>`).join(""));
   keep("auPart", Object.entries(AURA_PARTS).map(([k, [ja]]) => `<option value="${k}">${ja}</option>`).join(""));

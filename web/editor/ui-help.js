@@ -61,7 +61,7 @@ const PC = [
     [["物体・小物をドラッグ", "Drag an object / a thing"], ["床の上で動かす（カメラは動かない）", "Move it over the floor (the camera stays)"]],
     [["Shift＋ドラッグ", "Shift + drag"], ["上下に動かす", "Move it up and down"]],
     [["消失点をドラッグ", "Drag a vanishing point"], ["定規の向きを変える", "Turn the ruler"]],
-    [["設置のタブで何も選ばずに3軸ハンドル", "The 3-axis handles with nothing selected (Objects tab)"], ["置く前の物（プレビュー）を動かす・回す・変形・支点を動かす。「置く」でそのとおりに置く", "Move, turn, stretch or re-pivot the thing about to be put (the preview); Put puts it just so"]],
+    [["設置のタブで種類を選び、物は選ばずに3軸ハンドル", "The 3-axis handles with a kind chosen and nothing selected (Objects tab)"], ["置く前の物（プレビュー）を動かす・回す・変形・支点を動かす。「置く」でそのとおりに置く", "Move, turn, stretch or re-pivot the thing about to be put (the preview); Put puts it just so"]],
     [["ガイド図形の矢印・四角をドラッグ", "Drag a guide shape's arrow or square"], ["辺の向き（消失点の方）に動かす・引いた側の辺だけ延ばす", "Move it along its edges (toward the vanishing points) / lengthen only the side pulled"]],
     [["ガイド図形の輪をドラッグ", "Drag a guide shape's ring"], ["パース定規とほかのガイドも一緒に回す（倒すと消失点がアイレベルから外れる）", "Turn the perspective ruler and the other guides with it (tipped, the vanishing points leave the eye level)"]],
     [["丸をクリック", "Click a circle"], ["関節を選ぶ（物体に着ける用）", "Select a joint (to put it on an object)"]],

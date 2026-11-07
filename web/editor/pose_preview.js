@@ -27,7 +27,10 @@ function segRows(){
   $("scPreSegs").innerHTML = sg ? sg.list.map(g => ctl("scPreSeg_" + g.id, `部位の長さ：${g.ja}`, 20, 400, 1, "%", 100)).join("") : "";
   if (sg) for (const g of sg.list) linkRange("scPreSeg_" + g.id);
 }
-$("scKey").addEventListener("change", () => { segRows(); draw(); });
+// ニュートラル: no kind, no sizes to set
+const scShow = () => { scBox.style.display = $("scKey").value ? "" : "none"; };
+$("scKey").addEventListener("change", () => { scShow(); segRows(); draw(); });
+$("scCat").addEventListener("change", scShow); scShow();
 const pre = id => (+$(id).value || 100) / 100;
 function sized(it){                            // the sizes set before, on a new thing
   it.scale = pre("scPreSize");
