@@ -175,6 +175,17 @@ function headOutline(ctx, p, r, side){
   ctx.moveTo(p.x + w, p.y - L); ctx.lineTo(p.x + w, p.y + L);
   ctx.stroke();
 }
+// the head as its stretched ball seen (S.headShape: x across, y up, z forward, in the head's own frame):
+// the outline of that ellipsoid on the picture, through project (front view, camera)
+function headRadii(){ const hs = S.headShape || {}, r = handleR(IX.head); return [r * (hs.x || 1), r * (hs.y || 1), r * (hs.z || 1)]; }
+function headEllipse(ctx, W, H, proj){
+  const h = headFrame(), [rx, ry, rz] = headRadii(), c = S.P[IX.head], pc = proj(c, W, H);
+  let a = 0, b = 0, d = 0;
+  for (const v of [mul(h.side, rx), mul(h.up, ry), mul(h.fwd, rz)]){
+    const q = proj(add(c, v), W, H), x = q.x - pc.x, y = q.y - pc.y; a += x * x; b += x * y; d += y * y; }
+  const m = (a + d) / 2, s = Math.sqrt(((a - d) / 2) ** 2 + b * b);
+  ctx.beginPath(); ctx.ellipse(pc.x, pc.y, Math.sqrt(m + s), Math.sqrt(Math.max(0, m - s)), 0.5 * Math.atan2(2 * b, a - d), 0, 2 * Math.PI); ctx.stroke();
+}
 function facePoints(){
   const h = headFrame(), c = S.P[IX.head], r = h.r;
   const at = (f, s, u) => add(add(add(c, mul(h.fwd, f*r)), mul(h.side, s*r)), mul(h.up, u*r));
@@ -340,7 +351,7 @@ function drawAtari(ctx, W, H, opts = {}){
         ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.fill(); ctx.globalAlpha = 1; }
       const hid = S.hiddenDashed && hiddenAt(S.P[i], W, H, skipJoint(i));
       if (hid) ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2.5]);
-      if (i === IX.head && headShaped()) headOutline(ctx, p, r, opts.side);
+      if (i === IX.head && headShaped()){ if ((S.headShape.mode || "ball") === "ball") headEllipse(ctx, W, H, project); else headOutline(ctx, p, r, opts.side); }
       else { ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2*Math.PI); ctx.stroke(); }
       ctx.setLineDash([]);
       if (opts.sel === i){ ctx.strokeStyle = cssVar("--sel"); ctx.lineWidth = lw * 2;
@@ -350,14 +361,15 @@ function drawAtari(ctx, W, H, opts = {}){
   }
   // the face's centre lines (where the head looks), like a Loomis cross
   if (!opts.noFigure){
-  const h = headFrame(), c = S.P[IX.head], r = h.r;
+  const h = headFrame(), c = S.P[IX.head], [rx, ry, rz] = headRadii();
   ctx.strokeStyle = partColor("head") || ink; ctx.lineWidth = lw;
   if (S.hiddenDashed && hiddenAt(c, W, H, skipJoint(IX.head))) ctx.setLineDash([lw * 3, lw * 2.5]);
   const arc = (fn) => { ctx.beginPath(); for (let k = 0; k <= 24; k++){
       const t = -Math.PI/2 + Math.PI * k/24, q = project(fn(t), W, H);
       k ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); } ctx.stroke(); };
-  arc(t => add(c, add(mul(h.fwd, r*Math.cos(t)), mul(h.up, r*Math.sin(t)))));        // vertical
-  arc(t => add(c, add(mul(h.fwd, r*Math.cos(t)), mul(h.side, r*Math.sin(t)))));      // eye line
+  // on the head as stretched (頭の形)
+  arc(t => add(c, add(mul(h.fwd, rz*Math.cos(t)), mul(h.up, ry*Math.sin(t)))));      // vertical
+  arc(t => add(c, add(mul(h.fwd, rz*Math.cos(t)), mul(h.side, rx*Math.sin(t)))));    // eye line
   ctx.setLineDash([]);
   // pinned joints: a small filled square (editor only)
   if (!opts.export) for (const k of Object.keys(S.pins || {})){

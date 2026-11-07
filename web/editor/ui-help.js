@@ -43,10 +43,11 @@ const PC = [
     [["側面図でドラッグ", "Drag in the side view"], ["奥行きを直接動かす", "Move the depth directly"]],
     [["G・R・S キー（または 移動・回転・変形 ボタン）", "G, R, S keys (or the Move / Rotate / Scale buttons)"], ["3軸ハンドルの操作を切り替える", "Switch the 3-axis handles' tool"]],
     [["輪（X・Y・Z）をドラッグ", "Drag a ring (X, Y, Z)"], ["選んだ関節で、その先を関節の軸（Y が骨の向き）のまわりに回す（回転）。緑（Y）の輪は骨を軸にねじる（頭は左右を向く）。矢印（移動）は場面の X・Y・Z", "Turn what lies beyond the selected joint about the joint's own axes (Y along the bone; Rotate). The green (Y) ring twists along the bone (the head looks left and right). The arrows (Move) keep to the scene's X, Y, Z"]],
-    [["手足の関節の矢印（X・Y・Z）をドラッグ", "Drag an arrow (X, Y, Z) on an arm or leg joint"], ["その軸の向きに動かす（移動。手足だけ）", "Move it along that axis (Move; arms and legs only)"]],
+    [["手足・肩・股の関節の矢印（X・Y・Z）をドラッグ", "Drag an arrow (X, Y, Z) on an arm, leg, shoulder or thigh-root joint"], ["その軸の向きに動かす（移動）。肩・股は骨の長さを保って関節の限界の中で動き、胴体・腰の台形が歪む（体格は変わらない）", "Move it along that axis (Move). A shoulder or thigh root keeps its bone's length and moves within the joint limits: the torso's and pelvis' trapezoids lean (the body's sizes stay)"]],
     [["3軸ハンドルを出しているとき", "While the 3-axis handles show"], ["丸のドラッグは選ぶだけ。動かすのはハンドルで（変形は体格モードで）", "Dragging a circle only selects it; the handles move it (Scale is in Body mode)"]]]},
   {mode: "body", title: ["体格モード", "Body mode"], rows: [
     [["丸をドラッグ", "Drag a circle"], ["その骨を伸ばす・縮める（先の部分ごと）", "Lengthen / shorten the bone (with what lies beyond)"]],
+    [["頭を選んで四角（長さ・幅・奥行き）をドラッグ", "Select the head, drag a square (length, width, depth)"], ["頭の球をその向きに伸ばす・縮める（頭の形）", "Stretch the head's ball that way (head shape)"]],
     [["丸の上でホイール（丸の外では拡大・縮小）", "Wheel over a circle (elsewhere: zoom)"], ["丸（太さ）を大きく・小さく（腕・脚はまとめて）", "Make the circle (thickness) bigger / smaller (an arm or a leg together)"]],
     [["四角をドラッグ（3軸ハンドル：変形）", "Drag a square (3-axis handles: Scale)"], ["骨の長さ・丸の太さ、肩・股の幅・高さ・前後を変える", "Change a bone's length, a circle's thickness, a shoulder's or thigh root's width, height, depth"]]]},
   {mode: "persp", title: ["カメラモード", "Camera mode"], rows: [

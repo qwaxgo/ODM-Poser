@@ -6,9 +6,10 @@
 // it is turned). Several objects at once: the scene's axes.
 //  - ポーズ: 回転 turns what hangs on the selected joint about it (the elbow: the forearm; the hips:
 //    the whole figure; a hand, a toe or the head, having nothing after them: their own bone about
-//    the joint before). 移動 only for the arms and legs (elbow, wrist, knee, ankle ...: they reach).
+//    the joint before). 移動 for the arms and legs (elbow, wrist, knee, ankle ...: they reach) and the
+//    shoulders and thigh roots (their bone keeps its length: the torso's trapezoids lean).
 //  - 体格: 変形 only. A shoulder or a thigh root: the width, height and how far forward along the
-//    torso's axes; another joint: its bone's length (along the bone) and its circle's thickness
+//    torso's axes; the head: its ball's length, width and depth (頭の形); another joint: its bone's length (along the bone) and its circle's thickness
 //    (an arm's or a leg's circles together, unless 太さを部位ごとに連動 is off; 左右対称 follows).
 //  - 配置: an object, a thing put down, the ruler's box (while the 定規 tab shows), or the figure by
 //    its hips: 移動, 回転 about up, 変形 (its width / height / depth; not the figure).
@@ -80,7 +81,10 @@ function icons(){ if (!window.ODMICONS) return;
   for (const d of bars) d.querySelectorAll("button[data-gzicon]").forEach(b => { if (!b.querySelector("svg")) b.insertAdjacentHTML("afterbegin", ODMICONS.svg(b.dataset.gzicon)); }); }
 addEventListener("DOMContentLoaded", icons);
 // the tools the mode (and what is selected) has
-const LIMB = new Set(["elbow", "wrist", "hand", "knee", "ankle", "toe"].flatMap(n => ["r_" + n, "l_" + n]));
+// 移動 in ポーズ: the arms and legs (they reach), and the shoulders and thigh roots: moved, their bone from
+// the chest / pelvis keeps its length and turns within 関節の限界 (a shrug), so the torso's and the
+// pelvis' trapezoids lean and the body's sizes stay
+const LIMB = new Set(["shoulder", "elbow", "wrist", "hand", "hip", "knee", "ankle", "toe"].flatMap(n => ["r_" + n, "l_" + n]));
 function tools(){
   if (mode === "pose") return sel >= 0 && LIMB.has(J[sel]) ? ["move", "rotate"] : ["rotate"];
   if (mode === "body") return ["scale"];
@@ -158,6 +162,16 @@ function target(any){
         // neck moves no joint; it is the neck's twist, or the head's when the head itself is turned)
         else if (who.includes(IX.head) || i === IX.head) faceTurn(s0, i === IX.head ? IX.head : IX.neck, fr[k], deg(dg));
         afterEdit(root || own ? i : KIDS[i][0]); }};
+  }
+  // 体格, the head: its ball stretched along its own axes (頭の形, S.headShape): the length (up) and the
+  // thickness, across (width) and forward (depth)
+  if (mode === "body" && sel === IX.head){
+    const h = headFrame(), KEY = ["y", "x", "z"], MAX = {x: 2, y: 2.5, z: 2};
+    return {c: S.P[sel], ax: WORLD, joint: sel, pivot: S.P[sel], rings: [], sc: [[h.up, 0, "長さ"], [h.side, 1, "幅"], [h.fwd, 2, "奥行き"]],
+      save: () => Object.assign(save(), {hs: Object.assign({x: 1, y: 1, z: 1, mode: "ball"}, S.headShape || {})}),
+      scale: (s0, f, n) => { const k = KEY[n], hs = Object.assign({}, s0.hs);
+        hs[k] = Math.round(Math.max(0.5, Math.min(MAX[k], s0.hs[k] * f)) * 100) / 100;
+        S.headShape = hs; afterEdit(sel); }};
   }
   if (mode === "body" && sel > 0){
     const i = sel, par = PARENT[i], u = norm(sub(S.P[i], S.P[par])), [e1] = across(u);
