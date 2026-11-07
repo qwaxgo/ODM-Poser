@@ -99,6 +99,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 図と操作欄の境目のつまみをドラッグして、広さを変えられるように（PC の横並び、スマホの分割表示の縦・横。ダブルクリックで戻す。このブラウザに残ります）
 - スマホでも側面図を上・下・左・右に置けるように（幅が狭いときは置き場所のボタンを1つにまとめ、押すとほかが開く）
 - 「操作欄」「分割表示」のアイコンを、いまの画面で操作欄が出る場所（縦のスマホなら下）・分ける向きの絵に
+- ガイドをパース定規と常につなげました：3軸ハンドルや設置の回転の欄でガイドを回すと、パース定規とほかのガイドも一緒に立体的に回ります（前後・横に倒すと消失点がアイレベルから外れます）。定規のタブに「定規の倒れ」と「定規を床に立てる」を追加
+- スナップがオンでも、ガイドでない物体・小物を回せるように修正（定規の向きに戻されていました）。定規の向きから ±5° 以内に来たときだけ吸い付きます
+- 「定規を床のグリッドにスナップ」を追加：定規の向きを床のグリッドの線にそろえて90°ずつ回し、ガイドの角をグリッドの交点（40cm おき）に、底を床に吸い付けます
 
 ### English
 
@@ -189,6 +192,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Drag the grip on the edge between the views and the panel to give either more room (side by side on a computer, a phone's split screen upright or sideways; a double click puts it back; kept in this browser)
 - The side view can go above, below, left or right on a phone too (narrow, its place buttons fold into one that opens the others)
 - The "Panel" and "Split screen" icons picture where the panel comes out on this screen (below on an upright phone) and the way the screen splits
+- Guides are always linked to the perspective ruler: turning a guide (the 3-axis handles or the Objects tab's turn fields) turns the ruler and the other guides with it in 3D (tipped forward or sideways, the vanishing points leave the eye level). The Ruler tab gets "Ruler lean" and "Stand the ruler on the floor"
+- Objects and things that are not guides turn again while snapping is on (they were turned back to the ruler); they stick to a ruler direction only within ±5° of it
+- "Snap the ruler to the floor grid": the ruler turns to the floor grid's lines a quarter turn at a time, and guides stick by a corner to the grid's points (every 40 cm) and by the bottom to the floor
 
 ## v0.1.0
 

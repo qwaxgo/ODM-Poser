@@ -82,6 +82,10 @@ shape: it becomes a guide shape turned to the ruler (boxes, cylinders, prisms, p
 
 - Guides show only while the ruler does, drawn in its colours with their edges carried on to the vanishing points; they are not in the rough picture, but are in the ruler picture.
 - The 3-axis handles' arrows and squares follow the guide's edges. **Scale** lengthens only the side pulled; the other side stays (the edges without a vanishing point change too, for the height or width).
+- Guides are always linked to the perspective ruler. Turning a guide with **Rotate** turns the ruler and the other guides with it. Tipped forward or sideways, the vanishing points leave the eye level, as a box tipped over is drawn. **Stand the ruler on the floor** in the Ruler tab takes the lean away. In 1-point the ruler faces the camera, so it does not turn left or right.
+- With **Snap the ruler to the floor grid** on, the ruler turns to the floor grid's lines and turns a quarter turn at a time. A guide moved sticks by its corner to the grid's points (every 40 cm) and by its bottom to the floor.
+- Objects and things that are not guides turn freely. With **Snap objects to the ruler** on, they stick to a ruler direction only within ±5° of it.
+- When the camera tilts, the perspective ruler tilts with the scene.
 - The **box guide** of earlier versions becomes a guide box when a file opens.
 
 ## Sizes before putting
