@@ -14,8 +14,10 @@
 // The keys are "s3" (S.solids[3]) and "i2" (S.items[2]) as in 設置 (pose_place.js).
 (() => {
 const $ = id => document.getElementById(id);
-const solidOfKey = k => k && k[0] === "s" ? (S.solids || [])[+k.slice(1)] || null : null;
-const itemOfKey = k => k && k[0] === "i" ? (S.items || [])[+k.slice(1)] || null : null;
+// "gs" / "gi": the ghost of 設置 (the solid or thing about to be put, pose_place.js)
+const ghostOf = k => { const g = window.ODMGhost ? ODMGhost() : null; return g && g.key === k ? g.o : null; };
+const solidOfKey = k => k === "gs" ? ghostOf(k) : k && k[0] === "s" ? (S.solids || [])[+k.slice(1)] || null : null;
+const itemOfKey = k => k === "gi" ? ghostOf(k) : k && k[0] === "i" ? (S.items || [])[+k.slice(1)] || null : null;
 const loose = it => !!(it && it.base && typeof movable === "function" && movable(it));
 const exists = k => !!(solidOfKey(k) || loose(itemOfKey(k)));
 const r1 = v => Math.round(v * 10) / 10;
@@ -274,7 +276,9 @@ function handClick(i, x, y, shift){
   drawAtari = function(ctx, W, H, opts = {}){
     atari0(ctx, W, H, opts);
     if (opts.export || ctx.canvas !== front || mode !== "place") return;
-    const k = single() || (group().length ? primary() : ""); if (!k) return;     // a group: the one it turns about
+    // a group: the one it turns about; nothing selected: the ghost about to be put
+    const g = window.ODMGhost && !selected().length && sel !== IX.pelvis ? ODMGhost() : null;
+    const k = single() || (group().length ? primary() : "") || (g ? g.key : ""); if (!k) return;
     const s = project(pivWorld(k), W, H), dpr = devicePixelRatio || 1, r = 6 * dpr;
     ctx.save(); ctx.strokeStyle = "#f5a524"; ctx.lineWidth = 1.5 * dpr; ctx.setLineDash([]); ctx.globalAlpha = 0.95;
     ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, 2 * Math.PI);

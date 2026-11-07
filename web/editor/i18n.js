@@ -188,8 +188,8 @@
     "両手でロープにつかまりました（ターザン）。配置モードで腰をドラッグすると振れます。": "Holding the rope with both hands (Tarzan). Drag the hips in Place mode to swing.",
     "ロープにつかまる（ターザン）": "Holding a rope (Tarzan)",
     "小物を単体で置く": "Things on their own", "単体で置いた物": "Things put on their own", "いまの人物に持たせる": "Give to this figure",
-    "武器・道具・帽子なども、誰にも持たせずに床（物体の上）に置けます。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。人物に持たせた物は「装備」で扱います。":
-      "Weapons, tools, hats and the like can lie on the floor (or an object) held by no one. Drag them in Place mode (Shift + drag: up / down, wheel: turn). What a figure holds is in Equip.",
+    "武器・道具・帽子なども、誰にも持たせずに床（物体の上）に置けます。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。人物に持たせた物は「装備」で扱います。":
+      "Weapons, tools, hats and the like can lie on the floor (or an object) held by no one. Drag them in Place mode (Shift + drag: up / down, the 3-axis handles turn it). What a figure holds is in Equip.",
     "いまの人物に持たせました（手の形も合わせました）。": "Given to this figure (its hand shape set too).",
     "腕・脚の太さを部位ごとに連動": "Arm and leg thickness as a whole limb",
     "肩・肘・手首、股・膝・足首の丸をまとめて太く・細くする（外すと関節ごと）": "Shoulder, elbow, wrist (thigh root, knee, ankle) grow thicker or thinner together (off: joint by joint)",
@@ -212,8 +212,8 @@
     // things worn, carried, put down; effects and auras (pose_scene.js, pose_style.js)
     "背負う": "Carry on the back", "床・物体に置く": "Put down (floor / object)", "手に持つ・身に着ける": "Hold / wear again",
     "接地させる": "Ground it", "銃剣を付ける": "Fix a bayonet", "線の色を変える": "Own line colour", "身に着ける": "Wear",
-    "置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。":
-      "Things put down can be dragged in the Place mode (Shift+drag: up and down, wheel: turn).",
+    "置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。":
+      "Things put down can be dragged in the Place mode (Shift+drag: up and down, the 3-axis handles turn it).",
     "背負いました。": "Carried on the back.", "床・物体の上に置きました。配置モードでドラッグして動かせます。":
       "Put down on the floor / an object. Drag it in the Place mode.", "持たせました（手の形も合わせました）。": "Held again (the hand shape follows).",
     "接地させました。": "Grounded.", "直径": "Diameter", "長さ": "Length", "底の直径": "Base diameter", "底の一辺": "Base side",
@@ -273,8 +273,8 @@
       "Pose, body, props and auras apply to the selected figure only (the others are drawn lighter). Clicking another figure's circle switches too. Floor, walls, objects, the ruler, the camera and things put down are shared. Position and direction move the whole figure being edited.",
     "書き出す人物": "Figures in the picture", "全員": "Everyone",
     "単体で置く": "Place on its own", "誰にも持たせず、人物の前の床に置く": "Held by no one: put on the floor in front of the figure",
-    "単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。":
-      "Placed on its own. Drag it in Place mode (Shift + drag: up / down, wheel: turn).",
+    "単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。":
+      "Placed on its own. Drag it in Place mode (Shift + drag: up / down, the 3-axis handles turn it).",
     // touch, pens, phones (index.html)
     "固定": "Pin", "タッチ用のキー": "Touch keys", "その骨だけ・上下に動かす（もう一度押すまで）": "Only that bone / up and down (till pressed again)", "丸をタップして関節を固定する（もう一度押すまで）": "Tap a circle to pin its joint (till pressed again)", "カメラを回す・動かすスティックと拡大のスライダー": "Sticks to orbit and pan the camera, a slider to zoom", "側面図": "Side view",
     "タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（カメラモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。":
@@ -320,8 +320,8 @@
     "角柱": "Prism", "円柱": "Cylinder", "角錐": "Pyramid", "円錐": "Cone", "支柱": "Pole", "直方体": "Box",
     "置いた物体": "Objects in the scene", "複製": "Duplicate", "角の数": "Sides", "向き": "Turn",
     "選んだ関節を着ける": "Put the selected joint on it", "この上に立つ": "Stand on it",
-    "配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、ホイールで向き）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。":
-      "In the Place mode, drag an object to move it over the floor (Shift+drag: up and down, wheel: turn). With grounding on, the figure stands on objects too (it steps up to 40 cm). \"Put the selected joint on it\" puts the joint on a face of the selected object (or the nearest one) and pins it. Objects are in the exported rough when \"Draw floor and walls in the exported rough\" is on.",
+    "配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。":
+      "In the Place mode, drag an object to move it over the floor (Shift+drag: up and down, the 3-axis handles turn it). With grounding on, the figure stands on objects too (it steps up to 40 cm). \"Put the selected joint on it\" puts the joint on a face of the selected object (or the nearest one) and pins it. Objects are in the exported rough when \"Draw floor and walls in the exported rough\" is on.",
     "物体を先に置いてください。": "Place an object first.", "物体を一覧かドラッグで選んでください。": "Select an object in the list or by dragging it.",
     "床・物体の上にめり込まない": "No sinking into the floor or objects", "いつも床・物体の上に着ける（一番低い所）": "Always on the floor or an object (lowest point)",
     "書き出し": "Export", "幅": "Width", "高さ": "Height", "アタリ画像": "Rough picture", "OpenPose 画像": "OpenPose picture",
@@ -432,8 +432,8 @@
     "位置：前後": "Place: front-back", "立方体にする（幅にそろえる）": "Make it a cube (the width)", "スナップ": "Snapping",
     "物体を定規にスナップ": "Snap objects to the ruler", "壁を定規の向きにそろえる": "Turn the wall like the ruler",
     "壁を定規の向きにそろえました。": "The wall now turns like the ruler.",
-    "配置モードで物体・小物を動かすと、向きが定規の向きにそろいます（ホイールで 90°ずつ回ります）。物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。":
-      "Objects and things moved in the place mode turn to the ruler's directions (the wheel turns them 90° at a time). Objects stick to the floor, the ceiling and walls turned like the ruler (floor and wall slabs too) when they come near.",
+    "配置モードで物体・小物を動かすと、向きが定規の向きにそろいます。物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。":
+      "Objects and things moved in the place mode turn to the ruler's directions. Objects stick to the floor, the ceiling and walls turned like the ruler (floor and wall slabs too) when they come near.",
     "シーンの一覧": "In the scene", "開く": "Open", "↺ 初期状態に": "↺ Reset",
     "行を選んでから押します（ダブルクリックで開く）。持ち物・オーラは人物の下に、置いた物・物体・床と壁・定規の立方体は外側に並びます。":
       "Pick a row, then press (double-click opens it). Things held and auras sit under their figure; things put down, objects, floor and walls and the ruler's box stand outside.",

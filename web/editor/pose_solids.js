@@ -201,7 +201,7 @@ function eyePoint(W, H){ return add(camRotInv([0, 0, camDist(W, H)]), S.center);
   };
 }
 
-// ---- 配置 mode: grab a solid (the joints' circles come first), the wheel turns it ----------------
+// ---- 配置 mode: grab a solid (the joints' circles come first) ---------------------------------------
 function solidUnder(x, y){
   const r = pixelRay(x, y, front.width, front.height);
   let best = -1, bt = Infinity;
@@ -223,15 +223,8 @@ DOWN_HOOKS.push((cv, x, y) => {
 });
 let soFree = null;
 DOWN_HOOKS.unshift(() => { soFree = null; return null; });
-WHEEL_HOOKS.push((x, y, step, e) => {
-  if (mode !== "place") return false;
-  const u = solidUnder(x, y); if (!u) return false;
-  remember(); soSel = u.k;
-  const o = S.solids[u.k];
-  o.yaw = typeof snapTurn === "function" ? snapTurn(o.yaw, step, e) : (((o.yaw || 0) + step * (e.shiftKey ? 15 : 5)) + 540) % 360 - 180;
-  if (typeof snapSolid === "function") snapSolid(o);
-  afterEdit(); syncSolids(); return true;
-});
+// the wheel over it zooms the camera, as everywhere (turning is the 3-axis handles' and the panel's)
+
 
 // ---- adding, contact, standing on top -----------------------------------------------------------
 // 接地: the solid's lowest point onto the ground or the top of another solid under it
@@ -324,7 +317,7 @@ function buildSolidPanel(){
       <input type="color" id="soColor" value="#e0605a" ></div>
     <div class="btns" id="soResetRow" style="margin-top:6px"><button id="soReset" title="大きさ・向きを戻す">↺ 戻す</button></div>
     <div class="btns" style="margin-top:8px"><button id="soTouch">選んだ関節を着ける</button><button id="soStand">この上に立つ</button></div>
-    <div class="hint">配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、ホイールで向き）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。</div>`;
+    <div class="hint">配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。</div>`;
   const scene = $("scCat").closest("section");
   scene.parentNode.insertBefore(sec, scene.nextSibling);
   $("soAdd").addEventListener("click", () => addSolid($("soKind").value));

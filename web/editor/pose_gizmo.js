@@ -39,7 +39,7 @@ function setOn(on){ const c = $("gizmoOn"); if (c.checked === on) return; c.chec
 let pivEdit = false;                          // 支点 on: the move handles move the pivot
 const OBJ = () => window.ODMObj || null;      // pose_objects.js: the objects' selection and pivots
 function setPiv(on){
-  const o = OBJ(); if (on && !(mode === "place" && o && o.key())){ toast("配置モードで物体を1つ選ぶと、支点を動かせます。", true); return; }
+  const o = OBJ(); if (on && !(mode === "place" && o && (o.key() || ghostNow()))){ toast("配置モードで物体を1つ選ぶと、支点を動かせます。", true); return; }
   pivEdit = on; if (on) setOn(true); barKey = ""; syncBars(); draw();
   toast(on ? "支点を動かします（移動ハンドル）。もう一度押すと戻ります。" : "支点の移動を終えました。");
 }
@@ -92,7 +92,7 @@ function syncBars(){
   const on = $("gizmoOn").checked, can = tools();
   tool = can.includes(pref) ? pref : can[0] || pref;
   // 支点 ends with 配置 or with nothing (or several things) selected
-  if (pivEdit && !(mode === "place" && OBJ() && OBJ().key())) pivEdit = false;
+  if (pivEdit && !(mode === "place" && OBJ() && (OBJ().key() || ghostNow()))) pivEdit = false;
   const k = [on, tool, can.join(), pivEdit, mode === "place"].join("|"); if (k === barKey) return; barKey = k;
   for (const d of bars){ d.classList.toggle("off", !on);
     d.querySelectorAll("button[data-gz]").forEach(b => { const me = b.dataset.gz === tool && can.includes(tool);
@@ -201,63 +201,77 @@ function target(any){
         afterEdit(); if (typeof syncSolids === "function") syncSolids(); },
       turn: (s0, k, dg) => { for (const e of s0){ const r = ref(e.k), p = add(c, rotAxis(sub(e.at, c), WORLD[k], deg(dg)));
           const [a, pp, rr] = O.worldTurn(e.ang, k, dg);
-          if (e.k[0] === "s"){ r.pos = p; r.yaw = a; r.pitch = pp; r.roll = rr; }
+          if (e.k[0] === "s" && r.guide) r.pos = e.at.slice();      // a guide keeps to the ruler: it stays when the group turns
+          else if (e.k[0] === "s"){ r.pos = p; r.yaw = a; r.pitch = pp; r.roll = rr; }
           else { r.base = p; r.yaw = a; r.rot = [pp, 0, rr]; r.grounded = false; } }
         afterEdit(); if (typeof syncSolids === "function") syncSolids(); }};
   }
   // 支点: the move handles move the selected object's pivot, the object stays
-  if (pivEdit && O && O.key()){
-    const key = O.key(), c = O.pivWorld(key);
+  const pk = O ? O.key() || (ghostNow() ? ghostNow().key : "") : "";
+  if (pivEdit && pk){
+    const c = O.pivWorld(pk);
     return {c, ax: WORLD, pivot: c, rings: [], sc: [], lacks: ["rotate", "scale"], piv: true,
       save: () => ({p: c.slice()}),
-      move: (s0, d) => { O.setPivAbs(key, add(s0.p, d)); afterEdit(); }};
+      move: (s0, d) => { O.setPivAbs(pk, add(s0.p, d)); if (pk[0] !== "g") afterEdit(); }};
   }
+  // what the handles act on: a selected solid or thing, else (nothing selected, the 設置 tab's preview
+  // showing) the one about to be put (its ghost: moved, turned, stretched, its pivot moved before 置く)
   const so = S.solids && S.solids[soSel];
+  if (so) return solidTarget(so, "s" + soSel, O, false);
+  const it = S.items && S.items[scSel];
+  if (it && it.base && (it.where === "world" || (PROPS_[it.key] || {}).place === "world" || (PROPS_[it.key] || {}).place === "grab"))
+    return itemTarget(it, "i" + scSel, O, false);
+  const G = ghostNow();
+  if (G) return G.key === "gs" ? solidTarget(G.o, "gs", O, true) : itemTarget(G.o, "gi", O, true);
+  return null;
+}
+// the ghost of 設置 (pose_place.js) when nothing is selected: {key: "gs" | "gi", o}
+function ghostNow(){
+  const O = OBJ(); if (mode !== "place" || !window.ODMGhost || (O && O.selected().length) || sel === IX.pelvis) return null;
+  return ODMGhost();
+}
+function solidTarget(so, key, O, ghost){
+  const done = () => { if (!ghost){ afterEdit(); if (typeof syncSolids === "function") syncSolids(); } };
   // a guide shape of the perspective ruler: its handles go along its own edges (toward the vanishing
   // points); 変形 lengthens only the side pulled (the other side stays), on all three edges; it keeps
   // to the ruler's turn, so no rings
-  if (so && so.guide && typeof rulerAxes === "function"){
+  if (so.guide && typeof rulerAxes === "function"){
     const a = deg(so.yaw || 0), ax = [rotY([1, 0, 0], a), [0, 1, 0], rotY([0, 0, 1], a)];
-    const c = add(so.pos, [0, so.size[1] / 2, 0]), fin = () => { afterEdit(); if (typeof syncSolids === "function") syncSolids(); };
+    const c = add(so.pos, [0, so.size[1] / 2, 0]);
     return {c, ax, pivot: c, rings: [], sc: ax.map((u, n) => [u, n, "XYZ"[n]]), lacks: ["rotate"],
       save: () => ({pos: so.pos.slice(), size: so.size.slice()}),
-      move: (s0, d) => { so.pos = add(s0.pos, d); fin(); },
+      move: (s0, d) => { so.pos = add(s0.pos, d); done(); },
       scale: (s0, f, n, d) => { const v = Math.max(1, Math.round(s0.size[n] + d));
-        so.size[n] = v; so.pos = n === 1 ? s0.pos.slice() : add(s0.pos, mul(ax[n], (v - s0.size[n]) / 2)); fin(); }};
+        so.size[n] = v; so.pos = n === 1 ? s0.pos.slice() : add(s0.pos, mul(ax[n], (v - s0.size[n]) / 2)); done(); }};
   }
-  if (so){
-    const ax = WORLD;
-    const fin = () => { if (typeof snapSolid === "function") snapSolid(so); afterEdit(); if (typeof syncSolids === "function") syncSolids(); };
-    const c = add(so.pos, [0, so.size[1] / 2, 0]), key = "s" + soSel;
-    // turned about the world's X, Y, Z through its pivot (支点; the middle unless moved)
-    return {c, ax, pivot: O ? O.pivWorld(key) : c, rings: [0, 1, 2], sc: worldSc(O ? O.axesOf(key) : WORLD),
-      save: () => ({pos: so.pos.slice(), size: so.size.slice(), yaw: so.yaw || 0, pitch: so.pitch || 0, roll: so.roll || 0}),
-      move: (s0, d) => { so.pos = add(s0.pos, d); fin(); },
-      scale: (s0, f, n) => { so.size[n] = Math.max(1, Math.round(s0.size[n] * f)); fin(); },
-      turn: (s0, k, dg) => { so.pos = s0.pos.slice(); so.yaw = s0.yaw; so.pitch = s0.pitch; so.roll = s0.roll;
-        const set = () => { if (!O){ so.yaw = s0.yaw + (k === 1 ? dg : 0); return; }
-          const [a, p, r] = O.worldTurn([s0.yaw, s0.pitch, s0.roll], k, dg); so.yaw = a; so.pitch = p; so.roll = r; };
-        if (O) O.keepPivot(key, set); else set(); fin(); }};
-  }
-  const it = S.items && S.items[scSel];
-  if (it && it.base && (it.where === "world" || (PROPS_[it.key] || {}).place === "world" || (PROPS_[it.key] || {}).place === "grab")){
-    const a = deg(it.yaw || 0), ax = WORLD, f0 = frameOf(it);
-    // stretched along its own axes (as turned), each on its own
-    const own = [0, 1, 2].map(n => { const e = [0, 0, 0]; e[n] = 1; const v = dirToWorld(f0, it, e); return len(v) > 1e-6 ? norm(v) : rotY(WORLD[n], a); });
-    // turned about the world's X, Y, Z through its pivot (kept as yaw and its own turn, it.rot)
-    const key = "i" + scSel;
-    return {c: it.base, ax, pivot: O ? O.pivWorld(key) : it.base, rings: [0, 1, 2], sc: worldSc(own),
-      save: () => ({base: it.base.slice(), st: (stretchOf(it) || [1, 1, 1]).slice(), yaw: it.yaw || 0, rot: (it.rot || [0, 0, 0]).slice()}),
-      move: (s0, d) => { it.base = add(s0.base, d); if (typeof snapItem === "function") snapItem(it); afterEdit(); },
-      scale: (s0, f, n) => { foldStretch(it)[n] = Math.max(0.05, Math.round(s0.st[n] * f * 100) / 100); afterEdit(); },
-      turn: (s0, k, dg) => { const w = v => ((v + 540) % 360) - 180;
-        it.base = s0.base.slice(); it.yaw = s0.yaw; it.rot = s0.rot.slice();
-        const set = () => { if (!O){ if (k === 1) it.yaw = w(s0.yaw + dg); return; }
-          const [ya, p, r] = O.worldTurn([s0.yaw + (s0.rot[1] || 0), s0.rot[0] || 0, s0.rot[2] || 0], k, dg); it.yaw = ya; it.rot = [p, 0, r]; };
-        if (O) O.keepPivot(key, set); else set();
-        if (it.grounded) groundItem(it); afterEdit(); }};
-  }
-  return null;
+  const fin = () => { if (typeof snapSolid === "function") snapSolid(so); done(); };
+  const c = add(so.pos, [0, so.size[1] / 2, 0]);
+  // turned about the world's X, Y, Z through its pivot (支点; the middle unless moved)
+  return {c, ax: WORLD, pivot: O ? O.pivWorld(key) : c, rings: [0, 1, 2], sc: worldSc(O ? O.axesOf(key) : WORLD),
+    save: () => ({pos: so.pos.slice(), size: so.size.slice(), yaw: so.yaw || 0, pitch: so.pitch || 0, roll: so.roll || 0}),
+    move: (s0, d) => { so.pos = add(s0.pos, d); fin(); },
+    scale: (s0, f, n) => { so.size[n] = Math.max(1, Math.round(s0.size[n] * f)); fin(); },
+    turn: (s0, k, dg) => { so.pos = s0.pos.slice(); so.yaw = s0.yaw; so.pitch = s0.pitch; so.roll = s0.roll;
+      const set = () => { if (!O){ so.yaw = s0.yaw + (k === 1 ? dg : 0); return; }
+        const [a, p, r] = O.worldTurn([s0.yaw, s0.pitch, s0.roll], k, dg); so.yaw = a; so.pitch = p; so.roll = r; };
+      if (O) O.keepPivot(key, set); else set(); fin(); }};
+}
+function itemTarget(it, key, O, ghost){
+  const done = () => { if (!ghost) afterEdit(); };
+  const a = deg(it.yaw || 0), f0 = frameOf(it);
+  // stretched along its own axes (as turned), each on its own
+  const own = [0, 1, 2].map(n => { const e = [0, 0, 0]; e[n] = 1; const v = dirToWorld(f0, it, e); return len(v) > 1e-6 ? norm(v) : rotY(WORLD[n], a); });
+  // turned about the world's X, Y, Z through its pivot (kept as yaw and its own turn, it.rot)
+  return {c: it.base, ax: WORLD, pivot: O ? O.pivWorld(key) : it.base, rings: [0, 1, 2], sc: worldSc(own),
+    save: () => ({base: it.base.slice(), st: (stretchOf(it) || [1, 1, 1]).slice(), yaw: it.yaw || 0, rot: (it.rot || [0, 0, 0]).slice()}),
+    move: (s0, d) => { it.base = add(s0.base, d); if (typeof snapItem === "function") snapItem(it); done(); },
+    scale: (s0, f, n) => { foldStretch(it)[n] = Math.max(0.05, Math.round(s0.st[n] * f * 100) / 100); done(); },
+    turn: (s0, k, dg) => { const w = v => ((v + 540) % 360) - 180;
+      it.base = s0.base.slice(); it.yaw = s0.yaw; it.rot = s0.rot.slice();
+      const set = () => { if (!O){ if (k === 1) it.yaw = w(s0.yaw + dg); return; }
+        const [ya, p, r] = O.worldTurn([s0.yaw + (s0.rot[1] || 0), s0.rot[0] || 0, s0.rot[2] || 0], k, dg); it.yaw = ya; it.rot = [p, 0, r]; };
+      if (O) O.keepPivot(key, set); else set();
+      if (it.grounded) groundItem(it); done(); }};
 }
 // on screen, for the tool chosen: the handles as lines (from the centre to an end), rings as
 // point lists; L: the handle's length in cm (ARROW_PX on screen)

@@ -750,7 +750,7 @@ function holdAgain(it){
     S.items = S.items.filter(o => o === it || !(PROPS_[o.key] && PROPS_[o.key].place === "hand" && !o.where && o.hand === it.hand));
   holdHands(it);
 }
-// 配置 mode: drag what lies in the scene (Shift: up and down), the wheel turns it
+// 配置 mode: drag what lies in the scene (Shift: up and down)
 function itemUnder(x, y){
   const W = front.width, H = front.height, reach = 14 * pointerScale() * (devicePixelRatio || 1);
   let best = null, bd = reach;
@@ -772,14 +772,8 @@ DOWN_HOOKS.push((cv, x, y) => {
     if (d[1]) it.grounded = false; else if (it.grounded) groundItem(it);
     afterEdit(); showItem(); });
 });
-WHEEL_HOOKS.push((x, y, step, e) => {
-  if (mode !== "place") return false;
-  const u = itemUnder(x, y); if (!u) return false;
-  remember(); scSel = u.n; const it = S.items[u.n];
-  it.yaw = typeof snapTurn === "function" ? snapTurn(it.yaw, step, e) : ((it.yaw || 0) + step * (e.shiftKey ? 15 : 5) + 540) % 360 - 180;
-  if (it.grounded) groundItem(it);
-  afterEdit(); fillItemList(); return true;
-});
+// the wheel over it zooms the camera, as everywhere (turning is the 3-axis handles' and the panel's)
+
 
 // ---- adding things -----------------------------------------------------------------------------
 function facingYaw(){ const f = bodyFront(); return Math.atan2(f[0], f[2]) * 180 / Math.PI; }
@@ -796,7 +790,7 @@ function placeAlone(key){
   S.items = S.items || []; S.items.push(it); scSel = S.items.length - 1;
   groundItem(it);
   afterEdit(); fillItemList(); draw();
-  say("単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。");
+  say("単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。");
 }
 // カウチ (def.couch: lances): the holding arm comes back to the hip, its hand low by the side, so the
 // shaft lies along the forearm, forward and under the arm
@@ -891,7 +885,7 @@ function buildScenePanel(){
       <div id="scDims" class="grid2"></div>
       <div class="row" style="margin-top:6px"><label style="margin:0;flex:1"><input type="checkbox" id="scColorOn"> 線の色を変える</label>
         <input type="color" id="scColor" value="#e0605a" ></div>
-      <div class="hint">置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。</div>
+      <div class="hint">置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。</div>
     </div>
     <div id="scItemCtl">${ITEM_CTL.map(rng).join("")}
       <div class="btns" style="margin-top:6px"><button id="scReset" title="位置・向き・大きさを戻す">↺ 戻す</button></div></div>
@@ -1030,7 +1024,7 @@ function buildAlonePanel(){
     <label style="margin-top:10px">単体で置いた物</label>
     <select id="alList" size="4"></select>
     <div class="btns" style="margin-top:6px"><button id="alDel">外す</button><button id="alHold">いまの人物に持たせる</button></div>
-    <div class="hint">武器・道具・帽子なども、誰にも持たせずに床（物体の上）に置けます。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。人物に持たせた物は「装備」で扱います。</div>`;
+    <div class="hint">武器・道具・帽子なども、誰にも持たせずに床（物体の上）に置けます。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。人物に持たせた物は「装備」で扱います。</div>`;
   const cam = document.getElementById("camReset").closest("section");
   cam.parentNode.insertBefore(sec, cam);
   const fill = () => { $("alKey").innerHTML = Object.entries(PROPS_).filter(([, d]) => d.cat === $("alCat").value && ALONE_OK(d))

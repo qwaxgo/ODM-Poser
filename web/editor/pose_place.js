@@ -86,16 +86,23 @@ function choose(k){
 }
 $("plList").addEventListener("change", () => choose($("plList").value));
 
+// 置く: the thing as its ghost is now (moved, turned, stretched, its pivot moved with the 3-axis handles,
+// and the sizes above)
 $("plPut").addEventListener("click", () => {
   const c = $("plCat").value, key = $("plKey").value; if (!key) return;
+  const g = ghostNow(), copy = (to, from, keys) => { for (const k of keys) if (from[k] !== undefined) to[k] = JSON.parse(JSON.stringify(from[k])); else delete to[k]; };
   if (c === SHAPES){
-    addSolid(key); const o = S.solids[S.solids.length - 1]; preSolid(o);
-    if ($("plGuide").checked){                // a guide: turned to the ruler, which shows
-      const r = rulerState(); o.guide = true; o.yaw = rulerYaw(); o.pitch = 0; o.roll = 0;
+    addSolid(key); const o = S.solids[S.solids.length - 1];
+    if (g && g.o) copy(o, g.o, ["pos", "size", "yaw", "pitch", "roll", "sides", "top", "piv", "guide"]);
+    if (o.guide){                              // a guide: turned to the ruler, which shows
+      const r = rulerState(); o.yaw = rulerYaw(); o.pitch = 0; o.roll = 0;
       if (!r.on){ r.on = true; if (typeof syncRuler === "function") syncRuler(); }
     }
     afterEdit(); syncSolids(); choose("s" + (S.solids.length - 1));
-  } else { placeAlone(key); const it = S.items[S.items.length - 1]; preItem(it); if (it.grounded) groundItem(it); afterEdit(); choose("i" + (S.items.length - 1)); }
+  } else { placeAlone(key); const it = S.items[S.items.length - 1];
+    if (g && g.it) copy(it, g.it, ["base", "yaw", "rot", "scale", "stretch", "segs", "piv", "grounded"]);
+    afterEdit(); choose("i" + (S.items.length - 1)); }
+  pend = null;                                  // the next ghost starts afresh
 });
 $("plDel").addEventListener("click", () => {
   const o = solidOf(sel), it = itemOf(sel);
@@ -142,8 +149,8 @@ function preRows(){
     `<div><label>${label}</label><div class="row"><input type="range" id="${id}R" min="${min}" max="${max}" step="${step}" value="${v}" data-v0="${v}">` +
     `<input type="number" class="num" id="${id}" step="${step}" value="${v}"><span class="unit">${unit}</span></div></div>`).join("");
   $("plPreRows").querySelectorAll("input[type=range]").forEach(r => { const n = $(r.id.slice(0, -1));
-    r.addEventListener("input", () => { n.value = r.value; draw(); });
-    n.addEventListener("change", () => { r.value = n.value; draw(); }); });
+    r.addEventListener("input", () => { n.value = r.value; applyRows(); });
+    n.addEventListener("change", () => { r.value = n.value; applyRows(); }); });
 }
 const pv = id => { const n = $(id); return n && isFinite(+n.value) ? +n.value : null; };
 function preSolid(o){
@@ -156,25 +163,48 @@ function preSolid(o){
 function preItem(it){
   if (pv("ppScale") !== null) it.scale = Math.max(0.2, pv("ppScale") / 100);
   const st = ["ppSX", "ppSY", "ppSZ"].map(id => Math.max(0.2, (pv(id) || 100) / 100));
-  if (st.some(v => v !== 1)) it.stretch = st;
+  if (st.some(v => v !== 1)) it.stretch = st; else delete it.stretch;
   const segs = {}; $("plPreRows").querySelectorAll("input[id^=ppSeg_]:not([type=range])").forEach(n => {
     const v = +n.value / 100; if (isFinite(v) && v !== 1) segs[n.id.slice(6)] = Math.max(0.05, v); });
-  if (Object.keys(segs).length) it.segs = segs;
+  if (Object.keys(segs).length) it.segs = segs; else delete it.segs;
   return it;
 }
-$("plPreReset").addEventListener("click", () => { $("plPreRows").querySelectorAll("input[type=range]").forEach(r => {
+// the ghost follows the sizes typed or slid; the sizes follow the ghost stretched by the handles
+function applyRows(){
+  const g = ghostNow(); if (g){ if (g.o) preSolid(g.o); else { preItem(g.it); if (g.it.grounded) groundItem(g.it); } }
+  draw();
+}
+function rowsFromGhost(){
+  const g = pend; if (!g) return;
+  const put = (id, v) => { const n = $(id), r = $(id + "R"); if (!n || v === undefined || !isFinite(v)) return; v = Math.round(v);
+    if (document.activeElement !== n) n.value = v; if (document.activeElement !== r) r.value = v; };
+  if (g.o){ put("ppW", g.o.size[0]); put("ppH", g.o.size[1]); put("ppD", g.o.size[2]); }
+  else { const st = stretchOf(g.it) || [1, 1, 1]; put("ppScale", (g.it.scale || 1) * 100); put("ppSX", st[0] * 100); put("ppSY", st[1] * 100); put("ppSZ", st[2] * 100); }
+}
+$("plPreReset").addEventListener("click", () => { pend = null; $("plPreRows").querySelectorAll("input[type=range]").forEach(r => {
   r.value = r.dataset.v0; $(r.id.slice(0, -1)).value = r.dataset.v0; }); draw(); });
 $("plCat").addEventListener("change", preRows); $("plKey").addEventListener("change", preRows);
 $("plPreOn").addEventListener("change", draw); $("plGuide").addEventListener("change", draw);
 preRows();
-// the ghost: where 置く puts it, at the sizes above (a guide turned to the ruler)
-function ghost(){
+// the ghost: where 置く puts it, at the sizes above (a guide turned to the ruler). It stays (moved,
+// turned, stretched with the 3-axis handles while nothing is selected) until it is put or the kind changes
+let pend = null, pendKey = "";
+function ghostNow(){
+  const k = [$("plCat").value, $("plKey").value, $("plGuide").checked].join("|");
+  if (k !== pendKey || !pend){ pendKey = k; pend = ghostFresh(); }
+  return pend;
+}
+window.ODMGhost = () => {
+  if (!sec.classList.contains("active") || !$("plPreOn").checked) return null;
+  const g = ghostNow(); return !g ? null : g.o ? {key: "gs", o: g.o} : {key: "gi", o: g.it};
+};
+function ghostFresh(){
   const c = $("plCat").value, key = $("plKey").value, p = S.P[IX.pelvis];
   if (c === SHAPES){ const k = SOLID_KINDS[key]; if (!k) return null;
     const fy = S.env && S.env.floor ? +S.env.floorY || 0 : 0;
     const o = preSolid({kind: key, pos: [Math.round(p[0] + k.at[0]), fy + k.at[1], Math.round(p[2] + k.at[2])], size: k.size.slice(), yaw: 0});
     if (k.sides && !o.sides) o.sides = k.sides;
-    if ($("plGuide").checked) o.yaw = rulerYaw(); else if (typeof snapSolid === "function") snapSolid(o);
+    if ($("plGuide").checked){ o.guide = true; o.yaw = rulerYaw(); } else if (typeof snapSolid === "function") snapSolid(o);
     return {o}; }
   const def = PROPS_[key]; if (!def) return null;
   const f = bodyFront(), fy = +(S.env && S.env.floorY) || 0;
@@ -187,7 +217,7 @@ function ghost(){
   drawAtari = function(ctx, W, H, opts = {}){
     atari0(ctx, W, H, opts);
     if (opts.export || ctx.canvas !== front || !sec.classList.contains("active") || !$("plPreOn").checked) return;
-    const g = ghost(); if (!g) return;
+    const g = ghostNow(); if (!g) return; rowsFromGhost();
     const lw = Math.max(1.5, W / 540), P = q => project(q, W, H);
     ctx.save(); ctx.strokeStyle = cssVar("--sel"); ctx.globalAlpha = 0.6; ctx.lineCap = "round"; ctx.setLineDash([lw * 3, lw * 2]); ctx.lineWidth = lw;
     if (g.o){ const m = solidMesh(g.o), V = m.V.map(P); ctx.beginPath();

@@ -60,8 +60,8 @@ const PC = [
   {mode: "place", title: ["配置モード", "Place mode"], rows: [
     [["物体・小物をドラッグ", "Drag an object / a thing"], ["床の上で動かす（カメラは動かない）", "Move it over the floor (the camera stays)"]],
     [["Shift＋ドラッグ", "Shift + drag"], ["上下に動かす", "Move it up and down"]],
-    [["物体の上でホイール", "Wheel over an object"], ["向きを回す（スナップ中は定規の向きへ 90°ずつ）", "Turn it (with snapping: 90° at a time, along the ruler)"]],
     [["消失点をドラッグ", "Drag a vanishing point"], ["定規の向きを変える", "Turn the ruler"]],
+    [["設置のタブで何も選ばずに3軸ハンドル", "The 3-axis handles with nothing selected (Objects tab)"], ["置く前の物（プレビュー）を動かす・回す・変形・支点を動かす。「置く」でそのとおりに置く", "Move, turn, stretch or re-pivot the thing about to be put (the preview); Put puts it just so"]],
     [["ガイド図形の矢印・四角をドラッグ", "Drag a guide shape's arrow or square"], ["辺の向き（消失点の方）に動かす・引いた側の辺だけ延ばす", "Move it along its edges (toward the vanishing points) / lengthen only the side pulled"]],
     [["丸をクリック", "Click a circle"], ["関節を選ぶ（物体に着ける用）", "Select a joint (to put it on an object)"]],
     [["腰の丸をドラッグ（または選んで矢印・輪）", "Drag the hips' circle (or select it: arrows, ring)"], ["人物全体を動かす・回す", "Move / turn the whole figure"]],
@@ -100,7 +100,7 @@ const TOUCH = [
     [["右端のスライダーを上下", "Slide the right edge up / down"], ["カメラパッド（右端）", "Camera pad (right edge)"], ["拡大・縮小", "Zoom"]]]},
   {title: ["物体（配置モード）", "Objects (place mode)"], rows: [
     [["1本指でドラッグ", "Drag with one finger"], ["物体・小物", "An object / a thing"], ["床の上で動かす", "Move it over the floor"]],
-    [["2本指でつまむ・広げる", "Pinch / spread two fingers"], ["物体・小物の上", "Over an object / a thing"], ["向きを回す（スナップ中は 90°ずつ）", "Turn it (with snapping: 90° at a time)"]]]},
+    [["2本指でつまむ・広げる", "Pinch / spread two fingers"], ["画面のどこでも", "Anywhere on the view"], ["拡大・縮小（回すのは3軸ハンドル）", "Zoom (the 3-axis handles turn things)"]]]},
   {title: ["ペン", "Pen"], rows: [
     [["ペン先でドラッグ", "Drag with the tip"], ["丸", "A circle"], ["マウスと同じく関節を動かす", "Move the joint, as with a mouse"]],
     [["サイドボタン＋ドラッグ", "Side button + drag"], ["丸", "A circle"], ["Shift と同じ", "Same as Shift"]],
