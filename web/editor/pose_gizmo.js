@@ -143,17 +143,19 @@ function target(any){
   if (mode === "pose" && sel >= 0){
     // 回転: what hangs on the joint turns about it; a joint with nothing after it, its own bone
     const i = sel, par = PARENT[i], root = i === IX.pelvis || par === undefined || par < 0, own = !root && !KIDS[i].length;
-    // 左右を向く: on the neck and the head, the green ring (Y) twists it about its own bone, so the head
-    // turns where it is (tilted too), as ねじり in the joint panel; the head's rings show round the head
-    const look = i === IX.head || i === IX.neck;
+    // the green ring (Y) of every joint but the hips twists along its bone (ねじり in the joint panel: a
+    // hand's is its wrist's, the forearm), drawn round that bone, so it turns about the axis it shows (the
+    // head turns left and right where it is); the head's rings show round the head
+    const tj = root ? -1 : twistJoint(i), tAx = tj >= 0 ? sub(S.P[tj], S.P[PARENT[tj]]) : null;
+    const twists = !!tAx && len(tAx) > 1e-6;
     const pivot = i === IX.head ? S.P[i] : own ? S.P[par] : S.P[i];
-    return {c: S.P[i], ax: WORLD, joint: i, pivot, rings: [0, 1, 2], sc: [], save,
+    return {c: S.P[i], ax: WORLD, joint: i, pivot, rings: [0, 1, 2], ringAx: twists ? [WORLD[0], norm(tAx), WORLD[2]] : null, sc: [], save,
       move: (s0, d) => { const t = add(s0.P[i], d);
         if (IK_END[J[i]]) solveIK(i, t);
         else { const p = S.P[par], L = len(sub(S.P[i], p)); rotateSubtree(i, add(p, mul(norm(sub(t, p)), L))); }
         afterEdit(i); },
       turn: (s0, k, dg) => { S.P = s0.P.map(p => p.slice());
-        if (look && k === 1){ S.twist = s0.twist.slice(); setTwist(i, (s0.twist[i] || 0) + dg); afterEdit(i); return; }
+        if (twists && k === 1){ S.twist = s0.twist.slice(); setTwist(tj, (s0.twist[tj] || 0) + dg); afterEdit(i); return; }
         const pv = own ? s0.P[par] : s0.P[i], who = root ? S.P.map((p, n) => n) : own ? subtree(i) : subtree(i).slice(1);
         for (const n of who) S.P[n] = add(pv, rotAxis(sub(s0.P[n], pv), WORLD[k], deg(dg)));
         // the hips: the body's turn goes with it, so the joints' angles and limits keep to the body
@@ -317,9 +319,9 @@ function layout(t, W, H){
     const pc = project(t.pivot, W, H), R = RING_PX * k * dpr / Math.max(1e-6, pc.s);
     out.pc = pc;
     for (const k of t.rings){
-      const [a, b] = across(WORLD[k]), pts = [];
+      const [a, b] = across(t.ringAx ? t.ringAx[k] : WORLD[k]), pts = [];
       for (let m = 0; m <= 64; m++){ const q = 2 * Math.PI * m / 64; pts.push(project(add(t.pivot, add(mul(a, R * Math.cos(q)), mul(b, R * Math.sin(q)))), W, H)); }
-      out.rings.push({k, pts, a, b, R});
+      out.rings.push({k, pts, a, b, R, u: t.ringAx ? t.ringAx[k] : WORLD[k]});
     }
   }
   return out;
@@ -363,14 +365,20 @@ DOWN_HOOKS.unshift((cv, x, y) => {
   const t = target(); if (!t) return null;
   const W = cv.width, H = cv.height, g = layout(t, W, H), near = 9 * g.dpr * gzScale() * (typeof pointerScale === "function" ? pointerScale() : 1);
   const s0 = t.save(), x0 = x, y0 = y;
-  // a ring: the drag along the ring's direction on screen where it was taken turns it
-  for (const r of g.rings){
-    for (let m = 1; m < r.pts.length; m++){
-      if (segDist(x, y, r.pts[m - 1], r.pts[m]) >= near) continue;
+  // a ring: the drag along the ring's direction on screen where it was taken turns it. The ring nearest
+  // to the press is taken (rings cross and, along an axis, lie on each other: then the green one, a
+  // joint's twist along its bone)
+  let hitR = null, hitM = 0, hd = near;
+  for (const r of g.rings) for (let m = 1; m < r.pts.length; m++){
+    const dd = segDist(x, y, r.pts[m - 1], r.pts[m]) - (r.k === 1 ? 1.5 * g.dpr : 0);
+    if (dd < hd){ hd = dd; hitR = r; hitM = m; }
+  }
+  if (hitR){
+    { const r = hitR, m = hitM;
       const tx = (r.pts[m].x - r.pts[m - 1].x) / (2 * Math.PI / 64), ty = (r.pts[m].y - r.pts[m - 1].y) / (2 * Math.PI / 64);
       const t2 = Math.max(tx * tx + ty * ty, (24 * g.dpr) ** 2);     // a ring seen edge-on does not spin wildly
       // which way the ring's own angle turns the thing about its axis (a, b, axis: right-handed or not)
-      const sgn = Math.sign(dot(cross(r.a, r.b), WORLD[r.k])) || 1;
+      const sgn = Math.sign(dot(cross(r.a, r.b), r.u)) || 1;
       gzRing = r.k; draw();
       addEventListener("pointerup", () => { gzRing = -1; draw(); }, {once: true});
       addEventListener("pointercancel", () => { gzRing = -1; draw(); }, {once: true});

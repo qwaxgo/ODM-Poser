@@ -42,7 +42,7 @@ const PC = [
     [["Alt＋クリック", "Alt + click"], ["関節を固定する（ピン）", "Pin the joint"]],
     [["側面図でドラッグ", "Drag in the side view"], ["奥行きを直接動かす", "Move the depth directly"]],
     [["G・R・S キー（または 移動・回転・変形 ボタン）", "G, R, S keys (or the Move / Rotate / Scale buttons)"], ["3軸ハンドルの操作を切り替える", "Switch the 3-axis handles' tool"]],
-    [["輪（X・Y・Z）をドラッグ", "Drag a ring (X, Y, Z)"], ["選んだ関節で、その先を軸のまわりに回す（回転）", "Turn what lies beyond the selected joint about that axis (Rotate)"]],
+    [["輪（X・Y・Z）をドラッグ", "Drag a ring (X, Y, Z)"], ["選んだ関節で、その先を軸のまわりに回す（回転）。緑（Y）の輪は骨を軸にねじる（頭は左右を向く）", "Turn what lies beyond the selected joint about that axis (Rotate). The green (Y) ring twists along the bone (the head looks left and right)"]],
     [["手足の関節の矢印（X・Y・Z）をドラッグ", "Drag an arrow (X, Y, Z) on an arm or leg joint"], ["その軸の向きに動かす（移動。手足だけ）", "Move it along that axis (Move; arms and legs only)"]],
     [["3軸ハンドルを出しているとき", "While the 3-axis handles show"], ["丸のドラッグは選ぶだけ。動かすのはハンドルで（変形は体格モードで）", "Dragging a circle only selects it; the handles move it (Scale is in Body mode)"]]]},
   {mode: "body", title: ["体格モード", "Body mode"], rows: [
