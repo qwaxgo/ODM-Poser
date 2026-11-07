@@ -39,7 +39,7 @@ open `index.html`; mods go in its `mods` folder), and an app (an AppImage for Li
   and lens (wide angle = strong perspective). Grabbing a vanishing point or the eye level of the
   ruler moves the camera to match.
 - **Place mode**: the camera stays; drag a vanishing point to turn the ruler, drag the guide shapes
-  and objects over the floor (Shift+drag: up and down, wheel: turn).
+  and objects over the floor (Shift+drag: up and down, the 3-axis handles turn it).
 - **Perspective ruler**: 1-, 2- or 3-point guide lines, the eye level and guide shapes (any of the
   Objects tab's shapes, as many as you like, turned to the ruler; their edges carried on to the vanishing
   points; "Put as a guide" in the Objects tab). The vanishing points come from the camera, so the ruler has
@@ -86,7 +86,7 @@ headphones ...), the torso, the waist, the back (backpack, cases) and the feet (
 - Held things follow the wrist; two-handed things bring the other hand to the grip. Holding,
   wearing or mounting a thing sets the hand shapes it needs; letting go gives them back.
 - Any held thing can be carried on the back, and any thing put down on the floor or an object
-  (grounded); in the Place mode it is dragged (Shift: up and down) and turned with the wheel.
+  (grounded); in the Place mode it is dragged (Shift: up and down) and turned with the 3-axis handles.
 - Line colours per body part (head, torso, each arm, hand and leg), per thing and per object,
   for the floor / walls and the wire; they are kept in the exported rough too.
 - Auras on the whole body or some parts: rising ki flames, a smooth glow, or crackling plasma.
@@ -231,7 +231,7 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
 - **オーラ**：全身や部位に、立ちのぼる気（炎）・なめらかな光・プラズマ（電撃）をまとえます。
 - **パース定規**：1点・2点・3点透視の線、アイレベル、ガイド図形（設置のタブの図形を「ガイドとして置く」で、いくつでも、定規の向きにそろえて。辺は消失点まで延びます）。消失点はカメラから決まるので人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードではカメラはそのままで消失点をつかむと定規が回ります。エディタ上だけの表示で、「定規の画像」で透明な PNG を保存できます。
 - **カメラの傾き**：パースモードで Shift＋ドラッグ（または「傾き」）で水平でなくできます（±90°）。
-- **物体**：直方体（箱・床・壁・建物・段差）、角柱、円柱、角錐、円錐、支柱を cm の大きさで置けます。配置モードでドラッグして動かし（Shift で上下、ホイールで向き）、接地をオンにすると上に立ちます（40cm までの段は乗り上げ）。選んだ関節を面に着けて固定する、上に立たせる、もできます。
+- **物体**：直方体（箱・床・壁・建物・段差）、角柱、円柱、角錐、円錐、支柱を cm の大きさで置けます。配置モードでドラッグして動かし（Shift で上下、回すのは3軸ハンドル）、接地をオンにすると上に立ちます（40cm までの段は乗り上げ）。選んだ関節を面に着けて固定する、上に立たせる、もできます。
 - **複数の人物**：「人物」の欄の「人物を追加」「複製」。編集するのは選んだ人物だけ（ポーズ・体格・小物・オーラ・ワイヤー）で、ほかの人物は薄く表示され、その丸をクリックすると切り替わります。床・壁・物体・定規・カメラは共通。アタリ・OpenPose（1人ずつ）・構図の画像には全員が入ります。
 - **書き出しの比率と解像度**：比率（1:1・3:4・16:9・A判・2.35:1・自分で指定）と長い辺（最大 8192 px）から幅と高さを決めます。画面の図もその比率になります。
 - **構図の画像**：「構図を保存」で、正面の図をその大きさで保存。入れるもの（人物・小物・物体・床と壁・パース定規・オーラ）と背景（白・透明・画面と同じ色）を選べます。

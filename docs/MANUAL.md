@@ -89,6 +89,8 @@ shape: it becomes a guide shape turned to the ruler (boxes, cylinders, prisms, p
 In the Objects and Equip tabs, set the sizes before putting (or holding) a thing while its faint dashed preview shows:
 a shape's width, height, depth (a prism's or pyramid's sides and top); a thing's size, X, Y, Z and each section's length. It gets those sizes when put.
 
+In Place mode with nothing selected, the 3-axis handles (move, rotate, scale, pivot) act on the preview; **Put** puts it just where, as turned and as sized as it is. Changing the kind or putting it starts the preview afresh.
+
 ## Camera
 
 In the Camera tab, **Camera direction** (left-right, up-down, roll; degrees) turns the camera where it stands; **Camera position** (left-right, up-down, front-back; cm) moves it without turning it.
@@ -96,7 +98,7 @@ In the Camera tab, **Camera direction** (left-right, up-down, roll; degrees) tur
 
 | Do | What it does |
 |----|--------------|
-| Wheel | Zoom |
+| Wheel | Zoom (over things too) |
 | Ctrl + Alt + wheel | Lens (wider: stronger perspective) |
 | Middle button / Alt + drag | Turn the camera (Shift: move, Ctrl: zoom) |
 | Numpad 1, 3, 7 | Front, right, top |

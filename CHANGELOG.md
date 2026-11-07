@@ -62,6 +62,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - ガイド図形を3軸ハンドルで動かせるように（辺の向きに沿って）。「変形」は引いた側の辺だけを延ばし、透視していない辺（高さ・幅）も変えられます
 - 置く前に大きさを決められるように：設置のタブでプレビューを見ながら、図形の幅・高さ・奥行き・角の数・天面、小物の大きさ・X・Y・Z・部位ごとの長さ。装備のタブにも部位ごとの長さを追加
 - 英語表示で日本語のまま残っていた所を英訳（縦長画面のバー、頭の形、色の対象、オーラの放物線、小物の分類、部位の名前、ガイド図形、カメラのリセットなど）
+- マウスホイールで定規のガイドの向きが変わってしまうのを修正。ホイールは物体・小物の上でも、いつも拡大・縮小に（回すのは3軸ハンドルと設置の回転の欄）
+- 置く前のプレビューに3軸ハンドル（移動・回転・変形・支点）を使えるように（配置モードで何も選んでいないとき）。「置く」でそのとおりに置きます
+- いくつか選んでまとめて回すとき、ガイド図形は回さずに定規の向きのままに
 - カメラモードはいつもハンド：ドラッグでカメラ、クリックで関節ならポーズモード・物なら配置モードへ。Shift＋関節のクリックで体格モード（ポーズ・体格の間は Shift＋クリックで切り替え）
 - 操作のヒントに、これまでに変わった操作（ホイールで拡大・Ctrl＋Alt＋ホイールでレンズ、3軸ハンドルの出し方、モードの自動切り替え、境目・⇅ 上下・メニューの位置、スマホのメニューの閉じ方など）を追加
 - 設置のタブを1つにまとめました：図形・床・壁・天井と小物を同じ「置く物」の一覧から置き、「置いた物」の一覧で、位置（XYZ）・回転（XYZ）・大きさ（図形は幅・高さ・奥行き、小物は手に持つときと同じ大きさと3軸）を変えます。「接地させる」は回転していても、いちばん低い所で地面や下の物に着けます
@@ -149,6 +152,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Guide shapes move with the 3-axis handles (along their edges); Scale lengthens only the side pulled, and the edges without a vanishing point (height, width) change too
 - Sizes before putting: in the Objects tab, with the preview, a shape's width, height, depth, sides and top, a thing's size, X, Y, Z and section lengths; section lengths in the Equip tab too
 - English for what was still in Japanese (the tall layout's bar, head shape, colour targets, the aura's parabola, prop categories, section names, guide shapes, the camera reset ...)
+- Fixed the mouse wheel turning a ruler guide. The wheel always zooms, over objects and things too (the 3-axis handles and the Objects tab's turn fields turn them)
+- The 3-axis handles (move, rotate, scale, pivot) work on the preview before putting (Place mode, nothing selected); Put puts it just so
+- Guide shapes in a group turned together stay turned to the ruler
 - Camera mode is always the hand: a drag turns the camera; a click goes to Pose mode on a joint, to Place mode on a thing. Shift + a click on a joint goes to Body mode (Shift + click switches Pose and Body)
 - The hints show the operations changed before too (the wheel zooms, Ctrl+Alt+wheel the lens, showing the 3-axis handles, switching modes, the edge, ⇅, the menu's place, closing a phone's menu ...)
 - The Objects tab is one place: shapes, floors, walls, ceilings and things are put from one "What to put" list, and from "Out in the scene" each one's place (XYZ), turn (XYZ) and size (a shape's width, height, depth; a thing's size and 3 axes as when held) are changed. "Put on the ground" sets it down by its lowest point, turned or not

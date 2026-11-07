@@ -68,7 +68,7 @@ Lances and the gun lance are held couched by default (under the arm, thrust forw
 ### Moving things put down
 
 Things on the floor (**Place**, **Place on its own**, **Put down (floor / object)**) are dragged in
-**Place** mode (Shift + drag: up / down, wheel: turn). The 3-axis handles move and turn them and set their
+**Place** mode (Shift + drag: up / down, the 3-axis handles turn it). The 3-axis handles move and turn them and set their
 X, Y and Z sizes. While the handles show, a drag only selects; the handles do the moving (hide them to
 drag things). However many figures there are, things put down move whichever figure is being edited.
 
