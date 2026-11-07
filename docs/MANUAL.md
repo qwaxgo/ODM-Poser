@@ -93,6 +93,8 @@ shape: it becomes a guide shape turned to the ruler (boxes, cylinders, prisms, p
 In the Objects and Equip tabs, set the sizes before putting (or holding) a thing while its faint dashed preview shows:
 a shape's width, height, depth (a prism's or pyramid's sides and top); a thing's size, X, Y, Z and each section's length. It gets those sizes when put.
 
+The top of the kind list is **Neutral (nothing chosen)**: no preview and no handles. The tab starts at Neutral and goes back to it after putting (or holding) a thing, so what was put can be moved right away. To put another, choose a kind again; choosing a category picks its first kind.
+
 In Place mode with nothing selected, the 3-axis handles (move, rotate, scale, pivot) act on the preview; **Put** puts it just where, as turned and as sized as it is. Changing the kind or putting it starts the preview afresh.
 
 ## Camera

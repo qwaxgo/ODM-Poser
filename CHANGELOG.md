@@ -102,6 +102,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - ガイドをパース定規と常につなげました：3軸ハンドルや設置の回転の欄でガイドを回すと、パース定規とほかのガイドも一緒に立体的に回ります（前後・横に倒すと消失点がアイレベルから外れます）。定規のタブに「定規の倒れ」と「定規を床に立てる」を追加
 - スナップがオンでも、ガイドでない物体・小物を回せるように修正（定規の向きに戻されていました）。定規の向きから ±5° 以内に来たときだけ吸い付きます
 - 「定規を床のグリッドにスナップ」を追加：定規の向きを床のグリッドの線にそろえて90°ずつ回し、ガイドの角をグリッドの交点（40cm おき）に、底を床に吸い付けます
+- 設置・装備のタブの種類に「ニュートラル（何も選ばない）」を追加：開いたときと、置いた（持たせた）あとはニュートラルになり、置く前のプレビューと3軸ハンドルが出ないので、置いた物を動かしやすく。分類を選び直すとその最初の種類になります
 
 ### English
 
@@ -195,6 +196,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Guides are always linked to the perspective ruler: turning a guide (the 3-axis handles or the Objects tab's turn fields) turns the ruler and the other guides with it in 3D (tipped forward or sideways, the vanishing points leave the eye level). The Ruler tab gets "Ruler lean" and "Stand the ruler on the floor"
 - Objects and things that are not guides turn again while snapping is on (they were turned back to the ruler); they stick to a ruler direction only within ±5° of it
 - "Snap the ruler to the floor grid": the ruler turns to the floor grid's lines a quarter turn at a time, and guides stick by a corner to the grid's points (every 40 cm) and by the bottom to the floor
+- The Objects and Equip tabs' kinds get “Neutral (nothing chosen)”: the tabs start there and go back to it after putting (or holding) a thing, so no preview or 3-axis handles get in the way of moving what was put. Choosing a category picks its first kind
 
 ## v0.1.0
 
