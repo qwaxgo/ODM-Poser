@@ -19,7 +19,21 @@ const ghostOf = k => { const g = window.ODMGhost ? ODMGhost() : null; return g &
 const solidOfKey = k => k === "gs" ? ghostOf(k) : k && k[0] === "s" ? (S.solids || [])[+k.slice(1)] || null : null;
 const itemOfKey = k => k === "gi" ? ghostOf(k) : k && k[0] === "i" ? (S.items || [])[+k.slice(1)] || null : null;
 const loose = it => !!(it && it.base && typeof movable === "function" && movable(it));
-const exists = k => !!(solidOfKey(k) || loose(itemOfKey(k)));
+const isObj = k => !!(solidOfKey(k) || loose(itemOfKey(k)));
+// a figure in the selection: "f2" is the figure whose figId is 2 (the one edited, or one in S.others)
+const activeKey = () => "f" + (S.figId || 1);
+const isFig = k => typeof k === "string" && k[0] === "f";
+const otherOf = k => (S.others || []).find(f => "f" + (f.figId || 1) === k);
+const figExists = k => isFig(k) && (k === activeKey() || !!otherOf(k));
+const exists = k => isObj(k) || figExists(k);
+// fn with that figure in S (another figure is swapped in, and what fn changed is kept)
+function onFig(k, fn){
+  if (k === activeKey()) return fn();
+  const f = otherOf(k); if (!f) return undefined;
+  return withFigure(f, () => { const r = fn(); Object.assign(f, takeFigure()); return r; });
+}
+const figKeys = () => [activeKey(), ...(S.others || []).map(f => "f" + (f.figId || 1))];
+const midOf = ps => ps.reduce((a, p) => add(a, p), [0, 0, 0]).map(v => v / Math.max(1, ps.length));
 const r1 = v => Math.round(v * 10) / 10;
 
 // ---- turns and pivots ---------------------------------------------------------------------------------
@@ -52,7 +66,7 @@ function pivDefault(k, where){
 const objOf = k => solidOfKey(k) || itemOfKey(k);
 const pivRel = k => { const p = objOf(k).piv; return p && p.length === 3 ? p.slice() : pivDefault(k); };
 const rotOf = (k, inv) => solidOfKey(k) ? solidR(solidOfKey(k), inv) : itemR(itemOfKey(k), inv);
-function pivWorld(k){ return add(origin(k), rotOf(k)(pivRel(k))); }
+function pivWorld(k){ if (isFig(k)) return onFig(k, () => S.P[IX.pelvis].slice()); return add(origin(k), rotOf(k)(pivRel(k))); }
 function setPivRel(k, rel){ objOf(k).piv = rel.map(v => Math.round(v * 100) / 100); }
 function setPivAbs(k, p){ setPivRel(k, rotOf(k, true)(sub(p, origin(k)))); }
 function resetPiv(k, where){ const o = objOf(k); if (where === "bottom") o.piv = pivDefault(k, "bottom"); else delete o.piv; }
@@ -76,6 +90,25 @@ function keepPivot(k, fn){
   const o = solidOfKey(k); if (o) o.pos = add(o.pos, d); else { const it = itemOfKey(k); it.base = add(it.base, d); }
 }
 
+// a figure moved or turned with a group: its joints, pins, wire, the face it stands on and its body's
+// turn (s0: figSave's); tr moves a point, dir a direction; the figures not edited settle at once
+function figSave(k){
+  return onFig(k, () => ({P: S.P.map(p => p.slice()), body: Object.assign({}, S.body), pins: JSON.parse(JSON.stringify(S.pins || {})),
+    anchor: S.wire && S.wire.anchor ? S.wire.anchor.slice() : null, stand: S.stand ? JSON.parse(JSON.stringify(S.stand)) : null}));
+}
+function figPut(k, s0, tr, dir, axis, ang){
+  onFig(k, () => {
+    S.P = s0.P.map(tr); S.body = Object.assign({}, s0.body);
+    S.pins = {}; for (const n of Object.keys(s0.pins)) S.pins[n] = tr(s0.pins[n]);
+    if (S.wire && s0.anchor) S.wire.anchor = tr(s0.anchor);
+    if (s0.stand) S.stand = {p: tr(s0.stand.p), n: dir(s0.stand.n)};
+    if (axis && typeof turnBody === "function") turnBody(axis, ang);
+    if (k !== activeKey()) afterEdit();
+  });
+}
+const figMove = (k, s0, d) => figPut(k, s0, p => add(p, d), v => v);
+const figTurn = (k, s0, c, axis, ang) => figPut(k, s0, p => add(c, rotAxis(sub(p, c), axis, ang)), v => rotAxis(v, axis, ang), axis, ang);
+
 // ---- the selection --------------------------------------------------------------------------------------
 let picks = [];                               // two or more selected together; else the one in soSel / scSel
 function primary(){
@@ -83,18 +116,28 @@ function primary(){
   if (typeof scSel === "number" && loose(itemOfKey("i" + scSel))) return "i" + scSel;
   return "";
 }
+// a group led by a figure has no object in soSel / scSel
 function group(){
   picks = picks.filter(exists);
-  if (picks.length < 2 || !picks.includes(primary())) picks = [];
+  const p = primary();
+  if (picks.length < 2 || (p ? !picks.includes(p) : !isFig(picks[0]))) picks = [];
   return picks.slice();
 }
+const lead = () => { const g = group(); return g.length && isFig(g[0]) ? g[0] : primary(); };
+// what Ctrl+click adds to: the selection, or in 配置 the figure taken by its hips
+function current(){ const s = selected(); return s.length ? s : mode === "place" && sel === IX.pelvis ? [activeKey()] : []; }
 const selected = () => { const g = group(); if (g.length) return g; const p = primary(); return p ? [p] : []; };
 const single = () => group().length ? "" : primary();
 function setSel(keys){
   keys = keys.filter(exists);
   picks = keys.length > 1 ? keys.slice() : [];
   const k = keys[0] || "";
-  if (k[0] === "s"){ soSel = +k.slice(1); if (loose(itemOfKey("i" + scSel))) scSel = -1; }
+  if (keys.length > 1) sel = -1;              // a group: no joint (the hips' handles would take the group's place)
+  if (isFig(k) && keys.length === 1){         // one figure alone: it is edited, taken by its hips
+    const n = (S.others || []).indexOf(otherOf(k)); if (n >= 0) switchFigure(n);
+    sel = IX.pelvis; soSel = -1; if (loose(itemOfKey("i" + scSel))) scSel = -1;
+  } else if (isFig(k)){ soSel = -1; if (loose(itemOfKey("i" + scSel))) scSel = -1; }
+  else if (k[0] === "s"){ soSel = +k.slice(1); if (loose(itemOfKey("i" + scSel))) scSel = -1; }
   else if (k[0] === "i"){ scSel = +k.slice(1); soSel = -1; }
   else { soSel = -1; if (loose(itemOfKey("i" + scSel))) scSel = -1; }
   if (typeof syncSolids === "function") syncSolids();
@@ -105,7 +148,7 @@ window.objPicked = k => picks.length > 1 && picks.includes(k);
 
 // ---- take away, cut, copy, paste ------------------------------------------------------------------------
 function removeKeys(keys, quiet){
-  keys = keys.filter(exists); if (!keys.length) return;
+  keys = keys.filter(isObj); if (!keys.length) return;
   remember();
   const idx = c => keys.filter(k => k[0] === c).map(k => +k.slice(1)).sort((a, b) => b - a);
   for (const n of idx("s")) S.solids.splice(n, 1);
@@ -122,7 +165,7 @@ function clipNow(){
   return clip;
 }
 function copyKeys(keys){
-  keys = keys.filter(exists); if (!keys.length) return false;
+  keys = keys.filter(isObj); if (!keys.length) return false;
   const deep = o => JSON.parse(JSON.stringify(o));
   clip = {solids: keys.filter(k => k[0] === "s").map(k => deep(solidOfKey(k))), items: keys.filter(k => k[0] === "i").map(k => deep(itemOfKey(k)))};
   pasted = 0;
@@ -145,7 +188,7 @@ function paste(){
 }
 document.addEventListener("keydown", e => {
   if (e.altKey || (e.target && e.target.closest && e.target.closest("input, select, textarea, [contenteditable]"))) return;
-  const ctl = e.ctrlKey || e.metaKey, k = e.key.toLowerCase(), keys = mode === "place" ? selected() : [];
+  const ctl = e.ctrlKey || e.metaKey, k = e.key.toLowerCase(), keys = mode === "place" ? selected().filter(isObj) : [];
   if (!ctl && (e.key === "Delete" || e.key === "Backspace")){ if (!keys.length) return; e.preventDefault(); removeKeys(keys); return; }
   if (!ctl && !e.shiftKey && (k === "v" || k === "h")){ e.preventDefault(); setCursor(k === "v" ? "drag" : "hand", true); return; }
   if (!ctl || e.shiftKey) return;
@@ -164,27 +207,46 @@ function under(x, y){                         // the object under the pointer: i
   if (u && t) return project(u.hit, front.width, front.height).s >= project(t.p, front.width, front.height).s ? "s" + u.k : "i" + t.n;
   return u ? "s" + u.k : t ? "i" + t.n : "";
 }
-// 配置: Ctrl (⌘) + click adds an object to the selection or takes it out (the one added leads: the group
-// turns about its pivot; Ctrl+Shift+click on one selected makes it lead); Ctrl + the body takes the
-// figure by its hips and moves it; a joint lets the objects go
+// the figure under the pointer (the one edited first, then the nearest other): its key, or ""
+function figUnder(cv, x, y){
+  if (pick(cv, x, y) >= 0) return activeKey();
+  const W = cv.width, H = cv.height; let best = "", bd = Infinity;
+  for (const f of S.others || []) withFigure(f, () => {
+    const j = pick(cv, x, y); if (j < 0) return;
+    const q = project(S.P[j], W, H), dd = Math.hypot(q.x - x, q.y - y);
+    if (dd < bd){ bd = dd; best = "f" + (f.figId || 1); }
+  });
+  return best;
+}
+// Ctrl (⌘) + click (any mode but カメラ's own drags: it goes to 配置) adds an object or a figure to the
+// selection or takes it out (the one added leads: the group turns about its pivot, a figure's being its
+// hips; Ctrl+Shift+click on one selected makes it lead). Ctrl + a figure with nothing selected takes it
+// by its hips (a drag moves it)
 DOWN_HOOKS.unshift((cv, x, y, e) => {
-  if (cv !== front || mode !== "place") return null;
+  if (cv !== front) return null;
   if (e && (e.ctrlKey || e.metaKey)){
-    if (pick(cv, x, y) >= 0) return takeFigure(cv, x, y);
-    const k = under(x, y); if (!k) return null;
-    const cur = selected();
-    if (e.shiftKey && cur.includes(k)){ setSel([k, ...cur.filter(c => c !== k)]); toast("この物を中心にまとめて動かします。"); return {move(){}}; }
+    const f = figUnder(cv, x, y), k = f || under(x, y); if (!k) return null;
+    if (mode !== "place") modeTo("place");
+    const cur = current();
+    if (f && !cur.length){ setSel([f]); return grabFigure(cv, x, y); }
+    if (e.shiftKey && cur.includes(k)){ setSel([k, ...cur.filter(c => c !== k)]);
+      toast(isFig(k) ? "この人物を中心にまとめて動かします。" : "この物を中心にまとめて動かします。"); return {move(){}}; }
     const next = cur.includes(k) ? cur.filter(c => c !== k) : [...cur, k];
     setSel(next.includes(k) ? [k, ...next.filter(c => c !== k)] : next);
+    if (next.length > 1) toast(`${next.length}個を選んでいます（人物と物）。`);
     return {move(){}};
   }
-  if (pick(cv, x, y) >= 0 && selected().length){ picks = []; soSel = -1; if (loose(itemOfKey("i" + scSel))) scSel = -1; }
+  return null;
+});
+// after the 3-axis handles (a figure's are on its hips, over its joints)
+DOWN_HOOKS.push((cv, x, y) => {
+  if (cv === front && mode === "place" && pick(cv, x, y) >= 0 && selected().length){ picks = []; soSel = -1; if (loose(itemOfKey("i" + scSel))) scSel = -1; }
   return null;
 });
 // a click let go without a drag. カメラ (always the hand): a joint goes to ポーズ (Shift: 体格), an object
 // to 配置. Elsewhere (the drag cursor): Shift + a joint goes between ポーズ and 体格 (配置: to 体格)
 tapClick = t => {
-  if (!autoMode) return;
+  if (!autoMode || t.ctrl) return;            // Ctrl + click: the press did it
   const [x, y] = t.at, i = pick(front, x, y);
   if (i === IX.pelvis && (cursor !== "hand" || t.mode === "persp")){ hipsClick(t.shift); return; }   // the hand's click did it already
   if (t.mode === "persp"){
@@ -197,7 +259,7 @@ tapClick = t => {
 };
 // the figure by its hips: selected (the 3-axis handles move and turn it), or dragged along the floor
 // as the hips are in 配置 (Shift: up and down)
-function takeFigure(cv, x, y){
+function grabFigure(cv, x, y){
   picks = []; soSel = -1; if (loose(itemOfKey("i" + scSel))) scSel = -1;
   sel = IX.pelvis; draw(); toast("人物全体を動かします（腰）。");
   if (gizmoHolds()) return {move(){}};
@@ -232,17 +294,20 @@ function finishBox(b){
   if (Math.abs(b.x1 - b.x0) < small && Math.abs(b.y1 - b.y0) < small){ sel = -1; emptyClick(); draw(); return; }
   const [x0, x1] = [Math.min(b.x0, b.x1), Math.max(b.x0, b.x1)], [y0, y1] = [Math.min(b.y0, b.y1), Math.max(b.y0, b.y1)];
   const inside = p => { const s = project(p, W, H); return s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1; };
-  const mid = ps => ps.reduce((a, p) => add(a, p), [0, 0, 0]).map(v => v / Math.max(1, ps.length));
-  const found = [];
+  const mid = midOf, found = [];
   (S.solids || []).forEach((o, k) => { if (inside(mid(solidMesh(o).V))) found.push("s" + k); });
   (S.items || []).forEach((it, n) => { if (loose(it)){ const ps = worldSamples(it); if (ps.length && inside(mid(ps))) found.push("i" + n); } });
+  // the figures: their joints' middle inside the box
+  for (const f of figKeys()) if (onFig(f, () => inside(midOf(S.P)))) found.push(f);
   const keys = b.add ? [...selected(), ...found.filter(k => !selected().includes(k))] : found;
   if (keys.length && autoMode && mode !== "place") modeTo("place");
   setSel(keys);
-  if (found.length) toast(keys.length > 1 ? `${keys.length}個の物を選びました。` : "1個の物を選びました。");
+  const figs = keys.filter(isFig).length;
+  if (found.length) toast(keys.length > 1 ? (figs ? `${keys.length}個を選びました（人物${figs}人）。` : `${keys.length}個の物を選びました。`)
+    : figs ? "人物を選びました（腰）。" : "1個の物を選びました。");
 }
 handHook = (cv, x, y, e) => {
-  if (cursor !== "hand" || mode === "persp") return null;
+  if (cursor !== "hand" || mode === "persp" || (e && (e.ctrlKey || e.metaKey))) return null;     // Ctrl + click: the selection
   const i = pick(cv, x, y);
   const shift = !!(e && e.shiftKey);
   return {tapPick: i, cv, x, y, pan: shift, end(){ handClick(i, x, y, shift); }};
@@ -288,7 +353,14 @@ function handClick(i, x, y, shift){
     if (opts.export || ctx.canvas !== front || mode !== "place") return;
     // a group: the one it turns about; nothing selected: the ghost about to be put
     const g = window.ODMGhost && !selected().length && sel !== IX.pelvis ? ODMGhost() : null;
-    const k = single() || (group().length ? primary() : "") || (g ? g.key : ""); if (!k) return;
+    // the figures in a group: a dashed box round each
+    for (const f of group().filter(isFig)){
+      const q = onFig(f, () => S.P.map(p => project(p, W, H))), dp = devicePixelRatio || 1, m = 10 * dp;
+      const xs = q.map(p => p.x), ys = q.map(p => p.y), x0 = Math.min(...xs) - m, y0 = Math.min(...ys) - m;
+      ctx.save(); ctx.strokeStyle = cssVar("--sel"); ctx.lineWidth = 1.5 * dp; ctx.setLineDash([5 * dp, 4 * dp]); ctx.globalAlpha = 0.9;
+      ctx.strokeRect(x0, y0, Math.max(...xs) + m - x0, Math.max(...ys) + m - y0); ctx.restore();
+    }
+    const k = single() || (group().length ? lead() : "") || (g ? g.key : ""); if (!k) return;
     const s = project(pivWorld(k), W, H), dpr = devicePixelRatio || 1, r = 6 * dpr;
     ctx.save(); ctx.strokeStyle = "#f5a524"; ctx.lineWidth = 1.5 * dpr; ctx.setLineDash([]); ctx.globalAlpha = 0.95;
     ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, 2 * Math.PI);
@@ -332,7 +404,7 @@ editBar.innerHTML = [["del", "trash", "削除", "選んだ物を外す（Delete�
 curBar.after(editBar);
 editBar.addEventListener("click", e => {
   const b = e.target.closest("button[data-ed]"); if (!b || b.disabled) return;
-  const keys = mode === "place" ? selected() : [], n = keys.length;
+  const keys = mode === "place" ? selected().filter(isObj) : [], n = keys.length;      // figures stay
   if (b.dataset.ed === "del") removeKeys(keys);
   else if (b.dataset.ed === "cut"){ if (copyKeys(keys)){ removeKeys(keys, true); say(n > 1 ? `${n}個の物を切り取りました。` : "切り取りました。"); } }
   else if (b.dataset.ed === "copy"){ if (copyKeys(keys)) say(n > 1 ? `${n}個の物をコピーしました。` : "コピーしました。"); }
@@ -340,7 +412,7 @@ editBar.addEventListener("click", e => {
 });
 let editKey = "";
 function syncEdit(){
-  const n = mode === "place" ? selected().length : 0, clip = mode === "place" && !!clipNow();
+  const n = mode === "place" ? selected().filter(isObj).length : 0, clip = mode === "place" && !!clipNow();
   const k = n + "|" + clip; if (k === editKey) return; editKey = k;
   editBar.hidden = !(n || clip);
   editBar.querySelectorAll("button[data-ed]").forEach(b => { b.disabled = b.dataset.ed === "paste" ? !clip : !n; });
@@ -349,7 +421,7 @@ function syncEdit(){
 addEventListener("DOMContentLoaded", () => { if (!window.ODMICONS) return;
   editBar.querySelectorAll("button[data-gzicon]").forEach(b => { if (!b.querySelector("svg")) b.insertAdjacentHTML("afterbegin", ODMICONS.svg(b.dataset.gzicon)); }); });
 
-window.ODMObj = {key: single, group, selected, lead: primary, worldTurn, axesOf, setSel, pivWorld, pivRel, setPivRel, setPivAbs, resetPiv, keepPivot,
+window.ODMObj = {key: single, group, selected, lead, isFig, figSave, figMove, figTurn, worldTurn, axesOf, setSel, pivWorld, pivRel, setPivRel, setPivAbs, resetPiv, keepPivot,
   remove: removeKeys, copy: copyKeys, paste, hasClip: () => !!clipNow(), cursor: () => cursor, setCursor};
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
@@ -362,6 +434,7 @@ window.ODMObj = {key: single, group, selected, lead: primary, worldTurn, axesOf,
   "ハンド：ドラッグでカメラを動かします。": "Hand: dragging moves the camera.", "ドラッグ：何もない所からドラッグで範囲選択します。": "Drag: drag from an empty place to box-select.",
   "選んだ物を外しました。": "Took the selected one away.", "切り取りました。": "Cut.", "コピーしました。": "Copied.", "貼り付けました。": "Pasted.",
   "1個の物を選びました。": "Selected one object.", "この物を中心にまとめて動かします。": "The group now turns about this one.",
+  "この人物を中心にまとめて動かします。": "The group now turns about this figure's hips.", "人物を選びました（腰）。": "Selected the figure (its hips).",
   "人物全体を動かします（腰）。": "Moving the whole figure (by the hips).",
   "クリックで自動的にモードを切り替える": "Switch modes by what is clicked",
   "物を押すと配置モード、関節を押すとポーズモード（配置・カメラから）、何もない所をクリックするとカメラモード（ポーズ・体格から）に切り替えます":

@@ -1046,7 +1046,7 @@ for (const cv of [front, side]){
       }
       if (touches.size > 2 || pinch) return;
     }
-    tap = {cv, x: e.clientX, y: e.clientY, t: performance.now(), type: e.pointerType, mode, shift: evMods(e).shiftKey, at: evPos(cv, e)};
+    tap = {cv, x: e.clientX, y: e.clientY, t: performance.now(), type: e.pointerType, mode, shift: evMods(e).shiftKey, ctrl: !!(e.ctrlKey || e.metaKey), at: evPos(cv, e)};
     down(cv, evMods(e));
   });
   cv.addEventListener("pointermove", e => {

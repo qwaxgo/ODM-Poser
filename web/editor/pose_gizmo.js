@@ -172,6 +172,33 @@ function target(any){
         } });
         afterEdit(i); }};
   }
+  if (mode !== "place") return null;
+  const O = OBJ(), group = O ? O.group() : [];
+  // several selected (a box, or Ctrl+click; figures too): moved together, and turned together as one on
+  // all three axes about the pivot of the one that leads (the last one clicked; Ctrl+Shift+click
+  // changes it; a figure's is its hips)
+  if (group.length > 1){
+    const figs = group.filter(k => O.isFig(k)), objs = group.filter(k => !O.isFig(k));
+    const ref = k => k[0] === "s" ? S.solids[+k.slice(1)] : S.items[+k.slice(1)];
+    const at = k => { const r = ref(k); return k[0] === "s" ? r.pos : r.base; };
+    const ang = k => { const r = ref(k), t = r.rot || [0, 0, 0];
+      return k[0] === "s" ? [r.yaw || 0, r.pitch || 0, r.roll || 0] : [(r.yaw || 0) + (t[1] || 0), t[0] || 0, t[2] || 0]; };
+    const c = O.pivWorld(O.lead() || group[0]);
+    return {c, ax: WORLD, pivot: c, rings: [0, 1, 2], sc: [], lacks: ["scale"],
+      save: () => Object.assign(objs.map(k => ({k, at: at(k).slice(), ang: ang(k)})), {figs: figs.map(k => ({k, s: O.figSave(k)}))}),
+      move: (s0, d) => { for (const e of s0){ const r = ref(e.k), p = add(e.at, d);
+          if (e.k[0] === "s"){ r.pos = p; if (r.ground && typeof groundSolid === "function") groundSolid(r); }
+          else { r.base = p; if (d[1]) r.grounded = false; else if (r.grounded) groundItem(r); } }
+        for (const e of s0.figs) O.figMove(e.k, e.s, d);
+        afterEdit(); if (typeof syncSolids === "function") syncSolids(); },
+      turn: (s0, k, dg) => { for (const e of s0){ const r = ref(e.k), p = add(c, rotAxis(sub(e.at, c), WORLD[k], deg(dg)));
+          const [a, pp, rr] = O.worldTurn(e.ang, k, dg);
+          if (e.k[0] === "s" && r.guide) r.pos = e.at.slice();      // a guide keeps to the ruler: it stays when the group turns
+          else if (e.k[0] === "s"){ r.pos = p; r.yaw = a; r.pitch = pp; r.roll = rr; }
+          else { r.base = p; r.yaw = a; r.rot = [pp, 0, rr]; r.grounded = false; } }
+        for (const e of s0.figs) O.figTurn(e.k, e.s, c, WORLD[k], deg(dg));
+        afterEdit(); if (typeof syncSolids === "function") syncSolids(); }};
+  }
   // 配置: the figure by its hips (moved along with its pins and wire; turned about up)
   if (mode === "place" && sel === IX.pelvis){
     const c = S.P[IX.pelvis];
@@ -184,29 +211,6 @@ function target(any){
       turn: (s0, k, dg) => { S.P = s0.P.map(p => p.slice()); S.body = Object.assign({}, s0.body); S.pins = JSON.parse(JSON.stringify(s0.pins));
         if (S.wire && s0.anchor) S.wire.anchor = s0.anchor.slice();
         placeFigure([0, 0, 0], dg); afterEdit(IX.pelvis); }};
-  }
-  if (mode !== "place") return null;
-  const O = OBJ(), group = O ? O.group() : [];
-  // several selected (a box, or Ctrl+click): moved together, and turned together as one on all three
-  // axes about the pivot of the one that leads (the last one clicked; Ctrl+Shift+click changes it)
-  if (group.length > 1){
-    const ref = k => k[0] === "s" ? S.solids[+k.slice(1)] : S.items[+k.slice(1)];
-    const at = k => { const r = ref(k); return k[0] === "s" ? r.pos : r.base; };
-    const ang = k => { const r = ref(k), t = r.rot || [0, 0, 0];
-      return k[0] === "s" ? [r.yaw || 0, r.pitch || 0, r.roll || 0] : [(r.yaw || 0) + (t[1] || 0), t[0] || 0, t[2] || 0]; };
-    const c = O.pivWorld(O.lead() || group[0]);
-    return {c, ax: WORLD, pivot: c, rings: [0, 1, 2], sc: [], lacks: ["scale"],
-      save: () => group.map(k => ({k, at: at(k).slice(), ang: ang(k)})),
-      move: (s0, d) => { for (const e of s0){ const r = ref(e.k), p = add(e.at, d);
-          if (e.k[0] === "s"){ r.pos = p; if (r.ground && typeof groundSolid === "function") groundSolid(r); }
-          else { r.base = p; if (d[1]) r.grounded = false; else if (r.grounded) groundItem(r); } }
-        afterEdit(); if (typeof syncSolids === "function") syncSolids(); },
-      turn: (s0, k, dg) => { for (const e of s0){ const r = ref(e.k), p = add(c, rotAxis(sub(e.at, c), WORLD[k], deg(dg)));
-          const [a, pp, rr] = O.worldTurn(e.ang, k, dg);
-          if (e.k[0] === "s" && r.guide) r.pos = e.at.slice();      // a guide keeps to the ruler: it stays when the group turns
-          else if (e.k[0] === "s"){ r.pos = p; r.yaw = a; r.pitch = pp; r.roll = rr; }
-          else { r.base = p; r.yaw = a; r.rot = [pp, 0, rr]; r.grounded = false; } }
-        afterEdit(); if (typeof syncSolids === "function") syncSolids(); }};
   }
   // 支点: the move handles move the selected object's pivot, the object stays
   const pk = O ? O.key() || (ghostNow() ? ghostNow().key : "") : "";

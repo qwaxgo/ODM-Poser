@@ -527,6 +527,8 @@
     [/^(.+)を編集しています。$/, m => `Editing ${figEn(m[1])}.`],
     [/^構図を (\d+)×(\d+) で保存しました。$/, m => `Composition saved at ${m[1]} × ${m[2]}.`],
     // objects (pose_solids.js); before the general rules below
+    [/^(\d+)個を選んでいます（人物と物）。$/, m => `${m[1]} selected (figures and objects).`],
+    [/^(\d+)個を選びました（人物(\d+)人）。$/, m => `Selected ${m[1]} (${m[2]} figure${m[2] === "1" ? "" : "s"}).`],
     [/^(\d+)個の物を(外しました|切り取りました|コピーしました|貼り付けました|選びました)。$/, m => `${{外しました: "Took away", 切り取りました: "Cut", コピーしました: "Copied", 貼り付けました: "Pasted", 選びました: "Selected"}[m[2]]} ${m[1]} objects.`],
     [/^(.+)を置きました。配置モードでドラッグして動かせます。$/, m => `Placed: ${T[m[1]] || m[1]}. Drag it in the Place mode.`],
     [/^(.+)の大きさ・向きを戻しました。$/, m => `${T[m[1]] || m[1]}: size and turn reset.`],
