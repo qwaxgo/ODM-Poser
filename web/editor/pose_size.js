@@ -1,6 +1,6 @@
 // サイズ (index.html, loaded after pose_scene.js): the figure's sizes part by part, and a held
 // thing's length and thickness.
-//  - 身長 / 頭身, with what to keep: nothing (the head stays its size), the heads count (all grows
+//  - 身長 / 頭身 (in 体格's own section), with what to keep: nothing (the head stays its size), the heads count (all grows
 //    alike) or the height (the rest of the body makes up for the head)
 //  - 部位の固定: locked parts (head, torso, arms, legs) keep their lengths and thicknesses when the
 //    height or the heads count changes, or when another part's size does with 身長を保つ
@@ -27,11 +27,14 @@ const R_GROUP = Object.assign({}, GROUP, {r_shoulder: "arms", l_shoulder: "arms"
 const sec = (h, inner, menu = "body") => { const s = document.createElement("section"); s.dataset.menu = menu; s.innerHTML = `<h2>${h}</h2>` + inner; return s; };
 const ctl = (id, label, min, max, step, unit) => `<label>${label}</label><div class="row"><input type="range" id="${id}" min="${min}" max="${max}" step="${step}">` +
   `<input type="number" class="num" id="${id}N" step="${step}"><span class="unit">${unit}</span></div>`;
+// 身長・頭身 and what to keep: in 体格's own section, after the sex (one place for the height)
+{ const box = document.createElement("div");
+  box.innerHTML = ctl("szHeight", "身長", 60, 240, 0.5, "cm") + ctl("szHeads", "頭身", 2, 10, 0.1, "頭身") +
+    `<label>身長・頭身・各部を変えるとき保つもの</label><select id="szKeep"><option value="none">なし（頭の大きさはそのまま）</option>
+      <option value="heads">頭身を保つ（全身が同じ割合で）</option><option value="height">身長を保つ（残りの体で合わせる）</option></select>
+    <div class="hint">「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。</div>`;
+  $("sexF").closest(".btns").after(...box.childNodes); }
 const parts = [
-  sec("身長と頭身", `<label>保つもの</label><select id="szKeep"><option value="none">なし（頭の大きさはそのまま）</option>
-      <option value="heads">頭身を保つ（全身が同じ割合で）</option><option value="height">身長を保つ（残りの体で合わせる）</option></select>` +
-    ctl("szHeight", "身長", 60, 240, 0.5, "cm") + ctl("szHeads", "頭身", 2, 10, 0.1, "頭身") +
-    `<div class="hint">「身長を保つ」では、頭や体の各部を変えると、固定していない残りの部位の長さで身長を合わせます。</div>`),
   sec("部位の固定", `<label><input type="checkbox" id="szLock_head"> 頭と首</label><label><input type="checkbox" id="szLock_torso"> 胴体</label>
     <label><input type="checkbox" id="szLock_arms"> 腕</label><label><input type="checkbox" id="szLock_legs"> 脚</label>
     <div class="hint">固定した部位は、身長・頭身を変えても長さと太さが変わりません。</div>`),
@@ -259,10 +262,10 @@ for (const g of ["head", "torso", "arms", "legs"]) $("szLock_" + g).addEventList
   say(`${GROUP_JA[g]}を${e.target.checked ? "固定しました（身長・頭身を変えても、長さと太さはそのまま）" : "固定から外しました"}。`));
 // the numbers follow every edit (dragging in the body mode too), while the tab shows
 { const d0 = draw; draw = function(){ d0.apply(this, arguments);
-    if (parts.some(s => s.classList.contains("active"))) show(); else if (segSel){ segSel = ""; d0.apply(this, arguments); } }; }
+    if (parts.some(s => s.classList.contains("active")) || $("szHeight").closest("section").classList.contains("active")) show(); else if (segSel){ segSel = ""; d0.apply(this, arguments); } }; }
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
-(window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"身長と頭身": "Height and heads", "保つもの": "Keep",
+(window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"身長・頭身・各部を変えるとき保つもの": "Keep, when the height, heads or a part changes",
   "なし（頭の大きさはそのまま）": "Nothing (the head keeps its size)", "頭身を保つ（全身が同じ割合で）": "The heads count (all alike)",
   "身長を保つ（残りの体で合わせる）": "The height (the rest of the body makes up)", "頭身": "Heads", "部位の固定": "Locked parts",
   "頭と首": "Head and neck", "胴体": "Torso", "腕": "Arms", "脚": "Legs", "頭と胴体（縦・横）": "Head and torso (lengths, widths)",

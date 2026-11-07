@@ -648,8 +648,6 @@ function draw(){
   try { if (typeof everyFigure === "function") everyFigure(sideFigure); else sideFigure(true, true); }
   finally { occFrozen = null; }
   const hgt = standingHeight();
-  $("headsV").textContent = (hgt / (2 * S.R[IX.head])).toFixed(1) + " 頭身";
-  if (document.activeElement !== $("heightN")) $("heightN").value = hgt.toFixed(1);
   $("heightP").textContent = `${hgt.toFixed(1)} cm（${(hgt / (2 * S.R[IX.head])).toFixed(1)} 頭身）`;
   showSelected(); camCoords(); figCoords();
 }
@@ -1893,10 +1891,6 @@ for (const id of Object.keys(UNITS)){
     r.value = v; r.dispatchEvent(new Event("input"));
   });
 }
-$("heightN").addEventListener("change", e => {
-  const v = +e.target.value; if (!(v > 20)) return;
-  remember(); fromBottom(() => scaleAbout(v / standingHeight())); draw();
-});
 buildJointPanel();
 $("handSel").innerHTML = Object.keys(HANDS).map(k => `<option value="${k}">${HAND_JA[k]}（${k}）</option>`).join("");
 $("handSel").addEventListener("change", e => { if (sel < 0) return; remember(); S.hands[J[sel][0]] = e.target.value; draw(); });
