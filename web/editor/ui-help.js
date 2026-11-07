@@ -42,7 +42,7 @@ const PC = [
     [["Alt＋クリック", "Alt + click"], ["関節を固定する（ピン）", "Pin the joint"]],
     [["側面図でドラッグ", "Drag in the side view"], ["奥行きを直接動かす", "Move the depth directly"]],
     [["G・R・S キー（または 移動・回転・変形 ボタン）", "G, R, S keys (or the Move / Rotate / Scale buttons)"], ["3軸ハンドルの操作を切り替える", "Switch the 3-axis handles' tool"]],
-    [["輪（X・Y・Z）をドラッグ", "Drag a ring (X, Y, Z)"], ["選んだ関節で、その先を軸のまわりに回す（回転）。緑（Y）の輪は骨を軸にねじる（頭は左右を向く）", "Turn what lies beyond the selected joint about that axis (Rotate). The green (Y) ring twists along the bone (the head looks left and right)"]],
+    [["輪（X・Y・Z）をドラッグ", "Drag a ring (X, Y, Z)"], ["選んだ関節で、その先を関節の軸（Y が骨の向き）のまわりに回す（回転）。緑（Y）の輪は骨を軸にねじる（頭は左右を向く）。矢印（移動）は場面の X・Y・Z", "Turn what lies beyond the selected joint about the joint's own axes (Y along the bone; Rotate). The green (Y) ring twists along the bone (the head looks left and right). The arrows (Move) keep to the scene's X, Y, Z"]],
     [["手足の関節の矢印（X・Y・Z）をドラッグ", "Drag an arrow (X, Y, Z) on an arm or leg joint"], ["その軸の向きに動かす（移動。手足だけ）", "Move it along that axis (Move; arms and legs only)"]],
     [["3軸ハンドルを出しているとき", "While the 3-axis handles show"], ["丸のドラッグは選ぶだけ。動かすのはハンドルで（変形は体格モードで）", "Dragging a circle only selects it; the handles move it (Scale is in Body mode)"]]]},
   {mode: "body", title: ["体格モード", "Body mode"], rows: [
@@ -68,7 +68,7 @@ const PC = [
     [["腰の真ん中をクリック（Shift＋クリック）", "Click the hips' middle (Shift + click)"], ["配置モードで人体を動かす（ポーズモードで体ごと回す）", "Move the figure in Place mode (turn the whole body in Pose mode)"]],
     [["腰を壁・天井・斜面・物体の面に近づける", "Bring the hips near a wall, ceiling, slope or object face"], ["その面に体ごと合わせて立つ（面に沿ってドラッグ、離すと外れる）", "Stand on it, the whole body turned to it (drag along it; pull away to let go)"]],
     [["腰の丸をドラッグ（または選んで矢印・輪）", "Drag the hips' circle (or select it: arrows, ring)"], ["人物全体を動かす・回す", "Move / turn the whole figure"]],
-    [["矢印・輪・四角をドラッグ（G・R・S で切り替え）", "Drag an arrow, the ring or a square (G, R, S switch)"], ["選んだ物体を X・Y・Z（場面の軸。物の向きによらない）に沿って動かす・回す・伸ばす（3軸ハンドル）", "Move, turn or stretch the selected object along X, Y, Z (the scene's axes, however it is turned; 3-axis handles)"]],
+    [["矢印・輪・四角をドラッグ（G・R・S で切り替え）", "Drag an arrow, the ring or a square (G, R, S switch)"], ["選んだ物体を動かす（場面の X・Y・Z に沿って）・回す・伸ばす（物体の向きに沿って）（3軸ハンドル）", "Move the selected object (along the scene's X, Y, Z), turn or stretch it (along its own axes, as it is turned; 3-axis handles)"]],
     [["Ctrl＋クリック", "Ctrl + click"], ["人物・物体・小物を選ぶ物に足す・外す（いくつか選ぶと、最後に足した物の支点（人物は腰）を中心に、3軸ハンドルでまとめて動かす・回す）", "Add a figure, object or thing to the selection or take it out (several move and turn together with the 3-axis handles, about the pivot of the last one added; a figure's is its hips)"]],
     [["Ctrl＋Shift＋クリック（選んだ物の上）", "Ctrl + Shift + click (on one selected)"], ["まとめて回す中心をその物の支点にする", "Turn the group about this one's pivot"]],
     [["Ctrl＋人体をクリック・ドラッグ（何も選んでいないとき）", "Ctrl + click / drag the body (nothing selected)"], ["腰を選んで人物全体を動かす", "Take the figure by its hips and move it"]],

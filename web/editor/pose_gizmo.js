@@ -1,7 +1,9 @@
 // 3軸の操作ハンドル (index.html, loaded after pose_preview.js), like Blender's: one tool at a time,
 // chosen with 移動 / 回転 / 変形 (on the view under the modes, in the joint's and the objects'
 // sections, or the keys G / R / S). Each mode has its own tools; the others are greyed out and the
-// tool switches to one the mode has (in 配置 the handles keep to the world's X, Y, Z however a thing is turned):
+// tool switches to one the mode has. The arrows (移動) keep to the scene's X, Y, Z wherever the thing is;
+// the rings (回転) and squares (変形) keep to its own axes: a joint's (Y along its bone), an object's (as
+// it is turned). Several objects at once: the scene's axes.
 //  - ポーズ: 回転 turns what hangs on the selected joint about it (the elbow: the forearm; the hips:
 //    the whole figure; a hand, a toe or the head, having nothing after them: their own bone about
 //    the joint before). 移動 only for the arms and legs (elbow, wrist, knee, ankle ...: they reach).
@@ -124,14 +126,6 @@ document.addEventListener("keydown", e => {
 
 const tabOn = id => { const el = $(id), s = el && el.closest("section"); return !!(s && s.classList.contains("active")); };
 const UP = [0, 1, 0], WORLD = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
-// the handles stay along the world's X, Y, Z however the thing is turned; a scale handle stretches the
-// thing's own side nearest to its axis (loc: the thing's own axes in the world)
-const PERMS = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
-function worldSc(loc){
-  let best = PERMS[0], bs = -1;
-  for (const p of PERMS){ const s = p.reduce((a, n, j) => a + Math.abs(dot(loc[n], WORLD[j])), 0); if (s > bs + 1e-9){ bs = s; best = p; } }
-  return best.map((n, j) => [WORLD[j], n, "XYZ"[j]]);
-}
 // two directions across u (for a ring about u, and the joint's thickness)
 function across(u){ const r = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], a = norm(cross(r, u)); return [a, norm(cross(u, a))]; }
 // what the handles act on: {c: centre, ax: the move axes, rings: [axis index], pivot, sc: [[u, n, label]],
@@ -143,13 +137,13 @@ function target(any){
   if (mode === "pose" && sel >= 0){
     // 回転: what hangs on the joint turns about it; a joint with nothing after it, its own bone
     const i = sel, par = PARENT[i], root = i === IX.pelvis || par === undefined || par < 0, own = !root && !KIDS[i].length;
-    // the green ring (Y) of every joint but the hips twists along its bone (ねじり in the joint panel: a
-    // hand's is its wrist's, the forearm), drawn round that bone, so it turns about the axis it shows (the
-    // head turns left and right where it is); the head's rings show round the head
-    const tj = root ? -1 : twistJoint(i), tAx = tj >= 0 ? sub(S.P[tj], S.P[PARENT[tj]]) : null;
-    const twists = !!tAx && len(tAx) > 1e-6;
+    // the rings keep to the joint's own axes (jointFrame: Y along its bone); the arrows to the scene's X, Y, Z.
+    // The green ring (Y) of every joint but the hips twists along its bone (ねじり in the joint panel: a
+    // hand's is its wrist's, the forearm), so it turns about the axis it shows (the head turns left and
+    // right where it is); the head's rings show round the head
+    const tj = root ? -1 : twistJoint(i), fr = jointFrame(i), twists = tj >= 0;
     const pivot = i === IX.head ? S.P[i] : own ? S.P[par] : S.P[i];
-    return {c: S.P[i], ax: WORLD, joint: i, pivot, rings: [0, 1, 2], ringAx: twists ? [WORLD[0], norm(tAx), WORLD[2]] : null, sc: [], save,
+    return {c: S.P[i], ax: WORLD, joint: i, pivot, rings: [0, 1, 2], ringAx: fr, sc: [], save,
       move: (s0, d) => { const t = add(s0.P[i], d);
         if (IK_END[J[i]]) solveIK(i, t);
         else { const p = S.P[par], L = len(sub(S.P[i], p)); rotateSubtree(i, add(p, mul(norm(sub(t, p)), L))); }
@@ -157,12 +151,12 @@ function target(any){
       turn: (s0, k, dg) => { S.P = s0.P.map(p => p.slice());
         if (twists && k === 1){ S.twist = s0.twist.slice(); setTwist(tj, (s0.twist[tj] || 0) + dg); afterEdit(i); return; }
         const pv = own ? s0.P[par] : s0.P[i], who = root ? S.P.map((p, n) => n) : own ? subtree(i) : subtree(i).slice(1);
-        for (const n of who) S.P[n] = add(pv, rotAxis(sub(s0.P[n], pv), WORLD[k], deg(dg)));
+        for (const n of who) S.P[n] = add(pv, rotAxis(sub(s0.P[n], pv), fr[k], deg(dg)));
         // the hips: the body's turn goes with it, so the joints' angles and limits keep to the body
-        if (root && typeof turnBody === "function"){ S.body = Object.assign({}, s0.body); turnBody(WORLD[k], deg(dg)); }
+        if (root && typeof turnBody === "function"){ S.body = Object.assign({}, s0.body); turnBody(fr[k], deg(dg)); }
         // the neck or the head (or a joint below them) turned: the face turns as much (the turn about the
         // neck moves no joint; it is the neck's twist, or the head's when the head itself is turned)
-        else if (who.includes(IX.head) || i === IX.head) faceTurn(s0, i === IX.head ? IX.head : IX.neck, WORLD[k], deg(dg));
+        else if (who.includes(IX.head) || i === IX.head) faceTurn(s0, i === IX.head ? IX.head : IX.neck, fr[k], deg(dg));
         afterEdit(root || own ? i : KIDS[i][0]); }};
   }
   if (mode === "body" && sel > 0){
@@ -241,6 +235,18 @@ function target(any){
   if (G) return G.key === "gs" ? solidTarget(G.o, "gs", O, true) : itemTarget(G.o, "gi", O, true);
   return null;
 }
+// a joint's own axes [x, y, z]: y along its bone (the hips: the body's), z toward the body's front across
+// the bone, turned by the bone's twist, x across both
+function jointFrame(i){
+  if (i === IX.pelvis || PARENT[i] < 0) return [[1, 0, 0], [0, 1, 0], [0, 0, 1]].map(v => norm(bodyRot(v)));
+  const tj = twistJoint(i), b = sub(S.P[tj], S.P[PARENT[tj]]);
+  if (len(b) < 1e-6) return WORLD;
+  const u = norm(b);
+  let f = bodyRot([0, 0, 1]); f = sub(f, mul(u, dot(f, u)));
+  if (len(f) < 1e-3){ f = bodyRot([0, 1, 0]); f = sub(f, mul(u, dot(f, u))); }
+  f = rotAxis(norm(f), u, deg(S.twist[tj] || 0));
+  return [norm(cross(u, f)), u, f];
+}
 // the face (headFrame, pose_main.js) turned by ang about axis from where it looked (s0.fwd): the twist of
 // joint j makes up what the joints' new places do not
 function faceTurn(s0, j, axis, ang){
@@ -263,29 +269,31 @@ function solidTarget(so, key, O, ghost){
   // about the world's X, Y, Z through its pivot, it turns the ruler with it (and the other guides)
   if (so.guide && typeof rulerAxes === "function"){
     const R = turnOf(so), ax = [R(X3), R(Y3), R(Z3)], c = solidMid(so);
-    return {c, ax, pivot: O ? O.pivWorld(key) : c, rings: [0, 1, 2], sc: ax.map((u, n) => [u, n, "XYZ"[n]]),
+    return {c, ax, pivot: O ? O.pivWorld(key) : c, rings: [0, 1, 2], ringAx: ax, sc: ax.map((u, n) => [u, n, "XYZ"[n]]),
       save: () => ({pos: so.pos.slice(), size: so.size.slice(), yaw: so.yaw || 0, pitch: so.pitch || 0, roll: so.roll || 0, q: guideQuarter(so)}),
       move: (s0, d) => { so.pos = add(s0.pos, d); snapGuideGrid(so); done(); },
       scale: (s0, f, n, d) => { const v = Math.max(1, Math.round(s0.size[n] + d));
         so.size[n] = v; so.pos = n === 1 ? s0.pos.slice() : add(s0.pos, mul(ax[n], (v - s0.size[n]) / 2)); done(); },
       turn: (s0, k, dg) => { so.pos = s0.pos.slice(); so.yaw = s0.yaw; so.pitch = s0.pitch; so.roll = s0.roll;
-        const set = () => { const t = O.worldTurn([s0.yaw, s0.pitch, s0.roll], k, dg); so.yaw = t[0]; so.pitch = t[1]; so.roll = t[2]; };
+        const set = () => { const t = O.axisTurn([s0.yaw, s0.pitch, s0.roll], ax[k], dg); so.yaw = t[0]; so.pitch = t[1]; so.roll = t[2]; };
         O.keepPivot(key, set);
         rulerFromGuide(so, s0.q);
         O.keepPivot(key, () => guideToRuler(so, s0.q));          // as the ruler allows (1点: its direction is the camera's; the grid: quarter turns)
         if (!ghost) alignGuides(); done(); }};
   }
   const fin = () => { if (typeof snapSolid === "function") snapSolid(so, true); done(); };
-  const c = solidMid(so);
-  // turned about the world's X, Y, Z through its pivot (支点; the middle unless moved)
-  return {c, ax: WORLD, pivot: O ? O.pivWorld(key) : c, rings: [0, 1, 2], sc: worldSc(O ? O.axesOf(key) : WORLD),
+  const c = solidMid(so), own = O ? O.axesOf(key) : WORLD;
+  // moved along the scene's X, Y, Z; turned about its own axes through its pivot (支点; the middle unless
+  // moved) and stretched along them (its width, height, depth)
+  return {c, ax: WORLD, pivot: O ? O.pivWorld(key) : c, rings: [0, 1, 2], ringAx: own, sc: own.map((u, n) => [u, n, "XYZ"[n]]),
     save: () => ({pos: so.pos.slice(), size: so.size.slice(), yaw: so.yaw || 0, pitch: so.pitch || 0, roll: so.roll || 0}),
     move: (s0, d) => { so.pos = add(s0.pos, d); fin(); },
     scale: (s0, f, n) => { so.size[n] = Math.max(1, Math.round(s0.size[n] * f)); fin(); },
     turn: (s0, k, dg) => { so.pos = s0.pos.slice(); so.yaw = s0.yaw; so.pitch = s0.pitch; so.roll = s0.roll;
       const set = () => { if (!O){ so.yaw = s0.yaw + (k === 1 ? dg : 0); return; }
-        const [a, p, r] = O.worldTurn([s0.yaw, s0.pitch, s0.roll], k, dg); so.yaw = a; so.pitch = p; so.roll = r;
-        if (k === 1 && typeof magnetYaw === "function") so.yaw = magnetYaw(so.yaw); };    // near the ruler's direction: sticks
+        const [a, p, r] = O.axisTurn([s0.yaw, s0.pitch, s0.roll], own[k], dg); so.yaw = a; so.pitch = p; so.roll = r;
+        // upright, turned about up: near the ruler's direction it sticks
+        if (k === 1 && !s0.pitch && !s0.roll && typeof magnetYaw === "function") so.yaw = magnetYaw(so.yaw); };
       if (O) O.keepPivot(key, set); else set(); fin(); }};
 }
 function itemTarget(it, key, O, ghost){
@@ -293,16 +301,18 @@ function itemTarget(it, key, O, ghost){
   const a = deg(it.yaw || 0), f0 = frameOf(it);
   // stretched along its own axes (as turned), each on its own
   const own = [0, 1, 2].map(n => { const e = [0, 0, 0]; e[n] = 1; const v = dirToWorld(f0, it, e); return len(v) > 1e-6 ? norm(v) : rotY(WORLD[n], a); });
-  // turned about the world's X, Y, Z through its pivot (kept as yaw and its own turn, it.rot)
-  return {c: it.base, ax: WORLD, pivot: O ? O.pivWorld(key) : it.base, rings: [0, 1, 2], sc: worldSc(own),
+  // moved along the scene's X, Y, Z; turned about its own axes through its pivot (kept as yaw and its own
+  // turn, it.rot) and stretched along them
+  const ra = O ? O.axesOf(key) : own;
+  return {c: it.base, ax: WORLD, pivot: O ? O.pivWorld(key) : it.base, rings: [0, 1, 2], ringAx: ra, sc: own.map((u, n) => [u, n, "XYZ"[n]]),
     save: () => ({base: it.base.slice(), st: (stretchOf(it) || [1, 1, 1]).slice(), yaw: it.yaw || 0, rot: (it.rot || [0, 0, 0]).slice()}),
     move: (s0, d) => { it.base = add(s0.base, d); if (typeof snapItem === "function") snapItem(it); done(); },
     scale: (s0, f, n) => { foldStretch(it)[n] = Math.max(0.05, Math.round(s0.st[n] * f * 100) / 100); done(); },
     turn: (s0, k, dg) => { const w = v => ((v + 540) % 360) - 180;
       it.base = s0.base.slice(); it.yaw = s0.yaw; it.rot = s0.rot.slice();
       const set = () => { if (!O){ if (k === 1) it.yaw = w(s0.yaw + dg); return; }
-        const [ya, p, r] = O.worldTurn([s0.yaw + (s0.rot[1] || 0), s0.rot[0] || 0, s0.rot[2] || 0], k, dg); it.yaw = ya; it.rot = [p, 0, r];
-        if (k === 1 && typeof magnetYaw === "function") it.yaw = magnetYaw(it.yaw); };
+        const [ya, p, r] = O.axisTurn([s0.yaw + (s0.rot[1] || 0), s0.rot[0] || 0, s0.rot[2] || 0], ra[k], dg); it.yaw = ya; it.rot = [p, 0, r];
+        if (k === 1 && !s0.rot[0] && !s0.rot[2] && typeof magnetYaw === "function") it.yaw = magnetYaw(it.yaw); };
       if (O) O.keepPivot(key, set); else set();
       if (it.grounded) groundItem(it); done(); }};
 }

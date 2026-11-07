@@ -73,8 +73,10 @@ function resetPiv(k, where){ const o = objOf(k); if (where === "bottom") o.piv =
 // a turn by dg degrees about the world's axis k (0 x, 1 y, 2 z) on top of [yaw, pitch, roll] (the solids'
 // order: roll, pitch, then yaw; a thing's yaw + rot[1], rot[0], rot[2] are the same), as [yaw, pitch, roll]
 const SY = rotY(Z, deg(30))[0] > 0 ? 1 : -1, SP = rotAxis(Z, X, deg(30))[1] > 0 ? 1 : -1, SR = rotAxis(X, Z, deg(30))[1] > 0 ? 1 : -1;
-function worldTurn(ang, k, dg){
-  const R = solidR({yaw: ang[0], pitch: ang[1], roll: ang[2]}), w = v => rotAxis(v, [X, Y, Z][k], deg(dg));
+const worldTurn = (ang, k, dg) => axisTurn(ang, [X, Y, Z][k], dg);
+// the same turned about any axis (the object's own: its handles' rings follow its turn)
+function axisTurn(ang, axis, dg){
+  const R = solidR({yaw: ang[0], pitch: ang[1], roll: ang[2]}), w = v => rotAxis(v, axis, deg(dg));
   const vz = w(R(Z)), vx = w(R(X));
   const a = Math.atan2(SY * vz[0], vz[2]), p = Math.atan2(SP * vz[1], Math.hypot(vz[0], vz[2]));
   const q = rotAxis(rotY(vx, -a), X, -p), r = Math.atan2(SR * q[1], q[0]);
@@ -421,7 +423,7 @@ function syncEdit(){
 addEventListener("DOMContentLoaded", () => { if (!window.ODMICONS) return;
   editBar.querySelectorAll("button[data-gzicon]").forEach(b => { if (!b.querySelector("svg")) b.insertAdjacentHTML("afterbegin", ODMICONS.svg(b.dataset.gzicon)); }); });
 
-window.ODMObj = {key: single, group, selected, lead, isFig, figSave, figMove, figTurn, worldTurn, axesOf, setSel, pivWorld, pivRel, setPivRel, setPivAbs, resetPiv, keepPivot,
+window.ODMObj = {key: single, group, selected, lead, isFig, figSave, figMove, figTurn, worldTurn, axisTurn, axesOf, setSel, pivWorld, pivRel, setPivRel, setPivAbs, resetPiv, keepPivot,
   remove: removeKeys, copy: copyKeys, paste, hasClip: () => !!clipNow(), cursor: () => cursor, setCursor};
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
