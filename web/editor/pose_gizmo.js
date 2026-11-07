@@ -138,7 +138,8 @@ function across(u){ const r = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], a = 
 //  save(), move(s0, d), turn(s0, k, degrees), scale(s0, factor, n)}
 function target(any){
   if (!$("gizmoOn").checked && !any) return null;
-  const save = () => ({P: S.P.map(p => p.slice()), R: S.R.slice(), body: Object.assign({}, S.body)});
+  const save = () => ({P: S.P.map(p => p.slice()), R: S.R.slice(), body: Object.assign({}, S.body), twist: (S.twist || []).slice(),
+    fwd: headFrame().fwd});
   if (mode === "pose" && sel >= 0){
     // 回転: what hangs on the joint turns about it; a joint with nothing after it, its own bone
     const i = sel, par = PARENT[i], root = i === IX.pelvis || par === undefined || par < 0, own = !root && !KIDS[i].length;
@@ -153,6 +154,9 @@ function target(any){
         for (const n of who) S.P[n] = add(pv, rotAxis(sub(s0.P[n], pv), WORLD[k], deg(dg)));
         // the hips: the body's turn goes with it, so the joints' angles and limits keep to the body
         if (root && typeof turnBody === "function"){ S.body = Object.assign({}, s0.body); turnBody(WORLD[k], deg(dg)); }
+        // the neck or the head (or a joint below them) turned: the face turns as much (the turn about the
+        // neck moves no joint; it is the neck's twist, or the head's when the head itself is turned)
+        else if (who.includes(IX.head) || i === IX.head) faceTurn(s0, i === IX.head ? IX.head : IX.neck, WORLD[k], deg(dg));
         afterEdit(root || own ? i : KIDS[i][0]); }};
   }
   if (mode === "body" && sel > 0){
@@ -230,6 +234,16 @@ function target(any){
   const G = ghostNow();
   if (G) return G.key === "gs" ? solidTarget(G.o, "gs", O, true) : itemTarget(G.o, "gi", O, true);
   return null;
+}
+// the face (headFrame, pose_main.js) turned by ang about axis from where it looked (s0.fwd): the twist of
+// joint j makes up what the joints' new places do not
+function faceTurn(s0, j, axis, ang){
+  S.twist = s0.twist.slice();
+  const h = headFrame(), want = rotAxis(s0.fwd, axis, ang);
+  const w = sub(want, mul(h.up, dot(want, h.up))); if (len(w) < 1e-4) return;
+  const d = Math.atan2(dot(cross(h.fwd, norm(w)), h.up), dot(h.fwd, norm(w))) * 180 / Math.PI;
+  const v = ((S.twist[j] || 0) + d + 540) % 360 - 180;
+  S.twist[j] = typeof clampTwist === "function" ? clampTwist(j, v) : v;
 }
 // the ghost of 設置 (pose_place.js) when nothing is selected: {key: "gs" | "gi", o}
 function ghostNow(){
