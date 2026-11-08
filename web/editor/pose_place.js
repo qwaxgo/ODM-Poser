@@ -21,8 +21,10 @@ const cats = () => [[SHAPES, "図形・床・壁・天井"], ...CATS_.filter(([k
 const POS = [["plPX", "位置（左右）", -600, 600, 1, "cm"], ["plPY", "位置（上下）", -100, 500, 1, "cm"], ["plPZ", "位置（前後）", -600, 600, 1, "cm"]];
 const ROT = [["plRX", "回転（前後に倒す・X）", -180, 180, 1, "°"], ["plRY", "回転（向き・Y）", -180, 180, 1, "°"], ["plRZ", "回転（横に倒す・Z）", -180, 180, 1, "°"]];
 const SOLID_SIZE = [["plW", "幅", 1, 600, 1, "cm"], ["plH", "高さ", 1, 600, 1, "cm"], ["plD", "奥行き", 1, 600, 1, "cm"],
-  ["plSides", "角の数", 3, 24, 1, ""], ["plTop", "天面の大きさ（底面に対して）", 0, 200, 1, "%"]];
-const ITEM_SIZE = [["plScale", "大きさ", 20, 400, 1, "%"], ["plSX", "X 方向", 20, 400, 1, "%"], ["plSY", "Y 方向", 20, 400, 1, "%"], ["plSZ", "Z 方向", 20, 400, 1, "%"]];
+  ["plSides", "角の数", 3, 24, 1, ""], ["plTop", "天面の幅", 0, 600, 1, "cm"]];
+// a thing's size in cm (the file keeps its scale and stretch: pose_scene.js itemCm); the sliders' ends
+// follow the thing chosen (0.2 to 4 times its own size, as 20–400 % were)
+const ITEM_SIZE = [["plScale", "大きさ（いちばん長い辺）", 1, 300, 0.5, "cm"], ["plSX", "X 方向", 1, 300, 0.5, "cm"], ["plSY", "Y 方向", 1, 300, 0.5, "cm"], ["plSZ", "Z 方向", 1, 300, 0.5, "cm"]];
 // the pivot (支点, what it turns about): relative to the object (its own turned axes) or in the world
 const PIV_REL = [["plVX", "支点（本体から）X", -300, 300, 1, "cm"], ["plVY", "支点（本体から）Y", -300, 300, 1, "cm"], ["plVZ", "支点（本体から）Z", -300, 300, 1, "cm"]];
 const PIV_ABS = [["plAX", "支点（絶対座標）X", -600, 600, 1, "cm"], ["plAY", "支点（絶対座標）Y", -100, 500, 1, "cm"], ["plAZ", "支点（絶対座標）Z", -600, 600, 1, "cm"]];
@@ -157,46 +159,75 @@ function preRows(){
   let rows = [];
   if (c === SHAPES){ const d = SOLID_KINDS[key]; if (d){
     rows = [["ppW", "幅", 1, 600, 1, "cm", d.size[0]], ["ppH", "高さ", 1, 600, 1, "cm", d.size[1]], ["ppD", "奥行き", 1, 600, 1, "cm", d.size[2]]];
-    if (d.shape === "prism" || d.shape === "pyr") rows.push(["ppSides", "角の数", 3, 24, 1, "", d.sides || 4], ["ppTop", "天面の大きさ（底面に対して）", 0, 200, 1, "%", d.shape === "pyr" ? 0 : 100]); } }
+    if (d.shape === "prism" || d.shape === "pyr") rows.push(["ppSides", "角の数", 3, 24, 1, "", d.sides || 4], ["ppTop", "天面の幅", 0, 600, 1, "cm", d.shape === "pyr" ? 0 : d.size[0]]); } }
   else { const def = PROPS_[key]; if (def){
-    rows = [["ppScale", "大きさ", 20, 400, 1, "%", 100], ["ppSX", "X 方向", 20, 400, 1, "%", 100], ["ppSY", "Y 方向", 20, 400, 1, "%", 100], ["ppSZ", "Z 方向", 20, 400, 1, "%", 100]];
+    // in cm: the kind's own sizes at first, the sliders from 0.2 to 4 times them
+    const b = itemBase({key, scale: 1, off: [0, 0, 0], rot: [0, 0, 0]}).map(cm1), L = Math.max(...b);
+    const row = (id, label, v) => [id, label, cm1(v * 0.2), cm1(v * 4), 0.5, "cm", v];
+    rows = [row("ppScale", "大きさ（いちばん長い辺）", L), row("ppSX", "X 方向", b[0]), row("ppSY", "Y 方向", b[1]), row("ppSZ", "Z 方向", b[2])];
     const sg = typeof segsOf === "function" ? segsOf(def) : null;
-    if (sg) for (const g of sg.list) rows.push(["ppSeg_" + g.id, `部位の長さ：${g.ja}`, 20, 400, 1, "%", 100]); } }
+    if (sg) for (const g of sg.list) rows.push(row("ppSeg_" + g.id, `部位の長さ：${g.ja}`, cm1(g.hi - g.lo))); } }
   $("plPreRows").innerHTML = rows.map(([id, label, min, max, step, unit, v]) =>
     `<div><label>${label}</label><div class="row"><input type="range" id="${id}R" min="${min}" max="${max}" step="${step}" value="${v}" data-v0="${v}">` +
     `<input type="number" class="num" id="${id}" step="${step}" value="${v}"><span class="unit">${unit}</span></div></div>`).join("");
   $("plPreRows").querySelectorAll("input[type=range]").forEach(r => { const n = $(r.id.slice(0, -1));
-    r.addEventListener("input", () => { n.value = r.value; applyRows(); });
-    n.addEventListener("change", () => { r.value = n.value; applyRows(); }); });
+    r.addEventListener("input", () => { n.value = r.value; applyRows(n.id); });
+    n.addEventListener("change", () => { r.value = n.value; applyRows(n.id); }); });
 }
 const pv = id => { const n = $(id); return n && isFinite(+n.value) ? +n.value : null; };
-function preSolid(o){
+const cm1 = v => Math.round(v * 10) / 10;
+// the top's width in cm, kept as a share of the base (o.top): a wider base widens the top too
+const topCm = o => (o.top == null ? 1 : o.top) * o.size[0];
+const setTopCm = (o, v) => { o.top = Math.max(0, Math.min(2, v / Math.max(1, o.size[0]))); };
+// id: the row changed (only it is applied; the others follow the ghost); none: a fresh ghost, all of them
+function preSolid(o, id){
   const w = pv("ppW"), h = pv("ppH"), d = pv("ppD");
   if (w) o.size = [Math.max(1, w), Math.max(1, h || o.size[1]), Math.max(1, d || o.size[2])];
   if (pv("ppSides") !== null) o.sides = Math.max(3, Math.min(24, Math.round(pv("ppSides"))));
-  if (pv("ppTop") !== null) o.top = Math.max(0, Math.min(2, pv("ppTop") / 100));
+  if (pv("ppTop") !== null && (!id || id === "ppTop" || o.top == null)) setTopCm(o, pv("ppTop"));
   return o;
 }
-function preItem(it){
-  if (pv("ppScale") !== null) it.scale = Math.max(0.2, pv("ppScale") / 100);
-  const st = ["ppSX", "ppSY", "ppSZ"].map(id => Math.max(0.2, (pv(id) || 100) / 100));
-  if (st.some(v => v !== 1)) it.stretch = st; else delete it.stretch;
-  const segs = {}; $("plPreRows").querySelectorAll("input[id^=ppSeg_]:not([type=range])").forEach(n => {
-    const v = +n.value / 100; if (isFinite(v) && v !== 1) segs[n.id.slice(6)] = Math.max(0.05, v); });
-  if (Object.keys(segs).length) it.segs = segs; else delete it.segs;
+const segRows = () => [...$("plPreRows").querySelectorAll("input[id^=ppSeg_]:not([type=range])")];
+// a section's length in cm as seen (as in サイズ: its length times the size and the stretch along it)
+function segCm(it, id){ const L = segLength(it, id), sg = segsOf(PROPS_[it.key]); if (!L) return null;
+  return L.now * (it.scale || 1) * (stretchOf(it) || [1, 1, 1])[sg.axis]; }
+function setSegCm(it, id, v){ const L = segLength(it, id), sg = segsOf(PROPS_[it.key]); if (!L || !(v > 0)) return;
+  it.segs = Object.assign({}, it.segs);
+  it.segs[id] = Math.max(0.05, v / (L.base * (it.scale || 1) * (stretchOf(it) || [1, 1, 1])[sg.axis]));
+  if (Object.values(it.segs).every(k => k === 1)) delete it.segs; }
+function preItem(it, id){
+  const XYZ = ["ppSX", "ppSY", "ppSZ"];
+  if (id){                                     // one row: in cm, as on a thing put
+    const v = pv(id); if (!(v > 0)) return it;
+    if (id === "ppScale") setItemLongCm(it, v);
+    else if (XYZ.includes(id)) setItemCm(it, XYZ.indexOf(id), v);
+    else if (id.startsWith("ppSeg_")) setSegCm(it, id.slice(6), v);
+    if (it.stretch && it.stretch.every(k => k === 1)) delete it.stretch;
+    return it;
+  }
+  // a fresh ghost: its sections, then its size (the longest side) and the stretch on each axis
+  const segs = {}; delete it.segs; it.scale = 1; delete it.stretch;
+  for (const n of segRows()){ const L = segLength(it, n.id.slice(6)), v = +n.value;
+    if (L && v > 0 && Math.abs(v - L.base) > 0.05) segs[n.id.slice(6)] = Math.max(0.05, v / L.base); }
+  if (Object.keys(segs).length) it.segs = segs;
+  const b = itemBase(it), want = XYZ.map((r, a) => pv(r) > 0 ? pv(r) : b[a]);
+  it.scale = Math.max(0.2, Math.max(...want) / Math.max(...b));
+  const st = want.map((v, a) => Math.max(0.2, v / (b[a] * it.scale)));
+  if (st.some(v => Math.abs(v - 1) > 1e-3)) it.stretch = st;
   return it;
 }
 // the ghost follows the sizes typed or slid; the sizes follow the ghost stretched by the handles
-function applyRows(){
-  const g = ghostNow(); if (g){ if (g.o) preSolid(g.o); else { preItem(g.it); if (g.it.grounded) groundItem(g.it); } }
+function applyRows(id){
+  const g = ghostNow(); if (g){ if (g.o) preSolid(g.o, id); else { preItem(g.it, id); if (g.it.grounded) groundItem(g.it); } }
   draw();
 }
 function rowsFromGhost(){
   const g = pend; if (!g) return;
-  const put = (id, v) => { const n = $(id), r = $(id + "R"); if (!n || v === undefined || !isFinite(v)) return; v = Math.round(v);
+  const put = (id, v) => { const n = $(id), r = $(id + "R"); if (!n || v === undefined || v === null || !isFinite(v)) return; v = cm1(v);
     if (document.activeElement !== n) n.value = v; if (document.activeElement !== r) r.value = v; };
-  if (g.o){ put("ppW", g.o.size[0]); put("ppH", g.o.size[1]); put("ppD", g.o.size[2]); }
-  else { const st = stretchOf(g.it) || [1, 1, 1]; put("ppScale", (g.it.scale || 1) * 100); put("ppSX", st[0] * 100); put("ppSY", st[1] * 100); put("ppSZ", st[2] * 100); }
+  if (g.o){ put("ppW", g.o.size[0]); put("ppH", g.o.size[1]); put("ppD", g.o.size[2]); if ($("ppTop")) put("ppTop", topCm(g.o)); }
+  else { const c = itemCm(g.it); put("ppScale", Math.max(...c)); put("ppSX", c[0]); put("ppSY", c[1]); put("ppSZ", c[2]);
+    for (const n of segRows()) put(n.id, segCm(g.it, n.id.slice(6))); }
 }
 $("plPreReset").addEventListener("click", () => { pend = null; $("plPreRows").querySelectorAll("input[type=range]").forEach(r => {
   r.value = r.dataset.v0; $(r.id.slice(0, -1)).value = r.dataset.v0; }); draw(); });
@@ -259,10 +290,11 @@ function value(id){
     const p = id[2] === "V" ? O.pivRel(sel) : O.pivWorld(sel); return p["XYZ".indexOf(id[3])]; }
   if (o){ const top = o.top == null ? 1 : o.top;
     return {plPX: o.pos[0], plPY: o.pos[1], plPZ: o.pos[2], plRX: o.pitch || 0, plRY: o.yaw || 0, plRZ: o.roll || 0,
-      plW: o.size[0], plH: o.size[1], plD: o.size[2], plSides: o.sides || solidKind(o).sides || 4, plTop: top * 100}[id]; }
-  if (it){ const st = stretchOf(it) || [1, 1, 1], b = it.base || [0, 0, 0], r = it.rot || [0, 0, 0];
-    return {plPX: b[0], plPY: b[1], plPZ: b[2], plRX: r[0], plRY: it.yaw || 0, plRZ: r[2],
-      plScale: (it.scale || 1) * 100, plSX: st[0] * 100, plSY: st[1] * 100, plSZ: st[2] * 100}[id]; }
+      plW: o.size[0], plH: o.size[1], plD: o.size[2], plSides: o.sides || solidKind(o).sides || 4, plTop: top * o.size[0]}[id]; }
+  if (it){ const b = it.base || [0, 0, 0], r = it.rot || [0, 0, 0];
+    if (id === "plScale") return itemLongCm(it);
+    const a = {plSX: 0, plSY: 1, plSZ: 2}[id]; if (a !== undefined) return itemCm(it)[a];
+    return {plPX: b[0], plPY: b[1], plPZ: b[2], plRX: r[0], plRY: it.yaw || 0, plRZ: r[2]}[id]; }
 }
 function setValue(id, v){
   const o = solidOf(sel), it = itemOf(sel), a = {plPX: 0, plPY: 1, plPZ: 2}[id], O = window.ODMObj;
@@ -285,7 +317,7 @@ function setValue(id, v){
     else if (id === "plRX") turn(() => { o.pitch = wrap(v); }); else if (id === "plRY") turn(() => { o.yaw = wrap(v); }); else if (id === "plRZ") turn(() => { o.roll = wrap(v); });
     else if (id === "plW") o.size[0] = Math.max(1, v); else if (id === "plH") o.size[1] = Math.max(1, v); else if (id === "plD") o.size[2] = Math.max(1, v);
     else if (id === "plSides") o.sides = Math.max(3, Math.min(24, Math.round(v)));
-    else if (id === "plTop") o.top = Math.max(0, Math.min(2, v / 100));
+    else if (id === "plTop") setTopCm(o, v);
     if (o.ground) groundSolid(o);
     afterEdit(); if (typeof syncSolids === "function") syncSolids();
   } else if (it){
@@ -293,8 +325,8 @@ function setValue(id, v){
     else if (id === "plRX") turn(() => { it.rot = (it.rot || [0, 0, 0]).slice(); it.rot[0] = wrap(v); });
     else if (id === "plRY") turn(() => { it.yaw = wrap(v); });
     else if (id === "plRZ") turn(() => { it.rot = (it.rot || [0, 0, 0]).slice(); it.rot[2] = wrap(v); });
-    else if (id === "plScale") it.scale = Math.max(0.2, v / 100);
-    else { const k = {plSX: 0, plSY: 1, plSZ: 2}[id]; if (k !== undefined) foldStretch(it)[k] = Math.max(0.2, v / 100); }
+    else if (id === "plScale") setItemLongCm(it, v);
+    else { const k = {plSX: 0, plSY: 1, plSZ: 2}[id]; if (k !== undefined) setItemCm(it, k, v); }
     if (it.grounded && a !== 1) groundItem(it);
     afterEdit();
   }
@@ -325,6 +357,10 @@ function sync(){
   $("plTopBox").style.display = o && (sh === "prism" || sh === "pyr") ? "" : "none";
   $("plItemBtns").style.display = it && typeof segsOf === "function" && segsOf(PROPS_[it.key]) ? "" : "none";
   $("plSolidBtns").style.display = o && !o.guide ? "" : "none";
+  // a thing's size: the sliders from 0.2 to 4 times its own size (at its stretch, for the longest side)
+  if (it){ const c = itemCm(it), k = it.scale || 1, st = stretchOf(it) || [1, 1, 1];
+    const ends = (id, v) => { const r = $(id + "R"); if (document.activeElement !== r){ r.min = cm1(v * 0.2); r.max = cm1(v * 4); } };
+    ends("plScale", Math.max(...c) / k); c.forEach((v, a) => ends(["plSX", "plSY", "plSZ"][a], v / st[a])); }
   for (const [id] of ALL){ const v = value(id); if (v === undefined) continue;
     const r = $(id + "R"), n = $(id), shown = Math.round(v * 10) / 10;
     if (document.activeElement !== r) r.value = shown; if (document.activeElement !== n) n.value = shown; }
@@ -342,7 +378,7 @@ function sync(){
   "いちばん低い所で、床や下の物の上に着ける（回転していても）": "Onto the ground or what is under it by the lowest point (turned or not)",
   "位置（左右）": "Place (left / right)", "位置（上下）": "Place (up / down)", "位置（前後）": "Place (front / back)",
   "回転（前後に倒す・X）": "Turn (tip forward / back, X)", "回転（向き・Y）": "Turn (facing, Y)", "回転（横に倒す・Z）": "Turn (tip sideways, Z)",
-  "幅": "Width", "高さ": "Height", "奥行き": "Depth", "角の数": "Sides", "天面の大きさ（底面に対して）": "Top size (of the base)",
+  "幅": "Width", "高さ": "Height", "奥行き": "Depth", "角の数": "Sides", "天面の大きさ（底面に対して）": "Top size (of the base)", "天面の幅": "Top width", "大きさ（いちばん長い辺）": "Size (longest side)",
   "大きさ": "Size", "X 方向": "X", "Y 方向": "Y", "Z 方向": "Z", "部位ごとの長さ（下の欄）": "Section lengths (below)",
   "選んだ関節を着ける": "Put the selected joint on it", "この上に立つ": "Stand on it",
   "置いた物は、配置モードでドラッグ・3軸ハンドル（移動・回転・変形）でも動かせます。小物の大きさは、手に持つときと同じ決まりで変わります。":

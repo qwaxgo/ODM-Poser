@@ -13,32 +13,65 @@ const linkRange = id => { $(id).addEventListener("input", () => { $(id + "N").va
 const scBox = document.createElement("div");
 scBox.className = "pv-box";
 scBox.innerHTML = `<label title="持つ・置く前にプレビュー"><input type="checkbox" id="scPrevOn" checked> プレビュー</label>` +
-  ctl("scPreSize", "大きさ", 30, 300, 1, "%", 100) +
-  ctl("scPreX", "X 方向（赤）", 20, 400, 1, "%", 100) + ctl("scPreY", "Y 方向（緑）", 20, 400, 1, "%", 100) + ctl("scPreZ", "Z 方向（青）", 20, 400, 1, "%", 100) +
+  ctl("scPreSize", "大きさ（いちばん長い辺）", 1, 300, 0.5, "cm", 20) +
+  ctl("scPreX", "X 方向（赤）", 1, 300, 0.5, "cm", 20) + ctl("scPreY", "Y 方向（緑）", 1, 300, 0.5, "cm", 20) + ctl("scPreZ", "Z 方向（青）", 1, 300, 0.5, "cm", 20) +
   `<div id="scPreSegs"></div>`;
 $("scAddR").closest(".btns").before(scBox);
-for (const id of ["scPreSize", "scPreX", "scPreY", "scPreZ"]) linkRange(id);
 $("scPrevOn").addEventListener("change", draw);
-// each section's length (柄・刀身 ...), as in サイズ, for the kind chosen
+// the sizes in cm (the file keeps the size and the stretch: pose_scene.js itemCm). The rows are what the
+// thing will measure: the longest side scales all of them; an axis, or a section (柄・刀身 ...) along
+// the sections' axis, moves the others that go with it
+const XYZ = ["scPreX", "scPreY", "scPreZ"], cm1 = v => Math.round(v * 10) / 10;
+const num = id => +$(id + "N").value;
+const setRow = (id, v) => { v = cm1(v); $(id).value = v; $(id + "N").value = v; };
+const segIds = () => [...$("scPreSegs").querySelectorAll("input[type=range]")].map(r => r.id);
+const segAxis = () => { const sg = typeof segsOf === "function" ? segsOf(PROPS_[$("scKey").value]) : null; return sg ? sg.axis : -1; };
+function rowChanged(id){
+  if (id === "scPreSize"){ const L0 = Math.max(...XYZ.map(num)), k = L0 > 0 ? num(id) / L0 : 1;
+    for (const r of [...XYZ, ...segIds()]) setRow(r, num(r) * k); }
+  else if (XYZ.includes(id)){
+    if (XYZ.indexOf(id) === segAxis() && +$(id).dataset.was > 0){ const k = num(id) / +$(id).dataset.was; for (const r of segIds()) setRow(r, num(r) * k); }
+    setRow("scPreSize", Math.max(...XYZ.map(num))); }
+  else if (+$(id).dataset.was > 0){ const a = XYZ[segAxis()]; if (a) setRow(a, num(a) + num(id) - +$(id).dataset.was); setRow("scPreSize", Math.max(...XYZ.map(num))); }
+  for (const r of [...XYZ, ...segIds()]) $(r).dataset.was = num(r);
+  draw();
+}
+const linkRow = id => { $(id).addEventListener("input", () => { $(id + "N").value = $(id).value; rowChanged(id); });
+  $(id + "N").addEventListener("change", () => { $(id).value = $(id + "N").value; rowChanged(id); }); };
+for (const id of ["scPreSize", ...XYZ]) linkRow(id);
+// a kind chosen: its own sizes, the sliders from 0.2 to 4 times them
 let segKey = "";
 function segRows(){
   const key = $("scKey").value; if (key === segKey) return; segKey = key;
-  const sg = typeof segsOf === "function" ? segsOf(PROPS_[key]) : null;
-  $("scPreSegs").innerHTML = sg ? sg.list.map(g => ctl("scPreSeg_" + g.id, `部位の長さ：${g.ja}`, 20, 400, 1, "%", 100)).join("") : "";
-  if (sg) for (const g of sg.list) linkRange("scPreSeg_" + g.id);
+  const def = PROPS_[key], sg = def && typeof segsOf === "function" ? segsOf(def) : null;
+  $("scPreSegs").innerHTML = sg ? sg.list.map(g => ctl("scPreSeg_" + g.id, `部位の長さ：${g.ja}`, 1, 300, 0.5, "cm", cm1(g.hi - g.lo))).join("") : "";
+  if (sg) for (const g of sg.list) linkRow("scPreSeg_" + g.id);
+  if (!def) return;
+  const b = itemBase({key, scale: 1, off: [0, 0, 0], rot: [0, 0, 0]});
+  const ends = (id, v) => { $(id).min = cm1(v * 0.2); $(id).max = cm1(v * 4); setRow(id, v); $(id).dataset.was = cm1(v); };
+  ends("scPreSize", Math.max(...b)); XYZ.forEach((id, a) => ends(id, b[a]));
+  if (sg) for (const g of sg.list) ends("scPreSeg_" + g.id, g.hi - g.lo);
 }
 // ニュートラル: no kind, no sizes to set
 const scShow = () => { scBox.style.display = $("scKey").value ? "" : "none"; };
 $("scKey").addEventListener("change", () => { scShow(); segRows(); draw(); });
 $("scCat").addEventListener("change", scShow); scShow();
-const pre = id => (+$(id).value || 100) / 100;
-function sized(it){                            // the sizes set before, on a new thing
-  it.scale = pre("scPreSize");
-  const st = ["scPreX", "scPreY", "scPreZ"].map(pre);
-  if (st.some(v => v !== 1)) it.stretch = st;
-  const segs = {}; $("scPreSegs").querySelectorAll("input[type=range]").forEach(r => { const v = +r.value / 100;
-    if (isFinite(v) && v !== 1) segs[r.id.slice(9)] = Math.max(0.05, v); });
-  if (Object.keys(segs).length) it.segs = segs;
+function sized(it){                            // the sizes set before, on a new thing (in cm)
+  const sg = typeof segsOf === "function" ? segsOf(PROPS_[it.key]) : null, want = XYZ.map(num);
+  it.scale = 1; delete it.stretch; delete it.segs;
+  // the sections' lengths and the size hang on each other: a few rounds settle them
+  for (let n = 0; n < 4; n++){
+    if (sg){ const st = stretchOf(it) || [1, 1, 1], segs = {};
+      for (const g of sg.list){ const v = num("scPreSeg_" + g.id), base = g.hi - g.lo, f = v / (base * (it.scale || 1) * st[sg.axis]);
+        if (v > 0 && Math.abs(f - 1) > 1e-3) segs[g.id] = Math.max(0.05, f); }
+      if (Object.keys(segs).length) it.segs = segs; else delete it.segs; }
+    const b = itemBase(it);
+    if (!want.every(v => v > 0)) break;
+    it.scale = Math.max(0.2, Math.max(...want) / Math.max(...b));
+    const st = want.map((v, a) => Math.max(0.2, v / (b[a] * it.scale)));
+    if (st.some(v => Math.abs(v - 1) > 1e-3)) it.stretch = st; else delete it.stretch;
+    if (!sg) break;
+  }
   return it;
 }
 segRows();
@@ -119,6 +152,6 @@ const showing = el => { const s = el.closest("section"); return !!(s && s.classL
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
 (window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"持つ・置く前にプレビュー": "Preview before holding / putting", "置く前にプレビュー": "Preview before putting",
-  "大きさ": "Size", "X 方向（赤）": "X (red)", "Y 方向（緑）": "Y (green)", "Z 方向（青）": "Z (blue)", "幅": "Width", "高さ": "Height", "奥行き": "Depth"});
+  "大きさ": "Size", "大きさ（いちばん長い辺）": "Size (longest side)", "X 方向（赤）": "X (red)", "Y 方向（緑）": "Y (green)", "Z 方向（青）": "Z (blue)", "幅": "Width", "高さ": "Height", "奥行き": "Depth"});
 draw();
 })();

@@ -17,7 +17,7 @@ const SOLID_KINDS = {
   building: {ja: "建物", en: "Building", shape: "box", size: [400, 900, 400], at: [0, 0, -600]},
   step:     {ja: "段差", en: "Step", shape: "box", size: [120, 20, 40], at: [0, 0, 50]},
   prism:    {ja: "角柱", en: "Prism", shape: "prism", size: [60, 120, 60], sides: 6, at: [90, 0, 0]},
-  cylinder: {ja: "円柱", en: "Cylinder", shape: "cyl", size: [60, 120, 60], at: [90, 0, 0]},
+  cylinder: {ja: "円柱（太い・柱や建物）", en: "Cylinder (thick: columns, buildings)", shape: "cyl", size: [60, 120, 60], at: [90, 0, 0]},
   pyramid:  {ja: "角錐", en: "Pyramid", shape: "pyr", size: [80, 100, 80], sides: 4, at: [100, 0, 0]},
   cone:     {ja: "円錐", en: "Cone", shape: "cone", size: [60, 100, 60], at: [90, 0, 0]},
   pole:     {ja: "支柱", en: "Pole", shape: "cyl", size: [10, 250, 10], at: [50, 0, 0]},

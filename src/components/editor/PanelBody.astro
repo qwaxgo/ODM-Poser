@@ -6,11 +6,7 @@
     <h2>体格</h2>
     <div class="btns"><button id="sexF">女性</button><button id="sexM">男性</button></div>
     <label><input type="checkbox" id="sym" checked> 左右対称</label>
-    <label>全体サイズ</label>
-    <div class="row"><input type="range" id="scaleAll" min="60" max="140" value="100"><input type="number" class="num" id="scaleAllV"><span class="unit">%</span></div>
-    <label>頭</label>
-    <div class="row"><input type="range" id="scaleHead" min="50" max="250" value="100"><input type="number" class="num" id="scaleHeadV"><span class="unit">%</span></div>
-    <label>太さ</label>
-    <div class="row"><input type="range" id="scaleThick" min="50" max="200" value="100"><input type="number" class="num" id="scaleThickV"><span class="unit">%</span></div>
+    <label title="全身の丸（頭・胴の幅・腕・脚）を同じ割合で太く・細くする。数字は太ももの付け根の丸の直径">全身の太さ（太ももの付け根の直径）</label>
+    <div class="row"><input type="range" id="scaleThick" min="6" max="24" step="0.5" value="12"><input type="number" class="num" id="scaleThickV" step="0.5"><span class="unit">cm</span></div>
     <label title="肩・肘・手首、股・膝・足首の丸をまとめて太く・細くする（外すと関節ごと）"><input type="checkbox" id="thickLink" checked> 腕・脚の太さを部位ごとに連動</label>
   </section>

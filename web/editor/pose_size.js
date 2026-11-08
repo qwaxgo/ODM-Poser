@@ -49,10 +49,10 @@ const parts = [
     ctl("szArmT", "腕の太さ（肘）", 3, 24, 0.5, "cm") + ctl("szThigh", "太もも", 15, 70, 0.5, "cm") + ctl("szShin", "すね", 15, 70, 0.5, "cm") +
     ctl("szFoot", "足", 5, 25, 0.5, "cm") + ctl("szLegT", "脚の太さ（膝）", 4, 30, 0.5, "cm")),
   sec("小物の大きさ（3軸）", `<div class="hint" id="szItemName">装備・設置のタブで小物を選ぶと、ここで変えられます。</div>` +
-    ctl("szSX", "X 方向（赤）", 20, 400, 1, "%") + ctl("szSY", "Y 方向（緑）", 20, 400, 1, "%") + ctl("szSZ", "Z 方向（青）", 20, 400, 1, "%") +
+    ctl("szSX", "X 方向（赤）", 1, 100, 0.5, "cm") + ctl("szSY", "Y 方向（緑）", 1, 100, 0.5, "cm") + ctl("szSZ", "Z 方向（青）", 1, 100, 0.5, "cm") +
     `<div class="btns"><button type="button" id="szItemReset">↺ 3軸の大きさを戻す</button></div>
     <div class="hint">手に持つ物は Y が親指の向き（剣の刃）、Z が腕の向き（銃身）、X がそれと直角です。持つ所（握り）はそのままで、先の方が伸び縮みします。全体の大きさは装備のタブで変えます。</div>`)];
-parts.push(sec("頭の形", ctl("hsX", "幅（左右）", 50, 200, 1, "%") + ctl("hsY", "高さ（上下）", 50, 250, 1, "%") + ctl("hsZ", "奥行き（前後）", 50, 200, 1, "%") +
+parts.push(sec("頭の形", ctl("hsX", "幅（左右）", 5, 60, 0.5, "cm") + ctl("hsY", "高さ（上下）", 5, 60, 0.5, "cm") + ctl("hsZ", "奥行き（前後）", 5, 60, 0.5, "cm") +
     `<label>伸ばした形</label><select id="hsMode"><option value="ball">球のまま伸ばす</option><option value="cyl">円柱でつなぐ</option></select>
     <div class="btns"><button type="button" id="hsReset">↺ 頭の形を戻す</button></div>
     <div class="hint">頭の大きさ（頭身）は変わりません。見た目の形だけを変えます。</div>`));
@@ -163,7 +163,8 @@ function setHeadsTo(H){
 
 // ---- the selected thing (pose_scene.js: scSel, its stretch in itemLocal) ----------------------------
 const curItem = () => (typeof scSel === "number" && scSel >= 0 && S.items) ? S.items[scSel] : null;
-const axisItem = a => [it => Math.round((stretchOf(it) || [1, 1, 1])[a] * 100), (it, v) => { foldStretch(it)[a] = v / 100; }];
+// in cm along the thing's own axis (pose_scene.js: itemCm, setItemCm; the file keeps the stretch)
+const axisItem = a => [it => Math.round(itemCm(it)[a] * 10) / 10, (it, v) => setItemCm(it, a, v)];
 const ITEM = {szSX: axisItem(0), szSY: axisItem(1), szSZ: axisItem(2)};
 // a section's length in cm as seen (the item's size and its stretch along the sections' axis)
 const segK = it => { const sg = segsOf((window.PROPS || {})[it.key]); return (it.scale || 1) * (sg ? (stretchOf(it) || [1, 1, 1])[sg.axis] : 1); };
@@ -206,6 +207,8 @@ function show(){
   $("szItemName").textContent = def ? `選んだ小物：${def.ja}` : "装備・設置のタブで小物を選ぶと、ここで変えられます。";
   for (const [id, [get]] of Object.entries(ITEM)){
     const r = $(id), n = $(id + "N"); r.disabled = n.disabled = !it;
+    // the slider: 0.2 to 4 times the thing's side at its size (as 20–400 % were)
+    if (it && rangeHeld !== r){ const b = itemBase(it)["XYZ".indexOf(id[3])] * (it.scale || 1); r.min = fmt(b * 0.2); r.max = fmt(b * 4); }
     if (it){ if (rangeHeld !== r) r.value = get(it); if (document.activeElement !== n) n.value = get(it); }
   }
   $("szItemReset").disabled = !it;
@@ -232,20 +235,23 @@ for (const id of ["szHeight", "szHeads", ...Object.keys(SIZE), ...Object.keys(IT
 }
 $("szKeep").addEventListener("change", show);
 $("szSeg").addEventListener("change", () => { segSel = $("szSeg").value; draw(); });
-// 頭の形: the head's width, height and depth as shares of its size (S.headShape, pose_main.js)
-const HS = {hsX: "x", hsY: "y", hsZ: "z"};
+// 頭の形: the head's width, height and depth in cm (the file keeps them as shares of the head's size,
+// S.headShape, pose_main.js); the sliders from half to twice (the height 2.5 times) the head's diameter
+const HS = {hsX: "x", hsY: "y", hsZ: "z"}, HS_MAX = {x: 2, y: 2.5, z: 2};
+const headD = () => 2 * S.R[IX.head];
 function headShapeSync(){
-  const h = S.headShape || {x: 1, y: 1, z: 1, mode: "ball"};
-  for (const [id, k] of Object.entries(HS)){ const v = Math.round((h[k] || 1) * 100);
-    if (rangeHeld !== $(id)) $(id).value = v; if (document.activeElement !== $(id + "N")) $(id + "N").value = v; }
+  const h = S.headShape || {x: 1, y: 1, z: 1, mode: "ball"}, D = headD();
+  for (const [id, k] of Object.entries(HS)){ const v = fmt((h[k] || 1) * D), r = $(id);
+    if (rangeHeld !== r){ r.min = fmt(D * 0.5); r.max = fmt(D * HS_MAX[k]); r.value = v; }
+    if (document.activeElement !== $(id + "N")) $(id + "N").value = v; }
   $("hsMode").value = h.mode || "ball";
 }
 function headShapeSet(k, v){ const h = Object.assign({x: 1, y: 1, z: 1, mode: "ball"}, S.headShape || {}); h[k] = v; headShapeTo(h); }   // from the neck (pose_main.js)
 for (const [id, k] of Object.entries(HS)){
   const r = $(id), n = $(id + "N");
   r.addEventListener("pointerdown", () => remember());
-  r.addEventListener("input", () => { headShapeSet(k, +r.value / 100); n.value = r.value; afterEdit(); draw(); });
-  n.addEventListener("change", () => { remember(); const v = +n.value; if (!isFinite(v)) return; r.value = v; headShapeSet(k, v / 100); afterEdit(); draw(); });
+  r.addEventListener("input", () => { headShapeSet(k, +r.value / headD()); n.value = r.value; afterEdit(); draw(); });
+  n.addEventListener("change", () => { remember(); const v = +n.value; if (!(v > 0)) return; r.value = v; headShapeSet(k, Math.max(0.2, v / headD())); afterEdit(); draw(); });
 }
 $("hsMode").addEventListener("change", e => { remember(); S.headShape = Object.assign({x: 1, y: 1, z: 1, mode: "ball"}, S.headShape || {}); S.headShape.mode = e.target.value; afterEdit(); draw(); });
 $("hsReset").addEventListener("click", () => { remember(); headShapeTo(null); headShapeSync(); afterEdit(); draw(); say("頭の形を戻しました。"); });

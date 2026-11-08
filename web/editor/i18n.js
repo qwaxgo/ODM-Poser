@@ -339,7 +339,7 @@
       "Dragging does not move the camera (the middle button, the keypad and the camera pad do). Drag a vanishing point: turn the ruler. Drag the box guide or an object: move it over the floor (Shift+drag: up and down). Wheel over it: turn it. Click a circle: select the joint (for \"put the joint on it\").",
     "物体（床・壁・建物・柱など）": "Objects (floors, walls, buildings, poles ...)",
     "直方体（箱・台）": "Box (crate, stand)", "床（板）": "Floor slab", "壁（板）": "Wall slab", "建物": "Building", "段差": "Step",
-    "角柱": "Prism", "円柱": "Cylinder", "角錐": "Pyramid", "円錐": "Cone", "支柱": "Pole", "直方体": "Box",
+    "角柱": "Prism", "円柱": "Cylinder", "円柱（太い・柱や建物）": "Cylinder (thick: columns, buildings)", "棒（細い円柱）": "Rod (thin cylinder)", "角錐": "Pyramid", "円錐": "Cone", "支柱": "Pole", "直方体": "Box",
     "置いた物体": "Objects in the scene", "複製": "Duplicate", "角の数": "Sides", "向き": "Turn",
     "選んだ関節を着ける": "Put the selected joint on it", "この上に立つ": "Stand on it",
     "配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。":
@@ -399,7 +399,7 @@
     "関節を固定している間は「左右同時に動かす」を使えません（固定をすべて外すと使えます）。": "“Move both sides together” is off while joints are pinned (unpin them all to use it).",
     "「左右同時に動かす」がオンの間は固定できません。": "Cannot pin while “Move both sides together” is on.",
     "反対側をこの形に": "Make the other side like this", "ここから先": "This and beyond", "ドラッグ結果がここに反映されます": "What you drag shows here",
-    "女性": "Female", "男性": "Male", "身長": "Height", "全体サイズ": "Overall size", "太さ": "Thickness",
+    "女性": "Female", "男性": "Male", "身長": "Height", "全体サイズ": "Overall size", "全身の太さ（太ももの付け根の直径）": "Whole-body thickness (thigh root diameter)", "全身の丸（頭・胴の幅・腕・脚）を同じ割合で太く・細くする。数字は太ももの付け根の丸の直径": "Makes every circle (head, torso width, arms, legs) thicker or thinner alike. The number is the thigh root circle's diameter", "大きさ（いちばん長い辺）": "Size (longest side)", "天面の幅": "Top width", "太さ": "Thickness",
     "↺ 体格を初期値に": "↺ Default build", "骨の長さ・丸の太さ・大きさを初期値にします。ポーズ（骨の向き）はそのままです。": "Bone lengths, circle sizes and scale go back to the defaults; the pose (the bones' directions) stays.",
     "カメラの位置（左右・上下・前後）": "Camera position (left-right, up-down, front-back)", "見る点（左右・上下・前後）": "Looks at (left-right, up-down, front-back)",
     "床の中心が 0。前後は人物の正面側が＋。位置を変えると、見る点を向いたまま向き（左右・上下）と拡大が決まります（傾きはそのまま）。":

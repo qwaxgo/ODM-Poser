@@ -1157,6 +1157,8 @@ document.addEventListener("keydown", e => {
 function scaleAbout(k){
   const c = S.P[IX.pelvis]; S.P = S.P.map(p => add(c, mul(sub(p, c), k))); S.R = S.R.map(r => r * k);
 }
+// 全身の太さ (体格): the thigh root's circle's diameter in cm, the measure of every circle's thickness
+const thickCm = raw => { const v = 2 * S.R[IX.r_hip]; return raw ? v : Math.round(v * 10) / 10; };
 function scaleHead(k){
   const n = S.P[IX.neck], v = sub(S.P[IX.head], n);
   S.P[IX.head] = add(n, mul(v, k)); S.R[IX.head] *= k;
@@ -1619,7 +1621,7 @@ for (const [id, key] of [["vShift", "shift"], ["vAlt", "alt"]])
   $(id).addEventListener("click", () => { VMOD[key] = !VMOD[key]; $(id).setAttribute("aria-pressed", String(VMOD[key])); $(id).classList.toggle("on", VMOD[key]); });
 if (navigator.maxTouchPoints > 0 || "ontouchstart" in window || matchMedia("(any-pointer: coarse)").matches)
   document.body.classList.add("touch");
-const UNITS = {scaleAll: 1, scaleHead: 1, scaleThick: 1, lens: 1, yaw: 1, pitch: 1, roll: 1};
+const UNITS = {scaleThick: 1, lens: 1, yaw: 1, pitch: 1, roll: 1};
 const TC = [];                        // user presets: from files (the button below) or from a mod
 $("preset").innerHTML = Object.keys(PRESETS).map(n => `<option>${n}</option>`).join("");
 // user presets: possibly thousands, so a group, a search and a list
@@ -1750,10 +1752,9 @@ function syncUI(){
     $(id).value = v; if (document.activeElement !== $(id + "V")) $(id + "V").value = v;
   }
   const sc = Object.assign(fresh().scale, S.scale);
-  for (const [id, key] of [["scaleAll", "all"], ["scaleHead", "head"], ["scaleThick", "thick"]]){
-    const r = $(id), v = sc[key]; r.min = Math.min(+r.min, v); r.max = Math.max(+r.max, v);
-    r.value = v; if (document.activeElement !== $(id + "V")) $(id + "V").value = v;
-  }
+  // 全身の太さ in cm: the thigh root's diameter (全体サイズ and 頭 are 身長 and 頭の大きさ in cm, pose_size.js)
+  { const r = $("scaleThick"), v = thickCm(); r.min = Math.min(+r.min, Math.floor(v)); r.max = Math.max(+r.max, Math.ceil(v));
+    if (rangeHeld !== r) r.value = v; if (document.activeElement !== $("scaleThickV")) $("scaleThickV").value = v; }
 }
 // any slider in the side panel: one undo step per drag or key press (the camera's, the ruler's,
 // a mod's ...); remember() skips a step that changed nothing
@@ -1893,15 +1894,13 @@ for (const [id, set] of [["lens", v => S.cam.lens = v], ["yaw", v => S.cam.yaw =
 $("camReset").addEventListener("click", () => { remember(); S.cam = fresh().cam; syncUI(); draw(); });
 // the same reset in the リセット tab: the camera back to its first place (saved cameras and the lock stay)
 $("resetCam").addEventListener("click", () => { remember(); const f = fresh(); S.cam = f.cam; S.center = f.center.slice(); syncUI(); draw(); say("カメラを初期状態に戻しました。"); });
-for (const [id, key, fn] of [["scaleAll", "all", scaleAbout], ["scaleHead", "head", scaleHead],
-    ["scaleThick", "thick", k => { S.R = S.R.map(r => r * k); }]]){
-  $(id).addEventListener("pointerdown", remember);
-  $(id).addEventListener("input", e => {
-    const sc = S.scale = Object.assign(fresh().scale, S.scale);
-    const v = +e.target.value; fromBottom(() => fn(v / sc[key])); sc[key] = v;
-    if (document.activeElement !== $(id + "V")) $(id + "V").value = v; draw();
-  });
-}
+$("scaleThick").addEventListener("pointerdown", remember);
+$("scaleThick").addEventListener("input", e => {
+  const v = +e.target.value; if (!(v > 0)) return;
+  const sc = S.scale = Object.assign(fresh().scale, S.scale), k = v / thickCm(true);
+  fromBottom(() => { S.R = S.R.map(r => r * k); }); sc.thick = Math.round(sc.thick * k * 10) / 10;   // the old share, kept in files
+  if (document.activeElement !== $("scaleThickV")) $("scaleThickV").value = v; draw();
+});
 // a number typed next to a slider moves the slider (beyond its ends too, for the scales)
 for (const id of Object.keys(UNITS)){
   $(id + "V").addEventListener("change", e => {
@@ -2250,7 +2249,6 @@ $("limitsSide").checked = $("limits").checked;
 $("limitsSide").addEventListener("change", e => { $("limits").checked = e.target.checked; $("limits").dispatchEvent(new Event("change")); });
 window.addEventListener("beforeunload", () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} });
 try { const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d && d.P){ migrate(d); if (d.P.length === J.length) S = Object.assign(fresh(), d); } } catch (e) {}
-for (const id of ["scaleAll", "scaleHead", "scaleThick"]) $(id + "V").value = 100;
 syncUI(); draw();
 // the setting 「クリックで自動的にモードを切り替える」 (on at first, kept in this browser): a press on a
 // thing goes to 配置 (where things move), a press on a joint to ポーズ (from 配置 or カメラ; 体格 keeps

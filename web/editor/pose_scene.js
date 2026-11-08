@@ -96,6 +96,13 @@ function segOfShape(it, sh){
   return g ? g.id : null;
 }
 function foldStretch(it){ it.stretch = stretchOf(it) || [1, 1, 1]; delete it.len; delete it.thick; return it.stretch; }
+// a thing's size in cm (the panels show cm, the file keeps scale and stretch): itemBase is its own
+// X, Y, Z length before its size and stretch (dims and sections in), itemCm as it is now
+function itemBase(it){ const {lo, hi} = localExtent(partsOf(it)); return [0, 1, 2].map(i => Math.max(0.1, hi[i] - lo[i])); }
+function itemCm(it){ const b = itemBase(it), st = stretchOf(it) || [1, 1, 1], k = it.scale || 1; return b.map((v, i) => v * k * st[i]); }
+function setItemCm(it, a, v){ if (!(v > 0)) return; const b = itemBase(it); foldStretch(it)[a] = Math.max(0.2, v / (b[a] * (it.scale || 1))); }
+const itemLongCm = it => Math.max(...itemCm(it));
+function setItemLongCm(it, v){ if (!(v > 0)) return; it.scale = Math.max(0.2, (it.scale || 1) * v / itemLongCm(it)); }
 // a round part's radius under a stretch: the mean of the axes across its own axis d (a cylinder's,
 // a disc's normal); a ball (no d) the mean of all three
 function radK(it, d){
@@ -993,7 +1000,7 @@ function mountOn(it, quiet){                  // seat the pelvis, put the hands 
 
 // ---- the panel ---------------------------------------------------------------------------------
 let scSel = -1;
-const ITEM_CTL = [["scSize", "大きさ", 30, 300, 1, "%"], ["scRx", "回転（前後に倒す）", -180, 180, 1, "°"],
+const ITEM_CTL = [["scSize", "大きさ（いちばん長い辺）", 1, 300, 0.5, "cm"], ["scRx", "回転（前後に倒す）", -180, 180, 1, "°"],
   ["scRy", "回転（ひねる）", -180, 180, 1, "°"], ["scRz", "回転（横に倒す）", -180, 180, 1, "°"],
   ["scOx", "ずらす（左右）", -150, 150, 1, "cm"], ["scOy", "ずらす（上下）", -150, 150, 1, "cm"], ["scOz", "ずらす（前後）", -150, 150, 1, "cm"]];
 function buildScenePanel(){
@@ -1118,7 +1125,7 @@ function buildScenePanel(){
     it.color = $("scColorOn").checked ? $("scColor").value : undefined; draw(); };
   $("scColorOn").addEventListener("change", setColor);
   $("scColor").addEventListener("input", () => { $("scColorOn").checked = true; setColor(); });
-  const setters = {scSize: (it, v) => it.scale = v / 100, scRx: (it, v) => it.rot[0] = v, scRy: (it, v) => it.rot[1] = v,
+  const setters = {scSize: (it, v) => setItemLongCm(it, v), scRx: (it, v) => it.rot[0] = v, scRy: (it, v) => it.rot[1] = v,
     scRz: (it, v) => it.rot[2] = v, scOx: (it, v) => it.off[0] = v, scOy: (it, v) => it.off[1] = v, scOz: (it, v) => it.off[2] = v};
   for (const [id] of ITEM_CTL){
     const r = $(id), n = $(id + "N");
@@ -1251,9 +1258,12 @@ function showItem(){
   $("scHandSel").value = it.hand === "l" ? "l" : "r";
   $("scHoldSel").value = holdOf(it);
   $("scGripAt").value = it.gripAt || 0; $("scGripAtN").value = it.gripAt || 0;
-  const vals = {scSize: Math.round((it.scale || 1) * 100), scRx: it.rot[0], scRy: it.rot[1], scRz: it.rot[2],
+  // the size in cm: the slider from 0.3 to 3 times its first longest side (as 30–300 % were)
+  { const L0 = Math.max(...itemBase(it)) * Math.max(...(stretchOf(it) || [1, 1, 1])), r = $("scSize");
+    r.min = Math.round(L0 * 3) / 10; r.max = Math.round(L0 * 30) / 10; }
+  const vals = {scSize: Math.round(itemLongCm(it) * 10) / 10, scRx: it.rot[0], scRy: it.rot[1], scRz: it.rot[2],
     scOx: it.off[0], scOy: it.off[1], scOz: it.off[2]};
-  for (const [id, v] of Object.entries(vals)){ $(id).value = v; $(id + "N").value = Math.round(v); }
+  for (const [id, v] of Object.entries(vals)){ if (rangeHeld !== $(id)) $(id).value = v; if (document.activeElement !== $(id + "N")) $(id + "N").value = id === "scSize" ? v : Math.round(v); }
 }
 function syncScene(){
   const E = S.env = Object.assign(fresh().env, S.env || {});
