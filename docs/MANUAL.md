@@ -99,7 +99,8 @@ What touches the face is the body's nearest, lowest point. By the pose that may 
 ## Body and sizes
 
 The **Body** tab now holds the sex, height and overall size together with each part's size (locked parts, head and torso, arms and legs, head shape). The height and the heads count are in one place, the **Body** section, with sliders; **Keep, when the height, heads or a part changes** chooses whether the heads count is kept (the whole body alike) or the height (the rest of the body makes up).
-A thing's size (3 axes) and its sections' lengths are in the Equip and Objects tabs.
+**Whole-body thickness** in the Body section is the thigh root circle's diameter (cm) and makes every circle thicker or thinner alike. The **Overall size** and **Head** of earlier versions (%) are now the tab's **Height** and **Head size (diameter)** (cm). The head shape's width, height and depth are in cm too.
+A thing's size (3 axes) and its sections' lengths are in the Equip and Objects tabs, in cm.
 
 Switching **Female** / **Male** keeps your adjustments (part lengths, left-right differences, thickness, head size): each part and the height change only by the difference between the sexes.
 For the sex's own starting body, use **↺ This figure back to its sex's default** in the Reset tab, or a body preset.
@@ -122,7 +123,9 @@ shape: it becomes a guide shape turned to the ruler (boxes, cylinders, prisms, p
 ## Sizes before putting
 
 In the Objects and Equip tabs, set the sizes before putting (or holding) a thing while its faint dashed preview shows:
-a shape's width, height, depth (a prism's or pyramid's sides and top); a thing's size, X, Y, Z and each section's length. It gets those sizes when put.
+a shape's width, height, depth (a prism's or pyramid's sides and top width); a thing's longest side, X, Y, Z and each section's length. All are in cm, not %. It gets those sizes when put.
+
+A thin rod to hold is **Rod (thin cylinder)** among the things' simple solids. A thick cylinder for an obstacle, a column or a building is **Cylinder (thick: columns, buildings)** under Shapes, floors, walls, ceilings.
 
 The top of the kind list is **Neutral (nothing chosen)**: no preview and no handles. The tab starts at Neutral and goes back to it after putting (or holding) a thing, so what was put can be moved right away. To put another, choose a kind again; choosing a category picks its first kind.
 

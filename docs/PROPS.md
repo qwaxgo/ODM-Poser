@@ -39,9 +39,9 @@ Pick it in **In the scene** to:
 
 ### Size on three axes
 
-**A thing's size (3 axes)** in the **Equip** and **Objects** tabs stretches X, Y and Z each on its own (20–400 %). For a
+**A thing's size (3 axes)** in the **Equip** and **Objects** tabs sets X, Y and Z each on its own, in cm (the sliders go from 0.2 to 4 times the thing's own lengths). **Size (longest side)** in cm grows the whole thing alike. For a
 held thing, Y is the way the thumb points (a sword's blade), Z the way the arm points (a gun's
-barrel), X across both. The grip stays; the far end grows. The preview's fields set the size before
+barrel), X across both. The grip stays; the far end grows. The preview's fields set the size in cm before
 it is placed, too.
 
 ### Section lengths (grip and blade ...)
