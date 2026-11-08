@@ -205,7 +205,7 @@ function buildStylePanel(){
     <div class="hint">線・床・壁・天井・ワイヤー・小物・物体・オーラの色を、最初の色に戻します（「元に戻す」で取り消せます）。</div>
     <div class="row" style="margin-top:6px"><label style="margin:0;flex:1">対象</label><select id="clObj"></select></div>
     <div id="clRows" class="cl-rows"></div>
-    <div class="hint">対象（人物・床・物・オーラなど）を選び、色を変えるものにチェックを入れて色を選ぶか、#rrggbb のコードを入力します。チェックしていないものは既定の色のままです（書き出すアタリ画像にも反映）。</div>
+    <div class="hint">対象（人物・床・持ち物・オーラなど）を選び、色を変えるものにチェックを入れて色を選ぶか、#rrggbb のコードを入力します。チェックしていないものは既定の色のままです（書き出すアタリ画像にも反映）。置いた図形・小物の色は、設置のタブの「物体の色」で変えます。</div>
     <h2 style="margin-top:14px">オーラ・気をまとう</h2>
     <div class="grid2">
       <div><label>部位</label><select id="auPart">${Object.entries(AURA_PARTS).map(([k, [ja]]) => `<option value="${k}">${ja}</option>`).join("")}</select></div>
@@ -239,16 +239,8 @@ function buildStylePanel(){
     for (const a of S.auras || []) delete a.color;
     syncStyle(); if (typeof syncUI === "function") syncUI(); draw(); });
   // the object picker and its rows (see renderCl): one delegated handler for the rows
-  $("clObj").addEventListener("change", () => { clKey = $("clObj").value; clRowsKey = ""; renderCl(); });
-  $("clRows").addEventListener("pointerdown", e => { if (e.target.type === "color") remember(); });
-  $("clRows").addEventListener("input", e => { const t = e.target, k = t.dataset.cl || t.dataset.clhex; if (!k) return;
-    if (t.type === "color"){ $("clRows").querySelector(`input[type=checkbox][data-cl="${k}"]`).checked = true; setClColor(k, t.value, true); } });
-  $("clRows").addEventListener("change", e => { const t = e.target;
-    if (t.type === "checkbox" && t.dataset.cl){ setClColor(t.dataset.cl, t.checked ? defClColor(t.dataset.cl) : undefined, false); return; }
-    if (t.dataset.clhex){ const v = t.value.trim();
-      if (!/^#[0-9a-f]{6}$/i.test(v)){ t.value = clColorOf(t.dataset.clhex) || defClColor(t.dataset.clhex); say("色は #rrggbb の形で入れてください（例：#e0605a）。", true); return; }
-      setClColor(t.dataset.clhex, v.toLowerCase(), false); }
-  });
+  $("clObj").addEventListener("change", () => { clKey = $("clObj").value; $("clRows").dataset.state = ""; renderCl(); });
+  bindClRows($("clRows"));
   for (const [on] of [["scColorOn"], ["soColorOn"]]){ const row = $(on) && $(on).closest(".row"); if (!row) continue;
     row.style.display = "none";
     const go = document.createElement("div"); go.className = "btns";
@@ -315,12 +307,12 @@ function buildColorSets(){
 function thingOf(k){ const n = +k.slice(1); return ({i: S.items, s: S.solids, a: S.auras}[k[0]] || [])[n]; }
 // the line colours by object (the picker 対象): the figure's parts, the floor, walls, ceiling and the
 // wire, and each thing, solid and aura (their own colour). A colour not set (no check) is the default.
-let clKey = "body", clRowsKey = "", clObjKey = "";
+let clKey = "body", clObjKey = "";
 const CL_ENV = [["floor", "床"], ["wall", "壁"], ["ceiling", "天井"], ["wire", "ワイヤー"]];
 function clObjects(){
   const P = window.PROPS || {}, out = [["body", "人物（体の部位）"], ...CL_ENV.map(([k, ja]) => [k, ja])];
-  (S.items || []).forEach((it, n) => { const d = P[it.key] || {}; out.push(["i" + n, `小物：${d.ja || it.key}`]); });
-  (S.solids || []).forEach((o, n) => out.push(["s" + n, `物体：${typeof solidName === "function" ? solidName(o) : o.kind}`]));
+  // the things held or worn (the objects put are in 設置 › 物体の色)
+  (S.items || []).forEach((it, n) => { if (looseItem(it)) return; const d = P[it.key] || {}; out.push(["i" + n, `小物：${d.ja || it.key}`]); });
   (S.auras || []).forEach((a, n) => out.push(["a" + n, `オーラ：${(AURA_PARTS[a.part] || AURA_PARTS.body)[0]}・${(AURA_KINDS[a.kind] || AURA_KINDS.flame)[0]}`]));
   return out;
 }
@@ -355,8 +347,13 @@ function renderCl(){
   sel.value = clKey;
   const rows = clKey === "body" ? PART_NAMES.map(([k, ja]) => [k, ja])
     : [[clKey, (objs.find(([k]) => k === clKey) || [clKey, clKey])[1]]];
+  fillClRows(box, rows);
+}
+// rows of colours (the 色 tab's, the 設置 tab's 物体の色): rebuilt only when the rows change, else their
+// values change in place
+function fillClRows(box, rows){
   const state = JSON.stringify(rows.map(([k]) => [k, clColorOf(k) || null]));
-  if (state === clRowsKey) return; clRowsKey = state;
+  if (state === box.dataset.state) return; box.dataset.state = state;
   // the same rows: their values change in place (rebuilt, the colour picker open on one would close)
   const keys = JSON.stringify(rows.map(([k]) => k));
   if (keys === box.dataset.keys){
@@ -374,7 +371,41 @@ function renderCl(){
       <input type="color" data-cl="${k}" value="${v}" aria-label="${esc(name)}の色"><input type="text" class="hexin" data-clhex="${k}" value="${v}" maxlength="7" aria-label="${esc(name)}の色コード"></div>`;
   }).join("");
 }
-function syncThings(){ renderCl(); }
+// one handler set for a box of colour rows
+function bindClRows(box){
+  box.addEventListener("pointerdown", e => { if (e.target.type === "color") remember(); });
+  box.addEventListener("input", e => { const t = e.target, k = t.dataset.cl || t.dataset.clhex; if (!k) return;
+    if (t.type === "color"){ box.querySelector(`input[type=checkbox][data-cl="${k}"]`).checked = true; setClColor(k, t.value, true); } });
+  box.addEventListener("change", e => { const t = e.target;
+    if (t.type === "checkbox" && t.dataset.cl){ setClColor(t.dataset.cl, t.checked ? defClColor(t.dataset.cl) : undefined, false); return; }
+    if (t.dataset.clhex){ const v = t.value.trim();
+      if (!/^#[0-9a-f]{6}$/i.test(v)){ t.value = clColorOf(t.dataset.clhex) || defClColor(t.dataset.clhex); say("色は #rrggbb の形で入れてください（例：#e0605a）。", true); return; }
+      setClColor(t.dataset.clhex, v.toLowerCase(), false); }
+  });
+}
+// 設置 › 物体の色: the shapes, slabs, walls and things put on their own (not held or worn: those stay in 色)
+const looseItem = it => typeof movable === "function" ? movable(it) : it.where === "world";
+function objColorRows(){
+  const P = window.PROPS || {}, out = [];
+  (S.solids || []).forEach((o, n) => out.push(["s" + n, `${o.guide ? "ガイド" : "図形"}：${typeof solidName === "function" ? solidName(o) : o.kind}`]));
+  (S.items || []).forEach((it, n) => { if (looseItem(it)) out.push(["i" + n, `小物：${(P[it.key] || {}).ja || it.key}`]); });
+  return out;
+}
+function buildObjColors(){
+  const sec = document.createElement("section");
+  sec.dataset.menu = "objects";
+  sec.innerHTML = `<h2>物体の色</h2><div id="ocRows" class="cl-rows"></div>
+    <div class="hint" id="ocNone">図形・床の板・壁・置いた小物があると、ここで1つずつ線の色を変えられます。</div>
+    <div class="hint">色を変える物にチェックを入れて色を選ぶか、#rrggbb のコードを入力します。チェックしていない物は既定の色のままです（書き出すアタリ画像にも反映）。手に持つ物・身に着ける物とオーラの色は、色のタブで変えます。</div>`;
+  document.querySelector("aside").appendChild(sec);
+  bindClRows($("ocRows"));
+}
+function renderObjColors(){
+  const box = $("ocRows"); if (!box) return;
+  const rows = objColorRows(); $("ocNone").style.display = rows.length ? "none" : "";
+  fillClRows(box, rows);
+}
+function syncThings(){ renderCl(); renderObjColors(); }
 function syncStyle(){
   const c = S.colors = Object.assign({parts: {}}, S.colors || {}); c.parts = c.parts || {};
   // a colour that is not set shows the picker's own starting colour
@@ -388,13 +419,18 @@ function syncStyle(){
     $("auColor").value = a.color || AURA_KINDS[a.kind][1]; auWrite(a); }
 }
 buildStylePanel();
+buildObjColors();
 buildColorSets();
 syncStyle();
 { const d0 = draw; draw = function(){ d0.apply(this, arguments); syncThings(); }; }
 { const sync0 = syncUI; syncUI = function(){ sync0(); syncStyle(); }; }
 draw();
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
-(window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"床": "Floor", "壁": "Wall", "天井": "Ceiling", "小物・物体・オーラ": "Things, objects, auras",
+(window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({
+  "物体の色": "Object colours", "図形・床の板・壁・置いた小物があると、ここで1つずつ線の色を変えられます。": "With shapes, slabs, walls or things put, recolour each one's lines here.",
+  "色を変える物にチェックを入れて色を選ぶか、#rrggbb のコードを入力します。チェックしていない物は既定の色のままです（書き出すアタリ画像にも反映）。手に持つ物・身に着ける物とオーラの色は、色のタブで変えます。":
+    "Tick what to recolour and choose a colour or type a #rrggbb code. What is not ticked keeps its default colour (the exported rough picture too). Things held or worn and auras are recoloured in the Colors tab.",
+  "対象（人物・床・持ち物・オーラなど）を選び、色を変えるものにチェックを入れて色を選ぶか、#rrggbb のコードを入力します。チェックしていないものは既定の色のままです（書き出すアタリ画像にも反映）。置いた図形・小物の色は、設置のタブの「物体の色」で変えます。": "Pick a target (figure, floor, things held, auras ...), tick what to recolour and choose a colour or type a #rrggbb code. What is not ticked keeps its default colour (the exported rough picture too). Shapes and things put are recoloured under \"Object colours\" in the Objects tab.","床": "Floor", "壁": "Wall", "天井": "Ceiling", "小物・物体・オーラ": "Things, objects, auras",
   "線の色はすべてここで変えます。チェックしたものだけ色が変わります（書き出すアタリ画像にも）。": "Every line colour is set here. Only what is ticked changes (in the exported rough too).",
   "線の色は「色」のタブで": "Line colour: in the Colours tab", "まだありません。": "None yet.",
   "全身を、どの角度から見ても同じ横幅に": "Whole body: as wide from every side",

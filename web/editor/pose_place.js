@@ -367,6 +367,71 @@ function sync(){
 }
 { const d0 = draw; draw = function(){ d0.apply(this, arguments); if (sec.classList.contains("active")) sync(); }; }
 
+// ---- 物体のプリセット: one object's make (its kind, size, turn, colour, exaggeration ...), named and kept
+// in this browser, to put again as often as wanted (in front of the figure, on the ground)
+const OP_KEY = (typeof KEY === "string" ? KEY : "odm-poser-editor-v1") + "-objpresets";
+const SOLID_KEEP = ["kind", "size", "yaw", "pitch", "roll", "sides", "top", "color", "exag", "guide", "gq", "piv"];
+const ITEM_KEEP = ["key", "rot", "yaw", "scale", "stretch", "segs", "dims", "len", "thick", "color", "exag", "piv", "bayonet"];
+const opLoad = () => { try { const v = JSON.parse(localStorage.getItem(OP_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
+const opSave = list => { try { localStorage.setItem(OP_KEY, JSON.stringify(list)); return true; } catch (e) { say("プリセットを保存できませんでした（ブラウザの保存領域）。", true); return false; } };
+const pickKeys = (from, keys) => { const o = {}; for (const k of keys) if (from[k] !== undefined) o[k] = JSON.parse(JSON.stringify(from[k])); return o; };
+const opKind = p => p.solid ? (SOLID_KINDS[p.solid.kind] || {}).ja || p.solid.kind : p.item ? (PROPS_[p.item.key] || {}).ja || p.item.key : "";
+const opSec = document.createElement("section");
+opSec.dataset.menu = "objects";
+opSec.innerHTML = `<h2>物体のプリセット</h2>
+  <select id="opList" size="5"></select>
+  <div class="hint" id="opNone">まだありません。置いた物を選んで「記憶」を押すと、その種類・大きさ・向き・色・パースの誇張を、名前をつけて記憶します。</div>
+  <label>名前</label><input type="text" id="opName" maxlength="40" placeholder="例：レジャーシート">
+  <div class="btns" style="margin-top:6px"><button type="button" id="opSave" title="設置のタブで選んだ物を、この名前で記憶する（同じ名前は上書き）">記憶</button>
+    <button type="button" id="opPut" title="選んだプリセットを、人物の前に置く">置く</button>
+    <button type="button" id="opRename" title="選んだプリセットの名前を、上の名前に変える">名前を変える</button>
+    <button type="button" id="opDel" title="選んだプリセットを消す">削除</button></div>
+  <div class="hint">プリセットはこのブラウザに保存されます。置くと人物の前の床（または下の物の上）に置かれ、そのまま動かせます。</div>`;
+sec.after(opSec);
+function opFill(keep){
+  const list = opLoad(), cur = keep !== undefined ? keep : $("opList").value;
+  $("opList").innerHTML = list.map((p, i) => `<option value="${i}">${esc2(p.name)}（${esc2(opKind(p))}）</option>`).join("");
+  $("opNone").style.display = list.length ? "none" : "";
+  if (list[+cur]) $("opList").value = String(cur);
+  for (const id of ["opPut", "opRename", "opDel"]) $(id).disabled = !list.length;
+}
+$("opList").addEventListener("change", () => { const p = opLoad()[+$("opList").value]; if (p) $("opName").value = p.name; });
+$("opSave").addEventListener("click", () => {
+  const o = solidOf(sel), it = itemOf(sel);
+  if (!o && !it){ say("記憶する物を、置いた物の一覧か図で選んでください。", true); return; }
+  const name = $("opName").value.trim() || (o ? solidName(o) : (PROPS_[it.key] || {}).ja || it.key);
+  const p = o ? {name, solid: pickKeys(o, SOLID_KEEP)} : {name, item: pickKeys(it, ITEM_KEEP)};
+  const list = opLoad(), at = list.findIndex(x => x.name === name);
+  if (at >= 0) list[at] = p; else list.push(p);
+  if (opSave(list)){ opFill(at >= 0 ? at : list.length - 1); $("opName").value = name; say(`「${name}」を記憶しました。`); }
+});
+$("opPut").addEventListener("click", () => {
+  const p = opLoad()[+$("opList").value]; if (!p) return;
+  if (p.solid && SOLID_KINDS[p.solid.kind]){
+    addSolid(p.solid.kind); const o = S.solids[S.solids.length - 1];
+    Object.assign(o, JSON.parse(JSON.stringify(p.solid)));
+    if (o.guide){ guideToRuler(o, typeof o.gq === "number" ? o.gq : 0); const r = rulerState(); if (!r.on){ r.on = true; if (typeof syncRuler === "function") syncRuler(); } }
+    else { if (typeof snapSolid === "function") snapSolid(o); groundSolid(o); }
+    afterEdit(); syncSolids(); choose("s" + (S.solids.length - 1));
+  } else if (p.item && PROPS_[p.item.key]){
+    placeAlone(p.item.key); const it = S.items[S.items.length - 1];
+    Object.assign(it, JSON.parse(JSON.stringify(p.item)));
+    it.grounded = true; groundItem(it);
+    afterEdit(); choose("i" + (S.items.length - 1));
+  } else { say("このプリセットの種類が見つかりません。", true); return; }
+  say(`「${p.name}」を置きました。`); draw();
+});
+$("opRename").addEventListener("click", () => {
+  const list = opLoad(), i = +$("opList").value, name = $("opName").value.trim(); if (!list[i] || !name) return;
+  if (list.some((x, n) => n !== i && x.name === name)){ say("同じ名前のプリセットがあります。", true); return; }
+  list[i].name = name; if (opSave(list)) opFill(i);
+});
+$("opDel").addEventListener("click", () => {
+  const list = opLoad(), i = +$("opList").value; if (!list[i]) return;
+  const name = list[i].name; list.splice(i, 1); if (opSave(list)){ opFill(Math.max(0, i - 1)); say(`「${name}」を消しました。`); }
+});
+opFill();
+
 // the categories' and sections' English (from the props' own tables)
 { const t = {}; for (const [, ja, en] of CATS_) if (en) t[ja] = en;
   for (const d of Object.values(PROPS_)){ const sg = typeof segsOf === "function" ? segsOf(d) : null; if (sg) for (const g of sg.list) t[g.ja] = g.en; }
@@ -392,6 +457,17 @@ function sync(){
   "支点（本体から）Z": "Pivot (from the object) Z", "支点（絶対座標）X": "Pivot (world) X", "支点（絶対座標）Y": "Pivot (world) Y", "支点（絶対座標）Z": "Pivot (world) Z",
   "中心に戻す": "To the middle", "底の中心に": "To the bottom's middle", "支点を物の真ん中に戻す": "The pivot back to the object's middle",
   "支点を物の底の真ん中にする": "The pivot to the middle of the object's bottom",
+  "物体のプリセット": "Object presets", "名前": "Name", "例：レジャーシート": "e.g. Picnic mat", "記憶": "Save", "名前を変える": "Rename", "削除": "Delete",
+  "まだありません。置いた物を選んで「記憶」を押すと、その種類・大きさ・向き・色・パースの誇張を、名前をつけて記憶します。":
+    "None yet. Select a thing put and press Save to keep its kind, size, turn, colour and exaggerated perspective under a name.",
+  "設置のタブで選んだ物を、この名前で記憶する（同じ名前は上書き）": "Keep the thing selected in the Objects tab under this name (the same name is overwritten)",
+  "選んだプリセットを、人物の前に置く": "Put the chosen preset in front of the figure", "選んだプリセットの名前を、上の名前に変える": "Rename the chosen preset to the name above",
+  "選んだプリセットを消す": "Delete the chosen preset",
+  "プリセットはこのブラウザに保存されます。置くと人物の前の床（または下の物の上）に置かれ、そのまま動かせます。":
+    "Presets are kept in this browser. Put, one lands in front of the figure on the floor (or on what is under it), ready to move.",
+  "記憶する物を、置いた物の一覧か図で選んでください。": "Select the thing to save in the list of things put or in the view.",
+  "このプリセットの種類が見つかりません。": "This preset's kind is not found.", "同じ名前のプリセットがあります。": "A preset of that name exists.",
+  "プリセットを保存できませんでした（ブラウザの保存領域）。": "The preset could not be saved (the browser's storage).",
   "「本体から」は物と一緒に動き・回る位置、「絶対座標」は場面の中の位置です。3軸ハンドルの「支点」で動かすこともできます。":
     "\"From the object\" moves and turns with it; \"world\" is the place in the scene. The 3-axis handles' Pivot button moves it too.", "天井（板）": "Ceiling slab"});
 })();

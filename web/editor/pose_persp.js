@@ -26,11 +26,11 @@ for (const name of ["drawRuler", "guideEdges", "vanish", "horizonLine"]){
   window[name] = function(){ const a = arguments; return withPX(rulerPX(), () => fn.apply(this, a)); };
 }
 
-// ---- the panel: カメラ › パースの誇張 ------------------------------------------------------------------
+// ---- the panel: 見る › 視点 › パース ------------------------------------------------------------------
 const row = (id, label, min, max, step, unit, title) => `<div id="${id}Box"><label${title ? ` title="${title}"` : ""}>${label}</label><div class="row">` +
   `<input type="range" id="${id}R" min="${min}" max="${max}" step="${step}" value="0"><input type="number" class="num" id="${id}" step="${step}" value="0"><span class="unit">${unit}</span></div></div>`;
 const sec = document.createElement("section");
-sec.dataset.menu = "camera";
+sec.dataset.menu = "persp";                 // 見る › 視点 › パース (ui-menu.js)
 sec.innerHTML = `<h2>パースの誇張（物体ごと）</h2>
   <div class="hint" id="pxState"></div>
   <label title="この奥行きにある物は大きさが変わらず、奥ほど急に縮み、手前ほど大きくなる">支点（大きさが変わらない所）</label><select id="pxKey"></select>
@@ -40,14 +40,11 @@ sec.innerHTML = `<h2>パースの誇張（物体ごと）</h2>
   <div class="btns" style="margin-top:6px"><button type="button" id="pxOffReset" title="支点のずれをなくす（物体ならその真ん中）">↺ 支点の位置を戻す</button></div>
   ${row("pxFig", "編集中の人物の誇張", -100, 100, 1, "%", "0 で誇張なし。大きいほど、支点より奥が急に縮み、手前が大きくなる（マイナスは平らに）")}
   ${row("pxRuler", "パース定規・ガイド図形の誇張", -100, 100, 1, "%", "定規の線と消失点も、ガイド図形と同じ誇張に合わせる")}
-  <div class="hint">物体（図形・小物）の誇張は、設置のタブで物ごとに決めます。手に持つ物・身に着ける物は、持っている人物と同じ誇張です。書き出す画像（アタリ・OpenPose・定規）にも入ります。</div>`;
+  <h2 style="margin-top:14px">物体ごとの誇張</h2>
+  <div id="pxObjs" class="px-objs"></div>
+  <div class="hint" id="pxObjsNone">置いた図形・小物があると、ここで1つずつ強さを決められます。</div>
+  <div class="hint">手に持つ物・身に着ける物は、持っている人物と同じ誇張です。ガイド図形は「パース定規・ガイド図形の誇張」に従います。書き出す画像（アタリ・OpenPose・定規）にも入ります。</div>`;
 { const lock = $("camLock") && $("camLock").closest("section"); if (lock) lock.after(sec); else document.querySelector("aside").appendChild(sec); }
-
-// 設置: the object's own strength (a guide's is the ruler's)
-const plRow = document.createElement("div");
-plRow.innerHTML = row("plEx", "パースの誇張", -100, 100, 1, "%", "カメラを固定しているとき、カメラ › パースの誇張の支点を中心に、この物だけパースを強める（奥ほど急に縮む）") +
-  `<div class="hint" id="plExHint"></div>`;
-{ const at = $("plPiv"); if (at) at.before(plRow); }
 
 function pivotKeys(){
   const out = [["f" + (S.figId || 1), `人物：${S.figName || "1人目"}（編集中）`]];
@@ -78,31 +75,38 @@ function sync(){
   offNow().forEach((v, i) => put(["pxOX", "pxOY", "pxOZ"][i], v));
   put("pxFig", +S.figExag || 0); put("pxRuler", +P.ruler || 0);
 }
-function syncPlace(){
-  const k = window.ODMObj ? ODMObj.key() : "", o = /^s\d+$/.test(k) ? (S.solids || [])[+k.slice(1)] : null, it = /^i\d+$/.test(k) ? (S.items || [])[+k.slice(1)] : null;
-  const guide = !!(o && o.guide);
-  $("plExBox").style.display = (o || it) && !guide ? "" : "none";
-  $("plExHint").textContent = guide ? "ガイド図形の誇張は、カメラ › パースの誇張の「パース定規・ガイド図形の誇張」で決めます。"
-    : (o || it) && !S.camLock ? "誇張は、カメラを固定しているときだけ効きます。" : "";
-  $("plExHint").style.display = $("plExHint").textContent ? "" : "none";
-  const v = o ? +o.exag || 0 : it ? +it.exag || 0 : 0;
-  if (document.activeElement !== $("plEx")) $("plEx").value = v; if (document.activeElement !== $("plExR")) $("plExR").value = v;
+// 物体ごとの誇張: each shape (not a guide) and thing put, its strength in % (o.exag)
+const objList = () => { const out = [];
+  (S.solids || []).forEach((o, k) => { if (!o.guide) out.push(["s" + k, `図形：${typeof solidName === "function" ? solidName(o) : o.kind}`, o]); });
+  (S.items || []).forEach((it, n) => { if (typeof movable === "function" && movable(it)) out.push(["i" + n, `小物：${(PROPS_[it.key] || {}).ja || it.key}`, it]); });
+  return out; };
+let objKey = "";
+function syncObjs(){
+  const list = objList(), box = $("pxObjs"), k = JSON.stringify(list.map(([key, name]) => [key, name]));
+  $("pxObjsNone").style.display = list.length ? "none" : "";
+  if (k !== objKey){ objKey = k;                     // rebuilt only when the list changes (a slider held stays)
+    box.innerHTML = list.map(([key, name]) => `<label>${esc2(name)}</label><div class="row"><input type="range" data-px="${key}" min="-100" max="100" step="1">` +
+      `<input type="number" class="num" data-pxn="${key}" step="1"><span class="unit">%</span></div>`).join(""); }
+  for (const [key, , t] of list){ const v = +t.exag || 0, r = box.querySelector(`[data-px="${key}"]`), n = box.querySelector(`[data-pxn="${key}"]`);
+    if (r && document.activeElement !== r) r.value = v; if (n && document.activeElement !== n) n.value = v; }
 }
-{ const d0 = draw; draw = function(){ d0.apply(this, arguments);
-    if (sec.classList.contains("active")) sync();
-    const pl = plRow.closest("section"); if (pl && pl.classList.contains("active")) syncPlace(); }; }
+const objOfKey = key => key[0] === "s" ? (S.solids || [])[+key.slice(1)] : (S.items || [])[+key.slice(1)];
+function setObj(key, v){ const t = objOfKey(key); if (!t) return; if (v) t.exag = v; else delete t.exag; if (typeof afterEdit === "function") afterEdit(); draw(); }
+$("pxObjs").addEventListener("input", e => { const key = e.target.dataset.px; if (!key) return;
+  const n = $("pxObjs").querySelector(`[data-pxn="${key}"]`); if (n) n.value = e.target.value; setObj(key, +e.target.value); });
+$("pxObjs").addEventListener("change", e => { const key = e.target.dataset.pxn; if (!key) return; const v = +e.target.value; if (!isFinite(v)) return;
+  remember(); const r = $("pxObjs").querySelector(`[data-px="${key}"]`); if (r) r.value = v; setObj(key, v); });
+{ const d0 = draw; draw = function(){ d0.apply(this, arguments); if (sec.classList.contains("active")){ sync(); syncObjs(); } }; }
 
 // the controls: one undo step per drag (the slider's pointerdown: pose_main.js), one per typed number
 function setVal(id, v){
   const P = persp();
   if (id === "pxFig") S.figExag = v;
   else if (id === "pxRuler") P.ruler = v;
-  else if (id === "plEx"){ const k = window.ODMObj ? ODMObj.key() : "", o = /^s\d+$/.test(k) ? S.solids[+k.slice(1)] : null, it = /^i\d+$/.test(k) ? S.items[+k.slice(1)] : null;
-    const t = o || it; if (!t) return; if (v) t.exag = v; else delete t.exag; }
   else { const n = ["pxOX", "pxOY", "pxOZ"].indexOf(id); if (n < 0) return; const off = offNow().slice(); off[n] = v; P.pivot = Object.assign({}, P.pivot, {off}); }
   if (typeof afterEdit === "function") afterEdit(); draw();
 }
-for (const id of ["pxOX", "pxOY", "pxOZ", "pxFig", "pxRuler", "plEx"]){
+for (const id of ["pxOX", "pxOY", "pxOZ", "pxFig", "pxRuler"]){
   const r = $(id + "R"), n = $(id);
   r.addEventListener("input", () => { n.value = r.value; setVal(id, +r.value); });
   n.addEventListener("change", () => { const v = +n.value; if (!isFinite(v)) return; remember(); r.value = v; setVal(id, v); });
@@ -113,7 +117,7 @@ $("pxJoint").addEventListener("change", () => { remember(); const P = persp(); P
 $("pxOffReset").addEventListener("click", () => { remember(); const P = persp(); P.pivot = Object.assign({}, P.pivot, {off: null}); draw(); });
 // the lock switched: the picture changes at once
 if ($("camLock")) $("camLock").addEventListener("change", () => draw());
-sync();
+sync(); syncObjs();
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
 (window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({
@@ -125,8 +129,9 @@ sync();
   "編集中の人物の誇張": "The edited figure's exaggeration", "パース定規・ガイド図形の誇張": "The ruler's and guides' exaggeration",
   "0 で誇張なし。大きいほど、支点より奥が急に縮み、手前が大きくなる（マイナスは平らに）": "0: none. The more, the faster what lies behind the pivot shrinks and what is in front grows (below 0: flatter)",
   "定規の線と消失点も、ガイド図形と同じ誇張に合わせる": "The ruler's lines and vanishing points follow the guides' exaggeration",
-  "物体（図形・小物）の誇張は、設置のタブで物ごとに決めます。手に持つ物・身に着ける物は、持っている人物と同じ誇張です。書き出す画像（アタリ・OpenPose・定規）にも入ります。":
-    "Each object's (shapes, things) is set in the Objects tab. Things held or worn go with their figure. The exported pictures (rough, OpenPose, ruler) have it too.",
+  "物体ごとの誇張": "Each object's exaggeration", "置いた図形・小物があると、ここで1つずつ強さを決められます。": "With shapes or things put, set each one's strength here.",
+  "手に持つ物・身に着ける物は、持っている人物と同じ誇張です。ガイド図形は「パース定規・ガイド図形の誇張」に従います。書き出す画像（アタリ・OpenPose・定規）にも入ります。":
+    "Things held or worn go with their figure. Guides follow \"The ruler's and guides' exaggeration\". The exported pictures (rough, OpenPose, ruler) have it too.",
   "支点の位置は、その物体の座標（物体の向きに沿った X・Y・Z）です。": "The pivot's place is in the object's own coordinates (X, Y, Z along its turn).",
   "支点の位置は、選んだ部位からのずれ（場面の X・Y・Z）です。": "The pivot's place is an offset from the part (the scene's X, Y, Z).",
   "カメラを固定しているので、誇張が効いています。": "The camera is locked, so the exaggeration is on.",
