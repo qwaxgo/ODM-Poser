@@ -135,13 +135,57 @@ function frameWH(W, H){
   if (!frameAspect){ const [EW, EH] = exportSize(); frameAspect = EW / EH; }
   return W / H > frameAspect ? [H * frameAspect, H] : [W, W / frameAspect];
 }
-function lensF(W, H){ const [w, h] = frameWH(W, H); return S.cam.lens / 36 * Math.max(w, h); }
-function camDist(W, H){ return lensF(W, H) * 190 / (0.86 * frameWH(W, H)[1]) / S.cam.zoom; }   // 190 cm fills 86 % of the picture's height
+// パースの誇張 (pose_persp.js): while PX is set ({k, qz}), what is drawn is seen by a camera moved toward
+// the pivot (its depth qz) by k of the way, its lens widened as much (a dolly zoom for that thing alone):
+// at the pivot's depth the size stays, farther it shrinks faster, nearer it grows. Lines stay straight
+// and the vanishing points (vanish, the eye level) come from the same lens, so the ruler can follow
+let PX = null;
+function lensF(W, H){ const [w, h] = frameWH(W, H); return S.cam.lens / 36 * Math.max(w, h) * (PX ? 1 - PX.k : 1); }
+function camDist(W, H){ const [w, h] = frameWH(W, H), D = S.cam.lens / 36 * Math.max(w, h) * 190 / (0.86 * h) / S.cam.zoom;   // 190 cm fills 86 % of the picture's height
+  return PX ? D - PX.k * (D - PX.qz) : D; }
 function toCam(p){ return camRot(sub(p, S.center)); }
 function project(p, W, H){
   const q = toCam(p), f = lensF(W, H), D = camDist(W, H), d = Math.max(D - q[2], 1);
   return {x: W/2 + f*q[0]/d, y: H/2 - f*q[1]/d, s: f/d, z: q[2]};
 }
+// パースの誇張 (pose_persp.js): only while the camera is locked. S.persp.pivot {key, joint, off}: the
+// depth that keeps its size (a figure's joint, "f<id>", with an offset in cm on the scene's axes; an
+// object, "s<k>" / "i<n>", with an offset in its own axes, its middle at first). The strength in % is
+// each thing's own: a figure's S.figExag, an object's o.exag, the ruler's and guides' S.persp.ruler
+const EX_K = 0.9;                              // 100 %: the camera 0.9 of the way to the pivot
+function exPivot(){
+  const pv = (S.persp && S.persp.pivot) || {}, key = pv.key || "", off = Array.isArray(pv.off) ? pv.off : null;
+  if (/^[si]\d+$/.test(key) && window.ODMObj && ODMObj.toWorld){ const w = ODMObj.toWorld(key, off); if (w) return w; }
+  let P = S.P;
+  if (/^f\d+$/.test(key) && +key.slice(1) !== (S.figId || 1)){ const f = (S.others || []).find(o => (o.figId || 1) === +key.slice(1)); if (f) P = f.P; }
+  const j = IX[pv.joint] !== undefined ? IX[pv.joint] : IX.pelvis;
+  return add(P[j], off && !/^[si]/.test(key) ? off : [0, 0, 0]);
+}
+// the exaggeration for a strength in % (null: none, or the camera is free)
+function pxOf(pct){
+  pct = +pct; if (!S.camLock || !pct || !isFinite(pct)) return null;
+  const keep = PX; PX = null;
+  try { return {k: Math.max(-EX_K, Math.min(EX_K, pct / 100 * EX_K)), qz: toCam(exPivot())[2]}; } finally { PX = keep; }
+}
+// a segment cut just before the camera (null: all behind it); a far-reaching thing under a strong
+// パースの誇張 reaches behind its own camera, and its lines would cross the picture
+function clipNear(a, b, W, H, near = 5){
+  const D = camDist(W, H), da = D - toCam(a)[2], db = D - toCam(b)[2];
+  if (da < near && db < near) return null;
+  if (da < near) a = add(a, mul(sub(b, a), (near - da) / (db - da))); else if (db < near) b = add(b, mul(sub(a, b), (near - db) / (da - db)));
+  return [a, b];
+}
+function withPX(px, fn){ const keep = PX; PX = px; try { return fn(); } finally { PX = keep; } }
+const figPX = () => pxOf(S.figExag);
+// an object's ("s3", "i2"; a guide: the ruler's; a thing held or worn: its figure's)
+function pxOfKey(k){
+  if (!k) return null;
+  if (k[0] === "s"){ const o = (S.solids || [])[+k.slice(1)]; return !o ? null : pxOf(o.guide ? (S.persp || {}).ruler : o.exag); }
+  if (k[0] === "i"){ const it = (S.items || [])[+k.slice(1)]; return it ? pxOfItem(it) : null; }
+  return null;
+}
+function pxOfItem(it){ const loose = typeof movable === "function" ? movable(it) : it.where === "world"; return loose ? pxOf(it.exag) : figPX(); }
+const rulerPX = () => pxOf((S.persp || {}).ruler);
 
 // the head's frame, for the face direction and the OpenPose nose / eyes / ears
 function headFrame(){
@@ -290,7 +334,8 @@ function strokeSeen(ctx, a, b, W, H, skip, proj = project, seenWH = [W, H]){
   flush(start, n, prev);
   ctx.setLineDash([]);
 }
-function drawAtari(ctx, W, H, opts = {}){
+function drawAtari(ctx, W, H, opts = {}){ return withPX(figPX(), () => drawFigure(ctx, W, H, opts)); }
+function drawFigure(ctx, W, H, opts){
   if (S.P.length < J.length) upgradeState(S);
   const P = S.P.map(p => project(p, W, H));
   const ink = opts.ink || cssVar("--figure"), far = opts.far || cssVar("--far");
@@ -385,7 +430,7 @@ function drawAtari(ctx, W, H, opts = {}){
   }
   }
   // the scene: floor, walls, things held and placed (pose_scene.js)
-  if (typeof drawScene === "function") drawScene(ctx, W, H, opts, project, ink, far, lw);
+  if (typeof drawScene === "function") withPX(null, () => drawScene(ctx, W, H, opts, project, ink, far, lw));   // each thing its own (pose_scene.js)
   // hands: a small fan of the fingers
   if (!opts.noFigure) for (const side of ["r", "l"]){
     ctx.setLineDash([]);
@@ -525,7 +570,8 @@ function openposePoints(W, H){
                  P[IX.l_hip], P[IX.l_knee], P[IX.l_ankle], f.r_eye, f.l_eye, f.r_ear, f.l_ear];
   return order.map(p => project(p, W, H));
 }
-function drawOpenpose(ctx, W, H, noBg){
+function drawOpenpose(ctx, W, H, noBg){ return withPX(figPX(), () => drawOpenpose0(ctx, W, H, noBg)); }   // パースの誇張: the figure's own
+function drawOpenpose0(ctx, W, H, noBg){
   if (!noBg){ ctx.fillStyle = "#000"; ctx.fillRect(0, 0, W, H); }
   const K = openposePoints(W, H), sw = Math.max(2, Math.round(4 * Math.max(W, H) / 1024));
   OP_LIMBS.forEach(([a, b], i) => {

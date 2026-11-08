@@ -127,10 +127,11 @@ function rayHit(m, r){                        // distance to where the ray enter
   return t0;
 }
 // dragging a thing by the point that was grabbed: over the floor, or up and down with Shift
-function dragFrom(hit, W, H, apply){
+// px: the thing's パースの誇張 (its ray is its own camera's)
+function dragFrom(hit, W, H, apply, px){
   let last = hit.slice();
   return {move(x, y, e){
-    const r = pixelRay(x, y, W, H);
+    const r = withPX(px || null, () => pixelRay(x, y, W, H));
     if (e.shiftKey){
       const nrm = norm([r.dir[0], 0, r.dir[2]]), dn = dot(nrm, r.dir);
       if (Math.abs(dn) < 1e-6) return;
@@ -152,10 +153,10 @@ function drawSolids(ctx, W, H, opts, proj, lw, toViewer){
   const list = S.solids || [];
   if (!list.length) return;
   ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
-  list.forEach((o, k) => {
+  list.forEach((o, k) => withPX(opts.side ? null : pxOfKey("s" + k), () => {   // パースの誇張: each its own camera
     if (isGuide(o)) return;                 // drawn with the ruler
-    const m = solidMesh(o), P = m.V.map(p => proj(p, W, H));
-    const seen = m.faces.map(f => dot(f.n, toViewer(m.V[f.v[0]])) > 0);
+    const m = solidMesh(o), P = m.V.map(p => proj(p, W, H)), eye = PX ? eyePoint(W, H) : null;
+    const seen = m.faces.map(f => dot(f.n, eye ? sub(eye, m.V[f.v[0]]) : toViewer(m.V[f.v[0]])) > 0);
     const chosen = k === soSel || (typeof objPicked === "function" && objPicked("s" + k));
     const color = !opts.export && chosen && mode === "place" ? cssVar("--sel") : o.color || (opts.export ? "#8a8a8a" : cssVar("--accent"));
     const dashed = S.hiddenDashed && !opts.side && typeof strokeSeen === "function";
@@ -168,7 +169,8 @@ function drawSolids(ctx, W, H, opts, proj, lw, toViewer){
         for (const e of m.edges){
           const v0 = seen[e.f[0]], v1 = seen[e.f[1]];
           if ((e.outline && v0 === v1) || !(v0 || v1)) continue;
-          strokeSeen(ctx, m.V[e.a], m.V[e.b], W, H, x => x.solid === k);
+          const c = PX ? clipNear(m.V[e.a], m.V[e.b], W, H) : [m.V[e.a], m.V[e.b]]; if (!c) continue;
+          strokeSeen(ctx, c[0], c[1], W, H, x => x.solid === k);
         }
         continue;
       }
@@ -177,11 +179,13 @@ function drawSolids(ctx, W, H, opts, proj, lw, toViewer){
         const v0 = seen[e.f[0]], v1 = seen[e.f[1]];
         if (e.outline && v0 === v1) continue;
         if ((v0 || v1) === hidden) continue;
+        if (PX){ const c = clipNear(m.V[e.a], m.V[e.b], W, H); if (!c) continue;
+          const pa = proj(c[0], W, H), pb = proj(c[1], W, H); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); continue; }
         ctx.moveTo(P[e.a].x, P[e.a].y); ctx.lineTo(P[e.b].x, P[e.b].y);
       }
       ctx.stroke();
     }
-  });
+  }));
   ctx.restore();
 }
 function eyePoint(W, H){ return add(camRotInv([0, 0, camDist(W, H)]), S.center); }
@@ -203,10 +207,13 @@ function eyePoint(W, H){ return add(camRotInv([0, 0, camDist(W, H)]), S.center);
 
 // ---- 配置 mode: grab a solid (the joints' circles come first) ---------------------------------------
 function solidUnder(x, y){
-  const r = pixelRay(x, y, front.width, front.height);
-  let best = -1, bt = Infinity;
-  (S.solids || []).forEach((o, k) => { if (!solidLive(o)) return; const t = rayHit(solidMesh(o), r); if (t !== null && t < bt){ bt = t; best = k; } });
-  return best < 0 ? null : {k: best, hit: add(r.o, mul(r.dir, bt))};
+  // each solid by its own camera's ray (パースの誇張); the nearest hit by the real camera
+  const W = front.width, H = front.height, eye = eyePoint(W, H);
+  let best = -1, bt = Infinity, hit = null;
+  (S.solids || []).forEach((o, k) => { if (!solidLive(o)) return;
+    const r = withPX(pxOfKey("s" + k), () => pixelRay(x, y, W, H)), t = rayHit(solidMesh(o), r); if (t === null) return;
+    const p = add(r.o, mul(r.dir, t)), d = len(sub(p, eye)); if (d < bt){ bt = d; best = k; hit = p; } });
+  return best < 0 ? null : {k: best, hit};
 }
 DOWN_HOOKS.push((cv, x, y) => {
   if (mode !== "place" || cv !== front || pick(cv, x, y) >= 0) return null;
@@ -219,7 +226,7 @@ DOWN_HOOKS.push((cv, x, y) => {
     // snapping (pose_ruler.js) moves the solid itself, so the drag keeps its own, unsnapped place
     const o = S.solids[u.k]; soFree = add(soFree || o.pos, dlt); o.pos = soFree.slice();
     if (typeof snapSolid === "function") snapSolid(o);
-    afterEdit(); syncSolids(); });
+    afterEdit(); syncSolids(); }, pxOfKey("s" + u.k));
 });
 let soFree = null;
 DOWN_HOOKS.unshift(() => { soFree = null; return null; });

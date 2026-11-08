@@ -398,7 +398,7 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
     ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(a.x, a.y, lw * 3, 0, 2 * Math.PI); ctx.stroke();
   }
   // the things: their own colour (or an effect's), glowing effects drawn twice
-  if (!opts.noItems) (S.items || []).forEach((it, n) => {
+  if (!opts.noItems) (S.items || []).forEach((it, n) => withPX(opts.side ? null : pxOfItem(it), () => {   // パースの誇張: each its own
     const def = PROPS_[it.key]; if (!def) return;
     const col = it.color || def.color, sets = partSets(it);
     const picked = n === scSel || (mode === "place" && typeof objPicked === "function" && objPicked("i" + n));
@@ -413,7 +413,7 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
       }
     }
     ctx.globalAlpha = 1;
-  });
+  }));
   ctx.restore();
 }
 
@@ -899,8 +899,8 @@ function itemUnder(x, y){
   const W = front.width, H = front.height, reach = 14 * pointerScale() * (devicePixelRatio || 1);
   let best = null, bd = reach;
   (S.items || []).forEach((it, n) => { if (!movable(it)) return;
-    for (const q of worldSamples(it)){ const s = project(q, W, H), d = Math.hypot(s.x - x, s.y - y);
-      if (d < bd){ bd = d; best = {n, p: q}; } } });
+    withPX(pxOfItem(it), () => { for (const q of worldSamples(it)){ const s = project(q, W, H), d = Math.hypot(s.x - x, s.y - y);
+      if (d < bd){ bd = d; best = {n, p: q}; } } }); });
   return best;
 }
 DOWN_HOOKS.push((cv, x, y) => {
@@ -914,7 +914,7 @@ DOWN_HOOKS.push((cv, x, y) => {
     it.base = add(it.base, d);
     if (typeof snapItem === "function") snapItem(it);
     if (d[1]) it.grounded = false; else if (it.grounded) groundItem(it);
-    afterEdit(); showItem(); });
+    afterEdit(); showItem(); }, pxOfItem(it));
 });
 // the wheel over it zooms the camera, as everywhere (turning is the 3-axis handles' and the panel's)
 

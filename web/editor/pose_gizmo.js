@@ -335,7 +335,18 @@ function itemTarget(it, key, O, ghost){
 }
 // on screen, for the tool chosen: the handles as lines (from the centre to an end), rings as
 // point lists; L: the handle's length in cm (ARROW_PX on screen)
-function layout(t, W, H){
+// パースの誇張: the handles where the thing is drawn (its own camera: pose_main.js PX)
+function gzPX(){
+  if (typeof pxOf !== "function") return null;
+  if (mode === "pose" || mode === "body") return figPX();
+  const O = OBJ(), g = ghostNow();
+  if (g) return g.o && g.o.guide ? rulerPX() : null;
+  const k = O ? O.key() || (O.group().length ? O.lead() : "") : "";
+  if (k) return O.isFig(k) ? (k === "f" + (S.figId || 1) ? figPX() : null) : pxOfKey(k);
+  return sel === IX.pelvis ? figPX() : null;
+}
+function layout(t, W, H){ return withPX(gzPX(), () => layout0(t, W, H)); }
+function layout0(t, W, H){
   syncBars();
   const dpr = devicePixelRatio || 1, k = gzScale(), c = project(t.c, W, H), L = ARROW_PX * k * dpr / Math.max(1e-6, c.s);
   const out = {c, L, dpr, lines: [], rings: []};

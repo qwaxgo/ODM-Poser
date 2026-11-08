@@ -295,12 +295,13 @@ function finishBox(b){
   const W = front.width, H = front.height, small = 8 * (devicePixelRatio || 1);
   if (Math.abs(b.x1 - b.x0) < small && Math.abs(b.y1 - b.y0) < small){ sel = -1; emptyClick(); draw(); return; }
   const [x0, x1] = [Math.min(b.x0, b.x1), Math.max(b.x0, b.x1)], [y0, y1] = [Math.min(b.y0, b.y1), Math.max(b.y0, b.y1)];
-  const inside = p => { const s = project(p, W, H); return s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1; };
+  // each where it is drawn (パースの誇張: its own camera)
+  const inside = (p, px) => { const s = withPX(px || null, () => project(p, W, H)); return s.x >= x0 && s.x <= x1 && s.y >= y0 && s.y <= y1; };
   const mid = midOf, found = [];
-  (S.solids || []).forEach((o, k) => { if (inside(mid(solidMesh(o).V))) found.push("s" + k); });
-  (S.items || []).forEach((it, n) => { if (loose(it)){ const ps = worldSamples(it); if (ps.length && inside(mid(ps))) found.push("i" + n); } });
+  (S.solids || []).forEach((o, k) => { if (inside(mid(solidMesh(o).V), pxOfKey("s" + k))) found.push("s" + k); });
+  (S.items || []).forEach((it, n) => { if (loose(it)){ const ps = worldSamples(it); if (ps.length && inside(mid(ps), pxOfKey("i" + n))) found.push("i" + n); } });
   // the figures: their joints' middle inside the box
-  for (const f of figKeys()) if (onFig(f, () => inside(midOf(S.P)))) found.push(f);
+  for (const f of figKeys()) if (onFig(f, () => inside(midOf(S.P), figPX()))) found.push(f);
   const keys = b.add ? [...selected(), ...found.filter(k => !selected().includes(k))] : found;
   if (keys.length && autoMode && mode !== "place") modeTo("place");
   setSel(keys);
@@ -357,13 +358,13 @@ function handClick(i, x, y, shift){
     const g = window.ODMGhost && !selected().length && sel !== IX.pelvis ? ODMGhost() : null;
     // the figures in a group: a dashed box round each
     for (const f of group().filter(isFig)){
-      const q = onFig(f, () => S.P.map(p => project(p, W, H))), dp = devicePixelRatio || 1, m = 10 * dp;
+      const q = onFig(f, () => withPX(figPX(), () => S.P.map(p => project(p, W, H)))), dp = devicePixelRatio || 1, m = 10 * dp;
       const xs = q.map(p => p.x), ys = q.map(p => p.y), x0 = Math.min(...xs) - m, y0 = Math.min(...ys) - m;
       ctx.save(); ctx.strokeStyle = cssVar("--sel"); ctx.lineWidth = 1.5 * dp; ctx.setLineDash([5 * dp, 4 * dp]); ctx.globalAlpha = 0.9;
       ctx.strokeRect(x0, y0, Math.max(...xs) + m - x0, Math.max(...ys) + m - y0); ctx.restore();
     }
     const k = single() || (group().length ? lead() : "") || (g ? g.key : ""); if (!k) return;
-    const s = project(pivWorld(k), W, H), dpr = devicePixelRatio || 1, r = 6 * dpr;
+    const s = withPX(isFig(k) ? onFig(k, figPX) : g && k === g.key ? null : pxOfKey(k), () => project(pivWorld(k), W, H)), dpr = devicePixelRatio || 1, r = 6 * dpr;
     ctx.save(); ctx.strokeStyle = "#f5a524"; ctx.lineWidth = 1.5 * dpr; ctx.setLineDash([]); ctx.globalAlpha = 0.95;
     ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, 2 * Math.PI);
     ctx.moveTo(s.x - r * 1.7, s.y); ctx.lineTo(s.x + r * 1.7, s.y); ctx.moveTo(s.x, s.y - r * 1.7); ctx.lineTo(s.x, s.y + r * 1.7);
@@ -423,7 +424,9 @@ function syncEdit(){
 addEventListener("DOMContentLoaded", () => { if (!window.ODMICONS) return;
   editBar.querySelectorAll("button[data-gzicon]").forEach(b => { if (!b.querySelector("svg")) b.insertAdjacentHTML("afterbegin", ODMICONS.svg(b.dataset.gzicon)); }); });
 
-window.ODMObj = {key: single, group, selected, lead, isFig, figSave, figMove, figTurn, worldTurn, axisTurn, axesOf, setSel, pivWorld, pivRel, setPivRel, setPivAbs, resetPiv, keepPivot,
+// an object's own coordinates (cm, from its pivot's origin) in the scene; rel null: its middle (パースの誇張's pivot)
+function toWorld(k, rel){ if (!objOf(k)) return null; return add(origin(k), rotOf(k)(rel || pivDefault(k))); }
+window.ODMObj = {key: single, toWorld, midRel: k => objOf(k) ? pivDefault(k) : null, group, selected, lead, isFig, figSave, figMove, figTurn, worldTurn, axisTurn, axesOf, setSel, pivWorld, pivRel, setPivRel, setPivAbs, resetPiv, keepPivot,
   remove: removeKeys, copy: copyKeys, paste, hasClip: () => !!clipNow(), cursor: () => cursor, setCursor};
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)

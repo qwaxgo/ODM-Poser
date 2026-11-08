@@ -357,6 +357,17 @@ function renderCl(){
     : [[clKey, (objs.find(([k]) => k === clKey) || [clKey, clKey])[1]]];
   const state = JSON.stringify(rows.map(([k]) => [k, clColorOf(k) || null]));
   if (state === clRowsKey) return; clRowsKey = state;
+  // the same rows: their values change in place (rebuilt, the colour picker open on one would close)
+  const keys = JSON.stringify(rows.map(([k]) => k));
+  if (keys === box.dataset.keys){
+    for (const [k] of rows){ const c = clColorOf(k), v = c || defClColor(k);
+      const cb = box.querySelector(`input[type=checkbox][data-cl="${k}"]`), pk = box.querySelector(`input[type=color][data-cl="${k}"]`), hx = box.querySelector(`input[data-clhex="${k}"]`);
+      if (cb) cb.checked = !!c;
+      if (pk && pk.value !== v && document.activeElement !== pk) pk.value = v;
+      if (hx && document.activeElement !== hx) hx.value = v; }
+    return;
+  }
+  box.dataset.keys = keys;
   box.innerHTML = rows.map(([k, name]) => {
     const c = clColorOf(k), v = c || defClColor(k);
     return `<div class="row cl-row"><label style="margin:0;flex:1"><input type="checkbox" data-cl="${k}"${c ? " checked" : ""}> ${esc(name)}</label>
