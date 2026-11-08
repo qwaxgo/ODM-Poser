@@ -165,6 +165,7 @@
   window.ODMUI.groupOf = () => { const w = where(current); return w ? w.t.id : ""; };
   window.ODMUI.renderMenu = render;
   window.ODMUI.hasMenu = id => !!where(id);
+  window.ODMUI.current = () => current;
 
   // the mode buttons on the view: their icons; the corners fold away (kept in this browser)
   document.querySelectorAll(".ov [data-icon]").forEach(b => b.insertAdjacentHTML("afterbegin", icon(b.dataset.icon)));
@@ -190,4 +191,9 @@
     if (!busy && MENU_OF[b.dataset.mode]) show(MENU_OF[b.dataset.mode]);
   }));
   show("pose");
+  // after a reload: the mode and the tab it was on (pose_main.js saveLocal); the phone's sheet stays shut
+  try { const v = JSON.parse(localStorage.getItem((typeof KEY === "string" ? KEY : "odm-poser-editor-v1") + "-view") || "null");
+    if (v && typeof v === "object"){
+      const b = v.mode && document.querySelector(`#modes [data-mode="${v.mode}"]`); if (b && !b.classList.contains("on")) b.click();
+      if (v.menu && where(v.menu)) show(v.menu); } } catch (e) {}
 })();

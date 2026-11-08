@@ -2089,6 +2089,18 @@ const qs = new URLSearchParams(location.search);
   const sw = screen.width > 0 ? px(screen.width) : 1080, sh = screen.height > 0 ? px(screen.height) : 1920;
   $("W").value = qs.get("w") || sw; $("H").value = qs.get("h") || sh;
   $("longSide").value = Math.max(+$("W").value, +$("H").value); }
+// the picture's settings (its ratio and size: the camera's frame, so the composition; what the
+// composition picture shows) are kept in this browser too; a link's ?w= &h= comes first
+{ const PIC_KEY = "odm-poser-editor-v1-picture",   // (KEY is set further down)
+   IDS = ["ratio", "longSide", "ratioW", "ratioH", "W", "H", "cmFigure", "cmItems", "cmSolids", "cmEnv", "cmRuler", "cmAuras", "cmBg"];
+  const keep = () => { const o = {}; for (const id of IDS){ const e = $(id); if (e) o[id] = e.type === "checkbox" ? e.checked : e.value; }
+    try { localStorage.setItem(PIC_KEY, JSON.stringify(o)); } catch (e) {} };
+  let saved = null; try { saved = JSON.parse(localStorage.getItem(PIC_KEY) || "null"); } catch (e) {}
+  if (saved && typeof saved === "object") for (const id of IDS){
+    const e = $(id); if (!e || saved[id] === undefined || ((id === "W" || id === "H") && (qs.get("w") || qs.get("h")))) continue;
+    if (e.type === "checkbox") e.checked = !!saved[id]; else e.value = saved[id]; }
+  if ($("ratioCustom")) $("ratioCustom").style.display = $("ratio").value === "custom" ? "" : "none";
+  for (const id of IDS) if ($(id)){ $(id).addEventListener("change", keep); $(id).addEventListener("input", keep); } }
 
 // light / dark: auto follows the system; the choice is kept in this browser
 { const KEY_T = "odm-poser-theme", LABEL = {auto: "表示：自動", light: "表示：ライト", dark: "表示：ダーク"};
@@ -2293,7 +2305,17 @@ $("limits").addEventListener("change", e => { try { localStorage.setItem(KEY + "
 // the same switch in the pose panel
 $("limitsSide").checked = $("limits").checked;
 $("limitsSide").addEventListener("change", e => { $("limits").checked = e.target.checked; $("limits").dispatchEvent(new Event("change")); });
-window.addEventListener("beforeunload", () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} });
+// kept in this browser for a reload: the scene (S) and where the screen was (the mode, the menu's tab).
+// Not only when the page goes (beforeunload is not sent everywhere: iOS Safari, an app's web view,
+// a tab the browser closes), but also when it is hidden and a moment after each change
+function saveLocal(){
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+  try { localStorage.setItem(KEY + "-view", JSON.stringify({mode, menu: window.ODMUI && ODMUI.current ? ODMUI.current() : ""})); } catch (e) {}
+}
+window.addEventListener("beforeunload", saveLocal);
+window.addEventListener("pagehide", saveLocal);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveLocal(); });
+{ let t = 0; const d0 = draw; draw = function(){ d0.apply(this, arguments); clearTimeout(t); t = setTimeout(saveLocal, 800); }; }
 try { const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d && d.P){ migrate(d); if (d.P.length === J.length) S = Object.assign(fresh(), d); } } catch (e) {}
 syncUI(); draw();
 // the setting 「クリックで自動的にモードを切り替える」 (on at first, kept in this browser): a press on a
