@@ -128,6 +128,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 設置のタブに「物体のプリセット」を追加：置いた物の種類・大きさ・向き・色・パースの誇張を名前をつけて記憶し、何度でも置けます（名前の変更・削除も。このブラウザに保存）
 - 物体（図形・床の板・壁・置いた小物）の色を、色のタブから設置のタブの「物体の色」へ移しました。手に持つ物・身に着ける物・オーラの色は色のタブのままです
 - パースの誇張の設定を「見る › 視点 › パース」のタブにまとめました（支点、人物・定規の強さ、物体ごとの強さの一覧）
+- リロードで構図が変わり、カメラの固定が外れたように見える不具合を修正：書き出しの比率・幅・高さ（カメラの枠の形）と構図画像の設定を、このブラウザに残します（リンクの ?w= &h= が優先）
+- 編集の内容を、ページを閉じるときだけでなく、隠れたときと変更の少し後にも保存するように（スマホの Safari やアプリでリロード・終了しても、直前の編集が残ります）。リロードの前のモードと開いていたタブにも戻ります
 
 ### English
 
@@ -247,6 +249,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - "Object presets" in the Objects tab: keep a thing put (its kind, size, turn, colour and exaggerated perspective) under a name and put it again as often as wanted (rename and delete too; kept in this browser)
 - Object colours (shapes, slabs, walls, things put) moved from the Colors tab to "Object colours" in the Objects tab; things held or worn and auras stay in the Colors tab
 - The exaggerated perspective's settings are together in the View › Viewpoint › Perspective tab (the pivot, the figure's and the ruler's strengths, each object's strength in a list)
+- Fixed a reload changing the composition (as if the camera lock had gone): the export's ratio, width and height (the camera's frame) and the composition picture's settings are kept in this browser (a link's ?w= &h= comes first)
+- The editing is saved not only when the page closes but also when it is hidden and a moment after each change (a reload or close on iOS Safari or in an app keeps the last edit). A reload comes back to the mode and the tab it was on
 
 ## v0.1.0
 
