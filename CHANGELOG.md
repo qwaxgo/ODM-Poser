@@ -123,6 +123,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 接地の初期値を「床・物体の上にめり込まない」に。面に立つとき、体が面の反対側へ抜けたり、逆さに反転したりしないように：立っている面の裏へ押し込んでも戻り、腰を近づけたときは、腰が裏にある面や体が逆さになる面（天井・物体の下側）には立ちません。「逆さ・裏向きになる面にも立つ」で許可できます（面をクリックしたときは今までどおり）
 - 小物の「円柱・棒」を「棒（細い円柱）」に、図形の「円柱」を「円柱（太い・柱や建物）」に名前を変え、手に持つ細い棒と、障害物・建物にする太い円柱を分けました
 - 大きさを % ではなく cm で決めるように：小物の大きさ（いちばん長い辺・X・Y・Z）と部位ごとの長さ（設置・装備のタブ、置く前のプレビュー、小物の大きさ（3軸））、角柱・角錐の天面の幅、頭の形の幅・高さ・奥行き、体格の「全身の太さ」（太ももの付け根の直径）。体格の「全体サイズ」「頭」（%）は、同じタブの「身長」「頭の大きさ（直径）」にまとめました。前のファイルもそのまま開けます
+- 色のタブで、カラーパレット（色を選ぶ画面）の色をクリックした途端に閉じる不具合を修正：色を変えても一覧を作り直さず、その場で色だけを書き換えます
+- パースの誇張（物体ごと）を追加：カメラを固定しているとき、レンズとは別に、人物・物体ごとにパースを強められます（カメラのタブで支点を人物の部位や物体の座標で選び、強さは物ごとに設置のタブで）。支点の奥行きの大きさはそのまま、奥ほど急に縮み、手前は大きくなります。パース定規とガイド図形は1つの強さを共有し、消失点も誇張に合わせて動きます。図・クリック・3軸ハンドル・書き出す画像にも入ります
 
 ### English
 
@@ -237,6 +239,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Grounding starts as "No sinking into the floor or objects". Standing on faces, the body no longer goes through to the other side or turns over: pushed behind the face it stands on, it comes back; bringing the hips near takes no face the hips are behind and none that would turn the body upside down (a ceiling, an object's underside). "Also stand on faces that turn the body over" allows it (clicking a face works as before)
 - The things' "Cylinder / rod" is now "Rod (thin cylinder)" and the shapes' "Cylinder" is "Cylinder (thick: columns, buildings)", so a thin rod to hold and a thick cylinder for obstacles and buildings are apart
 - Sizes in cm, not %: a thing's size (longest side, X, Y, Z) and its sections' lengths (Objects and Equip tabs, the preview before putting, a thing's size on 3 axes), a prism's or pyramid's top width, the head shape's width, height and depth, and the Body section's "Whole-body thickness" (the thigh root's diameter). The Body section's "Overall size" and "Head" (%) are now that tab's "Height" and "Head size (diameter)". Older files open as before
+- Fixed the colour picker closing as soon as a colour in it was clicked (Colors tab): changing a colour no longer rebuilds the list, it only updates the colours in place
+- Exaggerated perspective (each thing): while the camera is locked, each figure and object can have stronger perspective apart from the lens (the pivot, a figure's part or a point in an object's own coordinates, in the Camera tab; each object's strength in the Objects tab). What lies at the pivot's depth keeps its size; farther shrinks faster, nearer grows. The perspective ruler and the guides share one strength, and their vanishing points move with it. The view, clicks, the 3-axis handles and the exported pictures follow it
 
 ## v0.1.0
 
