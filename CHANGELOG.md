@@ -125,6 +125,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 大きさを % ではなく cm で決めるように：小物の大きさ（いちばん長い辺・X・Y・Z）と部位ごとの長さ（設置・装備のタブ、置く前のプレビュー、小物の大きさ（3軸））、角柱・角錐の天面の幅、頭の形の幅・高さ・奥行き、体格の「全身の太さ」（太ももの付け根の直径）。体格の「全体サイズ」「頭」（%）は、同じタブの「身長」「頭の大きさ（直径）」にまとめました。前のファイルもそのまま開けます
 - 色のタブで、カラーパレット（色を選ぶ画面）の色をクリックした途端に閉じる不具合を修正：色を変えても一覧を作り直さず、その場で色だけを書き換えます
 - パースの誇張（物体ごと）を追加：カメラを固定しているとき、レンズとは別に、人物・物体ごとにパースを強められます（カメラのタブで支点を人物の部位や物体の座標で選び、強さは物ごとに設置のタブで）。支点の奥行きの大きさはそのまま、奥ほど急に縮み、手前は大きくなります。パース定規とガイド図形は1つの強さを共有し、消失点も誇張に合わせて動きます。図・クリック・3軸ハンドル・書き出す画像にも入ります
+- 設置のタブに「物体のプリセット」を追加：置いた物の種類・大きさ・向き・色・パースの誇張を名前をつけて記憶し、何度でも置けます（名前の変更・削除も。このブラウザに保存）
+- 物体（図形・床の板・壁・置いた小物）の色を、色のタブから設置のタブの「物体の色」へ移しました。手に持つ物・身に着ける物・オーラの色は色のタブのままです
+- パースの誇張の設定を「見る › 視点 › パース」のタブにまとめました（支点、人物・定規の強さ、物体ごとの強さの一覧）
 
 ### English
 
@@ -241,6 +244,9 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Sizes in cm, not %: a thing's size (longest side, X, Y, Z) and its sections' lengths (Objects and Equip tabs, the preview before putting, a thing's size on 3 axes), a prism's or pyramid's top width, the head shape's width, height and depth, and the Body section's "Whole-body thickness" (the thigh root's diameter). The Body section's "Overall size" and "Head" (%) are now that tab's "Height" and "Head size (diameter)". Older files open as before
 - Fixed the colour picker closing as soon as a colour in it was clicked (Colors tab): changing a colour no longer rebuilds the list, it only updates the colours in place
 - Exaggerated perspective (each thing): while the camera is locked, each figure and object can have stronger perspective apart from the lens (the pivot, a figure's part or a point in an object's own coordinates, in the Camera tab; each object's strength in the Objects tab). What lies at the pivot's depth keeps its size; farther shrinks faster, nearer grows. The perspective ruler and the guides share one strength, and their vanishing points move with it. The view, clicks, the 3-axis handles and the exported pictures follow it
+- "Object presets" in the Objects tab: keep a thing put (its kind, size, turn, colour and exaggerated perspective) under a name and put it again as often as wanted (rename and delete too; kept in this browser)
+- Object colours (shapes, slabs, walls, things put) moved from the Colors tab to "Object colours" in the Objects tab; things held or worn and auras stay in the Colors tab
+- The exaggerated perspective's settings are together in the View › Viewpoint › Perspective tab (the pivot, the figure's and the ruler's strengths, each object's strength in a list)
 
 ## v0.1.0
 
