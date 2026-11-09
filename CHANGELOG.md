@@ -131,6 +131,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - リロードで構図が変わり、カメラの固定が外れたように見える不具合を修正：書き出しの比率・幅・高さ（カメラの枠の形）と構図画像の設定を、このブラウザに残します（リンクの ?w= &h= が優先）
 - 編集の内容を、ページを閉じるときだけでなく、隠れたときと変更の少し後にも保存するように（スマホの Safari やアプリでリロード・終了しても、直前の編集が残ります）。リロードの前のモードと開いていたタブにも戻ります
 - 装備のタブのプレビューに「左右」を追加：手に持つ物は右手・左手、両足・両手の物は両方・右だけ・左だけ、ほかの左右で違う物は反対側（左右反転）に、持つ・着ける前にできます。出ている物の「反対側にする」で後からも入れ替えられます
+- パースの誇張を作り直し：物ごとの強さをやめ、1つの支点（画面に印が出るだけで、書き出す画像には出ない点）から、すべてに同じ強さで掛かるように。支点より奥は支点に向かって急に縮み、手前は支点から飛び出すように大きくなります（鯉のぼりから人物が飛び出す構図や、ヒーローが画面へ迫る構図）。支点は自由な点か、部位・物体に付けるかを選べ、印を画面でドラッグして動かせます。「カメラを一時的に動かす」で、固定したカメラを記憶したまま横から支点の奥行きを合わせられます。強さは上げるほど均等に効くように
 
 ### English
 
@@ -253,6 +254,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Fixed a reload changing the composition (as if the camera lock had gone): the export's ratio, width and height (the camera's frame) and the composition picture's settings are kept in this browser (a link's ?w= &h= comes first)
 - The editing is saved not only when the page closes but also when it is hidden and a moment after each change (a reload or close on iOS Safari or in an app keeps the last edit). A reload comes back to the mode and the tab it was on
 - "Side" in the Equip tab's preview: a thing held in the right or left hand, a pair on both or one foot / hand only, anything else that differs left and right mirrored to the other side, before it is held or worn. "To the other side" among the things out swaps it later too
+- Exaggerated perspective reworked: no more strengths for each thing; one pivot point (a mark on the view, never in the pictures) and one strength for everything. What lies behind the pivot shrinks fast toward it; what is in front bursts out of it (a figure bursting out of a carp streamer, a hero rushing at the camera). The pivot is a free point or on a part or an object, and its mark can be dragged on the view. **Move the camera for a while** keeps the locked camera while you set the pivot's depth from the side. The strength now feels even along the slider
 
 ## v0.1.0
 

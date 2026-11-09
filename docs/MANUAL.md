@@ -145,29 +145,39 @@ In the Camera tab, **Camera direction** (left-right, up-down, roll; degrees) tur
 | Two fingers (phone) | Pinch to zoom, move to pan |
 | Camera pad (phone) | Bottom left turns, bottom right moves, the right edge zooms |
 
-## Exaggerated perspective (each thing)
+## Exaggerated perspective
 
-Apart from the lens, and only while the camera is locked, each figure and object can have stronger perspective. You set one pivot. What lies at the pivot's depth keeps its size; farther shrinks faster, nearer grows. With the figure as the pivot, say, the figure stands out while a mat under it (a floor slab) and a carp streamer behind it (a cylinder) fall away fast.
+Apart from the lens, and only while the camera is locked, the perspective can be pushed further from one pivot. What lies at the pivot's depth keeps its size. What lies behind it shrinks fast toward the pivot; what is in front bursts out of it, growing.
 
+- Examples
+  - With the pivot at the mouth of a far carp streamer (a cylinder), the picnic mat in front and the figure on it burst out of the streamer.
+  - With the pivot on a figure's chest, a fist thrust at the camera grows large while the legs and head behind it shrink (a hero rushing at the camera).
 - All its settings are in the **View › Viewpoint › Perspective** tab (the perspective ruler stays in the Ruler tab).
-- **The pivot**: under **Exaggerated perspective (each thing)**, choose a figure, a shape or a thing.
-  - For a figure, choose a part (hips, head ...) and an offset from it (the scene's X, Y, Z, cm).
-  - For an object, place the pivot in the object's own coordinates (X, Y, Z along its turn, cm). It starts at the object's middle.
-- **The strength** (-100 to 100 %; 0: none; below 0: flatter)
-  - An object (shape or thing): in the same tab's list, **Each object's exaggeration**.
-  - The edited figure: **The edited figure's exaggeration**, kept for each figure.
-  - Things held or worn go with their figure.
-- **The perspective ruler and the guides** share one strength, **The ruler's and guides' exaggeration**. The vanishing points and the eye level move as much, so the ruler's lines and the guides' edges agree.
-- Each thing is drawn as if the camera moved toward the pivot and the lens widened as much. Lines stay straight, and a thing's parallel edges meet at its own vanishing points.
+- **Strength** (0 to 100 %; 0: none)
+  - Figures, shapes, things, guides, the perspective ruler and the floor all get the same. Things that touch, such as a figure sitting on a mat, stay together.
+- **The pivot** (where the size stays) is one of two kinds.
+  - **A free point**: anywhere in the scene, its place in the scene's X, Y, Z (cm). It does not move with anything.
+  - **On a part or an object**: a figure's part (hips, chest, head ...) with an offset on the scene's X, Y, Z, or a point in an object's own coordinates (X, Y, Z along its turn). It moves with the figure or the object. **↺ No offset** puts it back on the part (an object: its middle).
+  - Switching between them keeps the pivot where it is.
+  - **To the selected** moves it to the selected joint or object (on a part or an object: onto it).
+- **The pivot's mark**
+  - While this tab is open, a pink cross shows the pivot. It is not in the exported pictures.
+  - Drag the mark on the view; it keeps its depth.
+- **Move the camera for a while**
+  - The locked camera is kept while you turn and move the camera, to set the pivot's depth from the side.
+  - Meanwhile the exaggeration rests. **Back to the locked camera** returns to it, and the exaggeration comes back.
+  - Pictures exported meanwhile are the locked camera's. A reload goes back to the locked camera too.
+- How it works: drawn as if the camera moved toward the pivot, its lens widened as much and shifted so the pivot stays on the same spot. Lines stay straight. Lines going away meet toward the pivot, and the ruler's vanishing points and eye level move as much, so the ruler's lines and the guides' edges agree.
 - The view, clicks, box selection and the 3-axis handles work where things are drawn. The exported pictures (rough, OpenPose, ruler) have it too.
-- The floor grid (the scene's floor) is not exaggerated. Unlocking the camera takes the exaggeration away (the strengths are kept).
+- Unlocking the camera takes the exaggeration away (the strength and the pivot are kept).
+- Something well in front of the pivot goes behind the camera as the strength rises, and is cut off.
 
 ## Object presets and object colours
 
 The Objects tab has the following.
 
 - **Object presets**
-  - Select a thing put, give it a name and press **Save** to keep its make: its kind, size, turn, colour and exaggerated perspective. Saving under the same name overwrites it.
+  - Select a thing put, give it a name and press **Save** to keep its make: its kind, size, turn and colour. Saving under the same name overwrites it.
   - Choose one in the list and press **Put**: it lands in front of the figure on the floor (or on what is under it), as often as you like.
   - **Rename** and **Delete** are there too. Presets are kept in this browser.
 - **Object colours**: recolour each shape's, slab's, wall's or thing's lines in one list.
