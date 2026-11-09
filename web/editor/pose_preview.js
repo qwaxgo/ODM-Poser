@@ -15,7 +15,8 @@ scBox.className = "pv-box";
 scBox.innerHTML = `<label title="持つ・置く前にプレビュー"><input type="checkbox" id="scPrevOn" checked> プレビュー</label>` +
   ctl("scPreSize", "大きさ（いちばん長い辺）", 1, 300, 0.5, "cm", 20) +
   ctl("scPreX", "X 方向（赤）", 1, 300, 0.5, "cm", 20) + ctl("scPreY", "Y 方向（緑）", 1, 300, 0.5, "cm", 20) + ctl("scPreZ", "Z 方向（青）", 1, 300, 0.5, "cm", 20) +
-  `<div id="scPreSegs"></div>`;
+  `<div id="scPreSegs"></div>` +
+  `<div id="scPreSideBox"><label title="左右で違う物を、プレビューのうちに反対側にする（持つ・着けるとその向きになる）">左右</label><select id="scPreSide"></select></div>`;
 $("scAddR").closest(".btns").before(scBox);
 $("scPrevOn").addEventListener("change", draw);
 // the sizes in cm (the file keeps the size and the stretch: pose_scene.js itemCm). The rows are what the
@@ -52,8 +53,28 @@ function segRows(){
   ends("scPreSize", Math.max(...b)); XYZ.forEach((id, a) => ends(id, b[a]));
   if (sg) for (const g of sg.list) ends("scPreSeg_" + g.id, g.hi - g.lo);
 }
+// 左右: a thing held: the right or the left hand; a pair (skates, gloves): both, or one foot / hand only;
+// anything else worn or put: as it is, or mirrored to the other side (a holster, a shoulder bag, an eye's scouter)
+const sideKind = def => !def ? "" : def.place === "hand" ? "hand" : pairOf(def) ? "pair" : "mirror";
+const SIDE_OPTS = {hand: [["r", "右手"], ["l", "左手"]], pair: [["", "両方"], ["r", "右だけ"], ["l", "左だけ"]], mirror: [["", "そのまま"], ["m", "反対側（左右反転）"]]};
+let sideFor = "";
+function sideRows(){
+  const def = PROPS_[$("scKey").value], k = sideKind(def);
+  $("scPreSideBox").style.display = k ? "" : "none";
+  if (k === sideFor) return; sideFor = k;
+  $("scPreSide").innerHTML = (SIDE_OPTS[k] || []).map(([v, ja]) => `<option value="${v}">${ja}</option>`).join("");
+}
+const preSide = () => $("scPreSide").value;
+// what the 左右 chosen gives a thing (held: its hand is the button's)
+function sided(it){
+  const v = preSide(), k = sideKind(PROPS_[it.key]);
+  if (k === "pair"){ if (v === "r" || v === "l") it.side = v; else delete it.side; }
+  else if (k === "mirror"){ if (v === "m") it.mirror = true; else delete it.mirror; }
+  return it;
+}
+$("scPreSide").addEventListener("change", draw);
 // ニュートラル: no kind, no sizes to set
-const scShow = () => { scBox.style.display = $("scKey").value ? "" : "none"; };
+const scShow = () => { scBox.style.display = $("scKey").value ? "" : "none"; sideRows(); };
 $("scKey").addEventListener("change", () => { scShow(); segRows(); draw(); });
 $("scCat").addEventListener("change", scShow); scShow();
 function sized(it){                            // the sizes set before, on a new thing (in cm)
@@ -78,7 +99,7 @@ segRows();
 function ghostItem(hand){
   segRows();                                   // the list was refilled (another category)
   const key = $("scKey").value, def = PROPS_[key]; if (!def) return null;
-  const it = sized({key, off: [0, 0, 0], rot: [0, 0, 0], scale: 1});
+  const it = sided(sized({key, off: [0, 0, 0], rot: [0, 0, 0], scale: 1}));
   if (def.place === "hand") it.hand = hand;
   else if (!["body", "wear"].includes(def.place)){
     const c = S.P[IX.pelvis]; it.yaw = facingYaw(); it.base = [c[0], +(S.env && S.env.floorY) || 0, c[2]];
@@ -88,10 +109,28 @@ function ghostItem(hand){
 }
 { const sizeNew = (fn) => function(key, hand){ const n = (S.items || []).length; fn(key, hand);
     const it = S.items && S.items[scSel];
-    if (it && it.key === key && S.items.length >= n){ sized(it); if (it.grounded && typeof groundItem === "function") groundItem(it);
+    if (it && it.key === key && S.items.length >= n){ sized(it); sided(it); if (it.grounded && typeof groundItem === "function") groundItem(it);
       afterEdit(); fillItemList(); draw(); } };
   addItem = sizeNew(addItem);
 }
+
+// 出ている物 › 反対側にする: a thing held to the other hand (what that hand held goes), a pair on one foot
+// to the other, anything else worn or put mirrored (or back)
+{ const btn = document.createElement("button"); btn.type = "button"; btn.id = "scSideFlip"; btn.textContent = "反対側にする";
+  btn.title = "選んだ物を左右の反対側にする（持つ手を替える・片足の物を反対の足に・身に着ける物を左右反転）";
+  const row = $("scDel") && $("scDel").closest(".btns"); if (row) row.appendChild(btn);
+  btn.addEventListener("click", () => {
+    const it = (S.items || [])[scSel], def = it && PROPS_[it.key]; if (!def) return;
+    const k = sideKind(def); remember();
+    if (k === "hand" && !it.where){
+      freeHands(it); it.hand = it.hand === "l" ? "r" : "l";
+      S.items = S.items.filter(o => o === it || !(PROPS_[o.key] && PROPS_[o.key].place === "hand" && !o.where && o.hand === it.hand));
+      scSel = S.items.indexOf(it); holdHands(it);
+    } else if (k === "pair"){ if (it.side === "r" || it.side === "l") it.side = it.side === "r" ? "l" : "r"; else { say("両方に付けている物です（片方だけにするときは、プレビューの「左右」で）。", true); return; } }
+    else { if (it.mirror) delete it.mirror; else it.mirror = true; }
+    if (it.grounded && typeof groundItem === "function") groundItem(it);
+    afterEdit(); fillItemList(); draw(); say("反対側にしました。");
+  }); }
 
 // ---- objects (設置) ---------------------------------------------------------------------------------
 const soBox = document.createElement("div");
@@ -129,7 +168,7 @@ const showing = el => { const s = el.closest("section"); return !!(s && s.classL
     const lw = Math.max(1.5, W / 540), P = q => project(q, W, H);
     ctx.save(); ctx.strokeStyle = cssVar("--sel"); ctx.globalAlpha = 0.6; ctx.lineCap = "round"; ctx.lineJoin = "round";
     if (showing($("scKey")) && $("scPrevOn").checked){
-      const it = ghostItem("r");
+      const it = ghostItem(sideKind(PROPS_[$("scKey").value]) === "hand" && preSide() === "l" ? "l" : "r");
       if (it){ const hd = S.hiddenDashed; S.hiddenDashed = false;
         try { ctx.setLineDash([lw * 3, lw * 2]); ctx.lineWidth = lw;
           for (const {f, parts} of partSets(it)) for (const sh of parts) drawShape(ctx, sh, it, f, P, lw); }
@@ -152,6 +191,10 @@ const showing = el => { const s = el.closest("section"); return !!(s && s.classL
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
 (window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"持つ・置く前にプレビュー": "Preview before holding / putting", "置く前にプレビュー": "Preview before putting",
-  "大きさ": "Size", "大きさ（いちばん長い辺）": "Size (longest side)", "X 方向（赤）": "X (red)", "Y 方向（緑）": "Y (green)", "Z 方向（青）": "Z (blue)", "幅": "Width", "高さ": "Height", "奥行き": "Depth"});
+  "大きさ": "Size", "大きさ（いちばん長い辺）": "Size (longest side)", "左右": "Side", "反対側にする": "To the other side", "反対側にしました。": "Moved to the other side.",
+  "選んだ物を左右の反対側にする（持つ手を替える・片足の物を反対の足に・身に着ける物を左右反転）": "Put the chosen thing on the other side (the other hand, the other foot, a worn thing mirrored)",
+  "両方に付けている物です（片方だけにするときは、プレビューの「左右」で）。": "It is on both (for one side only, use Side in the preview).", "右手": "Right hand", "左手": "Left hand",
+  "両方": "Both", "右だけ": "Right only", "左だけ": "Left only", "そのまま": "As it is", "反対側（左右反転）": "The other side (mirrored)",
+  "左右で違う物を、プレビューのうちに反対側にする（持つ・着けるとその向きになる）": "Put a thing that differs left and right on the other side while previewing (it is held or worn so)", "X 方向（赤）": "X (red)", "Y 方向（緑）": "Y (green)", "Z 方向（青）": "Z (blue)", "幅": "Width", "高さ": "Height", "奥行き": "Depth"});
 draw();
 })();

@@ -209,11 +209,19 @@ function partsOf(it){                         // the shapes, with a simple solid
   return [...parts, {t: [x, y, z - 3, 0, 0, 1, 1.6, 0.4]}, {b: [x, y - 1.2, z + 12, 0.5, 2.6, 24]},
           {k: [x, y - 1.2, z + 24, x, y - 1.2, z + 31, 1.3]}];
 }
-// every place an item is drawn: [{f: frame, parts}] (a pair of skates is two)
+// every place an item is drawn: [{f: frame, parts}] (a pair of skates is two). The other side (左右):
+// a pair on one foot or hand only (it.side "r" / "l"); a thing worn on one side mirrored to the other
+// (it.mirror: its frame's x turned round, so it is drawn, touched and grounded mirrored)
 function partSets(it){
-  const def = PROPS_[it.key] || {};
+  const out = partSets0(it);
+  return it.mirror ? out.map(e => ({f: Object.assign({}, e.f, {x: mul(e.f.x, -1)}), parts: e.parts})) : out;
+}
+const pairOf = def => !!def && (def.at === "feet" || def.at === "hands" || (def.sets || []).some(([at]) => at === "feet" || at === "hands"));
+function partSets0(it){
+  const def = PROPS_[it.key] || {}, one = it.side === "r" || it.side === "l" ? it.side : "";
   const sets = (def.sets ? def.sets.map(([at, parts]) => [at, segParts(it, parts)]) : [[def.at, partsOf(it)]]).flatMap(([at, parts]) =>
-    at === "feet" ? [["r_foot", parts], ["l_foot", parts]] : at === "hands" ? [["r_hand", parts], ["l_hand", parts]] : [[at, parts]]);
+    at === "feet" ? [["r_foot", parts], ["l_foot", parts]].filter(([w]) => !one || w[0] === one)
+      : at === "hands" ? [["r_hand", parts], ["l_hand", parts]].filter(([w]) => !one || w[0] === one) : [[at, parts]]);
   if (it.where === "world"){
     const k = def.at === "head" ? S.R[IX.head] : 1;
     return sets.map(([, parts], i) => ({f: worldFrame(it, k, (i - (sets.length - 1) / 2) * 30), parts}));
