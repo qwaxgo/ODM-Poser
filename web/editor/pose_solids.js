@@ -200,7 +200,7 @@ function eyePoint(W, H){ return add(camRotInv([0, 0, camDist(W, H)]), S.center);
 }
 { const scene0 = drawScene;
   drawScene = function(ctx, W, H, opts, proj, ink, far, lw){
-    if (opts.side){ const right = camRotInv([1, 0, 0]); drawSolids(ctx, W, H, opts, proj, lw, () => right); }
+    if (opts.side){ const tv = sideBasis(W, H).ez; drawSolids(ctx, W, H, opts, proj, lw, () => tv); }   // toward the side view's viewer
     scene0(ctx, W, H, opts, proj, ink, far, lw);
   };
 }

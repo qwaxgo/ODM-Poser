@@ -20,7 +20,8 @@
       {id: "scenes", title: "シーン", icon: "Users", kids: [leaf("scene", "管理", "ViewList", "出ている人物・物の管理"),
         leaf("log", "作業ログ", "Undo", "した操作の一覧。どの時点にも戻せる")]},
       {id: "viewpoint", title: "視点", icon: "Fov", kids: [leaf("camera", "カメラ", "Camera", "カメラの向き・位置・レンズ・固定と記憶"), leaf("ruler", "定規", "ruler", "パース定規"),
-        leaf("persp", "パース", "FrameSize", "パースの誇張（カメラ固定時、1つの支点から）")]}]},
+        leaf("persp", "パース", "FrameSize", "パースの誇張（カメラ固定時、1つの支点から）"),
+        leaf("sideview", "側面図", "sideView", "側面図の中心・向き・回転・拡大")]}]},
     {id: "out", title: "出す", icon: "Send", kids: [
       {id: "file", title: "ファイル", icon: "File", kids: [leaf("import", "読込", "Upload", "保存したポーズを開く"),
         leaf("export", "書き出し", "DownloadAlt", "画像・ポーズを書き出す"), leaf("share", "共有", "ShareAndroid", "SNS に投稿、リンクをコピー"),
@@ -34,7 +35,7 @@
   const EN = {"作る": "Make", "見る": "View", "出す": "Output", "人物": "Figure", "物と場所": "Things & places", "リセット": "Reset", "シーン": "Scene",
     "視点": "Viewpoint", "ファイル": "File", "ポーズ": "Pose", "プリセット": "Presets", "体格": "Body", "サイズ": "Sizes", "色": "Colors",
     "装備": "Equip", "設置": "Objects", "配置": "Place", "管理": "Manage", "カメラ": "Camera", "定規": "Ruler", "読込": "Open",
-    "書き出し": "Export", "共有": "Share", "パース": "Perspective", "›": "›", "メニュー": "Menu",
+    "書き出し": "Export", "共有": "Share", "パース": "Perspective", "側面図の中心・向き・回転・拡大": "The side view's centre, side, turn and zoom", "›": "›", "メニュー": "Menu",
     "線の色（人物・物・床などをまとめて）": "Line colours (figures, things, floor ... in one place)", "線の色（人物・床・壁・持ち物・オーラ）": "Line colours (figures, floor, walls, things held, auras)",
     "選んだ人物に持たせる・身に着ける・まとう": "Give the selected figure something to hold, wear or be wrapped in",
     "人物から離れた物体を置く": "Put objects apart from the figure", "床・壁・天井、つかまる、ワイヤー": "Floor, wall, ceiling; grabbing; wire",

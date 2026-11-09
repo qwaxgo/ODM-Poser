@@ -665,12 +665,36 @@ function fitCanvas(cv, aspect, fixedH, reserve = 0){
   cv.width = Math.max(1, Math.round(w * dpr)); cv.height = Math.max(1, Math.round(h * dpr));
   cv.style.width = w + "px"; cv.style.height = h + "px";
 }
-// the side view looks from the camera's right but stays level: only the camera's direction (yaw)
-// turns it, not its height angle or tilt
-const sideRot = v => rotAxis(v, [0, 1, 0], deg(-S.cam.yaw)), sideRotInv = v => rotAxis(v, [0, 1, 0], deg(S.cam.yaw));
-function sideProject(p, W, H){                // orthographic, from the camera's right: depth across
-  const q = sideRot(sub(p, S.center)), k = 0.86 * H / 190;
-  return {x: W/2 - q[2] * k, y: H/2 - q[1] * k, s: k};
+// the side view (側面図, pose_sideview.js): orthographic, from the camera's right (or left: S.sideView.from
+// "l"), level: 90° from the camera's direction (its yaw only) unless turned (yaw, pitch: degrees on top),
+// round a centre (the camera's look-at point, or a figure's joint / an object: key, joint), moved (pan,
+// world cm) and zoomed. ex / ey: the screen's right and up, ez: toward the viewer (world), k: px per cm
+function sideView(){ return Object.assign({from: "r", key: "", joint: "pelvis", yaw: 0, pitch: 0, zoom: 1, pan: [0, 0, 0]}, S.sideView || {}); }
+function sideCentre(v){
+  v = v || sideView(); const key = v.key || "";
+  if (/^[si]\d+$/.test(key) && window.ODMObj && ODMObj.toWorld){ const w = ODMObj.toWorld(key, null); if (w) return w; }
+  if (/^f\d+$/.test(key)){
+    let P = S.P; if (+key.slice(1) !== (S.figId || 1)){ const f = (S.others || []).find(o => (o.figId || 1) === +key.slice(1)); P = f ? f.P : null; }
+    if (P){ const j = IX[v.joint] !== undefined ? IX[v.joint] : IX.pelvis; if (P[j]) return P[j]; }
+  }
+  return S.center;
+}
+function sideBasis(W, H){
+  const v = sideView(), Y = deg(S.cam.yaw + (+v.yaw || 0)), b = deg(+v.pitch || 0), up = [0, 1, 0];
+  const qz = rotAxis([0, 0, 1], up, Y), qx = rotAxis([1, 0, 0], up, Y), l = v.from === "l";
+  const ex = l ? qz : mul(qz, -1), ez0 = l ? mul(qx, -1) : qx;
+  const ey = sub(mul(up, Math.cos(b)), mul(ez0, Math.sin(b))), ez = add(mul(up, Math.sin(b)), mul(ez0, Math.cos(b)));
+  const pan = Array.isArray(v.pan) ? v.pan : [0, 0, 0];
+  return {c: add(sideCentre(v), pan), ex, ey, ez, k: 0.86 * H / 190 * Math.max(0.05, +v.zoom || 1)};
+}
+function sideProject(p, W, H){
+  const B = sideBasis(W, H), d = sub(p, B.c);
+  return {x: W/2 + dot(d, B.ex) * B.k, y: H/2 - dot(d, B.ey) * B.k, s: B.k};
+}
+// a pixel of the side view at the depth (toward the viewer) of p
+function sideUnproject(x, y, W, H, p){
+  const B = sideBasis(W, H);
+  return add(add(B.c, add(mul(B.ex, (x - W/2) / B.k), mul(B.ey, (H/2 - y) / B.k))), mul(B.ez, dot(sub(p, B.c), B.ez)));
 }
 function draw(){
   const [EW, EH] = exportSize();
@@ -699,7 +723,8 @@ function draw(){
   ctx.strokeStyle = cssVar("--line"); ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
   ctx.fillStyle = cssVar("--sub"); ctx.font = `${Math.round(11 * (devicePixelRatio || 1))}px sans-serif`;
-  ctx.fillText("← カメラ側", 6, H - 8);
+  { const v = sideView(); if (Math.abs(+v.yaw || 0) < 45){ if (v.from === "l"){ ctx.textAlign = "right"; ctx.fillText("カメラ側 →", W - 6, H - 8); ctx.textAlign = "left"; }
+      else ctx.fillText("← カメラ側", 6, H - 8); } }
   // the parts' line colours, and the lines hidden from the camera dashed, as in the front view
   const FW = front.width, FH = front.height, seen = [FW, FH];
   const sideFigure = (active, first) => {
@@ -813,10 +838,8 @@ function dragIK(i, x, y, W, H){
 function dragSide(i, x, y, W, H){
   if (i === IX.pelvis) return;
   const par = PARENT[i], L = len(sub(S.P[i], S.P[par]));
-  const k = 0.86 * H / 190, pc = sideRot(sub(S.P[par], S.center)), ic = sideRot(sub(S.P[i], S.center));
-  const want = [ic[0], (H/2 - y) / k, (W/2 - x) / k];
-  const v = norm(sub(want, pc));
-  rotateSubtree(i, add(sideRotInv(add(pc, mul(v, L))), S.center));
+  const want = sideUnproject(x, y, W, H, S.P[i]), v = norm(sub(want, S.P[par]));
+  rotateSubtree(i, add(S.P[par], mul(v, L)));
 }
 // the shoulders and the thigh roots sit on the torso: they move along its own axes, one at a time
 // (x: apart / together, y: up / down, z: forward / back), so widening the shoulders does not lift
