@@ -37,6 +37,16 @@ Pick it in **In the scene** to:
 - set its size, turn (forward / back, twist, sideways) and shift (across, up / down, forward / back),
   give it its own line colour, **↺ Reset**
 
+### Side (the other side)
+
+**Side** in the Equip tab's preview puts a thing that differs left and right on the other side before it is held or worn.
+
+- A thing held: the right or the left hand. The preview shows in that hand (it is held in the hand of the button pressed, **Hold in the right hand / put** or **Hold in the left hand**).
+- A pair for both feet or hands (skates, gloves): both, right only or left only.
+- Anything else worn or put (a holster, a shoulder bag, a one-eye scouter ...): as it is, or the other side (mirrored).
+
+Once held or worn, **To the other side** among the things out swaps it (the other hand, the other foot, a worn thing mirrored).
+
 ### Size on three axes
 
 **A thing's size (3 axes)** in the **Equip** and **Objects** tabs sets X, Y and Z each on its own, in cm (the sliders go from 0.2 to 4 times the thing's own lengths). **Size (longest side)** in cm grows the whole thing alike. For a

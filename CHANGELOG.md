@@ -130,6 +130,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - パースの誇張の設定を「見る › 視点 › パース」のタブにまとめました（支点、人物・定規の強さ、物体ごとの強さの一覧）
 - リロードで構図が変わり、カメラの固定が外れたように見える不具合を修正：書き出しの比率・幅・高さ（カメラの枠の形）と構図画像の設定を、このブラウザに残します（リンクの ?w= &h= が優先）
 - 編集の内容を、ページを閉じるときだけでなく、隠れたときと変更の少し後にも保存するように（スマホの Safari やアプリでリロード・終了しても、直前の編集が残ります）。リロードの前のモードと開いていたタブにも戻ります
+- 装備のタブのプレビューに「左右」を追加：手に持つ物は右手・左手、両足・両手の物は両方・右だけ・左だけ、ほかの左右で違う物は反対側（左右反転）に、持つ・着ける前にできます。出ている物の「反対側にする」で後からも入れ替えられます
 
 ### English
 
@@ -251,6 +252,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The exaggerated perspective's settings are together in the View › Viewpoint › Perspective tab (the pivot, the figure's and the ruler's strengths, each object's strength in a list)
 - Fixed a reload changing the composition (as if the camera lock had gone): the export's ratio, width and height (the camera's frame) and the composition picture's settings are kept in this browser (a link's ?w= &h= comes first)
 - The editing is saved not only when the page closes but also when it is hidden and a moment after each change (a reload or close on iOS Safari or in an app keeps the last edit). A reload comes back to the mode and the tab it was on
+- "Side" in the Equip tab's preview: a thing held in the right or left hand, a pair on both or one foot / hand only, anything else that differs left and right mirrored to the other side, before it is held or worn. "To the other side" among the things out swaps it later too
 
 ## v0.1.0
 
