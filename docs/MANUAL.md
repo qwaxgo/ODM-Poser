@@ -174,6 +174,21 @@ Apart from the lens, and only while the camera is locked, the perspective can be
 - Unlocking the camera takes the exaggeration away (the strength and the pivot are kept).
 - Something well in front of the pivot goes behind the camera as the strength rises, and is cut off.
 
+## The side view's camera
+
+The side view looks level from 90° beside the front camera's direction (to check depth). In the **View › Viewpoint › Side view** tab it gets a camera of its own.
+
+- **Seen from**: **The right (the camera's right)** or **The left (the camera's left)**. From the left, the camera's side is on the right.
+- **Centre (pivot)**: the side view turns round this point.
+  - **The camera's look-at point** (as before), a figure (choose a part), or a shape or thing put. A figure or an object is followed as it moves.
+  - **Centre on the selected** takes the selected joint or object.
+- **Turn (left / right), Looking down (up / down), Zoom**
+  - At 0° turn and 0° tilt it is the level view 90° from the camera, as before, and it follows the camera.
+  - The turn and the tilt are added on top. **↺ Angle and zoom back** resets the turn, tilt, zoom and moves.
+- **On the side view**: the wheel zooms; a middle-button drag (or Alt + a drag where there is nothing) turns it; with Shift it moves. All can be undone.
+- Joints can be dragged in a turned or tilted side view too (the bones keep their length).
+- The settings are saved in the file and kept on a reload.
+
 ## Object presets and object colours
 
 The Objects tab has the following.

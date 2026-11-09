@@ -133,6 +133,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 装備のタブのプレビューに「左右」を追加：手に持つ物は右手・左手、両足・両手の物は両方・右だけ・左だけ、ほかの左右で違う物は反対側（左右反転）に、持つ・着ける前にできます。出ている物の「反対側にする」で後からも入れ替えられます
 - パースの誇張を作り直し：物ごとの強さをやめ、1つの支点（画面に印が出るだけで、書き出す画像には出ない点）から、すべてに同じ強さで掛かるように。支点より奥は支点に向かって急に縮み、手前は支点から飛び出すように大きくなります（鯉のぼりから人物が飛び出す構図や、ヒーローが画面へ迫る構図）。支点は自由な点か、部位・物体に付けるかを選べ、印を画面でドラッグして動かせます。「カメラを一時的に動かす」で、固定したカメラを記憶したまま横から支点の奥行きを合わせられます。強さは上げるほど均等に効くように
 - パースの誇張の支点を3軸ハンドルで動かせるように：支点の印を押すか「3軸ハンドルで動かす」で、移動の矢印が出て、場面の X・Y・Z の方向に動かせます（元に戻すも効きます）
+- 側面図にカメラを追加（見る › 視点 › 側面図）：右から・左からを選べ、中心（支点）をカメラの注視点・人物の部位・置いた物から選べます（動いても付いていく）。回転・見下ろす角度・拡大もでき、側面図の上でホイール・中ボタン（Alt＋ドラッグ）・Shift で操作できます。回転しなければ、今まで通りカメラから90°横の水平な図です
 
 ### English
 
@@ -257,6 +258,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - "Side" in the Equip tab's preview: a thing held in the right or left hand, a pair on both or one foot / hand only, anything else that differs left and right mirrored to the other side, before it is held or worn. "To the other side" among the things out swaps it later too
 - Exaggerated perspective reworked: no more strengths for each thing; one pivot point (a mark on the view, never in the pictures) and one strength for everything. What lies behind the pivot shrinks fast toward it; what is in front bursts out of it (a figure bursting out of a carp streamer, a hero rushing at the camera). The pivot is a free point or on a part or an object, and its mark can be dragged on the view. **Move the camera for a while** keeps the locked camera while you set the pivot's depth from the side. The strength now feels even along the slider
 - The exaggerated perspective's pivot moves with the 3-axis handles: press its mark or **Move with the 3-axis handles**, and the move arrows take it along the scene's X, Y, Z (undo works)
+- A camera for the side view (View › Viewpoint › Side view): seen from the right or the left, round a centre (the camera's look-at point, a figure's part or an object put, followed as it moves), turned, tilted and zoomed; on the side view the wheel, the middle button (Alt + drag) and Shift work it. Unturned it is the level view 90° from the camera, as before
 
 ## v0.1.0
 
