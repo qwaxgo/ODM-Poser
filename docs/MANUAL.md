@@ -163,6 +163,8 @@ Apart from the lens, and only while the camera is locked, the perspective can be
 - **The pivot's mark**
   - While this tab is open, a pink cross shows the pivot. It is not in the exported pictures.
   - Drag the mark on the view; it keeps its depth.
+  - Press the mark (or **Move with the 3-axis handles**) to select the pivot: the 3-axis handles' move arrows show on it and move it along the scene's X, Y, Z (undo and redo work). A pivot on a part or an object changes its offset.
+  - A click elsewhere, or closing the tab, lets the pivot go. While it is selected, a click on empty space does not switch to Camera mode.
 - **Move the camera for a while**
   - The locked camera is kept while you turn and move the camera, to set the pivot's depth from the side.
   - Meanwhile the exaggeration rests. **Back to the locked camera** returns to it, and the exaggeration comes back.
