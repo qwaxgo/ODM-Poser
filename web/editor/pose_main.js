@@ -135,57 +135,67 @@ function frameWH(W, H){
   if (!frameAspect){ const [EW, EH] = exportSize(); frameAspect = EW / EH; }
   return W / H > frameAspect ? [H * frameAspect, H] : [W, W / frameAspect];
 }
-// パースの誇張 (pose_persp.js): while PX is set ({k, qz}), what is drawn is seen by a camera moved toward
-// the pivot (its depth qz) by k of the way, its lens widened as much (a dolly zoom for that thing alone):
-// at the pivot's depth the size stays, farther it shrinks faster, nearer it grows. Lines stay straight
-// and the vanishing points (vanish, the eye level) come from the same lens, so the ruler can follow
+// パースの誇張 (pose_persp.js): while PX is set ({k, qz, cw, o}), what is drawn is seen by a camera moved
+// k of the way toward the pivot point (along its ray: qz its depth, cw the sideways step in world cm),
+// its lens widened as much and shifted (o) so the pivot stays where it was on screen: at the pivot's
+// depth the size stays, farther shrinks fast toward the pivot, nearer grows out of it. One camera for
+// everything, so lines stay straight, things that touch still touch, and the vanishing points and the
+// eye level (vanish, horizonLine) follow: the ruler matches. withPX moves S.center by cw meanwhile.
 let PX = null;
 function lensF(W, H){ const [w, h] = frameWH(W, H); return S.cam.lens / 36 * Math.max(w, h) * (PX ? 1 - PX.k : 1); }
 function camDist(W, H){ const [w, h] = frameWH(W, H), D = S.cam.lens / 36 * Math.max(w, h) * 190 / (0.86 * h) / S.cam.zoom;   // 190 cm fills 86 % of the picture's height
   return PX ? D - PX.k * (D - PX.qz) : D; }
+// the picture's centre of projection (moved by the lens shift of パースの誇張)
+function cxOf(W, H){ return PX ? W/2 + PX.o[0] * lensF(W, H) / (1 - PX.k) : W/2; }
+function cyOf(W, H){ return PX ? H/2 - PX.o[1] * lensF(W, H) / (1 - PX.k) : H/2; }
+// the camera's direction (its own axes) through a pixel
+function pixDir(x, y, W, H){ const f = lensF(W, H); return norm([(x - cxOf(W, H)) / f, -(y - cyOf(W, H)) / f, -1]); }
 function toCam(p){ return camRot(sub(p, S.center)); }
 function project(p, W, H){
   const q = toCam(p), f = lensF(W, H), D = camDist(W, H), d = Math.max(D - q[2], 1);
-  return {x: W/2 + f*q[0]/d, y: H/2 - f*q[1]/d, s: f/d, z: q[2]};
+  return {x: cxOf(W, H) + f*q[0]/d, y: cyOf(W, H) - f*q[1]/d, s: f/d, z: q[2]};
 }
-// パースの誇張 (pose_persp.js): only while the camera is locked. S.persp.pivot {key, joint, off}: the
-// depth that keeps its size (a figure's joint, "f<id>", with an offset in cm on the scene's axes; an
-// object, "s<k>" / "i<n>", with an offset in its own axes, its middle at first). The strength in % is
-// each thing's own: a figure's S.figExag, an object's o.exag, the ruler's and guides' S.persp.ruler
-const EX_K = 0.9;                              // 100 %: the camera 0.9 of the way to the pivot
+// パースの誇張 (pose_persp.js): only while the camera is locked (and not turned for a while: S.camPeek).
+// S.persp {pivot: {mode: "free" (at [x, y, z] in the scene) | "attach" (key "f<id>" with a joint and an
+// offset on the scene's axes, or "s<k>" / "i<n>" with an offset in its own axes, its middle at first)},
+// k: the strength in % (0 to 100), the same for everything}
+// the strength felt evenly: each step brings the camera the same share closer (100 %: 4 % of the way left)
+const EX_K = 0.96, exK = pct => 1 - Math.pow(1 - EX_K, Math.max(0, Math.min(100, pct)) / 100);
 function exPivot(){
-  const pv = (S.persp && S.persp.pivot) || {}, key = pv.key || "", off = Array.isArray(pv.off) ? pv.off : null;
+  const pv = (S.persp && S.persp.pivot) || {};
+  if (pv.mode !== "attach") return Array.isArray(pv.at) ? pv.at : S.P[IX.pelvis];
+  const key = pv.key || "", off = Array.isArray(pv.off) ? pv.off : null;
   if (/^[si]\d+$/.test(key) && window.ODMObj && ODMObj.toWorld){ const w = ODMObj.toWorld(key, off); if (w) return w; }
   let P = S.P;
   if (/^f\d+$/.test(key) && +key.slice(1) !== (S.figId || 1)){ const f = (S.others || []).find(o => (o.figId || 1) === +key.slice(1)); if (f) P = f.P; }
   const j = IX[pv.joint] !== undefined ? IX[pv.joint] : IX.pelvis;
   return add(P[j], off && !/^[si]/.test(key) ? off : [0, 0, 0]);
 }
-// the exaggeration for a strength in % (null: none, or the camera is free)
-function pxOf(pct){
-  pct = +pct; if (!S.camLock || !pct || !isFinite(pct)) return null;
-  const keep = PX; PX = null;
-  try { return {k: Math.max(-EX_K, Math.min(EX_K, pct / 100 * EX_K)), qz: toCam(exPivot())[2]}; } finally { PX = keep; }
+// the exaggeration now (null: none, the camera is free or turned for a while)
+function pxNow(){
+  const pct = +((S.persp || {}).k); if (!S.camLock || S.camPeek || !pct || !isFinite(pct)) return null;
+  return withPX(null, () => {
+    const k = exK(pct), q = toCam(exPivot()), [EW, EH] = exportSize();
+    const d = Math.max(camDist(EW, EH) - q[2], 1);
+    return {k, qz: q[2], cw: camRotInv([k * q[0], k * q[1], 0]), o: [k * q[0] / d, k * q[1] / d]};
+  });
 }
+const pxOf = () => pxNow();
 // a segment cut just before the camera (null: all behind it); a far-reaching thing under a strong
-// パースの誇張 reaches behind its own camera, and its lines would cross the picture
+// パースの誇張 reaches behind the camera, and its lines would cross the picture
 function clipNear(a, b, W, H, near = 5){
   const D = camDist(W, H), da = D - toCam(a)[2], db = D - toCam(b)[2];
   if (da < near && db < near) return null;
   if (da < near) a = add(a, mul(sub(b, a), (near - da) / (db - da))); else if (db < near) b = add(b, mul(sub(a, b), (near - db) / (da - db)));
   return [a, b];
 }
-function withPX(px, fn){ const keep = PX; PX = px; try { return fn(); } finally { PX = keep; } }
-const figPX = () => pxOf(S.figExag);
-// an object's ("s3", "i2"; a guide: the ruler's; a thing held or worn: its figure's)
-function pxOfKey(k){
-  if (!k) return null;
-  if (k[0] === "s"){ const o = (S.solids || [])[+k.slice(1)]; return !o ? null : pxOf(o.guide ? (S.persp || {}).ruler : o.exag); }
-  if (k[0] === "i"){ const it = (S.items || [])[+k.slice(1)]; return it ? pxOfItem(it) : null; }
-  return null;
+function withPX(px, fn){
+  const keep = PX, c0 = S.center, base = PX ? sub(S.center, PX.cw) : S.center;
+  PX = px; S.center = px ? add(base, px.cw) : base;
+  try { return fn(); } finally { PX = keep; S.center = c0; }
 }
-function pxOfItem(it){ const loose = typeof movable === "function" ? movable(it) : it.where === "world"; return loose ? pxOf(it.exag) : figPX(); }
-const rulerPX = () => pxOf((S.persp || {}).ruler);
+// (one strength for all: these stay for the callers)
+const figPX = () => pxNow(), pxOfKey = k => k ? pxNow() : null, pxOfItem = () => pxNow(), rulerPX = () => pxNow();
 
 // the head's frame, for the face direction and the OpenPose nose / eyes / ears
 function headFrame(){
@@ -755,7 +765,7 @@ function dragPose(i, x, y, W, H){
   const par = PARENT[i], L = len(sub(S.P[i], S.P[par]));
   const f = lensF(W, H), D = camDist(W, H);
   const pc = toCam(S.P[par]), ic = toCam(S.P[i]);
-  const dir = norm([(x - W/2) / f, -(y - H/2) / f, -1]), O = [0, 0, D];
+  const dir = pixDir(x, y, W, H), O = [0, 0, D];
   const op = sub(O, pc), bq = dot(dir, op), cq = dot(op, op) - L*L, disc = bq*bq - cq;
   let target;
   if (disc >= 0){
@@ -776,7 +786,7 @@ const IK_END = {r_wrist: 1, l_wrist: 1, r_ankle: 1, l_ankle: 1};
 function dragIK(i, x, y, W, H){
   const mid = PARENT[i], root = PARENT[mid];
   const f = lensF(W, H), D = camDist(W, H);
-  const ec = toCam(S.P[i]), dir = norm([(x - W/2) / f, -(y - H/2) / f, -1]);
+  const ec = toCam(S.P[i]), dir = pixDir(x, y, W, H);
   const t = (ec[2] - D) / dir[2], T = add([0, 0, D], mul(dir, t));          // same depth
   const rc = toCam(S.P[root]), mc = toCam(S.P[mid]);
   const L1 = len(sub(mc, rc)), L2 = len(sub(ec, mc));
@@ -1565,7 +1575,7 @@ function dragMidPinned(i, x, y, W, H){
   const u = norm(sub(e, r)), a = (L1*L1 - L2*L2 + d*d) / (2*d), h = Math.sqrt(Math.max(0, L1*L1 - a*a));
   const c = add(r, mul(u, a));
   const f = lensF(W, H), D = camDist(W, H), mc = toCam(S.P[i]);
-  const dir = norm([(x - W/2) / f, -(y - H/2) / f, -1]), t = (mc[2] - D) / dir[2];
+  const dir = pixDir(x, y, W, H), t = (mc[2] - D) / dir[2];
   const T = add(camRotInv(add([0, 0, D], mul(dir, t))), S.center);
   let v = sub(T, c); v = sub(v, mul(u, dot(v, u)));
   if (len(v) < 1e-6) return false;

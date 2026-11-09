@@ -113,7 +113,7 @@ function closestOnSolid(m, q){
 // ---- the camera's ray through a pixel of the front view ----------------------------------------
 function pixelRay(x, y, W, H){
   const f = lensF(W, H), D = camDist(W, H);
-  return {o: add(camRotInv([0, 0, D]), S.center), dir: camRotInv(norm([(x - W/2) / f, -(y - H/2) / f, -1]))};
+  return {o: add(camRotInv([0, 0, D]), S.center), dir: camRotInv(pixDir(x, y, W, H))};
 }
 function rayHit(m, r){                        // distance to where the ray enters the solid, or null
   let t0 = 0, t1 = Infinity;

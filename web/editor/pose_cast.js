@@ -9,7 +9,7 @@
 //
 // S.others: [{P, R, hands, head, body, twist, pins, items, auras, wire, scale, shape, sex, figId, figName, torso3d}]
 // 胴体を立体 (torso3d) is each figure's own; a figure from before it was takes the one edited then
-const FIG_KEYS = ["P", "R", "hands", "head", "body", "twist", "pins", "items", "auras", "wire", "scale", "shape", "sex", "figId", "figName", "torso3d", "stand", "figExag"];
+const FIG_KEYS = ["P", "R", "hands", "head", "body", "twist", "pins", "items", "auras", "wire", "scale", "shape", "sex", "figId", "figName", "torso3d", "stand"];
 function takeFigure(){ const f = {}; for (const k of FIG_KEYS) f[k] = S[k]; return f; }
 function putFigure(f){ const d = fresh(), keep = S.torso3d;
   for (const k of FIG_KEYS) S[k] = f[k] !== undefined ? f[k] : k === "torso3d" && keep !== undefined ? keep : d[k]; }

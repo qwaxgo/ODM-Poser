@@ -20,7 +20,7 @@
       {id: "scenes", title: "シーン", icon: "Users", kids: [leaf("scene", "管理", "ViewList", "出ている人物・物の管理"),
         leaf("log", "作業ログ", "Undo", "した操作の一覧。どの時点にも戻せる")]},
       {id: "viewpoint", title: "視点", icon: "Fov", kids: [leaf("camera", "カメラ", "Camera", "カメラの向き・位置・レンズ・固定と記憶"), leaf("ruler", "定規", "ruler", "パース定規"),
-        leaf("persp", "パース", "FrameSize", "パースの誇張（カメラ固定時、人物・物体ごと）")]}]},
+        leaf("persp", "パース", "FrameSize", "パースの誇張（カメラ固定時、1つの支点から）")]}]},
     {id: "out", title: "出す", icon: "Send", kids: [
       {id: "file", title: "ファイル", icon: "File", kids: [leaf("import", "読込", "Upload", "保存したポーズを開く"),
         leaf("export", "書き出し", "DownloadAlt", "画像・ポーズを書き出す"), leaf("share", "共有", "ShareAndroid", "SNS に投稿、リンクをコピー"),
@@ -38,7 +38,7 @@
     "線の色（人物・物・床などをまとめて）": "Line colours (figures, things, floor ... in one place)", "線の色（人物・床・壁・持ち物・オーラ）": "Line colours (figures, floor, walls, things held, auras)",
     "選んだ人物に持たせる・身に着ける・まとう": "Give the selected figure something to hold, wear or be wrapped in",
     "人物から離れた物体を置く": "Put objects apart from the figure", "床・壁・天井、つかまる、ワイヤー": "Floor, wall, ceiling; grabbing; wire",
-    "出ている人物・物の管理": "The figures and things in the scene", "性別・身長・部位ごとのサイズ": "Sex, height and each part's size", "カメラとパース": "Camera and perspective", "カメラの向き・位置・レンズ・固定と記憶": "The camera's turn, place, lens, lock and saved cameras", "パースの誇張（カメラ固定時、人物・物体ごと）": "Exaggerated perspective (camera locked; each figure and object)", "パース定規": "Perspective ruler",
+    "出ている人物・物の管理": "The figures and things in the scene", "性別・身長・部位ごとのサイズ": "Sex, height and each part's size", "カメラとパース": "Camera and perspective", "カメラの向き・位置・レンズ・固定と記憶": "The camera's turn, place, lens, lock and saved cameras", "パースの誇張（カメラ固定時、1つの支点から）": "Exaggerated perspective (camera locked, from one pivot)", "パース定規": "Perspective ruler",
     "保存したポーズを開く": "Open a saved pose", "画像・ポーズを書き出す": "Export pictures and poses", "SNS に投稿、リンクをコピー": "Post to social media, copy the link",
     "MOD の管理": "Manage mods", "した操作の一覧。どの時点にも戻せる": "What you did, step by step; go back to any point", "メニューを開く・閉じる": "Open / close the menu",
     "骨の長さを保って関節を動かす": "Move the joints, keeping the bone lengths", "骨の長さ・丸の太さを変える": "Change the bone lengths and the circles' sizes",

@@ -134,7 +134,7 @@ function rulerAxes(){ const R = turnOf(rulerTurn()); return [R(X3), R(Y3), R(Z3)
 function vanish(a, W, H){
   const q = camRot(a), f = lensF(W, H);
   if (Math.abs(q[2]) > 1e-6){
-    const x = W/2 - f*q[0]/q[2], y = H/2 + f*q[1]/q[2];
+    const x = cxOf(W, H) - f*q[0]/q[2], y = cyOf(W, H) + f*q[1]/q[2];
     if (Math.hypot(x - W/2, y - H/2) < 60 * Math.max(W, H)) return {x, y};
   }
   const l = Math.hypot(q[0], q[1]) || 1;
@@ -142,7 +142,7 @@ function vanish(a, W, H){
 }
 // the eye level: the screen line where the ruler's horizontal planes vanish
 function horizonLine(up, W, H){
-  const n = camRot(up), f = lensF(W, H), cx = W/2, cy = H/2;
+  const n = camRot(up), f = lensF(W, H), cx = cxOf(W, H), cy = cyOf(W, H);
   // a pixel's ray ((x-cx)/f, -(y-cy)/f, -1) is perpendicular to n
   if (Math.abs(n[1]) >= Math.abs(n[0])){
     if (Math.abs(n[1]) < 1e-9) return null;

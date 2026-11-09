@@ -370,8 +370,8 @@ function sync(){
 // ---- 物体のプリセット: one object's make (its kind, size, turn, colour, exaggeration ...), named and kept
 // in this browser, to put again as often as wanted (in front of the figure, on the ground)
 const OP_KEY = (typeof KEY === "string" ? KEY : "odm-poser-editor-v1") + "-objpresets";
-const SOLID_KEEP = ["kind", "size", "yaw", "pitch", "roll", "sides", "top", "color", "exag", "guide", "gq", "piv"];
-const ITEM_KEEP = ["key", "rot", "yaw", "scale", "stretch", "segs", "dims", "len", "thick", "color", "exag", "piv", "bayonet"];
+const SOLID_KEEP = ["kind", "size", "yaw", "pitch", "roll", "sides", "top", "color", "guide", "gq", "piv"];
+const ITEM_KEEP = ["key", "rot", "yaw", "scale", "stretch", "segs", "dims", "len", "thick", "color", "piv", "bayonet"];
 const opLoad = () => { try { const v = JSON.parse(localStorage.getItem(OP_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
 const opSave = list => { try { localStorage.setItem(OP_KEY, JSON.stringify(list)); return true; } catch (e) { say("プリセットを保存できませんでした（ブラウザの保存領域）。", true); return false; } };
 const pickKeys = (from, keys) => { const o = {}; for (const k of keys) if (from[k] !== undefined) o[k] = JSON.parse(JSON.stringify(from[k])); return o; };
