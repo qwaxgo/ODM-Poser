@@ -99,10 +99,36 @@ function placePivot(w){
   const base = exPivot();
   P.pivot.off = sub(w, base).map(v => Math.round(v * 10) / 10);
 }
+// the pivot selected (a press on its mark, or 3軸ハンドルで動かす): the 3-axis handles' move arrows move it
+// along the scene's X, Y, Z (pose_gizmo.js); a click elsewhere, or the tab closed, lets it go
+let pxSel = false;
+// (with the handles on it, only the middle: the arrows start close by)
+const handlesOn = () => pxSel && $("gizmoOn") && $("gizmoOn").checked;
+const nearMark = (x, y) => { const p = markAt(front.width, front.height);
+  return Math.hypot(x - p.x, y - p.y) <= (handlesOn() ? 6 : 16) * pointerScale() * (devicePixelRatio || 1); };
+function selectPivot(){
+  pxSel = true;
+  if (window.ODMGizmo){ ODMGizmo.prefer("move"); ODMGizmo.show(); }
+  draw();
+}
+(window.ODMGizmoTargets || []).push(() => {
+  if (!pxSel) return null;
+  if (!markOn()){ pxSel = false; return null; }
+  const c = exPivot().slice();
+  return {c, ax: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], pivot: c, rings: [], sc: [], lacks: ["rotate", "scale"], px: true,
+    save: () => ({p: c.slice()}),
+    move: (s0, d) => { placePivot(add(s0.p, d)); if (typeof afterEdit === "function") afterEdit(); }};
+});
+// an empty click with the pivot selected only lets it go (no switch to カメラ by the automatic mode)
+{ const e0 = emptyClick; emptyClick = function(){ if (pxSel && markOn()){ pxSel = false; draw(); return; } return e0 ? e0.apply(this, arguments) : undefined; }; }
+{ const t0 = tapClick; tapClick = function(t){
+    if (pxSel && !(t && t.at && nearMark(t.at[0], t.at[1]))){ pxSel = false; draw(); }
+    return t0 ? t0.apply(this, arguments) : undefined; }; }
 DOWN_HOOKS.unshift((cv, x, y) => {
   if (cv !== front || !markOn()) return null;
   const W = cv.width, H = cv.height, p = markAt(W, H);
-  if (Math.hypot(x - p.x, y - p.y) > 16 * pointerScale() * (devicePixelRatio || 1)) return null;
+  if (!nearMark(x, y)) return null;
+  if (!pxSel){ pxSel = true; if (window.ODMGizmo) ODMGizmo.prefer("move"); }
   const depth = withPX(null, () => toCam(exPivot())[2]), dx = x - p.x, dy = y - p.y;
   return {move(mx, my){
     // across the view at the same depth (the mark's place does not depend on the exaggeration)
@@ -126,10 +152,11 @@ sec.innerHTML = `<h2>パースの誇張</h2>
     <div id="pxJointBox"><label>部位</label><select id="pxJoint">${J.map(n => `<option value="${n}">${esc2(J_JA[n] || n)}</option>`).join("")}</select></div></div>
   <div class="hint" id="pxOffHint"></div>
   ${row("pxOX", "支点の位置 X", -500, 500, 1, "cm")}${row("pxOY", "支点の位置 Y", -500, 500, 1, "cm")}${row("pxOZ", "支点の位置 Z", -500, 500, 1, "cm")}
-  <div class="btns" style="margin-top:6px"><button type="button" id="pxToSel" title="支点を、選んでいる関節・物体の所に移す">選んだ所に移す</button>
+  <div class="btns" style="margin-top:6px"><button type="button" id="pxGizmo" title="支点に3軸ハンドルの移動の矢印を出し、X・Y・Z の方向に動かす">3軸ハンドルで動かす</button>
+    <button type="button" id="pxToSel" title="支点を、選んでいる関節・物体の所に移す">選んだ所に移す</button>
     <button type="button" id="pxOffReset" title="付けた部位・物体の所（物体ならその真ん中）に戻す">↺ ずれをなくす</button></div>
   <div class="btns" style="margin-top:10px"><button type="button" id="pxPeek" title="固定したカメラを記憶したまま、カメラを回して支点の奥行きを確かめる">カメラを一時的に動かす</button></div>
-  <div class="hint">支点の印（ピンクの十字）は画面でドラッグして動かせます（今の奥行きのまま）。奥行きは、カメラを一時的に動かして横から合わせられます。印は書き出す画像には出ません。</div>
+  <div class="hint">支点の印（ピンクの十字）は画面でドラッグして動かせます（今の奥行きのまま）。印を押すか「3軸ハンドルで動かす」で、3軸ハンドルの矢印でも X・Y・Z の方向に動かせます。奥行きは、カメラを一時的に動かして横から合わせられます。印は書き出す画像には出ません。</div>
   <div class="hint">人物・図形・小物・ガイド図形・パース定規・床に、同じ強さで掛かります。書き出す画像（アタリ・OpenPose・定規）にも入ります。</div>`;
 { const lock = $("camLock") && $("camLock").closest("section"); if (lock) lock.after(sec); else document.querySelector("aside").appendChild(sec); }
 
@@ -164,6 +191,7 @@ function sync(){
   $("pxOffReset").style.display = att ? "" : "none";
   $("pxState").textContent = peeking() ? "カメラを一時的に動かしています（誇張は止まっています）。"
     : S.camLock ? "カメラを固定しているので、誇張が効いています。" : "カメラを固定しているときだけ効きます（固定と記憶の「カメラを固定」）。";
+  $("pxGizmo").classList.toggle("primary", !!handlesOn()); $("pxGizmo").setAttribute("aria-pressed", String(!!handlesOn()));
   $("pxPeek").textContent = peeking() ? "固定したカメラに戻る" : "カメラを一時的に動かす";
   $("pxPeek").disabled = !S.camLock;
   $("pxPeek").classList.toggle("primary", peeking());
@@ -210,6 +238,7 @@ $("pxToSel").addEventListener("click", () => {
   if (!w){ say("関節か物体を選んでから押してください。", true); return; }
   remember(); placePivot(w.slice()); if (typeof afterEdit === "function") afterEdit(); draw(); say("支点を選んだ所に移しました。");
 });
+$("pxGizmo").addEventListener("click", () => { selectPivot(); say("支点に3軸ハンドルを出しました（矢印で X・Y・Z に動かせます）。ほかの所をクリックすると外れます。"); });
 $("pxPeek").addEventListener("click", () => { if (S.camPeek) peekEnd(); else peekStart(); });
 sync();
 
@@ -225,8 +254,10 @@ sync();
   "↺ ずれをなくす": "↺ No offset", "付けた部位・物体の所（物体ならその真ん中）に戻す": "Back onto the part or object (an object: its middle)",
   "カメラを一時的に動かす": "Move the camera for a while", "固定したカメラに戻る": "Back to the locked camera",
   "固定したカメラを記憶したまま、カメラを回して支点の奥行きを確かめる": "Turn the camera to check the pivot's depth; the locked camera is kept",
-  "支点の印（ピンクの十字）は画面でドラッグして動かせます（今の奥行きのまま）。奥行きは、カメラを一時的に動かして横から合わせられます。印は書き出す画像には出ません。":
-    "Drag the pivot's mark (the pink cross) on the view (it keeps its depth). Set the depth by moving the camera for a while and looking from the side. The mark is not in the exported pictures.",
+  "支点の印（ピンクの十字）は画面でドラッグして動かせます（今の奥行きのまま）。印を押すか「3軸ハンドルで動かす」で、3軸ハンドルの矢印でも X・Y・Z の方向に動かせます。奥行きは、カメラを一時的に動かして横から合わせられます。印は書き出す画像には出ません。":
+    "Drag the pivot's mark (the pink cross) on the view (it keeps its depth). Press the mark or \"Move with the 3-axis handles\" to move it along X, Y, Z with the handles' arrows. Set the depth by moving the camera for a while and looking from the side. The mark is not in the exported pictures.",
+  "3軸ハンドルで動かす": "Move with the 3-axis handles", "支点に3軸ハンドルの移動の矢印を出し、X・Y・Z の方向に動かす": "Show the move arrows on the pivot and move it along X, Y, Z",
+  "支点に3軸ハンドルを出しました（矢印で X・Y・Z に動かせます）。ほかの所をクリックすると外れます。": "The 3-axis handles are on the pivot (move it along X, Y, Z with the arrows). Click elsewhere to let go.",
   "人物・図形・小物・ガイド図形・パース定規・床に、同じ強さで掛かります。書き出す画像（アタリ・OpenPose・定規）にも入ります。":
     "Figures, shapes, things, guides, the ruler and the floor all get the same. The exported pictures (rough, OpenPose, ruler) have it too.",
   "支点の位置は、場面の座標（X・Y・Z）です。ほかの物とは一緒に動きません。": "The pivot's place in the scene (X, Y, Z). It does not move with anything.",

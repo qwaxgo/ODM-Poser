@@ -18,6 +18,9 @@
 // selected move together and turn together about up.
 (() => {
 const $ = id => document.getElementById(id);
+// other files' targets, before the rest (パースの誇張's pivot: pose_persp.js): each returns one or null
+const EXTRA = window.ODMGizmoTargets = [];
+function extraTarget(){ for (const f of EXTRA){ const t = f(); if (t) return t; } return null; }
 const COL = ["#e5484d", "#30a46c", "#3e63dd"], ARROW_PX = 64, RING_PX = 52;
 // the switch, among the view's switches
 { const lab = document.createElement("label");
@@ -86,6 +89,7 @@ addEventListener("DOMContentLoaded", icons);
 // pelvis' trapezoids lean and the body's sizes stay
 const LIMB = new Set(["shoulder", "elbow", "wrist", "hand", "hip", "knee", "ankle", "toe"].flatMap(n => ["r_" + n, "l_" + n]));
 function tools(){
+  { const t = extraTarget(); if (t) return TOOLS.map(x => x[0]).filter(id => !t.lacks || !t.lacks.includes(id)); }
   if (mode === "pose") return sel >= 0 && LIMB.has(J[sel]) ? ["move", "rotate"] : ["rotate"];
   if (mode === "body") return ["scale"];
   if (mode === "place" && pivEdit) return ["move"];
@@ -99,7 +103,7 @@ function syncBars(){
   tool = can.includes(pref) ? pref : can[0] || pref;
   // 支点 ends with 配置 or with nothing (or several things) selected
   if (pivEdit && !(mode === "place" && OBJ() && (OBJ().key() || ghostNow()))) pivEdit = false;
-  const k = [on, tool, can.join(), pivEdit, mode === "place"].join("|"); if (k === barKey) return; barKey = k;
+  const k = [on, tool, can.join(), pivEdit, mode === "place", !!extraTarget()].join("|"); if (k === barKey) return; barKey = k;
   for (const d of bars){ d.classList.toggle("off", !on);
     d.querySelectorAll("button[data-gz]").forEach(b => { const me = b.dataset.gz === tool && can.includes(tool);
       b.disabled = !can.includes(b.dataset.gz); b.classList.toggle("on", me); b.setAttribute("aria-pressed", String(me)); });
@@ -114,7 +118,7 @@ function setTool(id, tell){
   if (tell) toast(`3軸ハンドル：${TOOLS.find(t => t[0] === id)[1]}`);
 }
 // the tool to show when the handles are on (the hips clicked, pose_objects.js); they are not turned on
-window.ODMGizmo = {prefer(id){ pref = id; try { localStorage.setItem(KEY + "-gizmotool", id); } catch (e) {} syncBars(); draw(); }};
+window.ODMGizmo = {show(){ setOn(true); }, prefer(id){ pref = id; try { localStorage.setItem(KEY + "-gizmotool", id); } catch (e) {} syncBars(); draw(); }};
 const modeName = () => ({pose: "ポーズ", body: "体格", persp: "カメラ", place: "配置"})[mode] || mode;
 // on the view, under the modes; in the joint's section (ポーズ) and the objects' (設置)
 { const ov = document.createElement("div"); ov.className = "ov-body ov-row"; ov.id = "ovGizmo"; ov.appendChild(bar("gz-ov"));
@@ -136,6 +140,7 @@ function across(u){ const r = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], a = 
 //  save(), move(s0, d), turn(s0, k, degrees), scale(s0, factor, n)}
 function target(any){
   if (!$("gizmoOn").checked && !any) return null;
+  { const t = extraTarget(); if (t) return t; }
   const save = () => ({P: S.P.map(p => p.slice()), R: S.R.slice(), body: Object.assign({}, S.body), twist: (S.twist || []).slice(),
     fwd: headFrame().fwd});
   if (mode === "pose" && sel >= 0){
