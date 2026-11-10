@@ -67,13 +67,16 @@ if ($("camLock")) $("camLock").addEventListener("change", () => { if (S.camPeek)
 { const u0 = upgradeState; upgradeState = function(st){ const r = u0.apply(this, arguments); if (st && st.camPeek && st.camPeek.sid !== SID) unpeek(st); return r; }; }
 if (S.camPeek && S.camPeek.sid !== SID) unpeek(S);
 
-// ---- the pivot's mark: shown while this panel is open or the camera moved for a while -------------------
-const markOn = () => sec.classList.contains("active") || peeking();
+// ---- the pivot's mark: on the front and side views, never in the pictures (S.persp.mark false: only
+// while this panel is open or the camera moved for a while); faint while the exaggeration is not on ----
+const tabOpen = () => sec.classList.contains("active");
+const markOn = () => tabOpen() || peeking() || (S.persp ? S.persp.mark !== false : true);
 const markAt = (W, H) => project(exPivot(), W, H);            // the same with or without the exaggeration
-function drawMark(ctx, W, H){
-  const p = markAt(W, H), u = devicePixelRatio || 1, r = 9 * u, c = "#ff5bd1";
-  ctx.save(); ctx.strokeStyle = c; ctx.lineWidth = 2 * u; ctx.setLineDash([]);
+function drawMark(ctx, p){
+  const u = devicePixelRatio || 1, r = 9 * u, c = "#ff5bd1";
+  ctx.save(); ctx.globalAlpha = pxNow() ? 1 : 0.5; ctx.strokeStyle = c; ctx.lineWidth = (pxSel ? 3 : 2) * u; ctx.setLineDash([]);
   ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.stroke();
+  if (pxSel){ ctx.fillStyle = c; ctx.globalAlpha *= 0.25; ctx.fill(); ctx.globalAlpha = pxNow() ? 1 : 0.5; }
   ctx.beginPath();
   for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]){ ctx.moveTo(p.x + dx * r * 0.4, p.y + dy * r * 0.4); ctx.lineTo(p.x + dx * r * 2, p.y + dy * r * 2); }
   ctx.stroke();
@@ -81,7 +84,11 @@ function drawMark(ctx, W, H){
   ctx.restore();
 }
 { const d0 = drawAtari; drawAtari = function(ctx, W, H, opts){ const r = d0.apply(this, arguments);
-    if (!(opts && opts.export) && ctx.canvas === front && markOn()) drawMark(ctx, W, H);
+    if (!(opts && opts.export) && ctx.canvas === front && markOn()) drawMark(ctx, markAt(W, H));
+    return r; }; }
+// on the side view too, after it is drawn (there it can be dragged across that view: its depth there)
+{ const d0 = draw; draw = function(){ const r = d0.apply(this, arguments);
+    if (markOn() && side.width > 1 && side.getClientRects().length) drawMark(side.getContext("2d"), sideProject(exPivot(), side.width, side.height));
     return r; }; }
 // an object's offset (its own axes) for a world point: its axes found from toWorld
 function objOff(key, w){
@@ -100,7 +107,7 @@ function placePivot(w){
   P.pivot.off = sub(w, base).map(v => Math.round(v * 10) / 10);
 }
 // the pivot selected (a press on its mark, or 3軸ハンドルで動かす): the 3-axis handles' move arrows move it
-// along the scene's X, Y, Z (pose_gizmo.js); a click elsewhere, or the tab closed, lets it go
+// along the scene's X, Y, Z (pose_gizmo.js); a click elsewhere, or the mark hidden, lets it go
 let pxSel = false;
 // (with the handles on it, only the middle: the arrows start close by)
 const handlesOn = () => pxSel && $("gizmoOn") && $("gizmoOn").checked;
@@ -122,13 +129,19 @@ function selectPivot(){
 // an empty click with the pivot selected only lets it go (no switch to カメラ by the automatic mode)
 { const e0 = emptyClick; emptyClick = function(){ if (pxSel && markOn()){ pxSel = false; draw(); return; } return e0 ? e0.apply(this, arguments) : undefined; }; }
 { const t0 = tapClick; tapClick = function(t){
-    if (pxSel && !(t && t.at && nearMark(t.at[0], t.at[1]))){ pxSel = false; draw(); }
+    if (pxSel && !markTook){ pxSel = false; draw(); }      // the press went to something else (a joint, an object)
     return t0 ? t0.apply(this, arguments) : undefined; }; }
+// a press on the mark selects it (the 3-axis handles go on it) and drags it across the view at its
+// depth. ポーズ・体格 outside this panel: a joint under it comes first (the pivot often sits on one)
+let markTook = false;                         // the last press was the mark's
+function grabMark(){ markTook = true; if (!pxSel){ pxSel = true; if (window.ODMGizmo) ODMGizmo.prefer("move"); say("誇張の支点を選びました（ドラッグか3軸ハンドルで動かせます。ほかの所をクリックすると外れます）。"); } }
 DOWN_HOOKS.unshift((cv, x, y) => {
+  markTook = false;
   if (cv !== front || !markOn()) return null;
   const W = cv.width, H = cv.height, p = markAt(W, H);
   if (!nearMark(x, y)) return null;
-  if (!pxSel){ pxSel = true; if (window.ODMGizmo) ODMGizmo.prefer("move"); }
+  if (!tabOpen() && (mode === "pose" || mode === "body") && pick(cv, x, y) >= 0) return null;
+  grabMark();
   const depth = withPX(null, () => toCam(exPivot())[2]), dx = x - p.x, dy = y - p.y;
   return {move(mx, my){
     // across the view at the same depth (the mark's place does not depend on the exaggeration)
@@ -137,6 +150,14 @@ DOWN_HOOKS.unshift((cv, x, y) => {
     placePivot(w); if (typeof afterEdit === "function") afterEdit();
   }};
 });
+// the side view (its press: pose_sideview.js asks first): across that view, keeping the depth there
+window.ODMPxMark = {sideDown(x, y){
+  if (!markOn()) return null;
+  const W = side.width, H = side.height, p = sideProject(exPivot(), W, H);
+  if (Math.hypot(x - p.x, y - p.y) > 16 * pointerScale() * (devicePixelRatio || 1)) return null;
+  grabMark(); const at = exPivot().slice(), dx = x - p.x, dy = y - p.y;
+  return {move(mx, my){ placePivot(sideUnproject(mx - dx, my - dy, W, H, at)); if (typeof afterEdit === "function") afterEdit(); }};
+}};
 
 // ---- the panel: 見る › 視点 › パース ------------------------------------------------------------------
 const row = (id, label, min, max, step, unit, title) => `<div id="${id}Box"><label${title ? ` title="${title}"` : ""}>${label}</label><div class="row">` +
@@ -155,8 +176,9 @@ sec.innerHTML = `<h2>パースの誇張</h2>
   <div class="btns" style="margin-top:6px"><button type="button" id="pxGizmo" title="支点に3軸ハンドルの移動の矢印を出し、X・Y・Z の方向に動かす">3軸ハンドルで動かす</button>
     <button type="button" id="pxToSel" title="支点を、選んでいる関節・物体の所に移す">選んだ所に移す</button>
     <button type="button" id="pxOffReset" title="付けた部位・物体の所（物体ならその真ん中）に戻す">↺ ずれをなくす</button></div>
+  <label class="chk" style="margin-top:8px"><input type="checkbox" id="pxMark"> 支点の印をいつも出す（外すと、このタブを開いている間だけ）</label>
   <div class="btns" style="margin-top:10px"><button type="button" id="pxPeek" title="固定したカメラを記憶したまま、カメラを回して支点の奥行きを確かめる">カメラを一時的に動かす</button></div>
-  <div class="hint">支点の印（ピンクの十字）は画面でドラッグして動かせます（今の奥行きのまま）。印を押すか「3軸ハンドルで動かす」で、3軸ハンドルの矢印でも X・Y・Z の方向に動かせます。奥行きは、カメラを一時的に動かして横から合わせられます。印は書き出す画像には出ません。</div>
+  <div class="hint">支点の印（ピンクの十字）は、正面と側面図にいつも出ます（誇張が効いていない間は薄く）。どのタブからでもつまんでドラッグでき（正面では今の奥行きのまま、側面図ではそこの奥行きのまま）、押すと選ばれて3軸ハンドルの矢印で X・Y・Z の方向に動かせます。ポーズ・体格では、印の下に関節があるとそちらが先です。印は書き出す画像には出ません。</div>
   <div class="hint">人物・図形・小物・ガイド図形・パース定規・床に、同じ強さで掛かります。書き出す画像（アタリ・OpenPose・定規）にも入ります。</div>`;
 { const lock = $("camLock") && $("camLock").closest("section"); if (lock) lock.after(sec); else document.querySelector("aside").appendChild(sec); }
 
@@ -192,6 +214,7 @@ function sync(){
   $("pxState").textContent = peeking() ? "カメラを一時的に動かしています（誇張は止まっています）。"
     : S.camLock ? "カメラを固定しているので、誇張が効いています。" : "カメラを固定しているときだけ効きます（固定と記憶の「カメラを固定」）。";
   $("pxGizmo").classList.toggle("primary", !!handlesOn()); $("pxGizmo").setAttribute("aria-pressed", String(!!handlesOn()));
+  $("pxMark").checked = P.mark !== false;
   $("pxPeek").textContent = peeking() ? "固定したカメラに戻る" : "カメラを一時的に動かす";
   $("pxPeek").disabled = !S.camLock;
   $("pxPeek").classList.toggle("primary", peeking());
@@ -239,6 +262,7 @@ $("pxToSel").addEventListener("click", () => {
   remember(); placePivot(w.slice()); if (typeof afterEdit === "function") afterEdit(); draw(); say("支点を選んだ所に移しました。");
 });
 $("pxGizmo").addEventListener("click", () => { selectPivot(); say("支点に3軸ハンドルを出しました（矢印で X・Y・Z に動かせます）。ほかの所をクリックすると外れます。"); });
+$("pxMark").addEventListener("change", () => { remember(); const P = persp(); if ($("pxMark").checked) delete P.mark; else P.mark = false; draw(); });
 $("pxPeek").addEventListener("click", () => { if (S.camPeek) peekEnd(); else peekStart(); });
 sync();
 
@@ -254,8 +278,10 @@ sync();
   "↺ ずれをなくす": "↺ No offset", "付けた部位・物体の所（物体ならその真ん中）に戻す": "Back onto the part or object (an object: its middle)",
   "カメラを一時的に動かす": "Move the camera for a while", "固定したカメラに戻る": "Back to the locked camera",
   "固定したカメラを記憶したまま、カメラを回して支点の奥行きを確かめる": "Turn the camera to check the pivot's depth; the locked camera is kept",
-  "支点の印（ピンクの十字）は画面でドラッグして動かせます（今の奥行きのまま）。印を押すか「3軸ハンドルで動かす」で、3軸ハンドルの矢印でも X・Y・Z の方向に動かせます。奥行きは、カメラを一時的に動かして横から合わせられます。印は書き出す画像には出ません。":
-    "Drag the pivot's mark (the pink cross) on the view (it keeps its depth). Press the mark or \"Move with the 3-axis handles\" to move it along X, Y, Z with the handles' arrows. Set the depth by moving the camera for a while and looking from the side. The mark is not in the exported pictures.",
+  "支点の印（ピンクの十字）は、正面と側面図にいつも出ます（誇張が効いていない間は薄く）。どのタブからでもつまんでドラッグでき（正面では今の奥行きのまま、側面図ではそこの奥行きのまま）、押すと選ばれて3軸ハンドルの矢印で X・Y・Z の方向に動かせます。ポーズ・体格では、印の下に関節があるとそちらが先です。印は書き出す画像には出ません。":
+    "The pivot's mark (the pink cross) is always on the front and side views (faint while the exaggeration is off). Drag it from any tab (on the front view it keeps its depth, on the side view its depth there); pressed, it is selected and the 3-axis handles' arrows move it along X, Y, Z. In Pose and Body, a joint under it comes first. The mark is not in the exported pictures.",
+  "支点の印をいつも出す（外すと、このタブを開いている間だけ）": "Always show the pivot's mark (off: only while this tab is open)",
+  "誇張の支点を選びました（ドラッグか3軸ハンドルで動かせます。ほかの所をクリックすると外れます）。": "The pivot is selected (drag it or use the 3-axis handles; click elsewhere to let go).",
   "3軸ハンドルで動かす": "Move with the 3-axis handles", "支点に3軸ハンドルの移動の矢印を出し、X・Y・Z の方向に動かす": "Show the move arrows on the pivot and move it along X, Y, Z",
   "支点に3軸ハンドルを出しました（矢印で X・Y・Z に動かせます）。ほかの所をクリックすると外れます。": "The 3-axis handles are on the pivot (move it along X, Y, Z with the arrows). Click elsewhere to let go.",
   "人物・図形・小物・ガイド図形・パース定規・床に、同じ強さで掛かります。書き出す画像（アタリ・OpenPose・定規）にも入ります。":

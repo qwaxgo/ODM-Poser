@@ -14,7 +14,8 @@
       <div class="view sideview"><span class="tag">側面図（奥行き）</span><canvas id="side"></canvas>
         <label class="view-place" data-ui="skip" title="側面図の置き場所"><span class="vp-name">置き場所</span>
           <select id="sidePos"><option value="right">右</option><option value="left">左</option><option value="top">上</option><option value="bottom">下</option><option value="hide">隠す</option></select></label>
-        <button type="button" class="sv-back" id="svBack90View" data-ui="skip" title="側面図を最初の向き（カメラから90°横・水平）に戻す">90°</button></div>
+        <div class="sv-tools" data-ui="skip"><button type="button" id="svBack90View" title="側面図を最初の向き（カメラから90°横・水平）に戻す">90°</button>
+          <button type="button" id="svResetView" title="側面図の角度・拡大・移動をまとめて戻す（カメラから90°・水平）" aria-label="角度と拡大を戻す">↺<span class="sv-long"> 角度と拡大</span></button></div></div>
       <!-- on the corners of the views (the front and the side one together): the editing modes (top left)
            and the drawing switches (top right); each folds away -->
       <div class="ov ov-tl" id="ovModes" data-ui="skip">

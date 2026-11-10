@@ -35,6 +35,7 @@ function svDrag(x, y, pan){
 { const d0 = down; down = function(cv, e){
     if (cv === side && !svPinch){
       const [x, y] = evPos(cv, e), empty = pick(cv, x, y) < 0;
+      { const d = window.ODMPxMark && ODMPxMark.sideDown(x, y); if (d){ remember(); drag = d; draw(); return; } }   // パースの誇張's pivot
       if (e.button === 1 || (empty && !e.altKey) || (e.altKey && empty)){ remember(); drag = svDrag(x, y, !!e.shiftKey); return; }
     }
     return d0.apply(this, arguments); }; }
@@ -83,7 +84,7 @@ sec.innerHTML = `<h2>側面図のカメラ</h2>
   <div class="btns" style="margin-top:6px"><button type="button" id="svToSel" title="選んでいる関節・物体を側面図の中心にする">選んだ物を中心に</button>
     <button type="button" id="svBack90" title="回転と見下ろす角度を 0° にする（カメラの向きから90°横・水平。中心と拡大はそのまま）">↺ 最初の90°に戻す</button>
     <button type="button" id="svReset" title="回転・見下ろす角度・拡大・ずらした分を戻す（カメラから90°・水平）">↺ 角度と拡大を戻す</button></div>
-  <div class="hint">回転が 0° なら、カメラの向きから90°横（水平）で、カメラを回すと付いてきます。側面図の上で、何もない所のドラッグ（または中ボタン）で回転、Shift を足すと移動、ホイールで拡大します。スマホでは、1本指のドラッグで回転、2本指でつまんで拡大・動かして移動です。側面図の隅の「90°」で、最初の向きに戻ります。</div>`;
+  <div class="hint">回転が 0° なら、カメラの向きから90°横（水平）で、カメラを回すと付いてきます。側面図の上で、何もない所のドラッグ（または中ボタン）で回転、Shift を足すと移動、ホイールで拡大します。スマホでは、1本指のドラッグで回転、2本指でつまんで拡大・動かして移動です。側面図の隅の「90°」で最初の向きに、「↺ 角度と拡大」で拡大と移動も戻ります。</div>`;
 { const after = document.querySelector('section[data-menu="persp"]') || ($("camLock") && $("camLock").closest("section"));
   if (after) after.after(sec); else document.querySelector("aside").appendChild(sec); }
 
@@ -123,7 +124,9 @@ $("svJoint").addEventListener("change", () => { remember(); const v = SV(); v.jo
 function back90(){ remember(); Object.assign(SV(), {yaw: 0, pitch: 0}); draw(); say("側面図をカメラの向きから90°横（水平）に戻しました。"); }
 $("svBack90").addEventListener("click", back90);
 if ($("svBack90View")) $("svBack90View").addEventListener("click", back90);
-$("svReset").addEventListener("click", () => { remember(); Object.assign(SV(), {yaw: 0, pitch: 0, zoom: 1, pan: [0, 0, 0]}); draw(); say("側面図の角度と拡大を戻しました（カメラから90°・水平）。"); });
+function resetAll(){ remember(); Object.assign(SV(), {yaw: 0, pitch: 0, zoom: 1, pan: [0, 0, 0]}); draw(); say("側面図の角度と拡大を戻しました（カメラから90°・水平）。"); }
+$("svReset").addEventListener("click", resetAll);
+if ($("svResetView")) $("svResetView").addEventListener("click", resetAll);
 $("svToSel").addEventListener("click", () => {
   const O = window.ODMObj, k = O && O.key ? O.key() : "", v = SV();
   if (k && isObj(k)){ remember(); Object.assign(v, {key: k, pan: [0, 0, 0]}); draw(); say("選んだ物体を側面図の中心にしました。"); return; }
@@ -140,8 +143,9 @@ sync();
   "回転（左右）": "Turn (left / right)", "見下ろす角度（上下）": "Looking down (up / down)", "拡大": "Zoom",
   "選んだ物を中心に": "Centre on the selected", "選んでいる関節・物体を側面図の中心にする": "Make the selected joint or object the side view's centre",
   "↺ 角度と拡大を戻す": "↺ Angle and zoom back", "回転・見下ろす角度・拡大・ずらした分を戻す（カメラから90°・水平）": "Turn, tilt, zoom and moves back (90° from the camera, level)",
-  "回転が 0° なら、カメラの向きから90°横（水平）で、カメラを回すと付いてきます。側面図の上で、何もない所のドラッグ（または中ボタン）で回転、Shift を足すと移動、ホイールで拡大します。スマホでは、1本指のドラッグで回転、2本指でつまんで拡大・動かして移動です。側面図の隅の「90°」で、最初の向きに戻ります。":
-    "At 0° it looks 90° from the camera's direction, level, and follows the camera. On the side view: a drag where there is nothing (or the middle button) turns it, with Shift it moves, the wheel zooms. On a phone: one finger turns it, two fingers pinch to zoom and move it. \"90°\" on the side view's corner brings back the first direction.",
+  "回転が 0° なら、カメラの向きから90°横（水平）で、カメラを回すと付いてきます。側面図の上で、何もない所のドラッグ（または中ボタン）で回転、Shift を足すと移動、ホイールで拡大します。スマホでは、1本指のドラッグで回転、2本指でつまんで拡大・動かして移動です。側面図の隅の「90°」で最初の向きに、「↺ 角度と拡大」で拡大と移動も戻ります。":
+    "At 0° it looks 90° from the camera's direction, level, and follows the camera. On the side view: a drag where there is nothing (or the middle button) turns it, with Shift it moves, the wheel zooms. On a phone: one finger turns it, two fingers pinch to zoom and move it. \"90°\" on the side view's corner brings back the first direction, \"↺ Angle & zoom\" the zoom and moves too.",
+  "↺ 角度と拡大": "↺ Angle & zoom", " 角度と拡大": " Angle & zoom", "角度と拡大を戻す": "Angle and zoom back", "側面図の角度・拡大・移動をまとめて戻す（カメラから90°・水平）": "The side view's angle, zoom and moves back at once (90° from the camera, level)",
   "↺ 最初の90°に戻す": "↺ Back to the first 90°", "回転と見下ろす角度を 0° にする（カメラの向きから90°横・水平。中心と拡大はそのまま）": "Turn and tilt to 0° (90° from the camera, level; the centre and zoom stay)",
   "側面図をカメラの向きから90°横（水平）に戻しました。": "The side view is back at 90° from the camera, level.",
   "90°": "90°", "側面図を最初の向き（カメラから90°横・水平）に戻す": "The side view back to its first direction (90° from the camera, level)",
