@@ -5,6 +5,9 @@
 // #立体人形装置 and a link (Reddit: an English title and the link); the network shows the link as a
 // card with the site's picture (web/editor/og-card.png,
 // from the page's Open Graph tags: a card cannot show each pose's own picture without a server).
+// The post itself can carry the composition's picture (構図の画像を付ける: the 構図の画像 as the export
+// panel sets it, on white, its long side up to SHARE_MAX): a phone hands it to the share menu with
+// the words; a computer copies it, and it is pasted into the network's post box.
 // The link carries the editing state after "#pose=" (the part of an address a server never sees):
 // only what differs from a new figure, numbers to 0.1, deflated, base64url. Of the mods only the
 // official ones (qwaxgo's, on GitHub) travel: their kinds stay and the link names their GitHub
@@ -19,6 +22,7 @@ const SITE = "https://apps.qwaxgo.com/ODM-Poser/editor/";
 const TAGS = "#ODMPoser #立体人形装置";
 const BACKUP = KEY + "-before-link", HOSTS = KEY + "-share-hosts";
 const own = ODMPoser.builtin;
+const SHARE_MAX = 2048;
 
 // ---- what can travel: the editor's own kinds and the official mods' ----------------------------------
 const SOLID_OF = {box: "box", prism: "prism", cyl: "cylinder", pyr: "pyramid", cone: "cone"};
@@ -89,6 +93,7 @@ sec.innerHTML = `<h2>SNS に投稿</h2>
   <label style="margin-top:0">ひとこと（なくても可）</label>
   <textarea id="shText" rows="2" style="${field};resize:vertical"></textarea>
   <label title="開くと同じ人物・小物・カメラになります"><input type="checkbox" id="shLink" checked> 編集データ入りのリンク</label>
+  <label title="書き出しの「構図の画像」と同じ画像（白い背景）"><input type="checkbox" id="shImg" checked> 構図の画像を付ける</label>
   <div class="btns" id="shMain" style="margin-top:6px"></div>
   <details style="margin-top:6px"><summary class="hint" style="cursor:pointer">そのほかの SNS・チャット</summary>
     <div class="btns" id="shMore" style="margin-top:6px"></div></details>
@@ -101,7 +106,7 @@ sec.innerHTML = `<h2>SNS に投稿</h2>
   <div id="shMods" style="display:none;margin-top:8px"><div id="shModList" class="hint" style="white-space:pre-wrap"></div>
     <div class="btns" style="margin-top:4px"><button id="shModAdd" title="公式 MOD を追加して開き直す">公式 MOD を追加</button></div></div>
   <div id="shBack" class="btns" style="display:none;margin-top:8px"><button id="shRestore" title="リンクを開く前の編集に戻す">↶ 前の編集へ</button></div>
-  <div class="hint">投稿には ${TAGS} とリンクが付き、リンクは「立体人形装置」の画像付きカードで表示されます。リンクに入る MOD は公式（GitHub の qwaxgo）のものだけで、ほかの MOD の小物・物体は単純な図形や棒になります。</div>`;
+  <div class="hint">投稿には ${TAGS} とリンクが付き、リンクは「立体人形装置」の画像付きカードで表示されます。構図の画像は、スマホでは共有メニューに文と一緒に渡し、パソコンではコピーするので、投稿欄に貼り付けてください（Ctrl＋V・⌘V）。リンクに入る MOD は公式（GitHub の qwaxgo）のものだけで、ほかの MOD の小物・物体は単純な図形や棒になります。</div>`;
 const exportSec = $("saveAtari").closest("section");
 exportSec.parentNode.insertBefore(sec, exportSec.nextSibling);
 
@@ -181,11 +186,38 @@ async function postText(siteOnly){
   return {words, head, link, text: head + "\n" + link};
 }
 async function copyText(t){ try { await navigator.clipboard.writeText(t); return true; } catch (e) { return false; } }
+// the composition's picture for a post (null: not wanted): drawn at once, while the click counts
+function shareImage(){
+  if (!$("shImg").checked) return null;
+  const src = compCanvas(), k = Math.min(1, SHARE_MAX / Math.max(src.width, src.height));
+  const cv = document.createElement("canvas"); cv.width = Math.max(1, Math.round(src.width * k)); cv.height = Math.max(1, Math.round(src.height * k));
+  const ctx = cv.getContext("2d"); ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.imageSmoothingQuality = "high"; ctx.drawImage(src, 0, 0, cv.width, cv.height);
+  const url = cv.toDataURL("image/png"), bin = atob(url.split(",")[1]), b = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+  const blob = new Blob([b], {type: "image/png"});
+  let file = null; try { file = new File([blob], `odm-poser_${stamp()}.png`, {type: "image/png"}); } catch (e) {}
+  return {url, blob, file};
+}
+// the share menu takes the picture (a phone, some computers)
+const filesOK = img => !!(img && img.file && navigator.share && navigator.canShare && (() => { try { return navigator.canShare({files: [img.file]}); } catch (e) { return false; } })());
+// the picture (and the words, when given) onto the clipboard; false: this browser cannot
+async function copyImage(img, text){
+  if (!img || !navigator.clipboard || !navigator.clipboard.write || typeof ClipboardItem !== "function") return false;
+  const o = {"image/png": img.blob}; if (text) o["text/plain"] = new Blob([text], {type: "text/plain"});
+  try { await navigator.clipboard.write([new ClipboardItem(o)]); return true; } catch (e) {}
+  if (text) try { await navigator.clipboard.write([new ClipboardItem({"image/png": img.blob})]); return true; } catch (e) {}
+  return false;
+}
 for (const n of NETS) $(netId(n)).addEventListener("click", async () => {
   const touch = document.body.classList.contains("touch"), label = n.name.replace(/（.*$/, "").replace(/ に投稿$/, "");
-  if (n.app && touch && navigator.share){        // a phone: the share menu, where the app is
-    const p = await postText();
-    try { await navigator.share({text: p.head, url: p.link}); return; } catch (e) { if (e && e.name === "AbortError") return; }
+  const img = shareImage();
+  // a phone: the share menu, where the app is (with the picture: every network, as its post page takes no picture)
+  if (touch && (filesOK(img) || (n.app && navigator.share))){
+    const p = await postText(), withImg = filesOK(img);
+    try { await navigator.share(withImg ? {files: [img.file], text: p.text} : {text: p.head, url: p.link});
+      if (withImg) say(`構図の画像と投稿の文を共有メニューに渡しました。${label}を選んでください。`); return; }
+    catch (e) { if (e && e.name === "AbortError") return; }
   }
   // a page opened now, while the click counts (one opened later may be blocked)
   const win = n.url || n.open ? window.open("", "_blank") : null;
@@ -193,18 +225,27 @@ for (const n of NETS) $(netId(n)).addEventListener("click", async () => {
   let p = await postText(), short = false;
   if (n.max && p.text.length > n.max){ p = await postText(true); short = true; }
   const url = n.url ? n.url(p, n.server ? host(n.id) : null) : n.open;
-  const copied = (n.app || n.copy) ? await copyText(n.app ? p.text : p.head) : false;
+  const words = (n.app || n.copy) ? (n.app ? p.text : p.head) : "";
+  // the picture onto the clipboard (with the words where they are copied too)
+  const imgCopied = img ? await copyImage(img, words) : false;
+  const copied = imgCopied ? !!words : words ? await copyText(words) : false;
   if (url){ if (win) win.location.href = url; else window.open(url, "_blank", "noopener"); } else if (win) win.close();
+  if (img){ say(imgCopied ? `${url ? "投稿画面を開き、" : ""}構図の画像${copied ? "と投稿の文" : ""}をコピーしました。${label}の投稿欄に貼り付けてください（Ctrl＋V・⌘V）。`
+      + (short ? "文字数の上限があるため、リンクは編集データの入らないサイトのリンクです。" : "")
+    : `この端末では画像をコピーできないため、構図の画像を保存してから${label}に添付してください。`, !imgCopied);
+    if (!imgCopied) download(img.url, `odm-poser_${stamp()}.png`);
+    return; }
   say(n.app ? (copied ? `投稿の文をコピーしました。${label}に貼り付けてください。` : `${label}には、この文を貼り付けてください：${p.text}`)
     : short ? `${label}は文字数の上限があるため、編集データの入らないサイトのリンクにしました。`
     : n.copy && copied ? `${label}の投稿画面を開き、ひとことをコピーしました（貼り付けて使えます）。` : "投稿画面を開きました。");
 });
 $("shOther").addEventListener("click", async () => {
-  const {words, link, text} = await postText();
+  const img = shareImage(), {words, link, text} = await postText();
   if (navigator.share){
-    try { await navigator.share({text: (words ? words + "\n" : "") + TAGS, url: link}); return; }
+    try { await navigator.share(filesOK(img) ? {files: [img.file], text} : {text: (words ? words + "\n" : "") + TAGS, url: link}); return; }
     catch (e) { if (e && e.name === "AbortError") return; }
   }
+  if (img && await copyImage(img, text)){ say("この端末には共有メニューがないため、構図の画像と投稿の文をコピーしました。"); return; }
   try { await navigator.clipboard.writeText(text); say("この端末には共有メニューがないため、投稿の文をコピーしました。"); }
   catch (e) { prompt("この文をコピーしてください", text); }
 });

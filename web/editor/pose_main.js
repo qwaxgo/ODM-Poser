@@ -2037,7 +2037,8 @@ function render(kind){
 }
 // the composition as seen in the front view, at the export size: the chosen parts, the ruler
 // (pose_ruler.js) and a white, clear or screen-coloured background
-function renderComposition(){
+function renderComposition(){ return compCanvas().toDataURL("image/png"); }
+function compCanvas(){
   const [cv, W, H] = exportCanvas();
   const ctx = cv.getContext("2d"), bg = $("cmBg").value, on = id => $(id).checked;
   const theme = bg === "theme";
@@ -2046,7 +2047,7 @@ function renderComposition(){
   drawAtari(ctx, W, H, Object.assign(theme ? {} : {ink: "#1a1a1a", far: "#8a8a8a", bg: "#ffffff"},
     {export: true, noFigure: !on("cmFigure"), noItems: !on("cmItems"), noSolids: !on("cmSolids"), noAuras: !on("cmAuras"),
      showEnv: on("cmEnv"), showSolids: on("cmSolids"), flat: bg === "clear"}));
-  return cv.toDataURL("image/png");
+  return cv;
 }
 // the export size from a ratio ("3:4") and the long side
 function applyRatio(){
