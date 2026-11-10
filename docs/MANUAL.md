@@ -184,8 +184,13 @@ The side view looks level from 90° beside the front camera's direction (to chec
   - **Centre on the selected** takes the selected joint or object.
 - **Turn (left / right), Looking down (up / down), Zoom**
   - At 0° turn and 0° tilt it is the level view 90° from the camera, as before, and it follows the camera.
-  - The turn and the tilt are added on top. **↺ Angle and zoom back** resets the turn, tilt, zoom and moves.
-- **On the side view**: the wheel zooms; a middle-button drag (or Alt + a drag where there is nothing) turns it; with Shift it moves. All can be undone.
+  - The turn and the tilt are added on top.
+  - **↺ Back to the first 90°** (or **90°** on the side view's corner) sets the turn and tilt to 0°; the centre and zoom stay.
+  - **↺ Angle and zoom back** resets the turn, tilt, zoom and moves together.
+- **On the side view**: a drag where there is nothing (or a middle-button drag) turns it; with Shift it moves; the wheel zooms. All can be undone.
+- **Phones and tablets**: one finger dragged where there is nothing turns it; two fingers pinch to zoom and move it. Joints are tapped to select, then dragged, as before.
+  - The side view shows on a phone or tablet held sideways (an upright screen has no side view).
+- **camera side** under the side view tells where the camera is (left or right; turned round: near or far).
 - Joints can be dragged in a turned or tilted side view too (the bones keep their length).
 - The settings are saved in the file and kept on a reload.
 
