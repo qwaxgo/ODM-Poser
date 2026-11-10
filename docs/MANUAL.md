@@ -161,10 +161,12 @@ Apart from the lens, and only while the camera is locked, the perspective can be
   - Switching between them keeps the pivot where it is.
   - **To the selected** moves it to the selected joint or object (on a part or an object: onto it).
 - **The pivot's mark**
-  - While this tab is open, a pink cross shows the pivot. It is not in the exported pictures.
-  - Drag the mark on the view; it keeps its depth.
+  - A pink cross always shows the pivot on the front and side views (faint while the exaggeration is off). It is not in the exported pictures.
+  - With **Always show the pivot's mark** off, it shows only while this tab is open.
+  - Drag the mark from any tab: on the front view it keeps its depth, on the side view its depth there (set how far forward it is on the side view).
+  - In Pose and Body mode, a joint under the mark is picked first.
   - Press the mark (or **Move with the 3-axis handles**) to select the pivot: the 3-axis handles' move arrows show on it and move it along the scene's X, Y, Z (undo and redo work). A pivot on a part or an object changes its offset.
-  - A click elsewhere, or closing the tab, lets the pivot go. While it is selected, a click on empty space does not switch to Camera mode.
+  - A click elsewhere lets the pivot go. While it is selected, a click on empty space does not switch to Camera mode.
 - **Move the camera for a while**
   - The locked camera is kept while you turn and move the camera, to set the pivot's depth from the side.
   - Meanwhile the exaggeration rests. **Back to the locked camera** returns to it, and the exaggeration comes back.
@@ -186,7 +188,7 @@ The side view looks level from 90° beside the front camera's direction (to chec
   - At 0° turn and 0° tilt it is the level view 90° from the camera, as before, and it follows the camera.
   - The turn and the tilt are added on top.
   - **↺ Back to the first 90°** (or **90°** on the side view's corner) sets the turn and tilt to 0°; the centre and zoom stay.
-  - **↺ Angle and zoom back** resets the turn, tilt, zoom and moves together.
+  - **↺ Angle and zoom back** (or **↺ Angle & zoom** on the side view's corner) resets the turn, tilt, zoom and moves together. On a phone held sideways it shows as **↺** alone.
 - **On the side view**: a drag where there is nothing (or a middle-button drag) turns it; with Shift it moves; the wheel zooms. All can be undone.
 - **Phones and tablets**: one finger dragged where there is nothing turns it; two fingers pinch to zoom and move it. Joints are tapped to select, then dragged, as before.
   - The side view shows on a phone or tablet held sideways (an upright screen has no side view).
