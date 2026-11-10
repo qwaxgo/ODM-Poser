@@ -80,6 +80,16 @@ Ctrl + click the body (nothing selected): takes the figure by its hips to move i
 | Take away | Delete (Backspace) | Delete |
 | Cut, copy, paste | Ctrl + X, C, V | Cut, Copy, Paste |
 
+### Putting a thing on a face
+
+Select a thing in the Objects tab, press **Put on the ground**, then click the face to put it on (the floor, a wall, a ceiling, another object's face, slopes too).
+
+- The thing turns the least it can so that its face most nearly parallel to the clicked one lies flat against it (a thing out of the props list uses the sides of the box round it).
+- It keeps its middle and moves straight to the face until it touches; its place along the face stays.
+- Clicking where there is nothing puts it on the floor or what is under it by its lowest point, as before.
+- Press the button again or Esc to cancel.
+- A thing put on the floor or an object's top stays grounded; one put on a wall or a ceiling stays there.
+
 On a narrow screen (a phone sideways) the menu on the left does not fit even in two columns, so “…” swaps the 3-axis handles with the cursor and edit buttons.
 
 ## Standing on a face

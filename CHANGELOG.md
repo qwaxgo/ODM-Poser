@@ -139,6 +139,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 書き出しの比率・幅・高さを変えるとカメラの位置がずれ、手前の物がカメラの後ろに回って何も見えなくなる不具合を修正：レンズを画像の高さに対して取り、カメラの距離が画像の形で変わらないように（高さに写る範囲はそのままで、左右が広がる・切れる。横長の画像は前よりパースが少し強くなります）
 - 書き出しに「アタリ画像の内容」を追加：構図（初期値。人物・小物に加えて物体と環境も、「構図の画像に含める」のチェックのとおりに白い背景に描く）か、人物と小物だけ（今まで通り）を選べます
 - SNS に投稿するとき、いまの構図の画像を投稿に付けるように（「構図の画像を付ける」、初期値でオン）：スマホは共有メニューに画像と文を一緒に渡し、パソコンは投稿画面を開いて画像をコピーするので、投稿欄に貼り付けます。リンクのカードの画像は、サーバーがないためサイト共通のままです
+- 設置のタブの「接地させる」で、押してから着ける面（床・壁・天井・物体の面、斜面も）をクリックすると、物のいちばん平行な面がその面にぴったり重なるように回して、面に着けるように（何もない所をクリックすると、今までどおりいちばん低い所で真下に接地。Esc でやめる）
 
 ### English
 
@@ -269,6 +270,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Fixed the camera moving when the export's ratio, width or height changed (near things went behind it and nothing showed): the lens is taken on the picture's height, so the camera's distance no longer depends on the picture's shape (the height shows the same; the sides widen or are cut; a wide picture's perspective is a little stronger than before)
 - **What the rough picture shows** in Export: Composition (the default: the objects and surroundings too, besides figures and things, on white, as the **In the composition picture** checks say) or Figures and things only (as before)
 - Posting to social media attaches the composition as it is now (**Attach the composition picture**, on by default): a phone hands the picture and the words to the share menu; a computer opens the post page and copies the picture to paste into the post box. The link's card keeps the site's picture (there is no server for each one)
+- **Put on the ground** (Objects tab): press it, then click the face to put the thing on (the floor, a wall, a ceiling, an object's face, slopes too): it turns so that its most nearly parallel face lies flat against that face, and touches it (click where there is nothing: onto the ground by its lowest point, as before; Esc cancels)
 
 ## v0.1.0
 
