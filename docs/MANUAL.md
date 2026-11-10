@@ -145,6 +145,13 @@ In the Camera tab, **Camera direction** (left-right, up-down, roll; degrees) tur
 | Two fingers (phone) | Pinch to zoom, move to pan |
 | Camera pad (phone) | Bottom left turns, bottom right moves, the right edge zooms |
 
+Changing the export's ratio, width or height leaves the camera where it is: what the picture's height shows stays, and the sides widen or are cut (the lens's mm is taken on the picture's height).
+
+**What the rough picture shows** (Export) picks what the rough picture draws.
+
+- Composition (the default): the objects and the surroundings (floor, walls) too, besides the figures and things, on white, as the **In the composition picture** checks under it say (no ruler).
+- Figures and things only: the rough picture as before.
+
 ## Exaggerated perspective
 
 Apart from the lens, and only while the camera is locked, the perspective can be pushed further from one pivot. What lies at the pivot's depth keeps its size. What lies behind it shrinks fast toward the pivot; what is in front bursts out of it, growing.

@@ -136,6 +136,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 側面図にカメラを追加（見る › 視点 › 側面図）：右から・左からを選べ、中心（支点）をカメラの注視点・人物の部位・置いた物から選べます（動いても付いていく）。回転・見下ろす角度・拡大もでき、側面図の上でホイール・中ボタン（Alt＋ドラッグ）・Shift で操作できます。回転しなければ、今まで通りカメラから90°横の水平な図です
 - 側面図のカメラをスマホ・タブレットで操作できるように（何もない所を1本指で回転、2本指でつまんで拡大・動かして移動。マウスでも何もない所のドラッグで回転）。最初の90°に戻すボタン（タブと側面図の隅の「90°」）を追加。「カメラ側」の表示は、回しても消さず、カメラのある向き（左右・手前・奥）を示すように
 - 側面図の隅に「↺ 角度と拡大」（角度・拡大・移動をまとめて戻す）を追加し、「90°」と並べて側面図の名前の下に置きました。パースの誇張の支点の印を、正面と側面図にいつも出すように（誇張が効いていない間は薄く。書き出す画像には出ません）。どのタブからでもつまんでドラッグ・3軸ハンドルで動かせ、側面図では前後の位置を合わせられます（「支点の印をいつも出す」を外すと、パースのタブの間だけ）
+- 書き出しの比率・幅・高さを変えるとカメラの位置がずれ、手前の物がカメラの後ろに回って何も見えなくなる不具合を修正：レンズを画像の高さに対して取り、カメラの距離が画像の形で変わらないように（高さに写る範囲はそのままで、左右が広がる・切れる。横長の画像は前よりパースが少し強くなります）
+- 書き出しに「アタリ画像の内容」を追加：構図（初期値。人物・小物に加えて物体と環境も、「構図の画像に含める」のチェックのとおりに白い背景に描く）か、人物と小物だけ（今まで通り）を選べます
 
 ### English
 
@@ -263,6 +265,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - A camera for the side view (View › Viewpoint › Side view): seen from the right or the left, round a centre (the camera's look-at point, a figure's part or an object put, followed as it moves), turned, tilted and zoomed; on the side view the wheel, the middle button (Alt + drag) and Shift work it. Unturned it is the level view 90° from the camera, as before
 - The side view's camera works by touch (one finger where there is nothing turns it; two fingers pinch to zoom and move it; a mouse drag where there is nothing turns it too). A button back to the first 90° (in the tab, and **90°** on the side view's corner). **camera side** no longer hides when turned: it tells where the camera is (left, right, near or far)
 - **↺ Angle & zoom** (the angle, zoom and moves back at once) on the side view, beside **90°**, under the view's name. The exaggerated perspective's pivot mark is always on the front and side views (faint while the exaggeration is off; never in the pictures): drag it or use the 3-axis handles from any tab, and set how far forward it is on the side view (with **Always show the pivot's mark** off, only while the Perspective tab is open)
+- Fixed the camera moving when the export's ratio, width or height changed (near things went behind it and nothing showed): the lens is taken on the picture's height, so the camera's distance no longer depends on the picture's shape (the height shows the same; the sides widen or are cut; a wide picture's perspective is a little stronger than before)
+- **What the rough picture shows** in Export: Composition (the default: the objects and surroundings too, besides figures and things, on white, as the **In the composition picture** checks say) or Figures and things only (as before)
 
 ## v0.1.0
 
