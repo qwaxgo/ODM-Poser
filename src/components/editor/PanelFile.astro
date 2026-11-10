@@ -27,6 +27,12 @@
       <div><label>幅</label><input type="number" id="W" value="1080" min="256" max="8192"></div>
       <div><label>高さ</label><input type="number" id="H" value="1920" min="256" max="8192"></div>
     </div>
+    <label for="atariMode">アタリ画像の内容</label>
+    <select id="atariMode">
+      <option value="comp">構図（人物・小物・物体・環境）</option>
+      <option value="figure">人物と小物だけ</option>
+    </select>
+    <div class="hint" id="atariModeHint">構図では、下の「構図の画像に含める」のチェック（定規を除く）のとおりに、物体や環境も白い背景に描きます。</div>
     <div class="btns">
       <button id="saveAtari">アタリ画像</button>
       <button id="saveOpenpose">OpenPose 画像</button>

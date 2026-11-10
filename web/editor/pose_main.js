@@ -142,8 +142,11 @@ function frameWH(W, H){
 // everything, so lines stay straight, things that touch still touch, and the vanishing points and the
 // eye level (vanish, horizonLine) follow: the ruler matches. withPX moves S.center by cw meanwhile.
 let PX = null;
-function lensF(W, H){ const [w, h] = frameWH(W, H); return S.cam.lens / 36 * Math.max(w, h) * (PX ? 1 - PX.k : 1); }
-function camDist(W, H){ const [w, h] = frameWH(W, H), D = S.cam.lens / 36 * Math.max(w, h) * 190 / (0.86 * h) / S.cam.zoom;   // 190 cm fills 86 % of the picture's height
+// The lens is taken on the picture's height (36 mm to the height): the camera's distance (camDist,
+// cm) then never depends on the picture's ratio or size, so changing them leaves the camera where
+// it is and only crops or widens the picture's sides (190 cm still fills 86 % of the height).
+function lensF(W, H){ const h = frameWH(W, H)[1]; return S.cam.lens / 36 * h * (PX ? 1 - PX.k : 1); }
+function camDist(W, H){ const D = S.cam.lens / 36 * 190 / 0.86 / S.cam.zoom;
   return PX ? D - PX.k * (D - PX.qz) : D; }
 // the picture's centre of projection (moved by the lens shift of パースの誇張)
 function cxOf(W, H){ return PX ? W/2 + PX.o[0] * lensF(W, H) / (1 - PX.k) : W/2; }
@@ -2025,7 +2028,11 @@ function render(kind){
   const ctx = cv.getContext("2d");
   if (kind === "openpose") drawOpenpose(ctx, W, H);
   else { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
-    drawAtari(ctx, W, H, {ink: "#1a1a1a", far: "#8a8a8a", bg: "#ffffff", export: true}); }
+    // 構図 (atariMode "comp"): the scene too, as the 構図の画像's checks say (without the ruler)
+    const comp = $("atariMode").value !== "figure", on = id => $(id).checked;
+    drawAtari(ctx, W, H, Object.assign({ink: "#1a1a1a", far: "#8a8a8a", bg: "#ffffff", export: true}, comp ?
+      {noFigure: !on("cmFigure"), noItems: !on("cmItems"), noSolids: !on("cmSolids"), noAuras: !on("cmAuras"),
+       showEnv: on("cmEnv"), showSolids: on("cmSolids")} : {})); }
   return cv.toDataURL("image/png");
 }
 // the composition as seen in the front view, at the export size: the chosen parts, the ruler
@@ -2128,7 +2135,7 @@ const qs = new URLSearchParams(location.search);
 // the picture's settings (its ratio and size: the camera's frame, so the composition; what the
 // composition picture shows) are kept in this browser too; a link's ?w= &h= comes first
 { const PIC_KEY = "odm-poser-editor-v1-picture",   // (KEY is set further down)
-   IDS = ["ratio", "longSide", "ratioW", "ratioH", "W", "H", "cmFigure", "cmItems", "cmSolids", "cmEnv", "cmRuler", "cmAuras", "cmBg"];
+   IDS = ["ratio", "longSide", "ratioW", "ratioH", "W", "H", "atariMode", "cmFigure", "cmItems", "cmSolids", "cmEnv", "cmRuler", "cmAuras", "cmBg"];
   const keep = () => { const o = {}; for (const id of IDS){ const e = $(id); if (e) o[id] = e.type === "checkbox" ? e.checked : e.value; }
     try { localStorage.setItem(PIC_KEY, JSON.stringify(o)); } catch (e) {} };
   let saved = null; try { saved = JSON.parse(localStorage.getItem(PIC_KEY) || "null"); } catch (e) {}
