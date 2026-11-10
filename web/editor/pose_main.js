@@ -723,8 +723,11 @@ function draw(){
   ctx.strokeStyle = cssVar("--line"); ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
   ctx.fillStyle = cssVar("--sub"); ctx.font = `${Math.round(11 * (devicePixelRatio || 1))}px sans-serif`;
-  { const v = sideView(); if (Math.abs(+v.yaw || 0) < 45){ if (v.from === "l"){ ctx.textAlign = "right"; ctx.fillText("カメラ側 →", W - 6, H - 8); ctx.textAlign = "left"; }
-      else ctx.fillText("← カメラ側", 6, H - 8); } }
+  // where the camera is: to the left or right of the side view, or (turned round) near or far
+  { const B = sideBasis(W, H), cb = camRotInv([0, 0, 1]), sx = dot(cb, B.ex), y = H - 38 * (devicePixelRatio || 1);
+    if (sx > 0.3){ ctx.textAlign = "right"; ctx.fillText("カメラ側 →", W - 6, y); ctx.textAlign = "left"; }
+    else if (sx < -0.3) ctx.fillText("← カメラ側", 6, y);
+    else ctx.fillText(dot(cb, B.ez) > 0 ? "カメラ側：手前" : "カメラ側：奥", 6, y); }
   // the parts' line colours, and the lines hidden from the camera dashed, as in the front view
   const FW = front.width, FH = front.height, seen = [FW, FH];
   const sideFigure = (active, first) => {

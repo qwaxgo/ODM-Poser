@@ -156,6 +156,15 @@
   /* on the side view's corner away from the switches (they lie over the views' right edge) */
   .views:not(.side-left) .view-place { right: auto; left: 6px; }
   .views:is(.side-top, .side-bottom) .view-place { left: 50%; transform: translateX(-50%); }
+  /* 90° (pose_sideview.js): the side view back to its first direction. On a corner no overlay lies over:
+     the switches lie over the views' right edge, the modes over their left, both along the top */
+  .sv-back { position: absolute; top: 6px; left: 6px; z-index: 3; min-width: 40px; height: 28px; padding: 0 8px; border-radius: 8px;
+    font: inherit; font-size: 0.75rem; color: var(--text-default); cursor: pointer;
+    background: color-mix(in srgb, var(--bg-surface) 88%, transparent); border: 1px solid var(--border-default); }
+  .sv-back:hover { background: var(--bg-page-alt); }
+  .sv-back:focus-visible { outline: 2px solid var(--sel); outline-offset: 1px; }
+  .views.side-left .sv-back { left: auto; right: 6px; }
+  .views:is(.side-top, .side-bottom) .sv-back { top: auto; bottom: 6px; }
   /* a narrow side view (a phone): only the place chosen shows; a tap on it opens the others, upward */
   .view-place.narrow { padding: 2px; }
   .view-place.narrow .vp-name { display: none; }

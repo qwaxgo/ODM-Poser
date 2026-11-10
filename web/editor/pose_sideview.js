@@ -2,8 +2,8 @@
 // from the camera's right or left, 90° from the camera's direction, and follows the camera's turn; on
 // top of that it can be turned round (yaw) and tilted (pitch), zoomed and moved, round a centre: the
 // camera's look-at point, or a figure's joint or an object (it follows them). On the side view itself:
-// the wheel zooms, the middle button (or Alt + a drag where there is no joint) turns it, with Shift
-// moves it. The projection is in pose_main.js (sideView, sideBasis, sideProject).
+// a drag where there is no joint (or the middle button) turns it, with Shift moves it, the wheel zooms;
+// on a touch screen one finger turns it, two pinch and move it. 90° (on the view): the first direction. The projection is in pose_main.js (sideView, sideBasis, sideProject).
 //
 // S.sideView: {from: "r" | "l", key: "" | "f<id>" | "s<k>" | "i<n>", joint, yaw, pitch (degrees),
 //              zoom, pan [x, y, z] cm}
@@ -21,18 +21,50 @@ side.addEventListener("wheel", e => {
   const v = SV(); v.zoom = Math.max(0.25, Math.min(6, (+v.zoom || 1) * Math.exp(-dy / 500)));
   drawSoon(); syncSoon();
 }, {passive: false});
+// a press on the side view where there is no joint (any pointer; the middle button and Alt + a drag
+// anywhere too): a drag turns the side view, with Shift moves it. Two fingers: pinch to zoom, move to
+// move it (pose_main.js gives the second finger no drag on this view; it is taken here)
+function svDrag(x, y, pan){
+  let lx = x, ly = y;
+  return {move(mx, my){
+    const v = SV(), W = side.width, H = side.height, dx = mx - lx, dy = my - ly; lx = mx; ly = my;
+    if (pan){ const B = sideBasis(W, H); v.pan = add(Array.isArray(v.pan) ? v.pan : [0, 0, 0], add(mul(B.ex, -dx / B.k), mul(B.ey, dy / B.k))); }
+    else { v.yaw = wrap((+v.yaw || 0) + dx * 240 / W); v.pitch = Math.max(-80, Math.min(80, (+v.pitch || 0) + dy * 180 / H)); }
+    syncSoon(); }, end(){ sync(); draw(); }};
+}
 { const d0 = down; down = function(cv, e){
-    if (cv === side && e.pointerType !== "touch" && (e.button === 1 || (e.altKey && pick(cv, ...evPos(cv, e)) < 0))){
-      const [x, y] = evPos(cv, e), pan = !!e.shiftKey; remember();
-      let lx = x, ly = y;
-      drag = {move(mx, my){
-        const v = SV(), W = side.width, H = side.height, dx = mx - lx, dy = my - ly; lx = mx; ly = my;
-        if (pan){ const B = sideBasis(W, H); v.pan = add(Array.isArray(v.pan) ? v.pan : [0, 0, 0], add(mul(B.ex, -dx / B.k), mul(B.ey, dy / B.k))); }
-        else { v.yaw = wrap((+v.yaw || 0) + dx * 240 / W); v.pitch = Math.max(-80, Math.min(80, (+v.pitch || 0) + dy * 180 / H)); }
-        syncSoon(); }, end(){ sync(); draw(); }};
-      return;
+    if (cv === side && !svPinch){
+      const [x, y] = evPos(cv, e), empty = pick(cv, x, y) < 0;
+      if (e.button === 1 || (empty && !e.altKey) || (e.altKey && empty)){ remember(); drag = svDrag(x, y, !!e.shiftKey); return; }
     }
     return d0.apply(this, arguments); }; }
+const fingers = new Map();
+let svPinch = null;
+const svPos = e => evPos(side, e);
+side.addEventListener("pointerdown", e => {
+  if (e.pointerType !== "touch") return;
+  if (e.isPrimary){ fingers.clear(); svPinch = null; }
+  fingers.set(e.pointerId, svPos(e));
+  if (fingers.size === 2){
+    const [a, b] = [...fingers.values()];
+    drag = null;                                  // the first finger's turn ends; this pinch takes over
+    svPinch = {d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, m: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]};
+  }
+});
+side.addEventListener("pointermove", e => {
+  if (!fingers.has(e.pointerId)) return;
+  fingers.set(e.pointerId, svPos(e));
+  if (!svPinch || fingers.size < 2) return;
+  const [a, b] = [...fingers.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const v = SV(), B = sideBasis(side.width, side.height);
+  v.pan = add(Array.isArray(v.pan) ? v.pan : [0, 0, 0], add(mul(B.ex, -(m[0] - svPinch.m[0]) / B.k), mul(B.ey, (m[1] - svPinch.m[1]) / B.k)));
+  v.zoom = Math.max(0.25, Math.min(6, (+v.zoom || 1) * d / svPinch.d));
+  svPinch.d = d; svPinch.m = m; drag = null; drawSoon(); syncSoon();
+});
+for (const t of ["pointerup", "pointercancel"]) side.addEventListener(t, e => {
+  fingers.delete(e.pointerId);
+  if (svPinch && fingers.size === 0){ svPinch = null; sync(); draw(); }
+});
 const wrap = a => ((a + 180) % 360 + 360) % 360 - 180;
 let syncQ = false;
 function syncSoon(){ if (syncQ) return; syncQ = true; requestAnimationFrame(() => { syncQ = false; if (sec.classList.contains("active")) sync(); }); }
@@ -49,8 +81,9 @@ sec.innerHTML = `<h2>側面図のカメラ</h2>
   <div id="svJointBox"><label>部位</label><select id="svJoint">${J.map(n => `<option value="${n}">${esc2(J_JA[n] || n)}</option>`).join("")}</select></div>
   ${row("svYaw", "回転（左右）", -180, 180, 1, "°")}${row("svPitch", "見下ろす角度（上下）", -80, 80, 1, "°")}${row("svZoom", "拡大", 25, 600, 1, "%")}
   <div class="btns" style="margin-top:6px"><button type="button" id="svToSel" title="選んでいる関節・物体を側面図の中心にする">選んだ物を中心に</button>
+    <button type="button" id="svBack90" title="回転と見下ろす角度を 0° にする（カメラの向きから90°横・水平。中心と拡大はそのまま）">↺ 最初の90°に戻す</button>
     <button type="button" id="svReset" title="回転・見下ろす角度・拡大・ずらした分を戻す（カメラから90°・水平）">↺ 角度と拡大を戻す</button></div>
-  <div class="hint">回転が 0° なら、カメラの向きから90°横（水平）で、カメラを回すと付いてきます。側面図の上で、ホイールで拡大、中ボタン（または Alt＋何もない所のドラッグ）で回転、Shift を足すと移動します。</div>`;
+  <div class="hint">回転が 0° なら、カメラの向きから90°横（水平）で、カメラを回すと付いてきます。側面図の上で、何もない所のドラッグ（または中ボタン）で回転、Shift を足すと移動、ホイールで拡大します。スマホでは、1本指のドラッグで回転、2本指でつまんで拡大・動かして移動です。側面図の隅の「90°」で、最初の向きに戻ります。</div>`;
 { const after = document.querySelector('section[data-menu="persp"]') || ($("camLock") && $("camLock").closest("section"));
   if (after) after.after(sec); else document.querySelector("aside").appendChild(sec); }
 
@@ -87,6 +120,9 @@ $("svFrom").addEventListener("change", () => { remember(); SV().from = $("svFrom
 // a new centre: what was moved off it starts again from it
 $("svKey").addEventListener("change", () => { remember(); const v = SV(); v.key = $("svKey").value; v.pan = [0, 0, 0]; draw(); });
 $("svJoint").addEventListener("change", () => { remember(); const v = SV(); v.joint = $("svJoint").value; v.pan = [0, 0, 0]; draw(); });
+function back90(){ remember(); Object.assign(SV(), {yaw: 0, pitch: 0}); draw(); say("側面図をカメラの向きから90°横（水平）に戻しました。"); }
+$("svBack90").addEventListener("click", back90);
+if ($("svBack90View")) $("svBack90View").addEventListener("click", back90);
 $("svReset").addEventListener("click", () => { remember(); Object.assign(SV(), {yaw: 0, pitch: 0, zoom: 1, pan: [0, 0, 0]}); draw(); say("側面図の角度と拡大を戻しました（カメラから90°・水平）。"); });
 $("svToSel").addEventListener("click", () => {
   const O = window.ODMObj, k = O && O.key ? O.key() : "", v = SV();
@@ -104,8 +140,12 @@ sync();
   "回転（左右）": "Turn (left / right)", "見下ろす角度（上下）": "Looking down (up / down)", "拡大": "Zoom",
   "選んだ物を中心に": "Centre on the selected", "選んでいる関節・物体を側面図の中心にする": "Make the selected joint or object the side view's centre",
   "↺ 角度と拡大を戻す": "↺ Angle and zoom back", "回転・見下ろす角度・拡大・ずらした分を戻す（カメラから90°・水平）": "Turn, tilt, zoom and moves back (90° from the camera, level)",
-  "回転が 0° なら、カメラの向きから90°横（水平）で、カメラを回すと付いてきます。側面図の上で、ホイールで拡大、中ボタン（または Alt＋何もない所のドラッグ）で回転、Shift を足すと移動します。":
-    "At 0° it looks 90° from the camera's direction, level, and follows the camera. On the side view: the wheel zooms, the middle button (or Alt + a drag where there is nothing) turns it, with Shift it moves.",
+  "回転が 0° なら、カメラの向きから90°横（水平）で、カメラを回すと付いてきます。側面図の上で、何もない所のドラッグ（または中ボタン）で回転、Shift を足すと移動、ホイールで拡大します。スマホでは、1本指のドラッグで回転、2本指でつまんで拡大・動かして移動です。側面図の隅の「90°」で、最初の向きに戻ります。":
+    "At 0° it looks 90° from the camera's direction, level, and follows the camera. On the side view: a drag where there is nothing (or the middle button) turns it, with Shift it moves, the wheel zooms. On a phone: one finger turns it, two fingers pinch to zoom and move it. \"90°\" on the side view's corner brings back the first direction.",
+  "↺ 最初の90°に戻す": "↺ Back to the first 90°", "回転と見下ろす角度を 0° にする（カメラの向きから90°横・水平。中心と拡大はそのまま）": "Turn and tilt to 0° (90° from the camera, level; the centre and zoom stay)",
+  "側面図をカメラの向きから90°横（水平）に戻しました。": "The side view is back at 90° from the camera, level.",
+  "90°": "90°", "側面図を最初の向き（カメラから90°横・水平）に戻す": "The side view back to its first direction (90° from the camera, level)",
+  "カメラ側：手前": "camera side: near", "カメラ側：奥": "camera side: far",
   "側面図の角度と拡大を戻しました（カメラから90°・水平）。": "The side view's angle and zoom are back (90° from the camera, level).",
   "選んだ物体を側面図の中心にしました。": "The selected object is the side view's centre.", "選んだ関節を側面図の中心にしました。": "The selected joint is the side view's centre.",
   "カメラ側 →": "camera side →"});
