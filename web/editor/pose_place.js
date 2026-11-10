@@ -43,7 +43,7 @@ sec.innerHTML = `<h2>設置（図形・床・壁・天井・小物）</h2>
   <div class="btns" style="margin-top:6px"><button id="plPut">置く</button></div>
   <label style="margin-top:10px">置いた物</label>
   <select id="plList" size="5"></select>
-  <div class="btns" style="margin-top:6px"><button id="plDel">外す</button><button id="plDup">複製</button><button id="plGround" title="いちばん低い所で、床や下の物の上に着ける（回転していても）">接地させる</button></div>
+  <div class="btns" style="margin-top:6px"><button id="plDel">外す</button><button id="plDup">複製</button><button id="plGround" title="押してから床・壁・天井・物体の面をクリックすると、いちばん平行な面をその面にぴったり着ける（何もない所をクリックすると、いちばん低い所で真下に着ける）">接地させる</button></div>
   <div id="plCtl">
     ${POS.map(ctl).join("")}${ROT.map(ctl).join("")}
     <details id="plPiv" style="margin-top:6px"><summary>支点（回転の中心）</summary>
@@ -127,12 +127,70 @@ $("plDup").addEventListener("click", () => {
   if (o){ const c = JSON.parse(JSON.stringify(o)); c.pos = add(c.pos, [o.size[0] + 20, 0, 0]); S.solids.push(c); afterEdit(); choose("s" + (S.solids.length - 1)); }
   else { const c = JSON.parse(JSON.stringify(it)); c.base = add(c.base || [0, 0, 0], [40, 0, 0]); S.items.push(c); afterEdit(); choose("i" + (S.items.length - 1)); }
 });
+// 接地させる: the button arms a pick; the next press on the front view picks the face to put it on (the
+// floor, a wall, a ceiling, another object's face). The thing turns the least it can so that its own
+// face most nearly parallel to that face (a solid's faces; a thing's box sides) lies flat against it,
+// keeps its middle, and moves straight to the face until it touches. A press where there is no face
+// puts it on the ground by its lowest point, as before (Esc: neither).
+let groundPick = "";
+const unhookGround = () => { const k = DOWN_HOOKS.indexOf(groundHook); if (k >= 0) DOWN_HOOKS.splice(k, 1); };
+function endGroundPick(){ groundPick = ""; unhookGround(); front.style.cursor = ""; }
+function groundDown(o, it){ if (o) groundSolid(o); else { it.grounded = true; groundItem(it); } }
+// the turn R = yaw (up) · pitch (x) · roll (z), as solidMesh and itemLocal turn
+const turnBy = (v, a, p, r) => rotY(rotAxis(rotAxis(v, [0, 0, 1], deg(r)), [1, 0, 0], deg(p)), deg(a));
+function turnOf(ex, ey, ez){                  // [yaw, pitch, roll] (degrees) whose turn takes x, y, z to these
+  const D = 180 / Math.PI, p = Math.asin(Math.max(-1, Math.min(1, -ez[1]))), cp = Math.cos(p);
+  if (cp > 1e-4) return [Math.atan2(ez[0], ez[2]) * D, p * D, Math.atan2(ex[1], ey[1]) * D];
+  return [Math.atan2(-ex[2], ex[0]) * D, p * D, 0];
+}
+const mid = pts => mul(pts.reduce((a, q) => add(a, q), [0, 0, 0]), 1 / Math.max(1, pts.length));
+function onFace(o, it, f){
+  const nt = norm(f.n), want = mul(nt, -1);
+  const cur = o ? [o.yaw || 0, o.pitch || 0, o.roll || 0] : [(it.yaw || 0) + ((it.rot || [])[1] || 0), (it.rot || [])[0] || 0, (it.rot || [])[2] || 0];
+  const pts = () => o ? solidMesh(o).V : worldSamples(it);
+  // its faces' outward directions: a solid's own; a thing's box (its own axes, either way)
+  const dirs = o ? solidMesh(o).faces.map(g => g.n) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]].flatMap(e => { const v = turnBy(e, ...cur); return [v, mul(v, -1)]; });
+  let nf = dirs[0]; for (const d of dirs) if (dot(d, want) > dot(nf, want)) nf = d;
+  // the least turn taking nf onto want
+  const c = Math.max(-1, Math.min(1, dot(nf, want)));
+  let axis = cross(nf, want);
+  if (len(axis) < 1e-6) axis = c > 0 ? null : (Math.abs(nf[1]) < 0.9 ? norm(cross(nf, [0, 1, 0])) : norm(cross(nf, [1, 0, 0])));
+  else axis = norm(axis);
+  const c0 = mid(pts());
+  if (axis){
+    const ang = Math.acos(c), Q = v => rotAxis(turnBy(v, ...cur), axis, ang);
+    const [a, p, r] = turnOf(Q([1, 0, 0]), Q([0, 1, 0]), Q([0, 0, 1])).map(v => Math.round(v * 100) / 100);
+    if (o){ o.yaw = a; o.pitch = p; o.roll = r; }
+    else it.rot = [p, Math.round((a - (it.yaw || 0)) * 100) / 100, r];
+  }
+  const shift = q => { if (o) o.pos = add(o.pos, q); else it.base = add(it.base || [0, 0, 0], q); };
+  shift(sub(c0, mid(pts())));                                   // its middle stays
+  const gap = Math.min(...pts().map(q => dot(sub(q, f.p), nt)));
+  shift(mul(nt, -gap));                                         // straight onto the face
+  if (it) it.grounded = nt[1] > 0.97;                          // on a floor it keeps to the ground; on a wall it stays
+  return Math.acos(c) * 180 / Math.PI;
+}
+const groundHook = (cv, x, y) => {
+  if (!groundPick || cv !== front) return null;
+  const key = groundPick; endGroundPick();
+  const o = solidOf(key), it = itemOf(key); if (!o && !it) return {move(){}};
+  const all = S.solids || []; let f = null;
+  if (o) S.solids = all.filter(s => s !== o);                   // not its own faces
+  try { f = typeof faceAt === "function" ? faceAt(x, y, cv.width, cv.height) : null; } finally { S.solids = all; }
+  remember();
+  if (!f){ groundDown(o, it); say("面のない所なので、いちばん低い所で真下に接地させました。"); }
+  else { const turned = onFace(o, it, f);
+    say(turned > 0.5 ? `クリックした面に、いちばん平行な面を合わせて接地させました（${Math.round(turned)}° 回しました）。` : "クリックした面に接地させました。"); }
+  afterEdit(); sync(); draw();
+  return {move(){}};
+};
 $("plGround").addEventListener("click", () => {
   const o = solidOf(sel), it = itemOf(sel); if (!o && !it) return;
-  remember();
-  if (o) groundSolid(o); else { it.grounded = true; groundItem(it); }
-  afterEdit(); sync(); draw(); say("接地させました（いちばん低い所で）。");
+  if (groundPick){ endGroundPick(); say("面のクリックをやめました。"); return; }
+  groundPick = sel; unhookGround(); DOWN_HOOKS.unshift(groundHook); front.style.cursor = "crosshair";
+  say("接地させる面（床・壁・天井・物体の面）をクリックしてください。何もない所をクリックすると、いちばん低い所で真下に着けます。Esc でやめます。");
 });
+addEventListener("keydown", e => { if (groundPick && e.key === "Escape"){ endGroundPick(); say("面のクリックをやめました。"); } });
 for (const [id, where] of [["plPivMid", "mid"], ["plPivLow", "bottom"]]) $(id).addEventListener("click", () => {
   if (!window.ODMObj || !(solidOf(sel) || itemOf(sel))) return;
   remember(); ODMObj.resetPiv(sel, where); afterEdit(); sync(); draw(); });
@@ -441,6 +499,12 @@ opFill();
   "設置（図形・床・壁・天井・小物）": "Objects (shapes, floors, walls, ceilings, things)", "置く物": "What to put", "図形・床・壁・天井": "Shapes, floors, walls, ceilings",
   "置く": "Put", "置いた物": "Out in the scene", "外す": "Take away", "複製": "Copy", "接地させる": "Put on the ground",
   "いちばん低い所で、床や下の物の上に着ける（回転していても）": "Onto the ground or what is under it by the lowest point (turned or not)",
+  "押してから床・壁・天井・物体の面をクリックすると、いちばん平行な面をその面にぴったり着ける（何もない所をクリックすると、いちばん低い所で真下に着ける）":
+    "Press it, then click the floor, a wall, a ceiling or an object's face: its most nearly parallel face goes flat against it (click where there is nothing: onto the ground by its lowest point)",
+  "接地させる面（床・壁・天井・物体の面）をクリックしてください。何もない所をクリックすると、いちばん低い所で真下に着けます。Esc でやめます。":
+    "Click the face to put it on (the floor, a wall, a ceiling, an object's face). Click where there is nothing to put it on the ground by its lowest point. Esc cancels.",
+  "面のない所なので、いちばん低い所で真下に接地させました。": "No face there: put on the ground by its lowest point.",
+  "クリックした面に接地させました。": "Put on the clicked face.",
   "位置（左右）": "Place (left / right)", "位置（上下）": "Place (up / down)", "位置（前後）": "Place (front / back)",
   "回転（前後に倒す・X）": "Turn (tip forward / back, X)", "回転（向き・Y）": "Turn (facing, Y)", "回転（横に倒す・Z）": "Turn (tip sideways, Z)",
   "幅": "Width", "高さ": "Height", "奥行き": "Depth", "角の数": "Sides", "天面の大きさ（底面に対して）": "Top size (of the base)", "天面の幅": "Top width", "大きさ（いちばん長い辺）": "Size (longest side)",

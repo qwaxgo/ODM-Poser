@@ -516,6 +516,7 @@
     [/^投稿の文をコピーしました。(.+)に貼り付けてください。$/, m => `Copied the post's text: paste it into ${m[1].replace("カカオトーク", "KakaoTalk")}.`],
     [/^(.+)には、この文を貼り付けてください：([\s\S]+)$/, m => `Paste this into ${m[1].replace("カカオトーク", "KakaoTalk")}: ${m[2]}`],
     [/^(.+)は文字数の上限があるため、編集データの入らないサイトのリンクにしました。$/, m => `${m[1]} allows only so many characters: the post has the site's link without the editing data.`],
+    [/^クリックした面に、いちばん平行な面を合わせて接地させました（(\d+)° 回しました）。$/, m => `Put its most nearly parallel face flat on the clicked face (turned ${m[1]}°).`],
     [/^構図の画像と投稿の文を共有メニューに渡しました。(.+)を選んでください。$/, m => `Handed the composition picture and the post's text to the share menu: pick ${m[1].replace("カカオトーク", "KakaoTalk").replace("オープンチャット", "LINE OpenChat")}.`],
     [/^(投稿画面を開き、)?構図の画像(と投稿の文)?をコピーしました。(.+)の投稿欄に貼り付けてください（Ctrl＋V・⌘V）。(文字数の上限があるため、リンクは編集データの入らないサイトのリンクです。)?$/,
       m => `${m[1] ? "Opened the post page and copied" : "Copied"} the composition picture${m[2] ? " and the post's text" : ""}: paste it into ${m[3].replace("カカオトーク", "KakaoTalk").replace("オープンチャット", "LINE OpenChat")}'s post box (Ctrl+V / ⌘V).${m[4] ? " The link is the site's own, without the editing data (the network's length limit)." : ""}`],
