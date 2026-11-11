@@ -10,7 +10,7 @@ MOD は、エディタの起動時に読み込まれる JavaScript のファイ�
 - 日本語の表示に対する英語（英語表示のとき）
 - 横の欄に出す自分の欄、描画・編集・元に戻す／読み込み・モード・マウスへのフック
 
-API の版：**1.2.0**。English: [MODDING.md](MODDING.md)（こちらが正式な説明で、内容は同じです）。
+API の版：**1.3.0**。English: [MODDING.md](MODDING.md)（こちらが正式な説明で、内容は同じです）。
 
 > **安全のために。** MOD はエディタのページの中で、エディタと同じ権限で動くプログラムです。信頼できる MOD だけを
 > 入れてください。エディタのアドレスの末尾に `?nomods` を付けると、MOD なしで開きます（MOD のせいで動かなくなったときなど）。
@@ -167,7 +167,7 @@ ODMPoser.registerMod({
 | `api.selectedJoint()` | 選んでいる関節の名前（なければ `null`） |
 
 MOD が読める（`api.edit` の中で変えてよい）`S` の項目：`P`（21 関節の [x, y, z] cm）、`R`（関節の丸の半径）、
-`hands`（`{r, l}` 手の形）、`cam`（`lens` mm、`yaw`・`pitch`・`roll` 度、`zoom`）、`pins`（固定した関節）、
+`hands`（`{r, l}` 手の形）、`fingers`（`{r, l}` 調整した指：`{from: もとの手の形, a: 指ごとの角度}`。`hands` がまだ `from` の間だけ使われます）、`fingerLen`（指の長さの割合 5 つ）、`cam`（`lens` mm、`yaw`・`pitch`・`roll` 度、`zoom`）、`pins`（固定した関節）、
 `items`（出ている小物）、`solids`、`auras`、`colors`、`env`（床・壁・天井・接地）、`wire`、`ruler`。
 
 ### 関節・計算・画面
@@ -196,7 +196,9 @@ MOD が読める（`api.edit` の中で変えてよい）`S` の項目：`P`（2
 | `api.auras.addKind(key, {ja, en, color, front?, margin?, draw})` | オーラの種類（下で説明） |
 | `api.auras.addPart(key, {ja, en, chains})` | オーラが囲む関節：`chains: [["r_shoulder", "r_elbow", "r_wrist", "r_hand"], ...]`（`r_hand`／`l_hand` は拳の中心。chain ごとに輪郭が一つ） |
 | `api.hands.add(key, {ja, en, curl})` | 手の形。`curl` は指ごと（親指・人差し指・中指・薬指・小指）の曲がり、0 伸ばす … 1 握る |
+| `api.hands.add(key, {ja, en, angles})` | 手の形を関節の角度で（1.3）。`angles` は指ごとの `[開き, 付け根の曲げ, 中の曲げ, 先の曲げ]`（度）を 5 本分。人の手の範囲に収めます |
 | `api.hands.set(side, key)`、`api.hands.shapes()` | 手の形を変える、手の形の一覧 |
+| `api.hands.angles(side)` | その手の今の指の関節（1.3）。自分で調整した指（`S.fingers`）か、手の形のもの |
 | `api.poses.add(name, {en, turns})` | 組み込みポーズ。`turns: [[関節, "x" \| "y" \| "z", 度], ...]`（立った姿勢からその関節の骨を回す） |
 | `api.poses.apply(name)` | そのポーズにする |
 | `api.presets.add(list)` | ユーザープリセット `{group, name, P}`（P は 21 関節か最初の 19 関節の cm。骨の向きだけを使います） |
@@ -269,7 +271,7 @@ api.i18n.addRule(/^(.+)を投げました。$/, m => `Threw the ${m[1]}.`);   //
 
 - `api.data()` の中身と、MOD が追加した小物・物体・オーラは、ポーズの JSON に保存されます（`api.io.poseJSON()` で渡すものにも入ります）。
   MOD なしで開いてもファイルには残り、エディタが知らない小物とオーラは描かず、知らない物体の種類は直方体として描きます。
-- API はセマンティック バージョニングに従います。1.x では追加はあっても、ここに書いたものは動き続けます（1.2 でマウス・タッチ・ペンのイベントを統一、1.1 で `api.io` と `addSection({at})` を追加）。`api: 2` の MOD は
+- API はセマンティック バージョニングに従います。1.x では追加はあっても、ここに書いたものは動き続けます（1.3 で手の形を関節の角度で足す `angles` と `api.hands.angles`、1.2 でマウス・タッチ・ペンのイベントを統一、1.1 で `api.io` と `addSection({at})` を追加）。`api: 2` の MOD は
   API 1 のエディタでは読み込みません。
 - API はこのページに書いたものだけです。エディタのほかの関数や変数は、版によって変わることがあります。
 

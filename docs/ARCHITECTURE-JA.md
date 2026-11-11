@@ -6,7 +6,7 @@ English: [ARCHITECTURE.md](ARCHITECTURE.md)
 
 - **目的**: リファクタリングの前に、今ある機能と実装の仕組みを、人間が読んで理解できるようにまとめます。機能は変えません。この文書は「今どうなっているか」を書き、最後の章（10 章）に、リファクタリングで守るべき約束と、難しい所を挙げます。
 - **読む人**: JavaScript は分かるが、このコードは初めての開発者。
-- **書いた時点**: v0.2.0 の開発中（2026-11-11）。コードの場所は、行番号ではなく関数名・変数名で示します（行番号はすぐずれるため）。
+- **書いた時点**: v0.2.0 の開発中（2026-11-11。同じ日に手と指の作り直しを反映）。コードの場所は、行番号ではなく関数名・変数名で示します（行番号はすぐずれるため）。
 - **ほかの文書との分担**:
   - [HANDOFF.md](HANDOFF.md): 作業の引き継ぎメモ（持ち主の決まりごと、未解決の項目）。
   - [MODDING-JA.md](MODDING-JA.md): MOD API の利用者向けの説明。
@@ -63,7 +63,7 @@ WebGL は使っていません。描画はすべて自前の投影と Canvas 2D 
 |------|------|
 | `src/pages/editor/index.astro` | エディタのページ。スクリプトの読み込み順もここで決まる |
 | `src/components/editor/*.astro` | エディタの HTML（Stage = 図、Panel* = 操作欄の各部）。props のない素の HTML |
-| `web/editor/*.js` | エディタの本体（約 11,300 行、29 ファイル）。Astro の `publicDir` としてそのまま配信 |
+| `web/editor/*.js` | エディタの本体（約 11,700 行、31 ファイル）。Astro の `publicDir` としてそのまま配信 |
 | `web/editor/ui.src.css` → `ui.css` | 見た目。Tailwind CSS 4 で生成（`npm run css`）。`ui.css` は手で直さない |
 | `web/editor/sw.js`, `manifest.webmanifest` | PWA |
 | `src/pages/docs/`, `src/lib/docs.ts`, `docs/*.md` | 利用者向けドキュメントのページ |
@@ -99,7 +99,7 @@ flowchart LR
 
 エディタのスクリプトは、`index.astro` の順に `<script is:inline>` で読まれます。モジュールの仕組みはなく、**すべてのファイルが 1 つのグローバルの名前空間を共有します**。
 
-- `pose_main.js` は即時関数（IIFE）に包まれていません。トップレベルの約 280 個の名前（`S`, `J`, `IX`, `draw`, `project` …）がそのままグローバルになります。
+- `pose_main.js` は即時関数（IIFE）に包まれていません。トップレベルの約 270 個の名前（`S`, `J`, `IX`, `draw`, `project` …）がそのままグローバルになります。
 - `pose_scene.js`、`pose_cast.js`、`pose_solids.js`、`pose_style.js`、`pose_ruler.js` も、トップレベルに関数を置きます。
 - それより後のファイルは、たいてい IIFE に包まれていて、外へは `window.ODM…` だけを出します。
 
@@ -108,7 +108,8 @@ flowchart LR
 | 1 | `ui.js` | 119 | melta UI のクラスを各コントロールに付ける（MutationObserver） | `ODMUI`（一部） |
 | 2 | `pose_props.js` | 457 | 小物の形のデータ（手で作った図形） | `PROP_CATS`, `PROPS` |
 | 3 | `pose_props_more.js` | 271 | 小物の追加分（効果、身に着ける物、単純な図形） | （`PROPS` に足す） |
-| 4 | `pose_main.js` | 2382 | 中心：人体・状態 `S`・カメラと投影・描画・入力・編集の流れ・パネルの基本・ファイル | 約 280 個のグローバル |
+| 3a | `pose_hand.js` | 191 | 手のモデル：手の形、指の関節、21 点、描画（5.12）。**`pose_main.js` より前に読むが、中の関数は `pose_main.js` の名前を実行時に使う** | `HANDS`, `FINGERS`, `handShape3D`, `drawHand`, `fingerSel` … |
+| 4 | `pose_main.js` | 2301 | 中心：人体・状態 `S`・カメラと投影・描画・入力・編集の流れ・パネルの基本・ファイル | 約 280 個のグローバル |
 | 5 | `pose_scene.js` | 1291 | 床と接地、持つ・着ける・置く、乗る、つかまる、ワイヤー、面に立つ | `drawScene`, `sceneAfterEdit`, `partSets` … |
 | 6 | `pose_cast.js` | 185 | 複数の人物（入れ替えて描く） | `everyFigure`, `withFigure`, `onlyFigure` |
 | 7 | `pose_sets.js` | 135 | ポーズ・体格の記憶（ブラウザに保存） | — |
@@ -122,6 +123,7 @@ flowchart LR
 | 15 | `pose_objects.js` | 448 | 物体と小物を 1 つの選択として扱う（複数選択、切り取り・貼り付け、カーソル、支点） | `ODMObj` |
 | 16 | `pose_persp.js` | 302 | パースの誇張（支点、一時的なカメラ） | `ODMPxMark` |
 | 17 | `pose_sideview.js` | 157 | 側面図のカメラ | — |
+| 17a | `pose_hand_ui.js` | 256 | 指の操作：丸の選択・ドラッグ、3 軸ハンドル、パネル、自分の手の形、手と指の大きさ | `ODMHand` |
 | 18 | `i18n.js` | 689 | 日本語→英語の置き換え | `ODMPoserI18n` |
 | 19 | `ui-icons.js` | 62 | メニューのアイコン（SVG） | `ODMICONS` |
 | 20 | `ui-menu.js` | 201 | 操作欄のメニュー（3 階層）とタブ | `ODMUI.showMenu` ほか |
@@ -130,7 +132,7 @@ flowchart LR
 | 23 | `ui-help.js` | 171 | 操作のヒント | — |
 | 24 | `ui-log.js` | 107 | 作業ログ | — |
 | 25 | `../mods.js` | — | MOD の一覧（ページの外。ホストが配る） | `ODM_POSER_MODS` |
-| 26 | `pose_api.js` | 581 | MOD API と MOD の読み込み | `ODMPoser`（旧名 `SymbolicPose`） |
+| 26 | `pose_api.js` | 584 | MOD API と MOD の読み込み | `ODMPoser`（旧名 `SymbolicPose`） |
 | 27 | `pose_share.js` | 313 | SNS への投稿と `#pose=` のリンク | — |
 | 28 | `ui-layout.js` | 130 | 操作欄の並び（ラベルと欄の組） | — |
 | 29 | `ui-pane.js` | 135 | 図と操作欄の境目、モードの列 | — |
@@ -145,17 +147,20 @@ flowchart LR
 ```mermaid
 flowchart TD
   props["pose_props*.js<br/>(形のデータ)"]
+  hand["pose_hand.js<br/>手のモデル"]
   main["pose_main.js<br/>S, 人体, カメラ, 描画, 入力, 編集"]
   scene["pose_scene.js<br/>持つ・置く・接地・面"]
   solids["pose_solids.js<br/>物体"]
   cast["pose_cast.js<br/>複数人物"]
   ruler["pose_ruler.js<br/>定規"]
-  feat["pose_size / style / preview / sets<br/>gizmo / place / objects / persp / sideview"]
+  feat["pose_size / style / preview / sets<br/>gizmo / place / objects / persp / sideview / hand_ui"]
   ui["ui-*.js, pose_tree.js<br/>(メニュー・並び・ログ)"]
   i18n["i18n.js"]
   api["pose_api.js<br/>MOD API"]
   share["pose_share.js"]
   props --> main
+  main --> hand
+  hand -. 実行時 .-> main
   scene --> main
   scene -. typeof .-> solids
   main -. typeof .-> scene
@@ -170,6 +175,7 @@ flowchart TD
   feat --> scene
   feat --> solids
   feat --> ruler
+  feat --> hand
   ui --> main
   api --> main
   api --> scene
@@ -216,7 +222,7 @@ flowchart TD
 
 `drawFigure` の中で、`drawScene`（床・小物・ワイヤー。これも `pose_solids.js` と `pose_api.js` が包む）を呼びます。**重なりの順（何が上に描かれるか）が、ファイルの読み込み順と包み方で決まっている**ことに注意してください。
 
-**`draw()`**: 画面の全体を描き直します。中身は 4.4 の流れです。12 ファイルの 17 か所が包み、それぞれ自分のパネルの表示をそろえます。
+**`draw()`**: 画面の全体を描き直します。中身は 4.4 の流れです。13 ファイルの 18 か所が包み、それぞれ自分のパネルの表示をそろえます。
 
 | ファイル | 包んでしていること |
 |---------|-----------------|
@@ -227,6 +233,7 @@ flowchart TD
 | `pose_objects.js`（3 か所） | 範囲選択の枠、カーソル、編集ボタンの有効・無効 |
 | `pose_persp.js`（2 か所） | 側面図の支点の印、パースの欄 |
 | `pose_sideview.js` | 側面図の欄 |
+| `pose_hand_ui.js` | 手の大きさ・指の長さの欄（体格のタブが開いているとき） |
 | `ui-figure.js` | 全身図 |
 | `pose_tree.js` | 管理の一覧 |
 | `ui-layout.js`（2 か所） | 並びの絵、数値とスライダーの対 |
@@ -248,8 +255,9 @@ flowchart TD
 | `down` | `pose_sideview.js` | 側面図の回転・移動・支点のドラッグ |
 | `remember`, `say`, `toast` | `ui-log.js` | 作業ログに書く |
 | `addItem`, `addSolid` | `pose_preview.js` | 置く前に決めた大きさで置く |
+| `showSelected` | `pose_hand_ui.js` | 関節のパネルと一緒に、指の欄をそろえる |
 
-**`DOWN_HOOKS` に入れているもの**: `pose_main.js`（自動のモード切り替え）、`pose_scene.js`、`pose_solids.js`、`pose_ruler.js`、`pose_gizmo.js`、`pose_objects.js`、`pose_cast.js`、`pose_persp.js` が入れています。ほかに、一時的に入れるもの（面をクリックして立つ、面に接地）と、MOD の `pointerDown`（最後の 1 つの前に入る）があります。
+**`DOWN_HOOKS` に入れているもの**: `pose_main.js`（自動のモード切り替え）、`pose_scene.js`、`pose_solids.js`、`pose_ruler.js`、`pose_gizmo.js`、`pose_objects.js`、`pose_cast.js`、`pose_persp.js` が入れています。`pose_hand_ui.js` の指のフックは、3 軸ハンドルのフック（`ODMGizmo.downHook`）の**すぐ後ろ**に `splice` で入ります（輪を押したとき、輪の中にある指の丸に取られないため）。ほかに、一時的に入れるもの（面をクリックして立つ、面に接地）と、MOD の `pointerDown`（最後の 1 つの前に入る）があります。
 
 ## 3. 状態（データモデル）
 
@@ -262,7 +270,9 @@ flowchart TD
 | `P` | 関節の 3D 座標 21 個（cm、y が上、人物は +z を向く）。順は `J` | ほぼすべて |
 | `R` | 関節の丸の半径（cm） | main, size, scene |
 | `twist` | 関節ごとのねじり（度） | main, gizmo |
-| `hands` | `{r, l}` 手の形の名前（`HANDS`） | main, scene |
+| `hands` | `{r, l}` 手の形の名前（`HANDS`）。持つ物・MOD・古いファイルもこれを変える | hand, scene |
+| `fingers` | `{r, l}` 調整した指 `{from, a, name}`。`hands` がまだ `from` の間だけ使う（5.12） | hand, hand_ui |
+| `fingerLen` | 指の長さの割合 5 つ（0.85〜1.15、両手共通） | hand, hand_ui, sets |
 | `head`, `headShape` | 頭（旧）、頭の形（伸び縮み） | main, size |
 | `body` | 全身の回転 `{yaw, pitch, roll}` | main |
 | `pins` | `{関節番号: [x, y, z]}` 固定した関節 | main, scene |
@@ -293,6 +303,7 @@ flowchart TD
 | 状態 | 場所 | 意味 |
 |------|------|------|
 | `sel` | pose_main.js | 選んでいる関節の番号（-1 なし） |
+| `fingerSel` | pose_hand.js | 選んでいる指の関節 `{side, n, j}`。`sel` がその手の手首か手のときだけ有効 |
 | `mode` | pose_main.js | 今のモード（`pose` / `body` / `persp` / `place`） |
 | `scSel` | pose_scene.js | 選んでいる小物の番号（`S.items` の添字） |
 | `soSel` | pose_solids.js | 選んでいる物体の番号（`S.solids` の添字） |
@@ -565,8 +576,9 @@ flowchart LR
 | 配置の選択 | `ODMObj`（`"sN"` / `"iN"` の集合） | クリック、範囲、Ctrl＋クリック |
 | 設置のタブ | `pose_place.js` の `sel`（キー） | 置いた物の一覧 |
 | パースの支点 | `pose_persp.js` の `pxSel` | 印をクリック |
+| 指の関節 | `pose_hand.js` の `fingerSel` | 選んだ手の指の丸、関節のパネル |
 
-同じ物を、ファイルごとに違う形で指しています。消したり並べ替えたりしたときには、添字がずれないように、それぞれのファイルが合わせています。
+同じ物を、ファイルごとに違う形で指しています（7 通り）。消したり並べ替えたりしたときには、添字がずれないように、それぞれのファイルが合わせています。
 
 ### 5.11 複数の人物
 
@@ -575,6 +587,46 @@ flowchart LR
 - `everyFigure(fn)` は、奥の人物から順に描きます。`onlyFigure(id, fn)` は、1 人だけを描きます（書き出す人物）。
 - そのため、どの道具も編集中の人物しか知らなくてよくなっています。その代わり、**描画の途中で `S` を読むと、別の人物の値が入っていることがあります。**
 - 床に置いた物は、編集中の人物の側に集めます（`gatherLoose`）。
+
+### 5.12 手と指
+
+**データ**（3.1）。手の形は 2 段で持ちます。
+
+- `S.hands[side]`: 手の形の名前（`HANDS` のキー）。今までどおりで、持つ物・MOD・古いファイルもこれを変えます。
+- `S.fingers[side] = {from, a, name}`: 自分で調整した指です。`a` は指 5 本分の `[開き, 曲げ0, 曲げ1, 曲げ2]`（度）、`from` は調整を始めたときの手の形、`name` は自分の形の名前です。
+- `handAngles(side)` は、`S.fingers[side].from === S.hands[side]` のときだけ調整した指を返し、それ以外は手の形から作ります（`shapeAngles`）。
+  - このため、剣を持つ（`S.hands = "grip"`）と持つ物の形になります。放して元の形に戻ると、調整した指も戻ります。`S.hands` を変えるコード（持つ・着ける・MOD）は、`S.fingers` を知らなくても動きます。
+  - 手の形を一覧から選んだときは、`S.fingers[side]` を消します。
+- `HANDS` の値は、今までの「指ごとの曲がり（0〜1）」の 5 つの数か、関節の角度 `{a}`（MOD の `angles`）です。曲がりは `FINGERS[n].bend × 曲がり` で角度にします。今までの形の名前、ファイル、MOD の手の形は、そのまま読めます。
+- 指の長さ `S.fingerLen` は両手共通で、体格として扱います（体格プリセット、体格を戻す）。手の大きさは、今までどおり手の骨（手首→手）の長さで、`handK = 長さ / HAND_LEN`（8cm）です。
+
+**形の計算**（`handShape3D`）
+
+- 手の座標系 `handFrame` で、指ごとに付け根 `root` から始めます。
+- 開きは手のひらの法線のまわりに回し（`FINGER_SIDE` で外向きを＋に）、各関節で手のひらの方へ曲げます（親指は手のひらの方と横切る方）。
+- リアルにするため、次の 2 つを足しています。
+  - 付け根が曲がるほど、指が中指の方へ寄る（`spread × (1 − 0.5·曲げ0/90)`）。
+  - 手が閉じるほど、薬指・小指の付け根が手のひらの方へ沈む（`arch`。手のひらのアーチ）。
+- 点の並びは OpenPose の 21 点と同じです（手首、親指 CM→MP→IP→先、ほかの指 MP→PIP→DIP→先）。OpenPose の書き出しはこの点をそのまま使います。ほかに、手のひらの付け根の 2 点（`heel`）を返します。
+- 曲がる範囲は `FINGER_LIM`（人の手の範囲）です。指の長さの範囲は `FINGER_LEN_LIM`（0.85〜1.15）、手の大きさは `HAND_K_LIM`（0.75〜1.35）です。
+
+**描画**（`drawHand`）
+
+- 手のひらの輪郭（小指側の付け根 → 指の付け根 4 つ → 親指の付け根 → 親指側の付け根）と、指の線を描きます。
+- エディタでは、その手が選ばれていてポーズモードのとき（`opts.sel` が手首か手）、指の関節 15 個を小さな丸で描きます。選んでいる関節は `--sel` の色で塗ります。
+
+**操作**（`pose_hand_ui.js`）
+
+- `fingerDown`（`DOWN_HOOKS`）: 選んだ手の指の丸を押すと `fingerSel` を決めます。手が選ばれていなければ、指の線を押すとその手を選びます。マウスはそのままドラッグ、タッチは 2 回目からドラッグ、3 軸ハンドルを出している間は選ぶだけです。
+- ドラッグ（`dragFinger`）: その関節の先の点が指の位置にいちばん近くなる角度を、粗い格子で探してから細かく探します。付け根は開きと曲げの 2 つ、ほかは曲げだけです。
+- 3 軸ハンドル: `ODMGizmoTargets` に対象を足します。輪は 0 = 曲げ（軸 `bendAx`）、1 = 開き（軸 `spreadAx`、付け根だけ）で、`fingerJoint` が軸を出します。
+- パネル: 関節のパネルの `#handRow` の後ろに `#fgBox` を足し、`showSelected` を包んでそろえます。自分の手の形は `KEY-handsets` に `{name, a}` で残し、「この腕の手の形」の一覧に `u:<名前>` で出します（`ODMHand.selHTML`。MOD が手の形を足したときも、`pose_api.js` の `refreshPanels` がこれを使う）。
+- 体格のタブ: 「手の大きさ・指の長さ」を足します。手の長さは、両手の手の骨の長さを変えます。「戻す」は、身長に対する標準の体の手の割合（`usualK`）に戻します。
+
+**ほかとのつながり**
+
+- `pose_cast.js` の `FIG_KEYS`、`pose_sets.js` のポーズの記憶（`fingers`）と体格の記憶（`fingerLen`）が、指のデータを運びます。
+- `pose_main.js` の左右対称（`symmetrize`）、左右反転（`mirror`）、リセットも、指のデータを運びます。
 
 ## 6. UI
 
@@ -620,7 +672,7 @@ flowchart LR
   - 訳、メニューとパネル
   - フック（`api.on`）
 - `api.on` のイベントは、`drawBehind`、`draw`、`drawSide`、`afterEdit`、`sync`、`mode`、`pointerDown`、`wheel` です。MOD のエラーは `guarded` で受け止め、MOD のパネルに出して、エディタは止めません。
-- API の版は `1.2.0` です（`API_VERSION`、メジャー 1）。詳しくは [MODDING-JA.md](MODDING-JA.md) を見てください。
+- API の版は `1.3.0` です（`API_VERSION`、メジャー 1）。1.3 で、手の形を関節の角度で足す `hands.add(key, {angles})` と、`hands.angles(side)` を足しました。詳しくは [MODDING-JA.md](MODDING-JA.md) を見てください。
 - ホスト（ComfyUI ブリッジなど）がエディタとやりとりするのは、MOD API と `../mods.js` だけです。
 
 ## 8. ブラウザに残すデータ（localStorage）
@@ -634,6 +686,7 @@ flowchart LR
 | `KEY-picture`（`odm-poser-editor-v1-picture`） | 書き出しの比率・大きさ・アタリの内容・構図の設定 | pose_main.js |
 | `KEY-limits`, `-sympose`, `-thicklink`, `-automode`, `-pad`, `-split` | 表示・操作の設定 | pose_main.js |
 | `KEY-posesets`, `-bodysets` | 記憶したポーズ・体格 | pose_sets.js |
+| `KEY-handsets` | 自分の手の形 `[{name, a}]` | pose_hand_ui.js |
 | `KEY-colorsets` | 色のセット | pose_style.js |
 | `KEY-objpresets` | 物体のプリセット | pose_place.js |
 | `KEY-clip`, `-cursor` | コピーした物、カーソル | pose_objects.js |
@@ -654,7 +707,7 @@ localStorage のほかにも、次の物を使います。
 
 今、リポジトリにある確認は次の 3 つです。
 
-- 構文: esprima で `web/editor/*.js` を読む（`docker-compose.test.yml` の `syntax`）。
+- 構文: esprima で `web/editor/*.js` を読む（`docker-compose.test.yml` の `syntax`）。**今は `pose_api.js` の `for await`（MOD のフォルダを読む所）を esprima が読めず、失敗します**。もう 1 つの失敗だった `ui-layout.js` の `?.` は、手と指の変更のときに直しました。
 - UI: `python tools/lint_ui.py`（melta-lint）。
 - ビルド: `npm run build`。
 
@@ -666,9 +719,10 @@ localStorage のほかにも、次の物を使います。
 
 | 約束 | 頼っている物 |
 |------|------------|
-| 状態の形式 `version: 3` と、`S` の項目名・意味 | ファイル、共有リンク、ComfyUI ブリッジ、持ち主の別プロジェクト、MOD（`S.mods`） |
+| 状態の形式 `version: 3` と、`S` の項目名・意味（`fingers` の `{from, a}` と「`from` の間だけ使う」決まり、`fingerLen` を含む） | ファイル、共有リンク、ComfyUI ブリッジ、持ち主の別プロジェクト、MOD（`S.mods`） |
 | `window.ODMPoser`（旧名 `window.SymbolicPose`）と API 1.x | MOD、ホスト |
 | `../mods.js` と `mods/` の置き方、`ODM_POSER_MODS` | HTML 版、アプリ、ComfyUI ブリッジ |
+| 手の形の名前（`HANDS` のキー）と、曲がり 5 つの形（MOD の `curl`）、OpenPose の手の 21 点の順 | 古いファイル、持つ物の `pose`、MOD、OpenPose を読む側 |
 | `#pose=` リンクの形式（`j` / `z` ＋ base64url、`{v: 1, s, mods}`） | 公開済みのリンク |
 | localStorage のキー（8 章） | 利用者の保存データ |
 | `file://` で動くこと（クラシックスクリプト、自分のファイルを fetch しない） | HTML 版 |
@@ -693,6 +747,14 @@ localStorage のほかにも、次の物を使います。
 | 処理と UI が同じファイル | 多くの pose_*.js | 計算の中に `innerHTML` やメッセージがある | 計算（core）と UI（panel）を分ける |
 | 古い形のための残り物 | `S.env.wall/ceiling`、`S.scale`、隠した旧パネル（`data-menu="old-place"`）、`S.head.yaw` | 読むコードが残っている | 読込のときに直して、残りを消す（形式の互換は保つ） |
 | `typeof` による弱い依存 | pose_main.js | どの機能があるかが実行時まで分からない | 依存を明示する（初期化の順を決める） |
+| 手の形の 2 段持ち（手と指の変更で生じた） | `S.hands` と `S.fingers` | 名前と、調整した角度の 2 か所に手の形があり、`from` が一致するときだけ角度を使う、という暗黙の決まりで切り替わる | 手の状態を 1 つの値にまとめ（「形の名前＋差分」など）、持つ物の手の形は一時的な上書きとして別に持つ |
+| 7 つ目の選択（手と指の変更で生じた） | `fingerSel` | 指の関節の選択が、`sel`（手の関節）と組で意味を持つ | 10.3 の選択の一本化に含める（指の関節も id で指す） |
+| 読み込み順の逆転（手と指の変更で生じた） | `pose_hand.js` → `pose_main.js` | `pose_hand.js` は先に読まれるが、中の関数は後の `pose_main.js` の名前（`S`, `add`, `project`, `IX` …）を実行時に使う。読み込み時に呼ぶと止まる | 共通の計算（ベクトル・投影）を先のファイルに分け、依存を一方向にする |
+| フックの順の結び付き（手と指の変更で生じた） | `DOWN_HOOKS` | 指のフックは「3 軸ハンドルのフックのすぐ後ろ」という位置に頼る（`ODMGizmo.downHook`） | 押したときの処理を、優先度つきの登録にする |
+| 上書きが 2 つ増えた（手と指の変更で生じた） | `showSelected`, `draw`（`pose_hand_ui.js`） | パネルの同期が、ほかの上書きと同じ形で増えた | 10.3 の 2（登録の形）でまとめて置き換える |
+| 持つ位置が名前で決まる（手と指の変更で生じた） | `GRIP_AT` | 指を調整しても、持つ物の位置は手の形の名前で決まる | 持つ位置を指の点から求める |
+| 手の大きさが 2 か所（手と指の変更で生じた） | 手の骨の長さ（`S.P`）と `S.fingerLen` | 手のひらの大きさは骨の長さ、指の長さは割合で、別の所にある | 手の寸法を 1 つの値にまとめる（形式の互換は保つ） |
+| パネルを DOM の位置で差し込む（手と指の変更で生じた） | `#fgBox` | 関節のパネルの `#handRow` の後ろに、JS で差し込む | パネルの組み立てを Astro のマークアップにまとめる |
 | 動きの自動テストがない | — | 変更の確認が手作業か、使い捨てのテスト | 10.3 |
 
 ### 10.3 進め方の提案

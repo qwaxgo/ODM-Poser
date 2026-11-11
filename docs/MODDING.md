@@ -10,7 +10,7 @@ A mod is a JavaScript file that the editor loads at start. Through the **MOD API
 - English words for its Japanese labels (and the other way round)
 - panels in the side bar, and hooks into drawing, editing, undo / load, the mode and the mouse
 
-API version: **1.2.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
+API version: **1.3.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
 
 > **Safety.** A mod is a program that runs inside the editor page with the same rights as the
 > editor itself. Install only mods you trust. Add `?nomods` to the editor's address to start
@@ -183,7 +183,7 @@ Every prop can be carried on the back (hand and body props) and put down on the 
 | `api.selectedJoint()` | the selected joint's name, or `null` |
 
 Fields of `S` a mod may read (and change inside `api.edit`): `P` (21 joints, [x, y, z] cm),
-`R` (joint radii), `hands` (`{r, l}` hand shapes), `cam` (`lens` mm, `yaw`, `pitch`, `roll` degrees,
+`R` (joint radii), `hands` (`{r, l}` hand shapes), `fingers` (`{r, l}` adjusted fingers: `{from: the shape they came from, a: each finger's angles}`, used while `hands` is still `from`), `fingerLen` (five finger-length shares), `cam` (`lens` mm, `yaw`, `pitch`, `roll` degrees,
 `zoom`), `pins` (pinned joints), `items` (props in the scene), `solids`, `auras`, `colors`, `env`
 (floor, walls, ceiling, grounding), `wire`, `ruler`.
 
@@ -213,7 +213,9 @@ Fields of `S` a mod may read (and change inside `api.edit`): `P` (21 joints, [x,
 | `api.auras.addKind(key, {ja, en, color, front?, margin?, draw})` | an aura kind (see below) |
 | `api.auras.addPart(key, {ja, en, chains})` | which joints an aura surrounds: `chains: [["r_shoulder", "r_elbow", "r_wrist", "r_hand"], ...]` (`r_hand` / `l_hand` = the middle of the fist; one outline per chain) |
 | `api.hands.add(key, {ja, en, curl})` | a hand shape: `curl` per finger (thumb, index, middle, ring, pinky), 0 straight … 1 closed |
+| `api.hands.add(key, {ja, en, angles})` | a hand shape by its joints (1.3): `angles` is five `[spread, root bend, middle bend, tip bend]` (degrees), one per finger, kept within a human hand's range |
 | `api.hands.set(side, key)`, `api.hands.shapes()` | set a hand's shape; the shape keys |
+| `api.hands.angles(side)` | the hand's finger joints now (1.3): its own adjusted fingers (`S.fingers`) or its shape's |
 | `api.poses.add(name, {en, turns})` | a built-in pose: `turns: [[joint, "x" \| "y" \| "z", degrees], ...]`, each a turn of that joint's bone from the standing pose |
 | `api.poses.apply(name)` | put the figure in that pose |
 | `api.presets.add(list)` | user presets `{group, name, P}` (P: 21 joints in cm, or the first 19; only the bones' directions are used) |
@@ -299,7 +301,7 @@ Write a hook once and it works with a mouse, a finger, an Apple Pencil, an S Pen
 - Your data in `api.data()` and the props, solids and auras you added are saved in the pose JSON
   (also in what `api.io.poseJSON()` hands on). Opened without your mod, they stay in the file; props and
   aura kinds the editor does not know are skipped when drawing, unknown solid kinds draw as boxes.
-- The API follows semantic versioning: 1.x adds things and keeps what is here working (1.2: the same events for mouse, touch and pens; 1.1 added
+- The API follows semantic versioning: 1.x adds things and keeps what is here working (1.3: hand shapes by joint angles, `angles` and `api.hands.angles`; 1.2: the same events for mouse, touch and pens; 1.1 added
   `api.io` and `addSection({at})`). A mod with
   `api: 2` does not load in an editor with API 1.
 - Only what this page describes is the API. The editor's other functions and globals can change

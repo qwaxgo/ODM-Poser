@@ -6,7 +6,7 @@
 
 - **Purpose**: before refactoring, set down the features as they are and how they are built, so a person can read and understand them. No feature changes. This document says how things are now; the last chapter (10) lists what a refactoring must keep and where the hard parts are.
 - **Reader**: a developer who knows JavaScript but is new to this code.
-- **As of**: v0.2.0 in development (2026-11-11). Code is pointed at by function and variable names, not line numbers (those move quickly).
+- **As of**: v0.2.0 in development (2026-11-11; the hands and fingers rework of the same day included). Code is pointed at by function and variable names, not line numbers (those move quickly).
 - **What other documents cover**:
   - [HANDOFF.md](HANDOFF.md): the hand-over notes (the owner's rules, open items).
   - [MODDING.md](MODDING.md): the MOD API, for mod authors.
@@ -63,7 +63,7 @@ There are also rules for how the code is written:
 |-------|------|
 | `src/pages/editor/index.astro` | The editor's page; it also sets the order the scripts load in |
 | `src/components/editor/*.astro` | The editor's HTML (Stage = the views, Panel* = parts of the panel); plain HTML without props |
-| `web/editor/*.js` | The editor itself (about 11,300 lines in 29 files), served as it is as Astro's `publicDir` |
+| `web/editor/*.js` | The editor itself (about 11,700 lines in 31 files), served as it is as Astro's `publicDir` |
 | `web/editor/ui.src.css` → `ui.css` | The look, made by Tailwind CSS 4 (`npm run css`); never edit `ui.css` by hand |
 | `web/editor/sw.js`, `manifest.webmanifest` | The PWA |
 | `src/pages/docs/`, `src/lib/docs.ts`, `docs/*.md` | The docs pages for users |
@@ -99,7 +99,7 @@ flowchart LR
 
 The editor's scripts are loaded with `<script is:inline>` in `index.astro`'s order. There is no module system: **every file shares one global namespace**.
 
-- `pose_main.js` is not wrapped in an IIFE. Its about 280 top-level names (`S`, `J`, `IX`, `draw`, `project`, ...) are globals as they are.
+- `pose_main.js` is not wrapped in an IIFE. Its about 270 top-level names (`S`, `J`, `IX`, `draw`, `project`, ...) are globals as they are.
 - `pose_scene.js`, `pose_cast.js`, `pose_solids.js`, `pose_style.js` and `pose_ruler.js` also put functions at the top level.
 - The files after them are mostly wrapped in IIFEs and hand out only `window.ODM…` objects.
 
@@ -108,7 +108,8 @@ The editor's scripts are loaded with `<script is:inline>` in `index.astro`'s ord
 | 1 | `ui.js` | 119 | Gives each control melta UI's classes (MutationObserver) | `ODMUI` (part) |
 | 2 | `pose_props.js` | 457 | The things' shapes (hand-made primitives) | `PROP_CATS`, `PROPS` |
 | 3 | `pose_props_more.js` | 271 | More things (effects, worn things, simple solids) | (adds to `PROPS`) |
-| 4 | `pose_main.js` | 2382 | The core: the body, the state `S`, the camera and projection, drawing, input, the edit pipeline, the basic panel, files | about 280 globals |
+| 3a | `pose_hand.js` | 191 | The hand's model: shapes, finger joints, the 21 points, drawing (5.12). **Loaded before `pose_main.js`, but its functions use `pose_main.js`'s names at run time** | `HANDS`, `FINGERS`, `handShape3D`, `drawHand`, `fingerSel`, ... |
+| 4 | `pose_main.js` | 2301 | The core: the body, the state `S`, the camera and projection, drawing, input, the edit pipeline, the basic panel, files | about 280 globals |
 | 5 | `pose_scene.js` | 1291 | The floor and grounding; holding, wearing, putting down; riding, grabbing, the wire; standing on faces | `drawScene`, `sceneAfterEdit`, `partSets`, ... |
 | 6 | `pose_cast.js` | 185 | More than one figure (swapped in to be drawn) | `everyFigure`, `withFigure`, `onlyFigure` |
 | 7 | `pose_sets.js` | 135 | Saved poses and bodies (in the browser) | — |
@@ -122,6 +123,7 @@ The editor's scripts are loaded with `<script is:inline>` in `index.astro`'s ord
 | 15 | `pose_objects.js` | 448 | Solids and things as one selection (several, cut / paste, cursors, pivots) | `ODMObj` |
 | 16 | `pose_persp.js` | 302 | Exaggerated perspective (the pivot, the camera moved for a while) | `ODMPxMark` |
 | 17 | `pose_sideview.js` | 157 | The side view's camera | — |
+| 17a | `pose_hand_ui.js` | 256 | The fingers by hand: picking and dragging the circles, the 3-axis handles, the panel, own hand shapes, hand and finger sizes | `ODMHand` |
 | 18 | `i18n.js` | 689 | Japanese → English | `ODMPoserI18n` |
 | 19 | `ui-icons.js` | 62 | The menu's icons (SVG) | `ODMICONS` |
 | 20 | `ui-menu.js` | 201 | The panel's menu (three levels) and tabs | `ODMUI.showMenu`, ... |
@@ -130,7 +132,7 @@ The editor's scripts are loaded with `<script is:inline>` in `index.astro`'s ord
 | 23 | `ui-help.js` | 171 | The controls' hints | — |
 | 24 | `ui-log.js` | 107 | The work log | — |
 | 25 | `../mods.js` | — | The list of mods (outside the page; the host serves it) | `ODM_POSER_MODS` |
-| 26 | `pose_api.js` | 581 | The MOD API and the mod loader | `ODMPoser` (old name `SymbolicPose`) |
+| 26 | `pose_api.js` | 584 | The MOD API and the mod loader | `ODMPoser` (old name `SymbolicPose`) |
 | 27 | `pose_share.js` | 313 | Posting to social media and `#pose=` links | — |
 | 28 | `ui-layout.js` | 130 | The panel's arrangement (labels paired with their fields) | — |
 | 29 | `ui-pane.js` | 135 | The edge between the views and the panel, the modes' columns | — |
@@ -145,17 +147,20 @@ Arrows mean "uses". Almost every file uses `pose_main.js`'s names directly.
 ```mermaid
 flowchart TD
   props["pose_props*.js<br/>(shape data)"]
+  hand["pose_hand.js<br/>the hand model"]
   main["pose_main.js<br/>S, body, camera, drawing, input, editing"]
   scene["pose_scene.js<br/>hold, put down, ground, faces"]
   solids["pose_solids.js<br/>solids"]
   cast["pose_cast.js<br/>several figures"]
   ruler["pose_ruler.js<br/>ruler"]
-  feat["pose_size / style / preview / sets<br/>gizmo / place / objects / persp / sideview"]
+  feat["pose_size / style / preview / sets<br/>gizmo / place / objects / persp / sideview / hand_ui"]
   ui["ui-*.js, pose_tree.js<br/>(menu, layout, log)"]
   i18n["i18n.js"]
   api["pose_api.js<br/>MOD API"]
   share["pose_share.js"]
   props --> main
+  main --> hand
+  hand -. run time .-> main
   scene --> main
   scene -. typeof .-> solids
   main -. typeof .-> scene
@@ -170,6 +175,7 @@ flowchart TD
   feat --> scene
   feat --> solids
   feat --> ruler
+  feat --> hand
   ui --> main
   api --> main
   api --> scene
@@ -216,7 +222,7 @@ There are slots too: `handHook`, `emptyDrag`, `emptyClick`, `tapClick` and `gizm
 
 `drawFigure` calls `drawScene` (floor, things, wire; also wrapped by `pose_solids.js` and `pose_api.js`). **What is drawn on top of what comes from the load order and the way each file wraps.**
 
-**`draw()`** draws the whole screen again (its body is the flow in 4.4). 17 wrappers in 12 files each bring their own panel in step:
+**`draw()`** draws the whole screen again (its body is the flow in 4.4). 18 wrappers in 13 files each bring their own panel in step:
 
 | File | What its wrapper does |
 |------|------------------------|
@@ -227,6 +233,7 @@ There are slots too: `handHook`, `emptyDrag`, `emptyClick`, `tapClick` and `gizm
 | `pose_objects.js` (3) | The selection box, the cursor, the edit buttons' enabled state |
 | `pose_persp.js` (2) | The pivot's mark on the side view, the Perspective panel |
 | `pose_sideview.js` | The Side view panel |
+| `pose_hand_ui.js` | The hand size and finger length panel (while the Body tab is open) |
 | `ui-figure.js` | The body map |
 | `pose_tree.js` | The Scene list |
 | `ui-layout.js` (2) | The layout pictures, number / slider pairs |
@@ -248,8 +255,9 @@ So **`draw()` is drawing + panel sync + autosave** at once.
 | `down` | `pose_sideview.js` | Turning / moving the side view, dragging the pivot there |
 | `remember`, `say`, `toast` | `ui-log.js` | Writing the work log |
 | `addItem`, `addSolid` | `pose_preview.js` | Putting at the size set before |
+| `showSelected` | `pose_hand_ui.js` | The finger panel kept in step with the joint panel |
 
-**What is in `DOWN_HOOKS`**: hooks from `pose_main.js` (automatic mode switching), `pose_scene.js`, `pose_solids.js`, `pose_ruler.js`, `pose_gizmo.js`, `pose_objects.js`, `pose_cast.js` and `pose_persp.js`. Others come and go (clicking a face to stand on, putting on a face), and the mods' `pointerDown` goes in before the last one.
+**What is in `DOWN_HOOKS`**: hooks from `pose_main.js` (automatic mode switching), `pose_scene.js`, `pose_solids.js`, `pose_ruler.js`, `pose_gizmo.js`, `pose_objects.js`, `pose_cast.js` and `pose_persp.js`. The finger hook of `pose_hand_ui.js` is spliced in **right after** the 3-axis handles' hook (`ODMGizmo.downHook`), so a ring pressed is not taken by a finger circle inside it. Others come and go (clicking a face to stand on, putting on a face), and the mods' `pointerDown` goes in before the last one.
 
 ## 3. State (the data model)
 
@@ -262,7 +270,9 @@ So **`draw()` is drawing + panel sync + autosave** at once.
 | `P` | 21 joints' 3D coordinates (cm, y up, the figure faces +z), in `J`'s order | almost all |
 | `R` | Joint circles' radii (cm) | main, size, scene |
 | `twist` | Each joint's twist (degrees) | main, gizmo |
-| `hands` | `{r, l}` hand shape names (`HANDS`) | main, scene |
+| `hands` | `{r, l}` hand shape names (`HANDS`); held things, mods and older files set it too | hand, scene |
+| `fingers` | `{r, l}` adjusted fingers `{from, a, name}`, used only while `hands` is still `from` (5.12) | hand, hand_ui |
+| `fingerLen` | Five finger-length shares (0.85–1.15, both hands alike) | hand, hand_ui, sets |
 | `head`, `headShape` | The head (old), the head's shape (stretch) | main, size |
 | `body` | The whole body's turn `{yaw, pitch, roll}` | main |
 | `pins` | `{joint index: [x, y, z]}` pinned joints | main, scene |
@@ -293,6 +303,7 @@ So **`draw()` is drawing + panel sync + autosave** at once.
 | State | Where | Meaning |
 |-------|-------|---------|
 | `sel` | pose_main.js | The selected joint's index (-1: none) |
+| `fingerSel` | pose_hand.js | The selected finger joint `{side, n, j}`; it counts only while `sel` is that hand's wrist or hand |
 | `mode` | pose_main.js | The mode (`pose` / `body` / `persp` / `place`) |
 | `scSel` | pose_scene.js | The selected thing's index in `S.items` |
 | `soSel` | pose_solids.js | The selected solid's index in `S.solids` |
@@ -565,8 +576,9 @@ With `S.stand = {p, n}` the figure takes that face as "down": sideways on a wall
 | Place selection | `ODMObj` (a set of `"sN"` / `"iN"`) | Click, a box, Ctrl + click |
 | Objects tab | `sel` in `pose_place.js` (a key) | The list of what is out |
 | The perspective pivot | `pxSel` in `pose_persp.js` | Clicking the mark |
+| A finger joint | `fingerSel` in `pose_hand.js` | The selected hand's finger circles, the joint panel |
 
-The same thing is pointed at in different forms by different files; when things are deleted or reordered, each file keeps its index right itself.
+The same thing is pointed at in different forms (seven) by different files; when things are deleted or reordered, each file keeps its index right itself.
 
 ### 5.11 Several figures
 
@@ -575,6 +587,46 @@ The same thing is pointed at in different forms by different files; when things 
 - `everyFigure(fn)` draws from the farthest figure; `onlyFigure(id, fn)` draws one (the export's figure choice).
 - So every tool only needs to know the edited figure. On the other hand, **reading `S` in the middle of drawing may give another figure's values.**
 - Things put down are gathered on the edited figure's side (`gatherLoose`).
+
+### 5.12 Hands and fingers
+
+**Data** (3.1). A hand's shape is kept in two layers:
+
+- `S.hands[side]`: the shape's name (a `HANDS` key), as before; held things, mods and older files set it.
+- `S.fingers[side] = {from, a, name}`: the fingers adjusted by hand. `a` is five `[spread, bend0, bend1, bend2]` (degrees), `from` the shape the adjusting started from, `name` an own shape's name.
+- `handAngles(side)` returns the adjusted fingers only while `S.fingers[side].from === S.hands[side]`; otherwise it makes them from the shape (`shapeAngles`).
+  - So holding a sword (`S.hands = "grip"`) takes the thing's shape, and letting go back to the first shape brings the adjusted fingers back. Code that sets `S.hands` (holding, wearing, mods) works without knowing about `S.fingers`.
+  - Choosing a shape from the list drops `S.fingers[side]`.
+- A `HANDS` value is either the five curls per finger (0–1) as before, or joint angles `{a}` (a mod's `angles`). A curl becomes angles by `FINGERS[n].bend × curl`. Shape names, files and mods' hand shapes read as before.
+- Finger lengths `S.fingerLen` are shared by both hands and count as the body (body presets, body reset). The hand's size stays the hand bone's length (wrist → hand): `handK = length / HAND_LEN` (8 cm).
+
+**The shape** (`handShape3D`)
+
+- In the hand's frame (`handFrame`), each finger starts from its `root`.
+- Spread turns it about the palm's normal (`FINGER_SIDE` makes outward +); each joint bends it toward the palm (the thumb toward the palm and across it).
+- Two things make it more lifelike:
+  - the fingers come together toward the middle finger as their roots bend (`spread × (1 − 0.5·bend0/90)`);
+  - the ring and little fingers' knuckles sink toward the palm as the hand closes (`arch`, the palm's arch).
+- The points are OpenPose's 21 in its order (wrist; thumb CM → MP → IP → tip; the others MP → PIP → DIP → tip); the OpenPose export uses them as they are. It also returns the palm's two heel points (`heel`).
+- Joint ranges are `FINGER_LIM` (a human hand's); finger lengths `FINGER_LEN_LIM` (0.85–1.15); the hand's size `HAND_K_LIM` (0.75–1.35).
+
+**Drawing** (`drawHand`)
+
+- The palm's outline (the little finger's heel → the four knuckles → the thumb's root → the thumb's heel) and the fingers as lines.
+- In the editor, while that hand is selected in Pose mode (`opts.sel` its wrist or hand), the 15 finger joints show as small circles; the selected one is filled in `--sel`.
+
+**Interaction** (`pose_hand_ui.js`)
+
+- `fingerDown` (`DOWN_HOOKS`): a finger circle of the selected hand pressed sets `fingerSel`; with no hand selected, pressing a hand's fingers selects it. A mouse drags at once, touch from the second press, and while the 3-axis handles show it only selects.
+- Dragging (`dragFinger`): the angle that brings the joint's next point nearest the pointer, searched on a coarse grid, then finer. A root has spread and bend, the others bend only.
+- 3-axis handles: a target added to `ODMGizmoTargets`. Ring 0 bends (axis `bendAx`), ring 1 spreads (axis `spreadAx`, roots only); `fingerJoint` gives the axes.
+- Panel: `#fgBox` goes after `#handRow` in the joint panel, kept in step by wrapping `showSelected`. Own shapes are kept in `KEY-handsets` as `{name, a}` and listed in the hand shape list as `u:<name>` (`ODMHand.selHTML`, which `refreshPanels` in `pose_api.js` uses when mods add shapes).
+- Body tab: **Hand size and finger lengths**. The hand length sets both hand bones' length; the reset goes back to the standard body's hand-to-height share (`usualK`).
+
+**Links elsewhere**
+
+- `FIG_KEYS` in `pose_cast.js`, saved poses (`fingers`) and body presets (`fingerLen`) in `pose_sets.js` carry the finger data.
+- Symmetry (`symmetrize`), mirroring (`mirror`) and the resets in `pose_main.js` carry it too.
 
 ## 6. UI
 
@@ -620,7 +672,7 @@ CSS switches layouts by `body`'s classes (`sheet`, `split`, `touch`, `mode-*`, .
   - translations, menus and panels
   - hooks (`api.on`)
 - `api.on`'s events are `drawBehind`, `draw`, `drawSide`, `afterEdit`, `sync`, `mode`, `pointerDown` and `wheel`. A mod's errors are caught by `guarded`, shown in the MOD panel, and the editor goes on.
-- The API's version is `1.2.0` (`API_VERSION`, major 1). See [MODDING.md](MODDING.md).
+- The API's version is `1.3.0` (`API_VERSION`, major 1). 1.3 added `hands.add(key, {angles})` (a hand shape by joint angles) and `hands.angles(side)`. See [MODDING.md](MODDING.md).
 - A host (the ComfyUI bridge, ...) talks to the editor only through the MOD API and `../mods.js`.
 
 ## 8. What the browser keeps (localStorage)
@@ -634,6 +686,7 @@ CSS switches layouts by `body`'s classes (`sheet`, `split`, `touch`, `mode-*`, .
 | `KEY-picture` (`odm-poser-editor-v1-picture`) | The export's ratio and size, the rough picture's content, the composition settings | pose_main.js |
 | `KEY-limits`, `-sympose`, `-thicklink`, `-automode`, `-pad`, `-split` | View and control settings | pose_main.js |
 | `KEY-posesets`, `-bodysets` | Saved poses and bodies | pose_sets.js |
+| `KEY-handsets` | Own hand shapes `[{name, a}]` | pose_hand_ui.js |
 | `KEY-colorsets` | Colour sets | pose_style.js |
 | `KEY-objpresets` | Object presets | pose_place.js |
 | `KEY-clip`, `-cursor` | The copied things, the cursor | pose_objects.js |
@@ -654,7 +707,7 @@ Besides localStorage:
 
 The repository has three checks now:
 
-- Syntax: esprima reads `web/editor/*.js` (`syntax` in `docker-compose.test.yml`).
+- Syntax: esprima reads `web/editor/*.js` (`syntax` in `docker-compose.test.yml`). **It fails now: esprima cannot read the `for await` in `pose_api.js` (reading a mods folder).** The other failure, a `?.` in `ui-layout.js`, was fixed with the hands and fingers change.
 - UI: `python tools/lint_ui.py` (melta-lint).
 - Build: `npm run build`.
 
@@ -666,9 +719,10 @@ The repository has three checks now:
 
 | Promise | Relied on by |
 |---------|--------------|
-| The state format `version: 3`, and `S`'s field names and meanings | Files, share links, the ComfyUI bridge, the owner's other project, mods (`S.mods`) |
+| The state format `version: 3`, and `S`'s field names and meanings (with `fingers`' `{from, a}` and its "only while `from`" rule, and `fingerLen`) | Files, share links, the ComfyUI bridge, the owner's other project, mods (`S.mods`) |
 | `window.ODMPoser` (old name `window.SymbolicPose`) and API 1.x | Mods, hosts |
 | `../mods.js` and the `mods/` layout, `ODM_POSER_MODS` | The HTML build, the app, the ComfyUI bridge |
+| Hand shape names (`HANDS` keys), the five-curl form (mods' `curl`), the order of OpenPose's 21 hand points | Older files, held things' `pose`, mods, whatever reads OpenPose |
 | The `#pose=` link format (`j` / `z` + base64url, `{v: 1, s, mods}`) | Links already shared |
 | The localStorage keys (chapter 8) | Users' saved data |
 | Working from `file://` (classic scripts, no fetch of its own files) | The HTML build |
@@ -693,6 +747,14 @@ Bundling into one classic script at build time keeps the `file://` promise; ship
 | Logic and UI in the same files | Many pose_*.js | `innerHTML` and messages inside calculations | Split core (calculation) and panel (UI) |
 | Leftovers for old forms | `S.env.wall/ceiling`, `S.scale`, hidden old panels (`data-menu="old-place"`), `S.head.yaw` | Code that reads them remains | Fix on load and remove the rest (keep format compatibility) |
 | Weak dependencies by `typeof` | pose_main.js | Which features exist is known only at run time | Make dependencies explicit (a set start-up order) |
+| A hand's shape in two layers (from the hands change) | `S.hands` and `S.fingers` | The shape lives in two places, a name and adjusted angles, switched by an implicit rule (the angles count only while `from` matches) | One value for a hand's state ("shape name + changes", say), with a held thing's shape as a separate, temporary override |
+| A seventh selection (from the hands change) | `fingerSel` | A finger joint's selection means something only together with `sel` (the hand joint) | Include it in the one selection of 10.3 (finger joints by id too) |
+| Load order turned round (from the hands change) | `pose_hand.js` → `pose_main.js` | `pose_hand.js` loads first, but its functions use the later `pose_main.js`'s names (`S`, `add`, `project`, `IX`, ...) at run time; calling them at load would stop | Move shared calculations (vectors, projection) into an earlier file so dependencies go one way |
+| Hook order coupling (from the hands change) | `DOWN_HOOKS` | The finger hook relies on its place, right after the 3-axis handles' hook (`ODMGizmo.downHook`) | Press handling registered with priorities |
+| Two more wrappers (from the hands change) | `showSelected`, `draw` (`pose_hand_ui.js`) | Panel sync grew in the same wrapping form | Replace them along with the others in step 2 of 10.3 |
+| Grip place by name (from the hands change) | `GRIP_AT` | Adjusting the fingers does not move where a held thing sits; the shape's name decides | Work the grip out from the finger points |
+| Hand size in two places (from the hands change) | the hand bone's length (`S.P`) and `S.fingerLen` | The palm's size is a bone length, the fingers' a share, kept apart | One value for the hand's measurements (keeping format compatibility) |
+| A panel put in by DOM position (from the hands change) | `#fgBox` | Inserted by JS after `#handRow` in the joint panel | Gather panel building into the Astro markup |
 | No automated behaviour tests | — | Changes are checked by hand or with throwaway tests | 10.3 |
 
 ### 10.3 A suggested order

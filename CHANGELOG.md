@@ -141,6 +141,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - SNS に投稿するとき、いまの構図の画像を投稿に付けるように（「構図の画像を付ける」、初期値でオン）：スマホは共有メニューに画像と文を一緒に渡し、パソコンは投稿画面を開いて画像をコピーするので、投稿欄に貼り付けます。リンクのカードの画像は、サーバーがないためサイト共通のままです
 - 設置のタブの「接地させる」で、押してから着ける面（床・壁・天井・物体の面、斜面も）をクリックすると、物のいちばん平行な面がその面にぴったり重なるように回して、面に着けるように（何もない所をクリックすると、今までどおりいちばん低い所で真下に接地。Esc でやめる）
 - 開発者向けの設計書（docs/ARCHITECTURE-JA.md、ARCHITECTURE.md）を追加：スクリプトの読み込み順と依存、関数の上書きの連鎖、状態のデータ、処理の流れ、主な仕組みの式、外との約束、リファクタリングの難所（機能の変更はありません）
+- 人形の手を作り直し：手のひらの輪郭と、人の手に近い指の付き方・曲がり方（閉じると指が寄り、薬指・小指の付け根が沈む）で描くように。手を選ぶと指の関節（片手 15 か所）が丸で出て、ドラッグ・3軸ハンドルの回転（赤：曲げ、緑：付け根の開き）・関節のパネルの数値で 1 つずつ曲げられます（人の手の範囲で）。手の形（グー・パーなど）は関節の角度で扱い、今までの手の形・ファイル・MOD の手の形もそのまま使えます。指を調整した手の形を名前を付けて記憶し、どちらの手にも呼び出せます。ポーズの記憶にも指の関節が入ります。体格のタブで、手の長さ（cm）と指 1 本ずつの長さ（85〜115%）を変えられます。MOD API 1.3：手の形を関節の角度で足す `angles` と `api.hands.angles`
+- 設計書に、手と指の仕組みと、この変更で生じたリファクタリングの難所を追記
 
 ### English
 
@@ -273,6 +275,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Posting to social media attaches the composition as it is now (**Attach the composition picture**, on by default): a phone hands the picture and the words to the share menu; a computer opens the post page and copies the picture to paste into the post box. The link's card keeps the site's picture (there is no server for each one)
 - **Put on the ground** (Objects tab): press it, then click the face to put the thing on (the floor, a wall, a ceiling, an object's face, slopes too): it turns so that its most nearly parallel face lies flat against that face, and touches it (click where there is nothing: onto the ground by its lowest point, as before; Esc cancels)
 - A design document for developers (docs/ARCHITECTURE.md, ARCHITECTURE-JA.md): script load order and dependencies, wrapping chains, the state's data, the main flows, the main mechanisms' formulas, promises to the outside, the refactoring's hard parts (no feature changes)
+- The figure's hands reworked: drawn with the palm's outline and fingers set on and bending as a human hand's do (closing, they come together and the ring and little fingers' knuckles sink). Select a hand and its finger joints (15 to a hand) show as circles: bend each by dragging, with the 3-axis handles' rotate rings (red: bend, green: the root's spread) or in numbers in the joint panel (within a human hand's range). Hand shapes (fist, open ...) are kept as joint angles; the old hand shapes, files and mods' hand shapes work as before. A hand with adjusted fingers can be saved as an own shape by name and called on either hand; saved poses carry the finger joints. The Body tab sets the hand's length (cm) and each finger's length (85–115 %). MOD API 1.3: `angles` to add a hand shape by joint angles, and `api.hands.angles`
+- The design document has the hands and fingers, and the refactoring hard parts this change brought
 
 ## v0.1.0
 

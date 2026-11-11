@@ -106,6 +106,19 @@ What touches the face is the body's nearest, lowest point. By the pose that may 
 - While on any face but the floor, dragging the hips moves the figure along the face. Pulled away from it (with the 3-axis handles, say), the figure lets go.
 - **Stand upright again** turns a tilted body upright.
 
+## Hands and fingers
+
+A hand is drawn as the palm's outline and five fingers as lines. Each finger has three joints, 15 to a hand, and each bends on its own.
+
+- **Picking a finger**: in Pose mode, select a hand (its wrist or hand circle; pressing its fingers selects it too) and that hand's finger joints show as small circles. Press one to select that joint. The circles never go into the pictures.
+- **Bending**: drag the circle. A root joint spreads sideways too as it bends. On touch, tap the circle to select it, then press again and drag.
+- **3-axis handles**: with the handles shown, the selected joint gets rotate rings: the red ring bends, the green one (roots only) spreads.
+- **In numbers**: pick it with **Finger** and **Joint** in the joint panel, then set **Bend** and **Spread**. Joints bend only as far as a human hand does.
+- **Straighten this finger**, **Same shape on the other hand** and **↺ Back to the hand shape** (drop the finger changes and go back to the chosen hand shape).
+- **Hand shape**: the hand shape list sets fist, open and the others. After the fingers are adjusted, holding a sword (say) takes the thing's own hand shape; let go and back to the first shape, and the adjusted fingers come back too.
+- **Own hand shapes**: type a name and press **Save** to keep the fingers as they are in this browser. Call it on either hand from **Own shapes** in the hand shape list.
+- **Sizes**: **Hand size and finger lengths** in the Body tab sets the hand's length (wrist to the middle fingertip, cm) and each finger's length (85–115 %), the same for both hands. **↺ Default hand and finger sizes** goes back to the size that suits the height.
+
 ## Body and sizes
 
 The **Body** tab now holds the sex, height and overall size together with each part's size (locked parts, head and torso, arms and legs, head shape). The height and the heads count are in one place, the **Body** section, with sliders; **Keep, when the height, heads or a part changes** chooses whether the heads count is kept (the whole body alike) or the height (the rest of the body makes up).
