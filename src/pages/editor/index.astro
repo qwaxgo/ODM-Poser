@@ -84,6 +84,8 @@ import PanelFile from "../../components/editor/PanelFile.astro";
 <!-- effects, simple solids, bags, and things worn on the head, body and feet -->
 <script is:inline src={"pose_props_more.js?v=" + V}></script>
 <!-- the editor's own script: the figure, its state, the views, the panel -->
+<!-- the hand's model: its shapes, its fingers' joints, its points and drawing (used by pose_main.js) -->
+<script is:inline src={"pose_hand.js?v=" + V}></script>
 <script is:inline src={"pose_main.js?v=" + V}></script>
 <!-- floor / walls / ceiling, holding and placing things, wires (uses the editor's state above) -->
 <script is:inline src={"pose_scene.js?v=" + V}></script>
@@ -110,6 +112,8 @@ import PanelFile from "../../components/editor/PanelFile.astro";
 <!-- パースの誇張: each figure and object its own stronger perspective about one pivot, while the camera is locked -->
 <script is:inline src={"pose_persp.js?v=" + V}></script>
 <script is:inline src={"pose_sideview.js?v=" + V}></script>
+<!-- the fingers by hand: the circles, their drag and handles, the panel, own shapes, hand and finger sizes -->
+<script is:inline src={"pose_hand_ui.js?v=" + V}></script>
 <!-- Japanese / English -->
 <script is:inline src="i18n.js"></script>
 <!-- the menu: its icons (Charcoal Icons, THIRD_PARTY_LICENSES.md) and its groups, categories and tabs

@@ -49,15 +49,6 @@ const handleR = i => HANDLE.has(i) ? 3.2 : S.R[i];
 const KIDS = J.map((_, i) => J.map((__, k) => k).filter(k => PARENT[k] === i));
 function subtree(i){ const out = [i]; for (let k = 0; k < out.length; k++) out.push(...KIDS[out[k]]); return out; }
 
-// hand shapes (curl per finger: thumb, index, middle, ring, pinky; 0 straight, 1 closed)
-const HANDS = {
-  relaxed:[.25,.3,.35,.4,.45], open:[0,0,0,0,0], fist:[.75,1,1,1,1], peace:[.9,0,0,1,1],
-  point:[.7,0,1,1,1], thumbs_up:[0,1,1,1,1], ok:[.55,.6,0,0,0], gun:[.15,0,1,1,1],
-  rock:[.9,0,1,1,0], grip:[.6,.75,.8,.8,.8], claw:[.5,.7,.7,.7,.7],
-  pinch:[.55,.6,.9,.95,.95], cup:[.35,.45,.5,.55,.6], trigger:[.6,.25,1,1,1]};
-const HAND_JA = {relaxed:"自然", open:"パー", fist:"グー", peace:"ピース", point:"指差し",
-  thumbs_up:"サムズアップ", ok:"OK", gun:"指鉄砲", rock:"ロック", grip:"握り込む", claw:"かぎ爪",
-  pinch:"つまむ（ペン）", cup:"包む（カップ・ボール）", trigger:"引き金"};
 
 // ---- state -------------------------------------------------------------------------------
 let S = fresh();
@@ -68,6 +59,7 @@ function fresh(){
           pins: {}, items: [], env: {floor: true, floorY: 0, ground: "nopen", wall: false, wallZ: -40,
           wallX: 0, wallYaw: 0, ceiling: false, ceilingY: 230, attach: true}, wire: {on: false, joint: "chest", height: 300},
           center: [0, 90, 0], cams: [], camLock: false, scale: {all: 100, head: 100, thick: 100}, hiddenDashed: false, torso3d: true, solids: [], auras: [], colors: {parts: {}}, others: [], figId: 1, figName: "1人目",
+          fingers: {}, fingerLen: [1, 1, 1, 1, 1],
           ruler: {on: false, n: 2, yaw: 30, pitch: 0, roll: 0, lines: 20, cube: false, box: [60, 60, 60], pos: [70, 0, 0], extend: true, snap: true, snapTurn: false, grid: false}};
 }
 // undo / redo: remember() keeps the state before an edit. A step remembered when nothing changed
@@ -444,15 +436,8 @@ function drawFigure(ctx, W, H, opts){
   }
   // the scene: floor, walls, things held and placed (pose_scene.js)
   if (typeof drawScene === "function") withPX(null, () => drawScene(ctx, W, H, opts, project, ink, far, lw));   // each thing its own (pose_scene.js)
-  // hands: a small fan of the fingers
-  if (!opts.noFigure) for (const side of ["r", "l"]){
-    ctx.setLineDash([]);
-    const pts = handPoints(side, W, H);
-    ctx.strokeStyle = partColor(side + "_hand") || ink; ctx.lineWidth = lw * 0.9;
-    const hw = IX[side + "_wrist"];
-    ctx.setLineDash(S.hiddenDashed && hiddenAt(S.P[hw], W, H, skipJoint(hw)) ? [lw * 2.5, lw * 2] : []);
-    HAND_EDGES.forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(pts[a][0], pts[a][1]); ctx.lineTo(pts[b][0], pts[b][1]); ctx.stroke(); });
-  }
+  // hands: the palm's outline and the fingers (pose_hand.js)
+  if (!opts.noFigure) for (const side of ["r", "l"]) drawHand(ctx, side, W, H, opts, ink, lw);
   ctx.setLineDash([]);
 }
 
@@ -501,73 +486,7 @@ function boxFacing(c, eye){
     return dot(n, sub(eye, fc)) > 0; });
 }
 
-// ---- hands: 21 OpenPose points from the hand shape, in 3D --------------------------------------
-const HAND_EDGES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],
-                    [0,13],[13,14],[14,15],[15,16],[0,17],[17,18],[18,19],[19,20]];
-// the hand's frame: origin in the middle of the fist, z along the hand (wrist -> knuckles), y toward
-// the thumb, x toward the palm. The forearm's frame (its twist) is carried over the wrist's bend,
-// so a bent wrist turns the fingers and what the hand holds (pose_scene.js).
-function handFrame(side){
-  const el = S.P[IX[side + "_elbow"]], wr = S.P[IX[side + "_wrist"]], hd = S.P[IX[side + "_hand"]];
-  const z0 = norm(sub(wr, el)), z = hd ? norm(sub(hd, wr)) : z0;
-  const ref = add(bodyFront(), mul(bodyRot([0, 1, 0]), 0.4));
-  let y = sub(ref, mul(z0, dot(ref, z0)));
-  if (len(y) < 1e-4) y = cross(z0, [1, 0, 0]);
-  const tw = (S.twist[IX[side + "_wrist"]] || 0) + (S.twist[IX[side + "_hand"]] || 0);
-  y = rotAxis(norm(y), z0, deg(tw));       // the same way as setTwist turns the bones (mirrored twists mirror)
-  y = norm(rotBetween(y, z0, z));
-  const x = mul(norm(cross(y, z)), side === "r" ? 1 : -1);
-  return {o: add(wr, mul(z, 7)), x, y, z};
-}
-// where a held thing sits in each hand shape, in the hand's frame from the wrist (cm for an 8 cm
-// hand; it grows with the hand): in the hole the curled fingers make (the middle of a handle),
-// against the palm (cup, open, relaxed) or between the thumb's and the index finger's tips (pinch,
-// ok). Shapes not listed curl the last fingers as a fist does. pose_scene.js puts the thing's own
-// grip point here (gripPoint).
-const GRIP_AT = {fist: [2.2, 0, 7.4], grip: [2.6, 0, 7.8], claw: [3, 0, 8.4],
-  cup: [1, 1, 7], relaxed: [1, 1, 6], open: [0.8, 1, 5.5], pinch: [7, 3.4, 8], ok: [7, 3.4, 8]};
-function gripFrame(side){
-  const f = handFrame(side), wr = S.P[IX[side + "_wrist"]], hd = S.P[IX[side + "_hand"]];
-  const k = (hd ? len(sub(hd, wr)) : HAND_LEN) / HAND_LEN, g = GRIP_AT[S.hands[side]] || GRIP_AT.fist;
-  return {o: add(wr, mul(add(add(mul(f.x, g[0]), mul(f.y, g[1])), mul(f.z, g[2])), k)), x: f.x, y: f.y, z: f.z};
-}
-// the fingers in the hand's frame, for an 8 cm hand (wrist -> knuckles): root [x, y, z] cm, the
-// direction it starts in (deg toward the thumb across the palm; the thumb also toward the palm),
-// its three segments, and how far each of its joints bends at a full curl (deg)
-const FINGERS = [
-  {root: [0.6, 2.2, 1.4], spread: 55, palm: 0.35, segs: [3.6, 3.0, 2.5], bend: [30, 55, 70], thumb: true},
-  {root: [0, 3.0, 8.0], spread: 7, segs: [4.0, 2.5, 2.0], bend: [80, 100, 70]},
-  {root: [0, 1.0, 8.3], spread: 0, segs: [4.5, 2.8, 2.2], bend: [80, 100, 70]},
-  {root: [0, -1.0, 8.0], spread: -6, segs: [4.2, 2.6, 2.0], bend: [80, 100, 70]},
-  {root: [0, -2.8, 7.3], spread: -13, segs: [3.3, 2.0, 1.8], bend: [80, 100, 70]}];
-// the 21 points in the world: the wrist, then thumb, index, middle, ring and little finger, each
-// root -> tip. A finger curls by bending toward the palm at each of its joints, so a fist shows
-// the back of the hand and its knuckles, and which way the palm faces reads at a glance.
-function handPoints3D(side){
-  const f = handFrame(side), wr = S.P[IX[side + "_wrist"]], hd = S.P[IX[side + "_hand"]];
-  const k = (hd ? len(sub(hd, wr)) : HAND_LEN) / HAND_LEN;
-  const at = v => add(wr, mul(add(add(mul(f.x, v[0]), mul(f.y, v[1])), mul(f.z, v[2])), k));
-  const curl = HANDS[S.hands[side]] || HANDS.relaxed;
-  const out = [wr];
-  FINGERS.forEach((g, n) => {
-    const sp = deg(g.spread);
-    let d = add(mul(f.z, Math.cos(sp)), mul(f.y, Math.sin(sp)));
-    if (g.palm) d = add(d, mul(f.x, g.palm));
-    d = norm(d);
-    // the way it bends: toward the palm (the thumb: toward the palm and across it)
-    let toward = g.thumb ? norm(sub(mul(f.x, 0.75), mul(f.y, 0.65))) : f.x;
-    let p = at(g.root); out.push(p);
-    g.segs.forEach((L, s) => {
-      const t = sub(toward, mul(d, dot(toward, d)));
-      if (len(t) > 1e-6){ const a = deg(curl[n] * g.bend[s]); d = norm(add(mul(d, Math.cos(a)), mul(norm(t), Math.sin(a)))); }
-      p = add(p, mul(d, L * k)); out.push(p);
-    });
-  });
-  return out;
-}
-function handPoints(side, W, H){
-  return handPoints3D(side).map(p => { const q = project(p, W, H); return [q.x, q.y]; });
-}
+// ---- hands: the shapes, the fingers' joints, the 21 points and the drawing are in pose_hand.js ----
 
 // ---- OpenPose picture -----------------------------------------------------------------------
 const OP_COLORS = [[255,0,0],[255,85,0],[255,170,0],[255,255,0],[170,255,0],[85,255,0],[0,255,0],
@@ -1371,7 +1290,8 @@ function symmetrize(i, whole){
       S.P[o] = d; for (const q of subtree(o).slice(1)) S.P[q] = add(S.P[q], shift);
       S.twist[o] = -(S.twist[k] || 0); }
     const side = J[i][0], other = J[m][0];
-    if (subtree(i).some(k => /_wrist$/.test(J[k]))) S.hands[other] = S.hands[side];
+    if (subtree(i).some(k => /_wrist$/.test(J[k]))){ S.hands[other] = S.hands[side];
+      S.fingers = S.fingers || {}; if (S.fingers[side]) S.fingers[other] = JSON.parse(JSON.stringify(S.fingers[side])); else delete S.fingers[other]; }
   } else if (HAND_J.has(i)){
     setTwist(twistJoint(m), -(S.twist[twistJoint(i)] || 0));
     rotateSubtree(m, add(S.P[PARENT[m]], mirroredBone(i)));
@@ -1875,6 +1795,7 @@ $("mirror").addEventListener("click", () => {
   const P = S.P.map(p => [-p[0], p[1], p[2]]);
   S.P = J.map((_, i) => P[MIRROR[i]]); S.R = J.map((_, i) => S.R[MIRROR[i]]);
   S.hands = {r: S.hands.l, l: S.hands.r};
+  { const f = S.fingers || {}; S.fingers = {}; if (f.l) S.fingers.r = f.l; if (f.r) S.fingers.l = f.r; }
   S.pins = Object.fromEntries(Object.entries(S.pins || {}).map(([k, q]) => [MIRROR[+k], [-q[0], q[1], q[2]]]));
   S.body = {yaw: -S.body.yaw, pitch: S.body.pitch, roll: -S.body.roll};
   S.twist = J.map((_, i) => -(S.twist[MIRROR[i]] || 0));
@@ -1906,7 +1827,7 @@ $("poseReset").addEventListener("click", () => {
 });
 $("bodyReset").addEventListener("click", () => {
   remember();
-  fromBottom(() => { S.P = withBoneLengths(S.P, REST); S.R = REST_R.slice(); S.scale = fresh().scale; delete S.shape; delete S.sex; });
+  fromBottom(() => { S.P = withBoneLengths(S.P, REST); S.R = REST_R.slice(); S.scale = fresh().scale; S.fingerLen = fresh().fingerLen; delete S.shape; delete S.sex; });
   afterEdit(); syncUI(); draw(); say("体格を初期値に戻しました（ポーズはそのまま）。");
 });
 // the figure being edited, all of it (pose, body, hands, turn, pins) back to the default of its sex
@@ -1914,7 +1835,7 @@ $("bodyReset").addEventListener("click", () => {
 function resetToSex(){
   remember();
   const c = S.P[IX.pelvis].slice(), sex = S.sex, f = fresh();
-  for (const k of ["P", "R", "hands", "head", "body", "twist", "pins", "scale"]) S[k] = f[k];
+  for (const k of ["P", "R", "hands", "fingers", "fingerLen", "head", "body", "twist", "pins", "scale"]) S[k] = f[k];
   delete S.shape; delete S.sex; delete S.stand;
   if (SEX_BODY[sex]) applySex(sex);
   standOnFloor(c[0], c[2]);
@@ -1948,7 +1869,7 @@ $("figResetPos").addEventListener("click", () => {
 $("resetFigure").addEventListener("click", () => {
   remember();
   const f = fresh();
-  for (const k of ["P", "R", "hands", "head", "body", "twist", "pins", "scale"]) S[k] = f[k];
+  for (const k of ["P", "R", "hands", "fingers", "fingerLen", "head", "body", "twist", "pins", "scale"]) S[k] = f[k];
   afterEdit(); syncUI(); draw(); say("この人物を初期状態に戻しました（持ち物とオーラはそのまま）。");
 });
 $("resetAll").addEventListener("click", () => {
@@ -1996,8 +1917,7 @@ for (const id of Object.keys(UNITS)){
   });
 }
 buildJointPanel();
-$("handSel").innerHTML = Object.keys(HANDS).map(k => `<option value="${k}">${HAND_JA[k]}（${k}）</option>`).join("");
-$("handSel").addEventListener("change", e => { if (sel < 0) return; remember(); S.hands[J[sel][0]] = e.target.value; draw(); });
+$("handSel").innerHTML = Object.keys(HANDS).map(k => `<option value="${k}">${HAND_JA[k]}（${k}）</option>`).join("");   // own shapes too: pose_hand_ui.js (ODMHand.selHTML)
 $("pin").addEventListener("change", () => { if (sel < 0) return; remember(); togglePin(sel); draw(); });
 // the adjustments stay (switchSex); 体格プリセット and リセット put the sex's own body
 $("sexF").addEventListener("click", () => { remember(); switchSex("female"); draw(); say("女性の体格にしました（調整はそのままです）。"); });

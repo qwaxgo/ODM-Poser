@@ -115,7 +115,7 @@ remember = function(){ if (dragging) return; return r0.apply(this, arguments); }
 for (const [id, min, max, step] of PAIRS){
   const n = document.getElementById(id); if (!n || n.dataset.paired) continue; n.dataset.paired = "1";
   const r = document.createElement("input"); r.type = "range"; r.id = id + "R"; r.min = min; r.max = max; r.step = step;
-  r.setAttribute("aria-label", n.getAttribute("aria-label") || n.previousElementSibling?.textContent || id);
+  r.setAttribute("aria-label", n.getAttribute("aria-label") || (n.previousElementSibling && n.previousElementSibling.textContent) || id);
   n.before(r);
   r.addEventListener("pointerdown", () => remember());
   r.addEventListener("input", () => { n.value = r.value; dragging = true; n.dispatchEvent(new Event("change")); dragging = false; });

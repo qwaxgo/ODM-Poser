@@ -1,9 +1,9 @@
 // プリセットの記憶 (index.html, loaded after pose_cast.js): two kinds, kept apart and in this browser,
 // so one never brings the other back with it:
-//  - ポーズ・小物・位置: the figure's pose (its bones' directions, its turn, twists, hands, head),
+//  - ポーズ・小物・位置: the figure's pose (its bones' directions, its turn, twists, hands and each finger's joints (S.fingers), head),
 //    what it holds and wears, and where it stands. Put on another body, that body keeps its own
 //    lengths and thicknesses.
-//  - 体格: the bones' lengths, the circles' thicknesses, the shoulders' and thigh roots' places and
+//  - 体格: the bones' lengths, the circles' thicknesses, the shoulders' and thigh roots' places, the fingers' lengths (S.fingerLen) and
 //    the sex. The pose stays; the body grows from its lowest point (fromBottom). Built in: 標準,
 //    女性, 男性.
 // The ポーズのプリセット above (the editor's own poses and the user presets) keep the body too.
@@ -22,7 +22,7 @@ const copy = v => JSON.parse(JSON.stringify(v));
 // ---- ポーズ・小物・位置 ----------------------------------------------------------------------------
 const held = () => (S.items || []).filter(it => !(typeof loose === "function" && loose(it)));
 function takePose(name){
-  return {name, P: S.P.map(p => p.map(r2)), body: copy(S.body), twist: S.twist.slice(), hands: copy(S.hands),
+  return {name, P: S.P.map(p => p.map(r2)), body: copy(S.body), twist: S.twist.slice(), hands: copy(S.hands), fingers: copy(S.fingers || {}),
     head: copy(S.head || {}), items: copy(held())};
 }
 function putPose(d){
@@ -33,7 +33,7 @@ function putPose(d){
   const lift = Math.min(...d.P.map(p => p[1])) - Math.min(...out.map(p => p[1]));
   S.P = out.map(p => [p[0], p[1] + lift, p[2]]); S.body = copy(d.body || fresh().body); S.twist = (d.twist || []).slice(0, J.length);
   while (S.twist.length < J.length) S.twist.push(0);
-  S.hands = Object.assign(fresh().hands, d.hands); S.head = Object.assign(fresh().head, d.head);
+  S.hands = Object.assign(fresh().hands, d.hands); S.fingers = copy(d.fingers || {}); S.head = Object.assign(fresh().head, d.head);
   S.items = [...(S.items || []).filter(it => typeof loose === "function" && loose(it)), ...copy(d.items || [])];
   S.pins = {};
   if (typeof scSel === "number") scSel = -1;
@@ -42,7 +42,7 @@ function putPose(d){
 // ---- 体格 --------------------------------------------------------------------------------------
 function takeBody(name){
   return {name, len: J.map((_, i) => i ? r2(len(sub(S.P[i], S.P[PARENT[i]]))) : 0), R: S.R.map(r2),
-    shape: S.shape ? copy(S.shape) : null, scale: copy(S.scale || fresh().scale), sex: S.sex || null};
+    shape: S.shape ? copy(S.shape) : null, scale: copy(S.scale || fresh().scale), sex: S.sex || null, fingerLen: fingerLens()};
 }
 function putBody(d){
   fromBottom(() => {
@@ -53,11 +53,12 @@ function putBody(d){
     if (d.shape) S.shape = copy(d.shape); else delete S.shape;
     S.scale = Object.assign(fresh().scale, d.scale);
     if (d.sex) S.sex = d.sex; else delete S.sex;
+    S.fingerLen = Array.isArray(d.fingerLen) ? d.fingerLen.slice(0, 5) : fresh().fingerLen;
   });
 }
 // built in: the standard body, and 女性 / 男性 on it
 function builtBody(kind){
-  fromBottom(() => { S.P = withBoneLengths(S.P, REST); S.R = REST_R.slice(); S.scale = fresh().scale; delete S.shape; delete S.sex; });
+  fromBottom(() => { S.P = withBoneLengths(S.P, REST); S.R = REST_R.slice(); S.scale = fresh().scale; S.fingerLen = fresh().fingerLen; delete S.shape; delete S.sex; });
   if (kind !== "std") applySex(kind);
 }
 const BUILT = [["std", "標準"], ["female", "女性"], ["male", "男性"]];

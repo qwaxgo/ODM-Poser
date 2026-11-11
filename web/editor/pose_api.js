@@ -11,7 +11,7 @@
 // from disk the editor cannot list one itself). ?nomods in the address starts without mods.
 // A mod's own data lives in S.mods[id]: saved with the pose, undone with Ctrl+Z.
 (() => {
-const API_VERSION = "1.2.0", API_MAJOR = 1;
+const API_VERSION = "1.3.0", API_MAJOR = 1;
 const mods = [];                              // {id, name, version, file, status: "ok" | "error", error}
 const ORIGIN = {props: {}, solids: {}, auras: {}, parts: {}, hands: {}};   // kind key -> the mod id that added it
 const hooks = {drawBehind: [], draw: [], drawSide: [], afterEdit: [], sync: [], mode: []};
@@ -55,7 +55,7 @@ function refreshPanels(){
   const keep = (id, html) => { const el = $(id); if (!el) return; const v = el.value; el.innerHTML = html;
     if ([...el.options].some(o => o.value === v)) el.value = v; };
   keep("preset", Object.keys(PRESETS).map(n => `<option>${n}</option>`).join(""));
-  keep("handSel", Object.keys(HANDS).map(k => `<option value="${k}">${HAND_JA[k] || k}（${k}）</option>`).join(""));
+  keep("handSel", window.ODMHand ? ODMHand.selHTML() : Object.keys(HANDS).map(k => `<option value="${k}">${HAND_JA[k] || k}（${k}）</option>`).join(""));
   keep("scCat", PROP_CATS.map(([k, ja, en]) => `<option value="${k}">${ja} / ${en}</option>`).join(""));
   if ($("scCat")) $("scCat").dispatchEvent(new CustomEvent("change", {detail: "keep"}));   // the kind chosen (or ニュートラル) stays
   keep("soKind", Object.entries(SOLID_KINDS).map(([k, d]) => `<option value="${k}">${d.ja}</option>`).join(""));
@@ -203,15 +203,19 @@ function makeApi(mod){
       },
     },
     hands: {
-      // curl per finger (thumb, index, middle, ring, pinky): 0 straight .. 1 closed
+      // curl per finger (thumb, index, middle, ring, pinky): 0 straight .. 1 closed; or angles: per
+      // finger [spread, bend0, bend1, bend2] degrees (pose_hand.js), kept within a hand's range
       add(key, def){
         if (!/^[a-z_][a-z0-9_]*$/.test(key)) throw new Error(`hand shape key "${key}": lower case, digits and _`);
-        if (!(Array.isArray(def.curl) && def.curl.length === 5 && def.curl.every(isNum))) throw new Error(`hand ${key}: curl is five numbers`);
-        HANDS[key] = def.curl.slice(); HAND_JA[key] = def.ja || key; ORIGIN.hands[key] = mod.id;
+        const angles = Array.isArray(def.angles) && def.angles.length === 5 && def.angles.every(f => Array.isArray(f) && f.length === 4 && f.every(isNum));
+        if (!angles && !(Array.isArray(def.curl) && def.curl.length === 5 && def.curl.every(isNum))) throw new Error(`hand ${key}: curl is five numbers, or angles five [spread, bend0, bend1, bend2]`);
+        HANDS[key] = angles ? {a: def.angles.map((f, n) => clampFinger(n, f))} : def.curl.slice(); HAND_JA[key] = def.ja || key; ORIGIN.hands[key] = mod.id;
         tr(`${def.ja || key}（${key}）`, def.en);
       },
       set(side, key){ if (!HANDS[key]) throw new Error(`no hand shape "${key}"`); S.hands[side === "l" ? "l" : "r"] = key; },
       shapes: () => Object.keys(HANDS),
+      // the joints a hand has now (its own, or its shape's): five [spread, bend0, bend1, bend2] degrees
+      angles: side => handAngles(side === "l" ? "l" : "r"),
     },
     poses: {
       // turns: [[joint, "x" | "y" | "z", degrees], ...] from the standing pose (as PRESETS in pose_main.js)

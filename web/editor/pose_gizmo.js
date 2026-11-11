@@ -394,8 +394,9 @@ function draw3(ctx, W, H){
 }
 const segDist = (x, y, a, b) => { const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy || 1;
   const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / l2)); return Math.hypot(x - a.x - dx * t, y - a.y - dy * t); };
-// a press on a handle starts its drag (before the joints and objects under it)
-DOWN_HOOKS.unshift((cv, x, y) => {
+// a press on a handle starts its drag (before the joints and objects under it); ODMGizmo.downHook: for a
+// file that puts its own hook right after it (pose_hand_ui.js: the fingers lie inside the rings)
+const gizmoDown = (cv, x, y) => {
   if (cv !== front) return null;
   const t = target(); if (!t) return null;
   const W = cv.width, H = cv.height, g = layout(t, W, H), near = 9 * g.dpr * gzScale() * (typeof pointerScale === "function" ? pointerScale() : 1);
@@ -436,7 +437,8 @@ DOWN_HOOKS.unshift((cv, x, y) => {
     if (tool === "scale") t.scale(s0, Math.max(0.05, 1 + f), hit.n, f * g.L);
     else t.move(s0, mul(hit.u, f * g.L));
   }};
-});
+};
+DOWN_HOOKS.unshift(gizmoDown); window.ODMGizmo.downHook = gizmoDown;
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
 (window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"3軸ハンドル": "3-axis handles",

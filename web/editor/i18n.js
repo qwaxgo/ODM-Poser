@@ -498,6 +498,18 @@
     [/^カメラ(\d+)$/, m => `Camera ${m[1]}`],
     [/^ガイド：(.+)$/, m => `Guide: ${T[m[1]] || m[1]}`],
     [/^部位の長さ：(.+)$/, m => `Section length: ${T[m[1]] || m[1]}`],
+    // the fingers (pose_hand_ui.js); a mod's shape keeps its own name
+    [/^自分の形「(.+)」（もと：(.+)）$/, m => `Own shape "${m[1]}" (from: ${HAND_JA[m[2]] || m[2]})`],
+    [/^指を調整しています（もと：(.+)）$/, m => `Fingers adjusted (from: ${HAND_JA[m[1]] || m[1]})`],
+    [/^手の形：(.+)$/, m => `Hand shape: ${HAND_JA[m[1]] || m[1]}`],
+    [/^(親指|人差し指|中指|薬指|小指)をまっすぐにしました。$/, m => `Straightened the ${(T[m[1]] || m[1]).toLowerCase()}.`],
+    [/^(.+)の形に戻しました。$/, m => HAND_JA[m[1]] || m[1] ? `Back to the ${HAND_JA[m[1]] || m[1]} shape.` : null],
+    [/^(右手|左手)も同じ形にしました。$/, m => `The ${JOINT[m[1]] || m[1]} has the same shape now.`],
+    [/^自分の手の形「(.+)」を記憶しました（どちらの手でも「この腕の手の形」から呼び出せます）。$/, m => `Saved the hand shape "${m[1]}" (call it on either hand from the hand shape list).`],
+    [/^自分の手の形「(.+)」を削除しました（今の手の形はそのままです）。$/, m => `Deleted the hand shape "${m[1]}" (the hand keeps its shape).`],
+    [/^自分の手の形「(.+)」にしました。$/, m => `Hand shape: "${m[1]}".`],
+    [/^(右手|左手)を「(.+)」にしました。$/, m => `The ${JOINT[m[1]] || m[1]}: ${HAND_JA[m[2]] || m[2]}.`],
+
     [/^(.+)に体を合わせて、合わせた関節を固定しました。$/, m => `Fitted the body to the ${name(m[1]).toLowerCase()} and pinned the fitted joints.`],
     [/^(.+)を(.+)に着けて固定しました。$/, m => SURFACE[m[2]] ? null : `Put the ${joint(m[1])} on the ${name(m[2]).toLowerCase()} and pinned it.`],
     [/^(.+)を固定しました（身長・頭身を変えても、長さと太さはそのまま）。$/,
