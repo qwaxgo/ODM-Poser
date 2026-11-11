@@ -140,6 +140,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 書き出しに「アタリ画像の内容」を追加：構図（初期値。人物・小物に加えて物体と環境も、「構図の画像に含める」のチェックのとおりに白い背景に描く）か、人物と小物だけ（今まで通り）を選べます
 - SNS に投稿するとき、いまの構図の画像を投稿に付けるように（「構図の画像を付ける」、初期値でオン）：スマホは共有メニューに画像と文を一緒に渡し、パソコンは投稿画面を開いて画像をコピーするので、投稿欄に貼り付けます。リンクのカードの画像は、サーバーがないためサイト共通のままです
 - 設置のタブの「接地させる」で、押してから着ける面（床・壁・天井・物体の面、斜面も）をクリックすると、物のいちばん平行な面がその面にぴったり重なるように回して、面に着けるように（何もない所をクリックすると、今までどおりいちばん低い所で真下に接地。Esc でやめる）
+- 開発者向けの設計書（docs/ARCHITECTURE-JA.md、ARCHITECTURE.md）を追加：スクリプトの読み込み順と依存、関数の上書きの連鎖、状態のデータ、処理の流れ、主な仕組みの式、外との約束、リファクタリングの難所（機能の変更はありません）
 
 ### English
 
@@ -271,6 +272,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - **What the rough picture shows** in Export: Composition (the default: the objects and surroundings too, besides figures and things, on white, as the **In the composition picture** checks say) or Figures and things only (as before)
 - Posting to social media attaches the composition as it is now (**Attach the composition picture**, on by default): a phone hands the picture and the words to the share menu; a computer opens the post page and copies the picture to paste into the post box. The link's card keeps the site's picture (there is no server for each one)
 - **Put on the ground** (Objects tab): press it, then click the face to put the thing on (the floor, a wall, a ceiling, an object's face, slopes too): it turns so that its most nearly parallel face lies flat against that face, and touches it (click where there is nothing: onto the ground by its lowest point, as before; Esc cancels)
+- A design document for developers (docs/ARCHITECTURE.md, ARCHITECTURE-JA.md): script load order and dependencies, wrapping chains, the state's data, the main flows, the main mechanisms' formulas, promises to the outside, the refactoring's hard parts (no feature changes)
 
 ## v0.1.0
 

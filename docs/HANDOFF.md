@@ -91,6 +91,7 @@ src/pages/docs/, src/lib/docs.ts the docs: docs/{DOWNLOAD,APP,EXPORT,POSES,PROPS
 tools/make_icons.py              draws the app icons (web/editor/icon-*.png, apple-touch-icon, favicon, icon.svg)
 web/editor/manifest.webmanifest, sw.js   the app (PWA): network first, the kept copy offline (docs/APP.md)
 docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API
+docs/ARCHITECTURE.md (-JA)       the design document for refactoring: load order, wrapping chains, state, flows, promises, debt
 ```
 
 ## Hosts
