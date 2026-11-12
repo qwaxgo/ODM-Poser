@@ -28,7 +28,8 @@ their own are left alone.
 **Where it is held.** A held thing goes to the grip point of the hand's shape: a handle (swords, bats,
 guns) inside the curled fingers, a cupped thing (cups, balls, phones) against the palm, a pinched thing
 (pens, chopsticks) between the fingertips. Change the hand's shape later and it moves to that shape's
-grip point.
+grip point. A thing has its own grip (hand shape): adjusted fingers stay with the thing, and **Place in the hand**
+in the Equip tab moves it in the hand ("Hands and fingers" in [MANUAL.md](MANUAL.md)).
 
 Pick it in **In the scene** to:
 

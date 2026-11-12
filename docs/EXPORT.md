@@ -23,6 +23,7 @@ Changing the ratio or size leaves the camera where it is: what the picture's hei
 | Rough picture | Lines and circles of the figures, props (simple shapes) and auras on white; with **What the rough picture shows** on Composition (the default), the objects, floor and walls too | Sketches, img2img |
 | OpenPose picture | The body's 18 points and 21 for each hand in the standard colours, on black | ControlNet (OpenPose) |
 | Pose (.json) | Everything as it is: figures, props, objects, floor and walls, camera, ... | Going on later, handing it to someone |
+| Edit data (.odmposer, .json) | The pose's content plus the export settings (ratio, size, the rough picture's content, the composition picture's settings) | Going on later, export settings and all |
 | Composition picture | Only what **In the composition picture** below has on | Backgrounds, a layout sketch |
 
 A picture is shown whole before it is saved: **Save** saves it, **Cancel** goes back. In the app
@@ -44,10 +45,19 @@ With two figures or more, **Figures in the picture** is **Everyone** or one of t
 OpenPose and composition pictures show only that figure (and what it holds). Things put down,
 objects, the floor and walls are drawn either way.
 
+### Edit data
+
+**Save the edit data** puts the figures, everything that is not a figure (things, objects, floor and walls, ruler, camera, side view, exaggerated perspective) and the export settings in one file, in either form:
+
+- **.odmposer**: one packed file, small.
+- **.json**: text you can read.
+
+Saved presets (poses, bodies, hand shapes, objects, colours) are not in it; they stay in the browser.
+
 ## Opening a pose file
 
-**Open** → **Open a pose file** opens a pose you exported (.json): figures, props, objects and the camera
-come back. Files from earlier versions open too.
+**Open** → **Open a file** opens a pose you exported (.json) or edit data (.odmposer, .json): figures, props, objects and the camera
+come back, and with edit data the export settings too. Files from earlier versions open too.
 
 ## Posting and links
 

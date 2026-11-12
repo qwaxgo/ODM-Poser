@@ -111,13 +111,15 @@ What touches the face is the body's nearest, lowest point. By the pose that may 
 A hand is drawn as the palm's outline and five fingers as lines. Each finger has three joints, 15 to a hand, and each bends on its own.
 
 - **Picking a finger**: in Pose mode, select a hand (its wrist or hand circle; pressing its fingers selects it too) and that hand's finger joints show as small circles. Press one to select that joint. The circles never go into the pictures.
+- **Loupe**: while a hand is selected, it shows enlarged over the view (on at first). Press and drag a circle in the loupe to bend it there and then (one touch too). On a phone the hand is small on screen: use the loupe. **Show the loupe** in the joint panel turns it off.
 - **Bending**: drag the circle. A root joint spreads sideways too as it bends. On touch, tap the circle to select it, then press again and drag.
 - **3-axis handles**: with the handles shown, the selected joint gets rotate rings: the red ring bends, the green one (roots only) spreads.
 - **In numbers**: pick it with **Finger** and **Joint** in the joint panel, then set **Bend** and **Spread**. Joints bend only as far as a human hand does.
 - **Straighten this finger**, **Same shape on the other hand** and **↺ Back to the hand shape** (drop the finger changes and go back to the chosen hand shape).
 - **Hand shape**: the hand shape list sets fist, open and the others. After the fingers are adjusted, holding a sword (say) takes the thing's own hand shape; let go and back to the first shape, and the adjusted fingers come back too.
 - **Own hand shapes**: type a name and press **Save** to keep the fingers as they are in this browser. Call it on either hand from **Own shapes** in the hand shape list.
-- **Sizes**: **Hand size and finger lengths** in the Body tab sets the hand's length (wrist to the middle fingertip, cm) and each finger's length (85–115 %), the same for both hands. **↺ Default hand and finger sizes** goes back to the size that suits the height.
+- **A held thing's grip**: a thing held in the hand has its own grip (hand shape). Adjust the holding hand's fingers and it stays with the thing: put it away and hold it again, and the grip is the same. **Place in the hand** in the Equip tab moves it in the hand (out of the palm, toward the thumb, toward the fingertips, cm), for the holding hand and the other hand (two-handed) each. **Adjust the gripping hand** selects that hand; **↺ Default place and hand** goes back to the thing's own.
+- **Sizes**: **Hand size and finger lengths** in the Body tab sets the hand's length (wrist to the middle fingertip, cm) and each finger's length (85–115 %). With **Both hands the same size** off, the right and left hands' lengths are set apart (finger lengths stay shared). **↺ Default hand and finger sizes** goes back to the size that suits the height.
 
 ## Body and sizes
 

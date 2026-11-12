@@ -143,6 +143,12 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 開発者向けの設計書（docs/ARCHITECTURE-JA.md、ARCHITECTURE.md）を追加：スクリプトの読み込み順と依存、関数の上書きの連鎖、状態のデータ、処理の流れ、主な仕組みの式、外との約束、リファクタリングの難所（機能の変更はありません）
 - 人形の手を作り直し：手のひらの輪郭と、人の手に近い指の付き方・曲がり方（閉じると指が寄り、薬指・小指の付け根が沈む）で描くように。手を選ぶと指の関節（片手 15 か所）が丸で出て、ドラッグ・3軸ハンドルの回転（赤：曲げ、緑：付け根の開き）・関節のパネルの数値で 1 つずつ曲げられます（人の手の範囲で）。手の形（グー・パーなど）は関節の角度で扱い、今までの手の形・ファイル・MOD の手の形もそのまま使えます。指を調整した手の形を名前を付けて記憶し、どちらの手にも呼び出せます。ポーズの記憶にも指の関節が入ります。体格のタブで、手の長さ（cm）と指 1 本ずつの長さ（85〜115%）を変えられます。MOD API 1.3：手の形を関節の角度で足す `angles` と `api.hands.angles`
 - 設計書に、手と指の仕組みと、この変更で生じたリファクタリングの難所を追記
+- 手を選んでいる間、図の上に手を拡大した「ルーペ」を出すように（初期値でオン）。ルーペの中の指の関節を押してドラッグすると曲がります。スマホで指が調整できなかった不具合（3軸ハンドルの輪が指の丸より先にタップを取っていた）を修正し、手首を選んだときも指の欄が出るように
+- 手に持つ物が、自分の握り（手の形）を持つように：持っている手の指を調整するとその持ち物に残り、持ち直しても同じ握りになります。装備のタブの「手の中の位置」で、持つ手・もう片方の手（両手持ち）ごとに手の中での位置をずらせます
+- 編集データの保存を追加（書き出し）：人物と人物以外のすべて（小物・物体・床と壁・定規・カメラなど）と書き出しの設定を、.odmposer（圧縮した 1 つのファイル）か .json で保存し、「ファイルを開く」で続きから編集できます
+- 体格のタブで、左右の手の大きさを同じにするか、別々に決めるかを選べるように
+- 装備の一覧で選んでいない物を（MOD などから）持たせると止まる不具合を修正
+- リファクタリングの準備：動きのテスト（tests/、tools/run_tests.py）をリポジトリに置き、構文の確認がすべてのファイルで通るように（`?.` と `for await` を同じ動きの書き方に）。設計書に、持ち物の握り・ルーペ・編集データの形式・テストと、新しく生じた難所を追記
 
 ### English
 
@@ -277,6 +283,12 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - A design document for developers (docs/ARCHITECTURE.md, ARCHITECTURE-JA.md): script load order and dependencies, wrapping chains, the state's data, the main flows, the main mechanisms' formulas, promises to the outside, the refactoring's hard parts (no feature changes)
 - The figure's hands reworked: drawn with the palm's outline and fingers set on and bending as a human hand's do (closing, they come together and the ring and little fingers' knuckles sink). Select a hand and its finger joints (15 to a hand) show as circles: bend each by dragging, with the 3-axis handles' rotate rings (red: bend, green: the root's spread) or in numbers in the joint panel (within a human hand's range). Hand shapes (fist, open ...) are kept as joint angles; the old hand shapes, files and mods' hand shapes work as before. A hand with adjusted fingers can be saved as an own shape by name and called on either hand; saved poses carry the finger joints. The Body tab sets the hand's length (cm) and each finger's length (85–115 %). MOD API 1.3: `angles` to add a hand shape by joint angles, and `api.hands.angles`
 - The design document has the hands and fingers, and the refactoring hard parts this change brought
+- While a hand is selected, a "loupe" shows it enlarged over the view (on at first); press and drag a finger joint in it to bend it. Fixed finger editing not working on phones (the 3-axis handles' rings took the tap before the finger circles), and the finger panel shows for the wrist too
+- A thing held in the hand has its own grip (hand shape): adjusting the holding hand's fingers keeps them in the thing, and holding it again gives the same grip. **Place in the hand** (Equip tab) moves it in the holding hand and in the other hand (two-handed)
+- Saving the edit data (Export): the figures and everything else (things, objects, floor and walls, ruler, camera ...) with the export settings, as .odmposer (one packed file) or .json; **Open a file** goes on from it
+- The Body tab sets whether both hands have the same size or are set apart
+- Fixed a stop when a thing not chosen in the Equip list was given to a hand (by a mod, say)
+- Getting ready to refactor: behaviour tests (tests/, tools/run_tests.py) in the repository, and the syntax check passes for every file (`?.` and `for await` rewritten with the same behaviour). The design document has held grips, the loupe, the edit data format, the tests and the new hard parts
 
 ## v0.1.0
 

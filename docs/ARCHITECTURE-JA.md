@@ -63,12 +63,13 @@ WebGL は使っていません。描画はすべて自前の投影と Canvas 2D 
 |------|------|
 | `src/pages/editor/index.astro` | エディタのページ。スクリプトの読み込み順もここで決まる |
 | `src/components/editor/*.astro` | エディタの HTML（Stage = 図、Panel* = 操作欄の各部）。props のない素の HTML |
-| `web/editor/*.js` | エディタの本体（約 11,700 行、31 ファイル）。Astro の `publicDir` としてそのまま配信 |
+| `web/editor/*.js` | エディタの本体（約 12,000 行、32 ファイル）。Astro の `publicDir` としてそのまま配信 |
 | `web/editor/ui.src.css` → `ui.css` | 見た目。Tailwind CSS 4 で生成（`npm run css`）。`ui.css` は手で直さない |
 | `web/editor/sw.js`, `manifest.webmanifest` | PWA |
 | `src/pages/docs/`, `src/lib/docs.ts`, `docs/*.md` | 利用者向けドキュメントのページ |
 | `src-tauri/` | アプリ（Rust）。MOD のフォルダを `odmmods://` で配る |
-| `tools/` | ビルド・確認の道具（`lint_ui.py`, `dist_server.py`, `make_release_html.py` ほか） |
+| `tools/` | ビルド・確認の道具（`lint_ui.py`, `dist_server.py`, `run_tests.py`, `make_release_html.py` ほか） |
+| `tests/` | 動きのテスト（`test_*.py`。`tools/run_tests.py` で動かす。9 章） |
 | `design/melta-ui/`（サブモジュール）, `design-system/` | デザインシステム melta UI と、このプロジェクトの上書き |
 | `mods/` | 利用者の MOD（README だけを管理） |
 
@@ -108,8 +109,8 @@ flowchart LR
 | 1 | `ui.js` | 119 | melta UI のクラスを各コントロールに付ける（MutationObserver） | `ODMUI`（一部） |
 | 2 | `pose_props.js` | 457 | 小物の形のデータ（手で作った図形） | `PROP_CATS`, `PROPS` |
 | 3 | `pose_props_more.js` | 271 | 小物の追加分（効果、身に着ける物、単純な図形） | （`PROPS` に足す） |
-| 3a | `pose_hand.js` | 191 | 手のモデル：手の形、指の関節、21 点、描画（5.12）。**`pose_main.js` より前に読むが、中の関数は `pose_main.js` の名前を実行時に使う** | `HANDS`, `FINGERS`, `handShape3D`, `drawHand`, `fingerSel` … |
-| 4 | `pose_main.js` | 2301 | 中心：人体・状態 `S`・カメラと投影・描画・入力・編集の流れ・パネルの基本・ファイル | 約 280 個のグローバル |
+| 3a | `pose_hand.js` | 224 | 手のモデル：手の形、指の関節、21 点、描画（5.12）。**`pose_main.js` より前に読むが、中の関数は `pose_main.js` の名前を実行時に使う** | `HANDS`, `FINGERS`, `handShape3D`, `drawHand`, `fingerSel` … |
+| 4 | `pose_main.js` | 2306 | 中心：人体・状態 `S`・カメラと投影・描画・入力・編集の流れ・パネルの基本・ファイル | 約 280 個のグローバル |
 | 5 | `pose_scene.js` | 1291 | 床と接地、持つ・着ける・置く、乗る、つかまる、ワイヤー、面に立つ | `drawScene`, `sceneAfterEdit`, `partSets` … |
 | 6 | `pose_cast.js` | 185 | 複数の人物（入れ替えて描く） | `everyFigure`, `withFigure`, `onlyFigure` |
 | 7 | `pose_sets.js` | 135 | ポーズ・体格の記憶（ブラウザに保存） | — |
@@ -123,7 +124,8 @@ flowchart LR
 | 15 | `pose_objects.js` | 448 | 物体と小物を 1 つの選択として扱う（複数選択、切り取り・貼り付け、カーソル、支点） | `ODMObj` |
 | 16 | `pose_persp.js` | 302 | パースの誇張（支点、一時的なカメラ） | `ODMPxMark` |
 | 17 | `pose_sideview.js` | 157 | 側面図のカメラ | — |
-| 17a | `pose_hand_ui.js` | 256 | 指の操作：丸の選択・ドラッグ、3 軸ハンドル、パネル、自分の手の形、手と指の大きさ | `ODMHand` |
+| 17a | `pose_hand_ui.js` | 414 | 指の操作：丸の選択・ドラッグ、ルーペ、3 軸ハンドル、パネル、自分の手の形、持ち物の手の中の位置、手と指の大きさ | `ODMHand`, `loupeMapForTest` |
+| 17b | `pose_project.js` | 88 | 編集データ（.json・.odmposer）の保存と、ファイルを開く処理（ポーズのファイルも） | `openEditFile`, `ODMProject` |
 | 18 | `i18n.js` | 689 | 日本語→英語の置き換え | `ODMPoserI18n` |
 | 19 | `ui-icons.js` | 62 | メニューのアイコン（SVG） | `ODMICONS` |
 | 20 | `ui-menu.js` | 201 | 操作欄のメニュー（3 階層）とタブ | `ODMUI.showMenu` ほか |
@@ -222,7 +224,7 @@ flowchart TD
 
 `drawFigure` の中で、`drawScene`（床・小物・ワイヤー。これも `pose_solids.js` と `pose_api.js` が包む）を呼びます。**重なりの順（何が上に描かれるか）が、ファイルの読み込み順と包み方で決まっている**ことに注意してください。
 
-**`draw()`**: 画面の全体を描き直します。中身は 4.4 の流れです。13 ファイルの 18 か所が包み、それぞれ自分のパネルの表示をそろえます。
+**`draw()`**: 画面の全体を描き直します。中身は 4.4 の流れです。13 ファイルの 19 か所が包み、それぞれ自分のパネルの表示をそろえます。
 
 | ファイル | 包んでしていること |
 |---------|-----------------|
@@ -233,7 +235,7 @@ flowchart TD
 | `pose_objects.js`（3 か所） | 範囲選択の枠、カーソル、編集ボタンの有効・無効 |
 | `pose_persp.js`（2 か所） | 側面図の支点の印、パースの欄 |
 | `pose_sideview.js` | 側面図の欄 |
-| `pose_hand_ui.js` | 手の大きさ・指の長さの欄（体格のタブが開いているとき） |
+| `pose_hand_ui.js`（2 か所） | 手の大きさ・指の長さの欄（体格のタブが開いているとき）、持ち物の手の中の位置の欄、ルーペ |
 | `ui-figure.js` | 全身図 |
 | `pose_tree.js` | 管理の一覧 |
 | `ui-layout.js`（2 か所） | 並びの絵、数値とスライダーの対 |
@@ -257,7 +259,7 @@ flowchart TD
 | `addItem`, `addSolid` | `pose_preview.js` | 置く前に決めた大きさで置く |
 | `showSelected` | `pose_hand_ui.js` | 関節のパネルと一緒に、指の欄をそろえる |
 
-**`DOWN_HOOKS` に入れているもの**: `pose_main.js`（自動のモード切り替え）、`pose_scene.js`、`pose_solids.js`、`pose_ruler.js`、`pose_gizmo.js`、`pose_objects.js`、`pose_cast.js`、`pose_persp.js` が入れています。`pose_hand_ui.js` の指のフックは、3 軸ハンドルのフック（`ODMGizmo.downHook`）の**すぐ後ろ**に `splice` で入ります（輪を押したとき、輪の中にある指の丸に取られないため）。ほかに、一時的に入れるもの（面をクリックして立つ、面に接地）と、MOD の `pointerDown`（最後の 1 つの前に入る）があります。
+**`DOWN_HOOKS` に入れているもの**: `pose_main.js`（自動のモード切り替え）、`pose_scene.js`、`pose_solids.js`、`pose_ruler.js`、`pose_gizmo.js`、`pose_objects.js`、`pose_cast.js`、`pose_persp.js` が入れています。`pose_hand_ui.js` の指のフックは、3 軸ハンドルのフック（`ODMGizmo.downHook`）の**すぐ前**に `splice` で入ります（スマホでは手の回転の輪が手全体を覆うため。指の丸の当たりは小さめにして、丸と丸の間を押したときは輪に回す）。ほかに、一時的に入れるもの（面をクリックして立つ、面に接地）と、MOD の `pointerDown`（最後の 1 つの前に入る）があります。
 
 ## 3. 状態（データモデル）
 
@@ -273,6 +275,7 @@ flowchart TD
 | `hands` | `{r, l}` 手の形の名前（`HANDS`）。持つ物・MOD・古いファイルもこれを変える | hand, scene |
 | `fingers` | `{r, l}` 調整した指 `{from, a, name}`。`hands` がまだ `from` の間だけ使う（5.12） | hand, hand_ui |
 | `fingerLen` | 指の長さの割合 5 つ（0.85〜1.15、両手共通） | hand, hand_ui, sets |
+| `handApart` | 左右の手の大きさを別に決めるか（なければ同じ） | hand_ui, sets |
 | `head`, `headShape` | 頭（旧）、頭の形（伸び縮み） | main, size |
 | `body` | 全身の回転 `{yaw, pitch, roll}` | main |
 | `pins` | `{関節番号: [x, y, z]}` 固定した関節 | main, scene |
@@ -311,13 +314,17 @@ flowchart TD
 | `sel`（設置） | pose_place.js（IIFE の中） | 設置のタブで選んでいるキー |
 | `drag` | pose_main.js | 今のドラッグ |
 | `PX`, `frameAspect`, `occFrozen`, `occMemo` | pose_main.js | 描画の途中だけ使う値・覚えておく値 |
-| 書き出しの設定 | DOM の入力欄（`#W`, `#H`, `#ratio`, `#atariMode`, `#cm*` …） | `exportSize()` などが欄から直接読む |
+| 書き出しの設定 | DOM の入力欄（`#W`, `#H`, `#ratio`, `#atariMode`, `#cm*` …） | `exportSize()` などが欄から直接読む。`PICTURE_IDS`／`pictureSettings()`／`setPictureSettings()` がまとめて読み書きする（編集データ） |
 | 表示の設定 | DOM と localStorage（8 章） | 関節の限界、左右同時、カーソル … |
 
 選択の状態がいくつかに分かれていることと、添字（何番目か）で指していることは、10 章の難所です。
 
 ### 3.4 保存の形式と互換
 
+- 編集データ（`pose_project.js`）は `{format: "odm-poser-project", version: 1, app, saved, state: {version: 3, ...S}, picture}` です。
+  - `.json` はそのままのテキストです。
+  - `.odmposer` は、`"ODMPOSER"`（8 バイト）、形式の版（1 バイト）、圧縮（1 バイト。0 なし、1 deflate-raw）、圧縮前の長さ（4 バイト、リトルエンディアン）、圧縮した UTF-8 のテキスト、の順です。
+  - 開くときは、先頭が `ODMPOSER` なら .odmposer、そうでなければ JSON として読みます。`format` があれば編集データ、なければポーズのファイルです（`openEditFile`）。
 - ファイルは `{version: 3, ...S}` です（`saveJson`）。読むときは `migrate(d)` で古い形を直してから、`Object.assign(fresh(), d)` で足りない項目を初期値で埋めます。
   - 18 関節（ウエストのない v1）
   - `head.yaw`（v2）→ 頭のねじり
@@ -621,7 +628,21 @@ flowchart LR
 - ドラッグ（`dragFinger`）: その関節の先の点が指の位置にいちばん近くなる角度を、粗い格子で探してから細かく探します。付け根は開きと曲げの 2 つ、ほかは曲げだけです。
 - 3 軸ハンドル: `ODMGizmoTargets` に対象を足します。輪は 0 = 曲げ（軸 `bendAx`）、1 = 開き（軸 `spreadAx`、付け根だけ）で、`fingerJoint` が軸を出します。
 - パネル: 関節のパネルの `#handRow` の後ろに `#fgBox` を足し、`showSelected` を包んでそろえます。自分の手の形は `KEY-handsets` に `{name, a}` で残し、「この腕の手の形」の一覧に `u:<名前>` で出します（`ODMHand.selHTML`。MOD が手の形を足したときも、`pose_api.js` の `refreshPanels` がこれを使う）。
-- 体格のタブ: 「手の大きさ・指の長さ」を足します。手の長さは、両手の手の骨の長さを変えます。「戻す」は、身長に対する標準の体の手の割合（`usualK`）に戻します。
+- 体格のタブ: 「手の大きさ・指の長さ」を足します。手の長さは、両手の手の骨の長さを変えます。「左右の手を同じ大きさにする」を外すと（`S.handApart`）、右手と左手を別々に変えます。「戻す」は、身長に対する標準の体の手の割合（`usualK`）に戻します。
+
+**持ち物の握り**（`heldOf`）
+
+- 手に持つ物（`place: "hand"`）は、その手が持ち物の求める形（持つ手は `def.pose`、両手持ちのもう片方は `def.pose2`）の間、その手の「握り」を決めます。役割は `main`（持つ手）か `other`（もう片方）です。
+- 指は、`it.handPose[role]`（調整した握り。持ち物に残る）→ `def.handPose[role]`（持ち物に組み込んだ握り。MOD でも書ける）→ 形の名前の角度、の順に使います。握っている手の指を調整すると、`S.fingers` ではなく `it.handPose` に入ります。
+- 手の中の位置は `it.gripOff[role]`（手の座標系の cm。手のひらから外へ・親指の方へ・指先の方へ）で、`gripFrame` が `GRIP_AT` に足します。持つ手は持ち物を、もう片方の手は手自身を、その分だけずらします（`aimOtherHand` も `gripFrame` を使う）。
+- 手の形の一覧で形を選ぶと、握っている間は `S.hands` を変えず、その形の角度を `it.handPose` に入れます（握ったまま）。
+
+**ルーペ**（`pose_hand_ui.js`）
+
+- 手を選んでいる間（ポーズモード）、図の上に `#handLoupe`（Stage.astro）を出します。初期値でオンで、`KEY-loupe` に残します。
+- 正面の図での手の点（PX 込み）を、手のまわりで拡大して描きます（`loupeMap`。ドラッグの間は倍率と中心を固定）。
+- ルーペの中の丸は、押すとすぐドラッグできます（タッチでも）。ドラッグは `dragFinger` に、ルーペの座標から戻した正面の座標を渡します。
+- 正面の図の指の丸は、当たりを小さめ（7px×端末の倍率）にして、3 軸ハンドルのフックより**前**で受けます。スマホでは、手の回転の輪が手全体を覆うためです。
 
 **ほかとのつながり**
 
@@ -707,11 +728,23 @@ localStorage のほかにも、次の物を使います。
 
 今、リポジトリにある確認は次の 3 つです。
 
-- 構文: esprima で `web/editor/*.js` を読む（`docker-compose.test.yml` の `syntax`）。**今は `pose_api.js` の `for await`（MOD のフォルダを読む所）を esprima が読めず、失敗します**。もう 1 つの失敗だった `ui-layout.js` の `?.` は、手と指の変更のときに直しました。
+- 構文: esprima で `web/editor/*.js` を読む（`docker-compose.test.yml` の `syntax`）。全ファイルが通ります（`ui-layout.js` の `?.` と、`pose_api.js` の `for await` を、同じ動きの書き方に直しました）。
 - UI: `python tools/lint_ui.py`（melta-lint）。
 - ビルド: `npm run build`。
 
-**動きの自動テストは、リポジトリにありません。** 開発中は、Playwright（Python）で `tools/dist_server.editor()` を使い、その都度テストを書いて確かめてきましたが、テストのファイルは残していません。リファクタリングの前に、主な動きのテストをリポジトリに置くことを勧めます（10.3）。
+**動きのテスト**（`tests/`、`python tools/run_tests.py`）。リファクタリングの安全網の最初の分として置きました（10.3 の 1）。
+
+- サイトを 1 回ビルドして配り（`--no-build` で省く）、テストごとに新しいブラウザの文脈（localStorage も別）でエディタを開きます。ページのエラーが出たら失敗です。
+- テストは `tests/test_*.py` の `test_<名前>(ed)` という関数です。`ed.page(query, phone=, clipboard=)` がエディタを開き、`pg.E` で `page.evaluate` を呼びます。ファイル名の一部を引数に渡すと、そのファイルだけを動かします。
+- `docker-compose.test.yml` の `behaviour` でも動きます。
+- 今あるテスト（14 件）は、次のとおりです。
+  - 起動、元に戻す・やり直し
+  - 比率を変えてもカメラが動かないこと、書き出す画像の大きさ
+  - 英語表示の訳し漏れ（手の欄、新しい欄）
+  - 編集データの往復（.json・.odmposer、書き出しの設定も）、ポーズのファイル、古いファイル（19 関節・18 関節・指のデータなし）、共有リンクの往復
+  - 指の関節（パネル・3 軸ハンドル）、自分の手の形、持ち物の握り（指と位置、持ち直し）、手の大きさ（左右同じ・別）、ルーペ（PC）
+  - スマホ（手をタップ→ルーペ→1 回のタッチで曲げる）
+- まだないものは、ポーズ・体格・配置の操作、物体と接地、パースの誇張、側面図、MOD の読み込み、書き出した画像の中身（10.3）です。開発中に使い捨てで書いてきたテストを、順に移します。
 
 ## 10. リファクタリングのための注意
 
@@ -755,13 +788,17 @@ localStorage のほかにも、次の物を使います。
 | 持つ位置が名前で決まる（手と指の変更で生じた） | `GRIP_AT` | 指を調整しても、持つ物の位置は手の形の名前で決まる | 持つ位置を指の点から求める |
 | 手の大きさが 2 か所（手と指の変更で生じた） | 手の骨の長さ（`S.P`）と `S.fingerLen` | 手のひらの大きさは骨の長さ、指の長さは割合で、別の所にある | 手の寸法を 1 つの値にまとめる（形式の互換は保つ） |
 | パネルを DOM の位置で差し込む（手と指の変更で生じた） | `#fgBox` | 関節のパネルの `#handRow` の後ろに、JS で差し込む | パネルの組み立てを Astro のマークアップにまとめる |
-| 動きの自動テストがない | — | 変更の確認が手作業か、使い捨てのテスト | 10.3 |
+| 持ち物を名前で探す（持ち物の握りで生じた） | `heldOf` | 手が持ち物の求める形の名前のときだけ握りとみなす。同じ形の物を 2 つ同じ手に持つ場合などは、先に見つかった物になる | 手と持ち物の結び付きを、持ち物の側に明示して持つ |
+| 握りの書き先が 3 か所（持ち物の握りで生じた） | `it.handPose`, `def.handPose`, `S.fingers` | 指を調整したとき、どこに書くかが「今その手が何を持っているか」で変わる | 5.12 の「手の状態を 1 つの値に」とまとめて直す |
+| テストのための口（整理作業で生じた） | `window.loupeMapForTest`, `toLoupeForTest` | テストがルーペの中の位置を知るために、グローバルに出している | モジュールにしたときに、テスト用の出口をまとめる |
+| `S` を入れ替える所が増えた | `pose_project.js` の `apply` | 3.1 の「丸ごと入れ替え」が 1 か所増えた | 状態の入れ物を 1 つにする |
+| 動きのテストが一部だけ | `tests/` | 14 件。ポーズ・体格・配置、物体、パース、側面図、MOD は、まだ使い捨てのテストだけ | 10.3 |
 
 ### 10.3 進め方の提案
 
 機能を変えずに進めるため、次の順を勧めます。
 
-1. **安全網を置く**: Playwright のテストをリポジトリに置き、CI で動かします。テストする物は次のとおりです。
+1. **安全網を置く**（一部済み：`tests/` と `tools/run_tests.py`、9 章）: Playwright のテストをリポジトリに置き、CI で動かします。テストする物は次のとおりです。
    - 起動してエラーがない
    - ポーズ・体格・配置の基本操作
    - 元に戻す・やり直し

@@ -130,6 +130,7 @@ ODMPoser.registerMod({
 | `place` | `hand`・`body`・`world`・`grab`・`wear`（必須） |
 | `parts` | 形の並び（または `make`／`sets`） |
 | `pose` | 持ったときの手の形（`grip`・`trigger`・`pinch`・`cup`・`fist`・`open` など、または MOD が追加した形） |
+| `handPose` | 握る手の形を関節の角度で（1.3）：`{main, other}`（持つ手・もう片方の手）、それぞれ指 5 本の `[開き, 付け根の曲げ, 中の曲げ, 先の曲げ]`（度）。なければ `pose`／`pose2` の形 |
 | `grip2`、`pose2` | 両手持ち：もう片方の手が持つ所（小物の座標で [x, y, z]）と、その手の形 |
 | `grip` | 手に持つ物の持つ所（小物の座標で [x, y, z]）。書かなければ、原点（`pose` が `cup` なら手のひらに向く面の中心、`pinch` なら原点にいちばん近い所） |
 | `mount` | `world`／`body`：関節を合わせる所 `{pelvis: [x,y,z], r_wrist: [...], l_ankle: [...]}`（座面・ハンドル・ペダル） |
@@ -167,8 +168,8 @@ ODMPoser.registerMod({
 | `api.selectedJoint()` | 選んでいる関節の名前（なければ `null`） |
 
 MOD が読める（`api.edit` の中で変えてよい）`S` の項目：`P`（21 関節の [x, y, z] cm）、`R`（関節の丸の半径）、
-`hands`（`{r, l}` 手の形）、`fingers`（`{r, l}` 調整した指：`{from: もとの手の形, a: 指ごとの角度}`。`hands` がまだ `from` の間だけ使われます）、`fingerLen`（指の長さの割合 5 つ）、`cam`（`lens` mm、`yaw`・`pitch`・`roll` 度、`zoom`）、`pins`（固定した関節）、
-`items`（出ている小物）、`solids`、`auras`、`colors`、`env`（床・壁・天井・接地）、`wire`、`ruler`。
+`hands`（`{r, l}` 手の形）、`fingers`（`{r, l}` 調整した指：`{from: もとの手の形, a: 指ごとの角度}`。`hands` がまだ `from` の間だけ使われます）、`fingerLen`（指の長さの割合 5 つ）、`handApart`（左右の手の大きさを別に）、`cam`（`lens` mm、`yaw`・`pitch`・`roll` 度、`zoom`）、`pins`（固定した関節）、
+`items`（出ている小物。手に持つ物は自分の握り `handPose {main, other}` と、手の中の位置 `gripOff {main, other}`［x, y, z］cm を持つことがある）、`solids`、`auras`、`colors`、`env`（床・壁・天井・接地）、`wire`、`ruler`。
 
 ### 関節・計算・画面
 

@@ -56,7 +56,8 @@ web/editor/pose_main.js          the editor core (plain JS, Canvas 2D), loaded b
 web/editor/ui.js, ui.src.css     the look after melta UI (design/melta-ui); ui.css is generated (npm run css); see AGENTS.md
 web/editor/pose_props*.js        window.PROP_CATS / window.PROPS: the props as primitives
 web/editor/pose_hand.js          the hand's model, loaded before pose_main.js (its functions use pose_main.js's names at run time): HANDS (curls or {a}), FINGERS, S.fingers {from, a, name} used only while S.hands is still `from`, S.fingerLen, handShape3D (OpenPose's 21 points + the palm's heels), drawHand, fingerSel
-web/editor/pose_hand_ui.js       the fingers by hand: the 15 circles of the selected hand (Pose), dragFinger, a 3-axis rotate target (ODMGizmoTargets; its DOWN_HOOK spliced right after ODMGizmo.downHook), #fgBox in the joint panel (wraps showSelected), own shapes KEY-handsets (ODMHand.selHTML), 体格's hand length / finger lengths
+web/editor/pose_hand_ui.js       the fingers by hand: the 15 circles of the selected hand (Pose), dragFinger, a 3-axis rotate target (ODMGizmoTargets; its DOWN_HOOK spliced right after ODMGizmo.downHook), #fgBox in the joint panel (wraps showSelected), own shapes KEY-handsets (ODMHand.selHTML), 体格's hand length / finger lengths (S.handApart: right and left apart), the loupe #handLoupe (on at first, KEY-loupe; its circles drag at once), a held thing's grip: heldOf / it.handPose {main, other} / it.gripOff {main, other} (pose_hand.js), 装備's #gripBox
+web/editor/pose_project.js       the edit data: {format: "odm-poser-project", version: 1, state: {version: 3, ...S}, picture} as .json or .odmposer ("ODMPOSER", version, packing 0/1 deflate-raw, length, text); openEditFile opens those and pose files
 web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carrying, mounting, grabbing, wire
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
 web/editor/pose_cast.js          more than one figure; pose_sets.js the saved poses (pose + things + place) and bodies
@@ -172,6 +173,8 @@ and patches `CanvasRenderingContext2D.fillText` for canvas labels. Prop names co
 add its English to `T` (or a rule) -- the check below lists what is left untranslated.
 
 ## Checking changes
+
+- Behaviour: `python tools/run_tests.py` (tests/test_*.py; `--no-build`, or words to pick files). Add a test there with each change; it is the refactoring's safety net (docs/ARCHITECTURE.md 9, 10.3).
 
 - JS syntax: `python -c "import esprima, glob; [esprima.parseScript(open(f, encoding='utf-8').read()) for f in sorted(glob.glob('web/editor/*.js'))]"`
   (esprima knows no `?.` or `??`: keep those out of the editor files).

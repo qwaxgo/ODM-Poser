@@ -63,12 +63,13 @@ There are also rules for how the code is written:
 |-------|------|
 | `src/pages/editor/index.astro` | The editor's page; it also sets the order the scripts load in |
 | `src/components/editor/*.astro` | The editor's HTML (Stage = the views, Panel* = parts of the panel); plain HTML without props |
-| `web/editor/*.js` | The editor itself (about 11,700 lines in 31 files), served as it is as Astro's `publicDir` |
+| `web/editor/*.js` | The editor itself (about 12,000 lines in 32 files), served as it is as Astro's `publicDir` |
 | `web/editor/ui.src.css` → `ui.css` | The look, made by Tailwind CSS 4 (`npm run css`); never edit `ui.css` by hand |
 | `web/editor/sw.js`, `manifest.webmanifest` | The PWA |
 | `src/pages/docs/`, `src/lib/docs.ts`, `docs/*.md` | The docs pages for users |
 | `src-tauri/` | The app (Rust); it serves the mods folder through `odmmods://` |
-| `tools/` | Build and check tools (`lint_ui.py`, `dist_server.py`, `make_release_html.py`, ...) |
+| `tools/` | Build and check tools (`lint_ui.py`, `dist_server.py`, `run_tests.py`, `make_release_html.py`, ...) |
+| `tests/` | Behaviour tests (`test_*.py`, run by `tools/run_tests.py`; chapter 9) |
 | `design/melta-ui/` (a submodule), `design-system/` | The melta UI design system and this project's overrides |
 | `mods/` | The user's mods (only the README is tracked) |
 
@@ -108,8 +109,8 @@ The editor's scripts are loaded with `<script is:inline>` in `index.astro`'s ord
 | 1 | `ui.js` | 119 | Gives each control melta UI's classes (MutationObserver) | `ODMUI` (part) |
 | 2 | `pose_props.js` | 457 | The things' shapes (hand-made primitives) | `PROP_CATS`, `PROPS` |
 | 3 | `pose_props_more.js` | 271 | More things (effects, worn things, simple solids) | (adds to `PROPS`) |
-| 3a | `pose_hand.js` | 191 | The hand's model: shapes, finger joints, the 21 points, drawing (5.12). **Loaded before `pose_main.js`, but its functions use `pose_main.js`'s names at run time** | `HANDS`, `FINGERS`, `handShape3D`, `drawHand`, `fingerSel`, ... |
-| 4 | `pose_main.js` | 2301 | The core: the body, the state `S`, the camera and projection, drawing, input, the edit pipeline, the basic panel, files | about 280 globals |
+| 3a | `pose_hand.js` | 224 | The hand's model: shapes, finger joints, the 21 points, drawing (5.12). **Loaded before `pose_main.js`, but its functions use `pose_main.js`'s names at run time** | `HANDS`, `FINGERS`, `handShape3D`, `drawHand`, `fingerSel`, ... |
+| 4 | `pose_main.js` | 2306 | The core: the body, the state `S`, the camera and projection, drawing, input, the edit pipeline, the basic panel, files | about 280 globals |
 | 5 | `pose_scene.js` | 1291 | The floor and grounding; holding, wearing, putting down; riding, grabbing, the wire; standing on faces | `drawScene`, `sceneAfterEdit`, `partSets`, ... |
 | 6 | `pose_cast.js` | 185 | More than one figure (swapped in to be drawn) | `everyFigure`, `withFigure`, `onlyFigure` |
 | 7 | `pose_sets.js` | 135 | Saved poses and bodies (in the browser) | — |
@@ -123,7 +124,8 @@ The editor's scripts are loaded with `<script is:inline>` in `index.astro`'s ord
 | 15 | `pose_objects.js` | 448 | Solids and things as one selection (several, cut / paste, cursors, pivots) | `ODMObj` |
 | 16 | `pose_persp.js` | 302 | Exaggerated perspective (the pivot, the camera moved for a while) | `ODMPxMark` |
 | 17 | `pose_sideview.js` | 157 | The side view's camera | — |
-| 17a | `pose_hand_ui.js` | 256 | The fingers by hand: picking and dragging the circles, the 3-axis handles, the panel, own hand shapes, hand and finger sizes | `ODMHand` |
+| 17a | `pose_hand_ui.js` | 414 | The fingers by hand: picking and dragging the circles, the loupe, the 3-axis handles, the panel, own hand shapes, a held thing's place in the hand, hand and finger sizes | `ODMHand`, `loupeMapForTest` |
+| 17b | `pose_project.js` | 88 | Saving the edit data (.json, .odmposer) and opening files (pose files too) | `openEditFile`, `ODMProject` |
 | 18 | `i18n.js` | 689 | Japanese → English | `ODMPoserI18n` |
 | 19 | `ui-icons.js` | 62 | The menu's icons (SVG) | `ODMICONS` |
 | 20 | `ui-menu.js` | 201 | The panel's menu (three levels) and tabs | `ODMUI.showMenu`, ... |
@@ -222,7 +224,7 @@ There are slots too: `handHook`, `emptyDrag`, `emptyClick`, `tapClick` and `gizm
 
 `drawFigure` calls `drawScene` (floor, things, wire; also wrapped by `pose_solids.js` and `pose_api.js`). **What is drawn on top of what comes from the load order and the way each file wraps.**
 
-**`draw()`** draws the whole screen again (its body is the flow in 4.4). 18 wrappers in 13 files each bring their own panel in step:
+**`draw()`** draws the whole screen again (its body is the flow in 4.4). 19 wrappers in 13 files each bring their own panel in step:
 
 | File | What its wrapper does |
 |------|------------------------|
@@ -233,7 +235,7 @@ There are slots too: `handHook`, `emptyDrag`, `emptyClick`, `tapClick` and `gizm
 | `pose_objects.js` (3) | The selection box, the cursor, the edit buttons' enabled state |
 | `pose_persp.js` (2) | The pivot's mark on the side view, the Perspective panel |
 | `pose_sideview.js` | The Side view panel |
-| `pose_hand_ui.js` | The hand size and finger length panel (while the Body tab is open) |
+| `pose_hand_ui.js` (2) | The hand size and finger length panel (while the Body tab is open), a held thing's place-in-hand panel, the loupe |
 | `ui-figure.js` | The body map |
 | `pose_tree.js` | The Scene list |
 | `ui-layout.js` (2) | The layout pictures, number / slider pairs |
@@ -257,7 +259,7 @@ So **`draw()` is drawing + panel sync + autosave** at once.
 | `addItem`, `addSolid` | `pose_preview.js` | Putting at the size set before |
 | `showSelected` | `pose_hand_ui.js` | The finger panel kept in step with the joint panel |
 
-**What is in `DOWN_HOOKS`**: hooks from `pose_main.js` (automatic mode switching), `pose_scene.js`, `pose_solids.js`, `pose_ruler.js`, `pose_gizmo.js`, `pose_objects.js`, `pose_cast.js` and `pose_persp.js`. The finger hook of `pose_hand_ui.js` is spliced in **right after** the 3-axis handles' hook (`ODMGizmo.downHook`), so a ring pressed is not taken by a finger circle inside it. Others come and go (clicking a face to stand on, putting on a face), and the mods' `pointerDown` goes in before the last one.
+**What is in `DOWN_HOOKS`**: hooks from `pose_main.js` (automatic mode switching), `pose_scene.js`, `pose_solids.js`, `pose_ruler.js`, `pose_gizmo.js`, `pose_objects.js`, `pose_cast.js` and `pose_persp.js`. The finger hook of `pose_hand_ui.js` is spliced in **right before** the 3-axis handles' hook (`ODMGizmo.downHook`): on a phone the hand's rings cover the whole hand. Finger circles are hit only closely, so a press between them goes on to the rings. Others come and go (clicking a face to stand on, putting on a face), and the mods' `pointerDown` goes in before the last one.
 
 ## 3. State (the data model)
 
@@ -273,6 +275,7 @@ So **`draw()` is drawing + panel sync + autosave** at once.
 | `hands` | `{r, l}` hand shape names (`HANDS`); held things, mods and older files set it too | hand, scene |
 | `fingers` | `{r, l}` adjusted fingers `{from, a, name}`, used only while `hands` is still `from` (5.12) | hand, hand_ui |
 | `fingerLen` | Five finger-length shares (0.85–1.15, both hands alike) | hand, hand_ui, sets |
+| `handApart` | The two hands' sizes set apart (absent: alike) | hand_ui, sets |
 | `head`, `headShape` | The head (old), the head's shape (stretch) | main, size |
 | `body` | The whole body's turn `{yaw, pitch, roll}` | main |
 | `pins` | `{joint index: [x, y, z]}` pinned joints | main, scene |
@@ -311,13 +314,17 @@ So **`draw()` is drawing + panel sync + autosave** at once.
 | `sel` (Objects tab) | pose_place.js (inside its IIFE) | The key chosen in the Objects tab |
 | `drag` | pose_main.js | The drag going on |
 | `PX`, `frameAspect`, `occFrozen`, `occMemo` | pose_main.js | Values used during drawing, and memos |
-| Export settings | DOM fields (`#W`, `#H`, `#ratio`, `#atariMode`, `#cm*`, ...) | `exportSize()` and others read the fields directly |
+| Export settings | DOM fields (`#W`, `#H`, `#ratio`, `#atariMode`, `#cm*`, ...) | `exportSize()` and others read the fields directly; `PICTURE_IDS` / `pictureSettings()` / `setPictureSettings()` read and write them together (the edit data) |
 | View settings | DOM and localStorage (chapter 8) | Joint limits, both sides together, the cursor, ... |
 
 The selection being split over several places, and pointing by index, are hard parts in chapter 10.
 
 ### 3.4 Saved form and compatibility
 
+- The edit data (`pose_project.js`) is `{format: "odm-poser-project", version: 1, app, saved, state: {version: 3, ...S}, picture}`.
+  - `.json` is that text as it is.
+  - `.odmposer` is `"ODMPOSER"` (8 bytes), the format's version (1 byte), the packing (1 byte: 0 none, 1 deflate-raw), the text's length before packing (4 bytes, little-endian), then the packed UTF-8 text.
+  - Opening: a file starting with `ODMPOSER` is .odmposer, anything else is read as JSON; with `format` it is edit data, without it a pose file (`openEditFile`).
 - A file is `{version: 3, ...S}` (`saveJson`). Reading runs `migrate(d)` to fix older forms, then `Object.assign(fresh(), d)` fills missing fields with defaults:
   - 18 joints (v1, no waist)
   - `head.yaw` (v2) → the head's twist
@@ -621,7 +628,21 @@ The same thing is pointed at in different forms (seven) by different files; when
 - Dragging (`dragFinger`): the angle that brings the joint's next point nearest the pointer, searched on a coarse grid, then finer. A root has spread and bend, the others bend only.
 - 3-axis handles: a target added to `ODMGizmoTargets`. Ring 0 bends (axis `bendAx`), ring 1 spreads (axis `spreadAx`, roots only); `fingerJoint` gives the axes.
 - Panel: `#fgBox` goes after `#handRow` in the joint panel, kept in step by wrapping `showSelected`. Own shapes are kept in `KEY-handsets` as `{name, a}` and listed in the hand shape list as `u:<name>` (`ODMHand.selHTML`, which `refreshPanels` in `pose_api.js` uses when mods add shapes).
-- Body tab: **Hand size and finger lengths**. The hand length sets both hand bones' length; the reset goes back to the standard body's hand-to-height share (`usualK`).
+- Body tab: **Hand size and finger lengths**. The hand length sets both hand bones' length (with **Both hands the same size** off, `S.handApart`, right and left apart); the reset goes back to the standard body's hand-to-height share (`usualK`).
+
+**A held thing's grip** (`heldOf`)
+
+- A thing held in the hand (`place: "hand"`) decides that hand's grip while the hand has the shape the thing asks for (the holding hand `def.pose`, a two-handed thing's other hand `def.pose2`). Its role is `main` (holding hand) or `other`.
+- The fingers come from `it.handPose[role]` (the adjusted grip, kept in the thing) → `def.handPose[role]` (a grip built into the thing; mods can write it) → the shape name's angles. Adjusting the holding hand's fingers writes `it.handPose`, not `S.fingers`.
+- The place in the hand is `it.gripOff[role]` (cm in the hand's frame: out of the palm, toward the thumb, toward the fingertips), added to `GRIP_AT` by `gripFrame`. The holding hand moves the thing by it, the other hand moves itself (`aimOtherHand` uses `gripFrame` too).
+- Choosing a shape in the hand shape list while holding leaves `S.hands` alone and puts that shape's angles in `it.handPose` (still holding).
+
+**The loupe** (`pose_hand_ui.js`)
+
+- While a hand is selected (Pose mode), `#handLoupe` (Stage.astro) shows over the view; on at first, kept in `KEY-loupe`.
+- It draws the hand's points as the front view has them (PX included), enlarged about the hand (`loupeMap`; scale and centre held while dragging).
+- A circle pressed in the loupe drags at once (touch too); the drag hands `dragFinger` front-view coordinates turned back from the loupe's.
+- On the front view, finger circles are hit closely (7 px × the device's scale) and taken **before** the 3-axis handles' hook: on a phone the hand's rotate rings cover the whole hand.
 
 **Links elsewhere**
 
@@ -707,11 +728,23 @@ Besides localStorage:
 
 The repository has three checks now:
 
-- Syntax: esprima reads `web/editor/*.js` (`syntax` in `docker-compose.test.yml`). **It fails now: esprima cannot read the `for await` in `pose_api.js` (reading a mods folder).** The other failure, a `?.` in `ui-layout.js`, was fixed with the hands and fingers change.
+- Syntax: esprima reads `web/editor/*.js` (`syntax` in `docker-compose.test.yml`). Every file passes (the `?.` in `ui-layout.js` and the `for await` in `pose_api.js` were rewritten to the same behaviour).
 - UI: `python tools/lint_ui.py` (melta-lint).
 - Build: `npm run build`.
 
-**There are no automated behaviour tests in the repository.** During development, behaviour was checked with Playwright (Python) through `tools/dist_server.editor()`, writing tests as needed, but those test files were not kept. Before refactoring, putting tests of the main behaviour into the repository is advised (10.3).
+**Behaviour tests** (`tests/`, `python tools/run_tests.py`): the first part of the refactoring's safety net (step 1 of 10.3).
+
+- It builds the site once (`--no-build` skips that), serves it, and opens the editor in a new browser context (its own localStorage) for each test; a page error fails the test.
+- A test is a function `test_<name>(ed)` in `tests/test_*.py`; `ed.page(query, phone=, clipboard=)` opens the editor and `pg.E` calls `page.evaluate`. Words given as arguments pick the files whose names hold them.
+- `behaviour` in `docker-compose.test.yml` runs them too.
+- The tests now (14):
+  - start-up, undo and redo
+  - the camera staying when the ratio changes, the exported picture's size
+  - untranslated English (the hand panel, the new controls)
+  - edit data both ways (.json, .odmposer, with the export settings), the pose file, older files (19 joints, 18 joints, no finger data), a share link both ways
+  - finger joints (panel, 3-axis handles), own hand shapes, a held thing's grip (fingers and place, held again), hand sizes (alike and apart), the loupe (computer)
+  - a phone (tap the hand → loupe → bend with one touch)
+- Not yet: Pose, Body and Place operations, objects and grounding, exaggerated perspective, the side view, loading mods, the exported pictures' content (10.3). The throwaway tests written during development will be moved in step by step.
 
 ## 10. Notes for the refactoring
 
@@ -755,13 +788,17 @@ Bundling into one classic script at build time keeps the `file://` promise; ship
 | Grip place by name (from the hands change) | `GRIP_AT` | Adjusting the fingers does not move where a held thing sits; the shape's name decides | Work the grip out from the finger points |
 | Hand size in two places (from the hands change) | the hand bone's length (`S.P`) and `S.fingerLen` | The palm's size is a bone length, the fingers' a share, kept apart | One value for the hand's measurements (keeping format compatibility) |
 | A panel put in by DOM position (from the hands change) | `#fgBox` | Inserted by JS after `#handRow` in the joint panel | Gather panel building into the Astro markup |
-| No automated behaviour tests | — | Changes are checked by hand or with throwaway tests | 10.3 |
+| Held things found by name (from the held grip) | `heldOf` | A hand counts as gripping a thing only while it has the shape name the thing asks for; with two things of the same shape in one hand, the first found wins | Keep the hand–thing link explicit on the thing |
+| Three places a grip is written (from the held grip) | `it.handPose`, `def.handPose`, `S.fingers` | Where an adjusted finger goes depends on what that hand holds now | Fix together with "one value for a hand's state" (5.12) |
+| Openings for the tests (from the tidying) | `window.loupeMapForTest`, `toLoupeForTest` | Global, so the tests can find places in the loupe | Gather test exits when it becomes modules |
+| One more place replacing `S` | `apply` in `pose_project.js` | 3.1's "replaced as a whole" grew by one | One state container |
+| Behaviour tests only in part | `tests/` | 14 tests; Pose, Body, Place, objects, perspective, side view and mods have throwaway tests only | 10.3 |
 
 ### 10.3 A suggested order
 
 To go ahead without changing features:
 
-1. **A safety net**: put Playwright tests into the repository and run them in CI. Test:
+1. **A safety net** (partly done: `tests/` and `tools/run_tests.py`, chapter 9): put Playwright tests into the repository and run them in CI. Test:
    - start-up without errors
    - the basic operations of Pose, Body and Place
    - undo and redo

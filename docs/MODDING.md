@@ -144,6 +144,7 @@ Each shape is an object with one key (helpers in `api.shapes`):
 | `place` | `hand`, `body`, `world`, `grab` or `wear` (required) |
 | `parts` | the shapes (or `make` / `sets`) |
 | `pose` | the hand shape while held (`grip`, `trigger`, `pinch`, `cup`, `fist`, `open`, ... or one a mod added) |
+| `handPose` | the grip's own hand, by joint angles (1.3): `{main, other}`, each five `[spread, root bend, middle bend, tip bend]` (degrees); without it, the `pose` / `pose2` shape's |
 | `grip2`, `pose2` | two-handed: where the other hand holds ([x, y, z] in the prop's frame) and its shape |
 | `grip` | where a held prop is held ([x, y, z] in the prop's frame). Without it: the origin (with `pose: "cup"` the middle of its side toward the palm, with `pinch` the bit nearest the origin) |
 | `mount` | `world` / `body`: where joints go, `{pelvis: [x,y,z], r_wrist: [...], l_ankle: [...]}` (seats, handlebars, pedals) |
@@ -183,8 +184,8 @@ Every prop can be carried on the back (hand and body props) and put down on the 
 | `api.selectedJoint()` | the selected joint's name, or `null` |
 
 Fields of `S` a mod may read (and change inside `api.edit`): `P` (21 joints, [x, y, z] cm),
-`R` (joint radii), `hands` (`{r, l}` hand shapes), `fingers` (`{r, l}` adjusted fingers: `{from: the shape they came from, a: each finger's angles}`, used while `hands` is still `from`), `fingerLen` (five finger-length shares), `cam` (`lens` mm, `yaw`, `pitch`, `roll` degrees,
-`zoom`), `pins` (pinned joints), `items` (props in the scene), `solids`, `auras`, `colors`, `env`
+`R` (joint radii), `hands` (`{r, l}` hand shapes), `fingers` (`{r, l}` adjusted fingers: `{from: the shape they came from, a: each finger's angles}`, used while `hands` is still `from`), `fingerLen` (five finger-length shares), `handApart` (the hands' sizes set apart), `cam` (`lens` mm, `yaw`, `pitch`, `roll` degrees,
+`zoom`), `pins` (pinned joints), `items` (props in the scene; a held one may carry its own grip: `handPose {main, other}` and `gripOff {main, other}` [x, y, z] cm in the hand's frame), `solids`, `auras`, `colors`, `env`
 (floor, walls, ceiling, grounding), `wire`, `ruler`.
 
 ### Joints, maths and the view
