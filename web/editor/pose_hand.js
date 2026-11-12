@@ -13,7 +13,13 @@
 //   S.hands of that side is still `from` (the shape it was made from): whatever sets another shape
 //   (taking a sword: "grip") takes over, and setting `from` again brings the own joints back.
 // S.fingerLen [thumb, index, middle, ring, little]: each finger's length as a share (0.85 .. 1.15),
-//   both hands alike; the hand's size is the hand bone's length (wrist -> knuckles, HAND_LEN at 1).
+//   both hands alike; the hand's size is the hand bone's length (wrist -> knuckles, HAND_LEN at 1);
+//   S.handApart: the two hands' sizes set apart (else both alike).
+// A thing held in the hand brings its own hand: while a hand has the shape the thing asks for (its
+//   main hand: def.pose; the other hand of a two-handed one: def.pose2), that hand's joints are the
+//   thing's (it.handPose {main, other}: adjusted by hand; else def.handPose {main, other}: built in;
+//   else the shape's), and its grip is moved by it.gripOff {main, other} [x, y, z] cm in the hand's
+//   frame (x: out of the palm, y: toward the thumb, z: toward the fingers) from the shape's GRIP_AT.
 "use strict";
 
 // the named shapes: a curl per finger (thumb, index, middle, ring, little; 0 straight, 1 closed), as
@@ -60,15 +66,39 @@ function shapeAngles(name){
   if (h && Array.isArray(h.a)) return h.a.map(f => f.slice());
   return FINGERS.map((g, n) => [0, ...g.bend.map(b => (+h[n] || 0) * b)]);
 }
-// the joints a hand has now: its own (S.fingers) while made from the shape it has, else the shape's
+// the thing held in this hand, while the hand has the shape that thing asks for: {it, role, shape}
+function heldOf(side, st){
+  st = st || S;
+  const P = window.PROPS || {};
+  for (const it of st.items || []){
+    const d = P[it.key]; if (!d || it.where || d.place !== "hand") continue;
+    const main = it.hand === "l" ? "l" : "r", name = st.hands && st.hands[side];
+    if (side === main && name === (d.pose || "grip")) return {it, role: "main", shape: name};
+    if (side !== main && d.grip2 && it.both !== false && name === (d.pose2 || d.pose || "grip")) return {it, role: "other", shape: name};
+  }
+  return null;
+}
+const goodAngles = a => Array.isArray(a) && a.length === 5 && a.every(f => Array.isArray(f) && f.length === 4);
+// the joints a hand has now: a held thing's (its own adjusted, its built-in, its shape's); else the
+// hand's own (S.fingers) while made from the shape it has; else the shape's
 function handAngles(side, st){
   st = st || S;
+  const h = heldOf(side, st);
+  if (h){ const d = (window.PROPS || {})[h.it.key] || {};
+    if (h.it.handPose && goodAngles(h.it.handPose[h.role])) return h.it.handPose[h.role].map(f => f.slice());
+    if (d.handPose && goodAngles(d.handPose[h.role])) return d.handPose[h.role].map((f, n) => clampFinger(n, f));
+    return shapeAngles(h.shape); }
   const own = st.fingers && st.fingers[side], name = (st.hands && st.hands[side]) || "relaxed";
   if (own && own.from === name && Array.isArray(own.a) && own.a.length === 5) return own.a.map(f => f.slice());
   return shapeAngles(name);
 }
-// the hand's own joints from now on (made from the shape it has), for an edit
+// the hand's own joints from now on (made from the shape it has; a held thing's hand: kept in the
+// thing), for an edit
 function ownAngles(side){
+  const h = heldOf(side);
+  if (h){ h.it.handPose = h.it.handPose || {};
+    if (!goodAngles(h.it.handPose[h.role])) h.it.handPose[h.role] = handAngles(side);
+    return h.it.handPose[h.role]; }
   S.fingers = S.fingers || {};
   const name = S.hands[side] || "relaxed", own = S.fingers[side];
   if (!(own && own.from === name)) S.fingers[side] = {from: name, a: handAngles(side)};
@@ -84,7 +114,7 @@ function setFingerJoint(side, n, j, bend, spread){
   if (bend !== undefined) f[1 + j] = bend;
   if (j === 0 && spread !== undefined) f[0] = spread;
   a[n] = clampFinger(n, f);
-  delete S.fingers[side].name;
+  if (!heldOf(side) && S.fingers[side]) delete S.fingers[side].name;
 }
 const fingerLens = st => { const v = (st || S).fingerLen; return [0, 1, 2, 3, 4].map(n => clampTo(Array.isArray(v) && +v[n] ? +v[n] : 1, FINGER_LEN_LIM)); };
 // the hand's size: its bone (wrist -> knuckles) against the usual 8 cm
@@ -119,7 +149,10 @@ function handFrame(side){
 const GRIP_AT = {fist: [2.2, 0, 7.4], grip: [2.6, 0, 7.8], claw: [3, 0, 8.4],
   cup: [1, 1, 7], relaxed: [1, 1, 6], open: [0.8, 1, 5.5], pinch: [7, 3.4, 8], ok: [7, 3.4, 8]};
 function gripFrame(side){
-  const f = handFrame(side), wr = S.P[IX[side + "_wrist"]], k = handK(side), g = GRIP_AT[S.hands[side]] || GRIP_AT.fist;
+  const f = handFrame(side), wr = S.P[IX[side + "_wrist"]], k = handK(side), h = heldOf(side);
+  let g = GRIP_AT[S.hands[side]] || GRIP_AT.fist;
+  const off = h && h.it.gripOff && h.it.gripOff[h.role];
+  if (Array.isArray(off) && off.length === 3) g = add(g, off.map(v => +v || 0));
   return {o: add(wr, mul(add(add(mul(f.x, g[0]), mul(f.y, g[1])), mul(f.z, g[2])), k)), x: f.x, y: f.y, z: f.z};
 }
 // the hand in the world: the 21 points (OpenPose's order) and the heel of the palm on the thumb's and

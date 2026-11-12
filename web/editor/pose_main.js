@@ -1561,7 +1561,7 @@ function showSelected(){
   $("pinRow").style.display = ok && PINNABLE.has(J[sel]) ? "" : "none";
   $("pin").checked = !!(ok && S.pins && S.pins[sel]);
   $("symRow").style.display = ok && MIRROR[sel] !== sel ? "" : "none";
-  const arm = ok && /_hand$/.test(J[sel]) ? J[sel][0] : null;     // the hand's shape: on the hand joint
+  const arm = ok && /_(hand|wrist)$/.test(J[sel]) ? J[sel][0] : null;     // the hand's shape: on the hand joint or the wrist
   $("handRow").style.display = arm ? "" : "none";
   if (arm){ $("handRow").querySelector("label").textContent = (arm === "r" ? "右手" : "左手") + "の形";
     if (document.activeElement !== $("handSel")) $("handSel").value = S.hands[arm]; }
@@ -1827,7 +1827,7 @@ $("poseReset").addEventListener("click", () => {
 });
 $("bodyReset").addEventListener("click", () => {
   remember();
-  fromBottom(() => { S.P = withBoneLengths(S.P, REST); S.R = REST_R.slice(); S.scale = fresh().scale; S.fingerLen = fresh().fingerLen; delete S.shape; delete S.sex; });
+  fromBottom(() => { S.P = withBoneLengths(S.P, REST); S.R = REST_R.slice(); S.scale = fresh().scale; S.fingerLen = fresh().fingerLen; delete S.handApart; delete S.shape; delete S.sex; });
   afterEdit(); syncUI(); draw(); say("体格を初期値に戻しました（ポーズはそのまま）。");
 });
 // the figure being edited, all of it (pose, body, hands, turn, pins) back to the default of its sex
@@ -1835,7 +1835,7 @@ $("bodyReset").addEventListener("click", () => {
 function resetToSex(){
   remember();
   const c = S.P[IX.pelvis].slice(), sex = S.sex, f = fresh();
-  for (const k of ["P", "R", "hands", "fingers", "fingerLen", "head", "body", "twist", "pins", "scale"]) S[k] = f[k];
+  for (const k of ["P", "R", "hands", "fingers", "fingerLen", "handApart", "head", "body", "twist", "pins", "scale"]) S[k] = f[k];
   delete S.shape; delete S.sex; delete S.stand;
   if (SEX_BODY[sex]) applySex(sex);
   standOnFloor(c[0], c[2]);
@@ -1869,7 +1869,7 @@ $("figResetPos").addEventListener("click", () => {
 $("resetFigure").addEventListener("click", () => {
   remember();
   const f = fresh();
-  for (const k of ["P", "R", "hands", "fingers", "fingerLen", "head", "body", "twist", "pins", "scale"]) S[k] = f[k];
+  for (const k of ["P", "R", "hands", "fingers", "fingerLen", "handApart", "head", "body", "twist", "pins", "scale"]) S[k] = f[k];
   afterEdit(); syncUI(); draw(); say("この人物を初期状態に戻しました（持ち物とオーラはそのまま）。");
 });
 $("resetAll").addEventListener("click", () => {
@@ -2022,13 +2022,10 @@ $("saveJson").addEventListener("click", () => {
   download(URL.createObjectURL(blob), `pose_${stamp()}.json`); say("ポーズを保存しました。");
 });
 $("loadJson").addEventListener("click", () => $("file").click());
+// opening a file: the pose (.json) or the edit data (.json / .odmposer) is pose_project.js's (openEditFile)
 $("file").addEventListener("change", async e => {
   const f = e.target.files[0]; if (!f) return;
-  try { const d = JSON.parse(await f.text());
-    migrate(d);
-    if (!Array.isArray(d.P) || d.P.length !== J.length) throw new Error("形式が違います");
-    remember(); S = Object.assign(fresh(), d); syncUI(); draw(); say("ポーズを読み込みました。");
-  } catch (err) { say("読み込めませんでした：" + err.message, true); }
+  try { await openEditFile(f); } catch (err) { say("読み込めませんでした：" + err.message, true); }
   e.target.value = "";
 });
 function migrate(d){                  // version 1 had no waist joint (18 joints)
@@ -2055,10 +2052,18 @@ const qs = new URLSearchParams(location.search);
   $("longSide").value = Math.max(+$("W").value, +$("H").value); }
 // the picture's settings (its ratio and size: the camera's frame, so the composition; what the
 // composition picture shows) are kept in this browser too; a link's ?w= &h= comes first
+// pictureSettings() / setPictureSettings(o): the same settings as an object (the edit data file, pose_project.js)
+const PICTURE_IDS = ["ratio", "longSide", "ratioW", "ratioH", "W", "H", "atariMode", "cmFigure", "cmItems", "cmSolids", "cmEnv", "cmRuler", "cmAuras", "cmBg"];
+function pictureSettings(){ const o = {}; for (const id of PICTURE_IDS){ const e = $(id); if (e) o[id] = e.type === "checkbox" ? e.checked : e.value; } return o; }
+function setPictureSettings(o){
+  if (!o || typeof o !== "object") return;
+  for (const id of PICTURE_IDS){ const e = $(id); if (!e || o[id] === undefined) continue; if (e.type === "checkbox") e.checked = !!o[id]; else e.value = o[id]; }
+  if ($("ratioCustom")) $("ratioCustom").style.display = $("ratio").value === "custom" ? "" : "none";
+  $("W").dispatchEvent(new Event("change"));                  // kept in this browser too
+}
 { const PIC_KEY = "odm-poser-editor-v1-picture",   // (KEY is set further down)
-   IDS = ["ratio", "longSide", "ratioW", "ratioH", "W", "H", "atariMode", "cmFigure", "cmItems", "cmSolids", "cmEnv", "cmRuler", "cmAuras", "cmBg"];
-  const keep = () => { const o = {}; for (const id of IDS){ const e = $(id); if (e) o[id] = e.type === "checkbox" ? e.checked : e.value; }
-    try { localStorage.setItem(PIC_KEY, JSON.stringify(o)); } catch (e) {} };
+   IDS = PICTURE_IDS;
+  const keep = () => { try { localStorage.setItem(PIC_KEY, JSON.stringify(pictureSettings())); } catch (e) {} };
   let saved = null; try { saved = JSON.parse(localStorage.getItem(PIC_KEY) || "null"); } catch (e) {}
   if (saved && typeof saved === "object") for (const id of IDS){
     const e = $(id); if (!e || saved[id] === undefined || ((id === "W" || id === "H") && (qs.get("w") || qs.get("h")))) continue;

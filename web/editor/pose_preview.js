@@ -109,7 +109,8 @@ function ghostItem(hand){
 }
 { const sizeNew = (fn) => function(key, hand){ const n = (S.items || []).length; fn(key, hand);
     const it = S.items && S.items[scSel];
-    if (it && it.key === key && S.items.length >= n){ sized(it); sided(it); if (it.grounded && typeof groundItem === "function") groundItem(it);
+    // the sizes set before belong to the thing chosen in the list (another key, from code or a mod: its own size)
+    if (it && it.key === key && key === $("scKey").value && S.items.length >= n){ sized(it); sided(it); if (it.grounded && typeof groundItem === "function") groundItem(it);
       afterEdit(); fillItemList(); draw(); } };
   addItem = sizeNew(addItem);
 }

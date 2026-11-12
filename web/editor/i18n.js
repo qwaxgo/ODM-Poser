@@ -508,6 +508,10 @@
     [/^自分の手の形「(.+)」を記憶しました（どちらの手でも「この腕の手の形」から呼び出せます）。$/, m => `Saved the hand shape "${m[1]}" (call it on either hand from the hand shape list).`],
     [/^自分の手の形「(.+)」を削除しました（今の手の形はそのままです）。$/, m => `Deleted the hand shape "${m[1]}" (the hand keeps its shape).`],
     [/^自分の手の形「(.+)」にしました。$/, m => `Hand shape: "${m[1]}".`],
+    [/^持ち物「(.+)」の握り（(調整あり|持ち物の手の形)）$/, m => `${name(m[1])}'s grip (${m[2] === "調整あり" ? "adjusted" : "the thing's own hand"})`],
+    [/^持ち物「(.+)」の手の形に戻しました。$/, m => `Back to ${name(m[1])}'s own hand shape.`],
+    [/^持ち物「(.+)」の握りを「(.+)」の形にしました。$/, m => `${name(m[1])}'s grip: ${HAND_JA[m[2]] || m[2]}.`],
+    [/^(右手|左手)を選びました。指の関節の丸（ルーペの中でも）を動かすと、持ち物の握りが変わります。$/, m => `Selected the ${JOINT[m[1]] || m[1]}. Moving its finger joint circles (in the loupe too) changes the thing's grip.`],
     [/^(右手|左手)を「(.+)」にしました。$/, m => `The ${JOINT[m[1]] || m[1]}: ${HAND_JA[m[2]] || m[2]}.`],
 
     [/^(.+)に体を合わせて、合わせた関節を固定しました。$/, m => `Fitted the body to the ${name(m[1]).toLowerCase()} and pinned the fitted joints.`],

@@ -416,7 +416,10 @@ async function loadStored(){
 const MOD_PATH = /^([A-Za-z0-9-][\w.-]*\/)?[A-Za-z0-9-][\w.-]*\.js$/;   // names starting with _ or . stay out, as in mods/
 async function folderFiles(dir, path = ""){   // a folder -> [[path, File]]
   const out = [];
-  for await (const [name, h] of dir.entries()){
+  // (an async iterator walked by hand: the syntax check, esprima, cannot read for await)
+  const entries = dir.entries();
+  for (let step = await entries.next(); !step.done; step = await entries.next()){
+    const [name, h] = step.value;
     if (h.kind === "file" && MOD_PATH.test(path + name)) out.push([path + name, await h.getFile()]);
     else if (h.kind === "directory" && !path && MOD_PATH.test(name + "/x.js")) out.push(...await folderFiles(h, name + "/"));
   }

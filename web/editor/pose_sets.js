@@ -42,7 +42,7 @@ function putPose(d){
 // ---- 体格 --------------------------------------------------------------------------------------
 function takeBody(name){
   return {name, len: J.map((_, i) => i ? r2(len(sub(S.P[i], S.P[PARENT[i]]))) : 0), R: S.R.map(r2),
-    shape: S.shape ? copy(S.shape) : null, scale: copy(S.scale || fresh().scale), sex: S.sex || null, fingerLen: fingerLens()};
+    shape: S.shape ? copy(S.shape) : null, scale: copy(S.scale || fresh().scale), sex: S.sex || null, fingerLen: fingerLens(), handApart: !!S.handApart};
 }
 function putBody(d){
   fromBottom(() => {
@@ -54,6 +54,7 @@ function putBody(d){
     S.scale = Object.assign(fresh().scale, d.scale);
     if (d.sex) S.sex = d.sex; else delete S.sex;
     S.fingerLen = Array.isArray(d.fingerLen) ? d.fingerLen.slice(0, 5) : fresh().fingerLen;
+    if (d.handApart) S.handApart = true; else delete S.handApart;
   });
 }
 // built in: the standard body, and 女性 / 男性 on it

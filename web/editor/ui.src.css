@@ -159,6 +159,13 @@
   /* 90° and ↺ 角度と拡大 (pose_sideview.js): the side view back to its first direction / all back. On a
      corner no overlay lies over: the switches lie over the views' right edge, the modes over their left,
      both along the top; under the view's name */
+  /* the hand's loupe (pose_hand_ui.js): the selected hand enlarged, its finger joints pressed and dragged there */
+  .view #handLoupe { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); z-index: 3; width: 168px; height: 168px;
+    border-radius: 12px; border: 1px solid var(--border-default); background: var(--stage); touch-action: none; cursor: crosshair;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--text-default) 18%, transparent); }
+  .view #handLoupe[hidden] { display: none; }
+  /* the phone: under the undo bar */
+  body.sheet .view #handLoupe { top: 64px; }
   .sv-tools { position: absolute; top: 30px; left: 6px; z-index: 3; display: flex; flex-wrap: wrap; gap: 4px; max-width: calc(100% - 12px); }
   .sv-tools button { min-width: 40px; height: 28px; padding: 0 8px; border-radius: 8px; white-space: nowrap;
     font: inherit; font-size: 0.75rem; color: var(--text-default); cursor: pointer;
