@@ -149,6 +149,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 体格のタブで、左右の手の大きさを同じにするか、別々に決めるかを選べるように
 - 装備の一覧で選んでいない物を（MOD などから）持たせると止まる不具合を修正
 - リファクタリングの準備：動きのテスト（tests/、tools/run_tests.py）をリポジトリに置き、構文の確認がすべてのファイルで通るように（`?.` と `for await` を同じ動きの書き方に）。設計書に、持ち物の握り・ルーペ・編集データの形式・テストと、新しく生じた難所を追記
+- ルーペにも 3軸ハンドルの回転の輪（赤：曲げ、緑：付け根の開き）を出し、ルーペの中で掴んで指の関節を回せるように
+- 指の関節の 3軸ハンドルが掴めなかった不具合を修正（輪を押すと、掴む前に関節の選択が外れてハンドルが消えていた）
 
 ### English
 
@@ -289,6 +291,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The Body tab sets whether both hands have the same size or are set apart
 - Fixed a stop when a thing not chosen in the Equip list was given to a hand (by a mod, say)
 - Getting ready to refactor: behaviour tests (tests/, tools/run_tests.py) in the repository, and the syntax check passes for every file (`?.` and `for await` rewritten with the same behaviour). The design document has held grips, the loupe, the edit data format, the tests and the new hard parts
+- The loupe shows the 3-axis handles' rotate rings too (red: bend, green: the root's spread); grab them there to turn a finger joint
+- Fixed a finger joint's 3-axis handles not being grabbable (pressing a ring let the joint go first, so its handles vanished)
 
 ## v0.1.0
 

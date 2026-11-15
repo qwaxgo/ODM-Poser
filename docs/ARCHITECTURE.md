@@ -124,7 +124,7 @@ The editor's scripts are loaded with `<script is:inline>` in `index.astro`'s ord
 | 15 | `pose_objects.js` | 448 | Solids and things as one selection (several, cut / paste, cursors, pivots) | `ODMObj` |
 | 16 | `pose_persp.js` | 302 | Exaggerated perspective (the pivot, the camera moved for a while) | `ODMPxMark` |
 | 17 | `pose_sideview.js` | 157 | The side view's camera | — |
-| 17a | `pose_hand_ui.js` | 414 | The fingers by hand: picking and dragging the circles, the loupe, the 3-axis handles, the panel, own hand shapes, a held thing's place in the hand, hand and finger sizes | `ODMHand`, `loupeMapForTest` |
+| 17a | `pose_hand_ui.js` | 469 | The fingers by hand: picking and dragging the circles, the loupe, the 3-axis handles, the panel, own hand shapes, a held thing's place in the hand, hand and finger sizes | `ODMHand`, `loupeMapForTest` |
 | 17b | `pose_project.js` | 88 | Saving the edit data (.json, .odmposer) and opening files (pose files too) | `openEditFile`, `ODMProject` |
 | 18 | `i18n.js` | 689 | Japanese → English | `ODMPoserI18n` |
 | 19 | `ui-icons.js` | 62 | The menu's icons (SVG) | `ODMICONS` |
@@ -259,7 +259,7 @@ So **`draw()` is drawing + panel sync + autosave** at once.
 | `addItem`, `addSolid` | `pose_preview.js` | Putting at the size set before |
 | `showSelected` | `pose_hand_ui.js` | The finger panel kept in step with the joint panel |
 
-**What is in `DOWN_HOOKS`**: hooks from `pose_main.js` (automatic mode switching), `pose_scene.js`, `pose_solids.js`, `pose_ruler.js`, `pose_gizmo.js`, `pose_objects.js`, `pose_cast.js` and `pose_persp.js`. The finger hook of `pose_hand_ui.js` is spliced in **right before** the 3-axis handles' hook (`ODMGizmo.downHook`): on a phone the hand's rings cover the whole hand. Finger circles are hit only closely, so a press between them goes on to the rings. Others come and go (clicking a face to stand on, putting on a face), and the mods' `pointerDown` goes in before the last one.
+**What is in `DOWN_HOOKS`**: hooks from `pose_main.js` (automatic mode switching), `pose_scene.js`, `pose_solids.js`, `pose_ruler.js`, `pose_gizmo.js`, `pose_objects.js`, `pose_cast.js` and `pose_persp.js`. The finger hook of `pose_hand_ui.js` is spliced in **right before** the 3-axis handles' hook (`ODMGizmo.downHook`): on a phone the hand's rings cover the whole hand. Finger circles are hit only closely, so a press between them goes on to the rings. `fingerLetGo`, which lets the selected finger joint go, sits **right after** the handles' hook (letting it go before made the joint's handles vanish before they could be grabbed). Others come and go (clicking a face to stand on, putting on a face), and the mods' `pointerDown` goes in before the last one.
 
 ## 3. State (the data model)
 
@@ -643,6 +643,7 @@ The same thing is pointed at in different forms (seven) by different files; when
 - It draws the hand's points as the front view has them (PX included), enlarged about the hand (`loupeMap`; scale and centre held while dragging).
 - A circle pressed in the loupe drags at once (touch too); the drag hands `dragFinger` front-view coordinates turned back from the loupe's.
 - On the front view, finger circles are hit closely (7 px × the device's scale) and taken **before** the 3-axis handles' hook: on a phone the hand's rotate rings cover the whole hand.
+- With the handles shown and a finger joint selected, the loupe draws that joint's rotate rings too (red: bend, green: the root's spread; `loupeRings`, a fixed 30 % of the loupe). A ring pressed (`loupeRingHit`) calls `setFingerJoint` with the front view handles' formula (a drag along the ring where it was taken). On a circle (within 8 px) the circle comes first.
 
 **Links elsewhere**
 
@@ -743,7 +744,8 @@ The repository has three checks now:
   - untranslated English (the hand panel, the new controls)
   - edit data both ways (.json, .odmposer, with the export settings), the pose file, older files (19 joints, 18 joints, no finger data), a share link both ways
   - finger joints (panel, 3-axis handles), own hand shapes, a held thing's grip (fingers and place, held again), hand sizes (alike and apart), the loupe (computer)
-  - a phone (tap the hand → loupe → bend with one touch)
+  - a phone (tap the hand → loupe → bend with one touch; turn the elbow's ring and the loupe's ring by touch)
+  - a finger joint's handles grabbed with a mouse, on the front view and in the loupe
 - Not yet: Pose, Body and Place operations, objects and grounding, exaggerated perspective, the side view, loading mods, the exported pictures' content (10.3). The throwaway tests written during development will be moved in step by step.
 
 ## 10. Notes for the refactoring
@@ -783,14 +785,14 @@ Bundling into one classic script at build time keeps the `file://` promise; ship
 | A hand's shape in two layers (from the hands change) | `S.hands` and `S.fingers` | The shape lives in two places, a name and adjusted angles, switched by an implicit rule (the angles count only while `from` matches) | One value for a hand's state ("shape name + changes", say), with a held thing's shape as a separate, temporary override |
 | A seventh selection (from the hands change) | `fingerSel` | A finger joint's selection means something only together with `sel` (the hand joint) | Include it in the one selection of 10.3 (finger joints by id too) |
 | Load order turned round (from the hands change) | `pose_hand.js` → `pose_main.js` | `pose_hand.js` loads first, but its functions use the later `pose_main.js`'s names (`S`, `add`, `project`, `IX`, ...) at run time; calling them at load would stop | Move shared calculations (vectors, projection) into an earlier file so dependencies go one way |
-| Hook order coupling (from the hands change) | `DOWN_HOOKS` | The finger hook relies on its place, right after the 3-axis handles' hook (`ODMGizmo.downHook`) | Press handling registered with priorities |
+| Hook order coupling (from the hands change) | `DOWN_HOOKS` | The finger hook relies on its place right before the 3-axis handles' hook, and `fingerLetGo` right after it (`ODMGizmo.downHook`). In the wrong order, finger joints' handles cannot be grabbed | Press handling registered with priorities |
 | Two more wrappers (from the hands change) | `showSelected`, `draw` (`pose_hand_ui.js`) | Panel sync grew in the same wrapping form | Replace them along with the others in step 2 of 10.3 |
 | Grip place by name (from the hands change) | `GRIP_AT` | Adjusting the fingers does not move where a held thing sits; the shape's name decides | Work the grip out from the finger points |
 | Hand size in two places (from the hands change) | the hand bone's length (`S.P`) and `S.fingerLen` | The palm's size is a bone length, the fingers' a share, kept apart | One value for the hand's measurements (keeping format compatibility) |
 | A panel put in by DOM position (from the hands change) | `#fgBox` | Inserted by JS after `#handRow` in the joint panel | Gather panel building into the Astro markup |
 | Held things found by name (from the held grip) | `heldOf` | A hand counts as gripping a thing only while it has the shape name the thing asks for; with two things of the same shape in one hand, the first found wins | Keep the hand–thing link explicit on the thing |
 | Three places a grip is written (from the held grip) | `it.handPose`, `def.handPose`, `S.fingers` | Where an adjusted finger goes depends on what that hand holds now | Fix together with "one value for a hand's state" (5.12) |
-| Openings for the tests (from the tidying) | `window.loupeMapForTest`, `toLoupeForTest` | Global, so the tests can find places in the loupe | Gather test exits when it becomes modules |
+| Openings for the tests (from the tidying) | `window.loupeMapForTest`, `toLoupeForTest`, `loupeRingsForTest`, `ODMGizmo.layoutForTest` | Global, so the tests can find places in the loupe | Gather test exits when it becomes modules |
 | One more place replacing `S` | `apply` in `pose_project.js` | 3.1's "replaced as a whole" grew by one | One state container |
 | Behaviour tests only in part | `tests/` | 14 tests; Pose, Body, Place, objects, perspective, side view and mods have throwaway tests only | 10.3 |
 

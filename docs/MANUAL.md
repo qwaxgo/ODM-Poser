@@ -113,7 +113,7 @@ A hand is drawn as the palm's outline and five fingers as lines. Each finger has
 - **Picking a finger**: in Pose mode, select a hand (its wrist or hand circle; pressing its fingers selects it too) and that hand's finger joints show as small circles. Press one to select that joint. The circles never go into the pictures.
 - **Loupe**: while a hand is selected, it shows enlarged over the view (on at first). Press and drag a circle in the loupe to bend it there and then (one touch too). On a phone the hand is small on screen: use the loupe. **Show the loupe** in the joint panel turns it off.
 - **Bending**: drag the circle. A root joint spreads sideways too as it bends. On touch, tap the circle to select it, then press again and drag.
-- **3-axis handles**: with the handles shown, the selected joint gets rotate rings: the red ring bends, the green one (roots only) spreads.
+- **3-axis handles**: with the handles shown, the selected joint gets rotate rings: the red ring bends, the green one (roots only) spreads. The same rings show in the loupe and can be grabbed there (on a phone too).
 - **In numbers**: pick it with **Finger** and **Joint** in the joint panel, then set **Bend** and **Spread**. Joints bend only as far as a human hand does.
 - **Straighten this finger**, **Same shape on the other hand** and **↺ Back to the hand shape** (drop the finger changes and go back to the chosen hand shape).
 - **Hand shape**: the hand shape list sets fist, open and the others. After the fingers are adjusted, holding a sword (say) takes the thing's own hand shape; let go and back to the first shape, and the adjusted fingers come back too.
