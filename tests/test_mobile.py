@@ -21,3 +21,29 @@ def test_phone_fingers(ed):
     touch(pg, p[0], p[1], 25, 25)
     check(pg.E("fingerSel && [fingerSel.n, fingerSel.j]") == [2, 1], "the loupe picks the middle finger's joint")
     check(pg.E("!!(S.fingers && S.fingers.r)"), "and bends it with one touch")
+
+
+def test_phone_handles(ed):
+    """The handles are grabbed by a finger: the hand's own rings on the view, a finger joint's in the loupe."""
+    pg = ed.page(phone=True)
+    pg.E("document.querySelector('#modes [data-mode=pose]').click(); sel = IX.r_elbow; draw(); 0")
+    pg.E("document.querySelector('#ovGizmo [data-gz=rotate]').click(); 0")
+    pt = """(([pts, id]) => { const c = document.getElementById(id), r = c.getBoundingClientRect(), k = r.width / c.width;
+      for (let m = 4; m < pts.length - 4; m += 2){ const x = r.left + pts[m][0] * k, y = r.top + pts[m][1] * k;
+        if (document.elementFromPoint(x, y) === c) return [x, y, (pts[m + 2][0] - pts[m - 2][0]) * k * 2, (pts[m + 2][1] - pts[m - 2][1]) * k * 2]; }
+      return null; })"""
+    g = pg.E("ODMGizmo.layoutForTest().rings.map(r => r.pts.map(q => [q.x, q.y]))")
+    p = pg.E(pt, [g[2], "front"])
+    check(p, "the elbow's blue ring shows")
+    a0 = pg.E("JSON.stringify(S.P[IX.r_wrist])")
+    touch(pg, *p)
+    check(pg.E("JSON.stringify(S.P[IX.r_wrist])") != a0, "a finger on the elbow's ring turns the forearm")
+    # a finger joint: its ring in the loupe
+    pg.E("sel = IX.r_hand; fingerSel = {side: 'r', n: 1, j: 1}; draw(); 0")
+    rings = pg.E("loupeRingsForTest()")
+    check(len(rings) == 1, "the loupe shows the joint's ring")
+    b0 = pg.E("handAngles('r')[1][2]")
+    p = pg.E(pt, [rings[0]["pts"], "handLoupe"])
+    check(p, "a point of the loupe's ring")
+    touch(pg, *p)
+    check(abs(pg.E("handAngles('r')[1][2]") - b0) > 3, "a finger on the loupe's ring bends the joint")

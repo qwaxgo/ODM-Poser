@@ -439,6 +439,8 @@ const gizmoDown = (cv, x, y) => {
   }};
 };
 DOWN_HOOKS.unshift(gizmoDown); window.ODMGizmo.downHook = gizmoDown;
+// for the tests (tests/test_hands.py): where the handles are on the front view (its pixels), or null
+window.ODMGizmo.layoutForTest = () => { const t = target(); return t ? layout(t, front.width, front.height) : null; };
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
 (window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"3軸ハンドル": "3-axis handles",

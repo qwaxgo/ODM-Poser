@@ -188,7 +188,8 @@ const fingerDown = (cv, x, y, e) => {
   if (cv !== front || mode !== "pose") return null;
   const hit = fingerAt(x, y);
   if (!hit){
-    fingerSel = null;
+    // the selected joint stays for the handles' hook after this one (its rings are that joint's); a press
+    // the handles do not take either lets it go (fingerLetGo, right after the handles' hook)
     // a hand not selected: pressing its fingers (no joint there) selects it
     if (!gizmoHolds() && pick(cv, x, y) < 0){ const s = handNear(x, y); if (s && !sideOf(sel)){ sel = IX[s + "_hand"]; draw(); return {move(){}}; } }
     return null;
@@ -199,8 +200,11 @@ const fingerDown = (cv, x, y, e) => {
   if (gizmoHolds() || (e && e.pointerType === "touch" && !same)) return {move(){}};
   return dragFinger(hit);
 };
+// after the handles' hook: a press on neither a circle nor a handle lets the selected finger joint go
+const fingerLetGo = cv => { if (cv === front && mode === "pose") fingerSel = null; return null; };
 { const gi = window.ODMGizmo && ODMGizmo.downHook ? DOWN_HOOKS.indexOf(ODMGizmo.downHook) : -1;
-  DOWN_HOOKS.splice(Math.max(0, gi), 0, fingerDown); }
+  DOWN_HOOKS.splice(Math.max(0, gi), 0, fingerDown);
+  DOWN_HOOKS.splice(gi >= 0 ? gi + 2 : 1, 0, fingerLetGo); }
 
 // ---- the 3-axis handles: the rotate rings on the selected finger joint ----------------------------
 window.ODMGizmoTargets.push(() => {
@@ -233,7 +237,8 @@ function loupeMap(s){
 }
 const toLoupe = (M, q) => [(q.x - M.c[0]) * M.m + M.L / 2, (q.y - M.c[1]) * M.m + M.L / 2];
 // for the tests (tests/test_hands.py, test_mobile.py): where a point shows in the loupe
-window.loupeMapForTest = () => lMap; window.toLoupeForTest = (M, p) => toLoupe(M, screenOf(p, front.width, front.height));
+window.loupeMapForTest = () => lMap; window.loupeRingsForTest = () => loupeRings(lMap).map(g => ({k: g.k, pts: g.pts}));
+window.toLoupeForTest = (M, p) => toLoupe(M, screenOf(p, front.width, front.height));
 const fromLoupe = (M, x, y) => [(x - M.L / 2) / M.m + M.c[0], (y - M.L / 2) / M.m + M.c[1]];
 function drawLoupe(){
   if (!loupe) return;
@@ -254,6 +259,13 @@ function drawLoupe(){
   line([22, 17, 13, 9, 5, 1, 21, 22]);
   for (let n = 0; n < 5; n++){ const b = 1 + 4 * n; line([b, b + 1, b + 2, b + 3]); }
   const fs = fingerSelOf(s), r = Math.max(5 * dpr, L / 26);
+  // the selected joint's rotate rings (the same as the front view's handles), behind the circles
+  for (const g of loupeRings(M)){
+    ctx.globalAlpha = lDrag && lDrag.ring !== undefined && lDrag.ring !== g.k ? 0.2 : 0.95;
+    ctx.strokeStyle = RING_COL[g.k]; ctx.lineWidth = lw * (lDrag && lDrag.ring === g.k ? 2.2 : 1.1);
+    ctx.beginPath(); g.pts.forEach((q, m) => m ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
   for (let n = 0; n < 5; n++) for (let j = 0; j < 3; j++){
     const q = P[1 + 4 * n + j], me = fs && fs.n === n && fs.j === j;
     ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 2 * Math.PI);
@@ -262,6 +274,40 @@ function drawLoupe(){
   }
   ctx.fillStyle = cssVar("--sub"); ctx.font = `${Math.round(10 * dpr)}px sans-serif`;
   ctx.fillText(s === "r" ? "右手" : "左手", 6 * dpr, 14 * dpr);
+}
+// the rotate rings in the loupe, while the handles show and a finger joint is selected: about the bend's
+// axis (red) and, at a root, the spread's (green), a fixed size in the loupe. [{k, u, a, b, pts}]
+const RING_COL = ["#e5484d", "#30a46c"];
+function loupeRings(M){
+  const fs = M && gizmoHolds() ? fingerSelOf(M.s) : null; if (!fs) return [];
+  const W = front.width, H = front.height, fj = fingerJoint(fs.side, fs.n, fs.j), c = screenOf(fj.p, W, H);
+  const R = M.L * 0.3 / (M.m * Math.max(1e-6, c.s));
+  return (fs.j === 0 ? [0, 1] : [0]).map(k => {
+    const u = k ? fj.spreadAx : fj.bendAx, h = Math.abs(u[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+    const a = norm(cross(h, u)), b = norm(cross(u, a)), pts = [];
+    for (let m = 0; m <= 64; m++){ const q = 2 * Math.PI * m / 64;
+      pts.push(toLoupe(M, screenOf(add(fj.p, add(mul(a, R * Math.cos(q)), mul(b, R * Math.sin(q)))), W, H))); }
+    return {k, u, a, b, pts, fs};
+  });
+}
+// a press on a ring in the loupe: the drag along the ring where it was taken turns the joint (as the
+// front view's handles do)
+function loupeRingHit(x, y){
+  if (!lMap) return null;
+  const near = 10 * (devicePixelRatio || 1) * Math.min(1.6, pointerScale()), dpr = devicePixelRatio || 1;
+  let best = null, bd = near;
+  for (const g of loupeRings(lMap)) for (let m = 1; m < g.pts.length; m++){
+    const p = g.pts[m - 1], q = g.pts[m], dx = q[0] - p[0], dy = q[1] - p[1], l2 = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((x - p[0]) * dx + (y - p[1]) * dy) / l2)), d = Math.hypot(x - p[0] - dx * t, y - p[1] - dy * t);
+    if (d < bd){ bd = d; best = {g, m}; }
+  }
+  if (!best) return null;
+  const {g, m} = best, step = 2 * Math.PI / 64, tx = (g.pts[m][0] - g.pts[m - 1][0]) / step, ty = (g.pts[m][1] - g.pts[m - 1][1]) / step;
+  const t2 = Math.max(tx * tx + ty * ty, (24 * dpr) ** 2), sgn = Math.sign(dot(cross(g.a, g.b), g.u)) || 1;
+  const fs = g.fs, s0 = handAngles(fs.side)[fs.n].slice(), x0 = x, y0 = y;
+  return {ring: g.k, turn(mx, my){ const dg = sgn * ((mx - x0) * tx + (my - y0) * ty) / t2 * 180 / Math.PI;
+    if (g.k === 0) setFingerJoint(fs.side, fs.n, fs.j, s0[1 + fs.j] + dg);
+    else setFingerJoint(fs.side, fs.n, 0, undefined, s0[0] + dg); }};
 }
 function loupeHit(x, y){
   if (!lMap) return null;
@@ -276,14 +322,23 @@ function loupeHit(x, y){
 if (loupe){
   const at = e => { const r = loupe.getBoundingClientRect(), k = loupe.width / (r.width || 1); return [(e.clientX - r.left) * k, (e.clientY - r.top) * k]; };
   loupe.addEventListener("pointerdown", e => {
-    e.preventDefault(); const [x, y] = at(e), hit = loupeHit(x, y); if (!hit) return;
+    e.preventDefault(); const [x, y] = at(e), hit = loupeHit(x, y);
+    // a circle first (they are small and lie on the rings' middle), then a ring
+    const onCircle = hit && (() => { const q = toLoupe(lMap, screenOf(handShape3D(hit.side).pts[1 + 4 * hit.n + hit.j], front.width, front.height));
+      return Math.hypot(q[0] - x, q[1] - y) < 8 * (devicePixelRatio || 1); })();
+    const rh = onCircle ? null : loupeRingHit(x, y);
+    if (rh){ remember(); lDrag = {M: lMap, ring: rh.ring, d: {move: (mx, my) => rh.turn(mx, my)}, raw: true};
+      try { loupe.setPointerCapture(e.pointerId); } catch (err) {} draw(); return; }
+    if (!hit) return;
     fingerSel = hit; sel = IX[hit.side + "_hand"];
     // pressed in the loupe: bent at once, mouse or finger (the circles are big there)
     remember(); lDrag = {M: lMap, d: dragFinger(hit)};
     try { loupe.setPointerCapture(e.pointerId); } catch (err) {}
     draw();
   });
-  loupe.addEventListener("pointermove", e => { if (!lDrag) return; const [x, y] = at(e), f = fromLoupe(lDrag.M, x, y); lDrag.d.move(f[0], f[1]); drawSoon(); });
+  // a ring's drag goes in loupe pixels; a circle's in the front view's (where the finger is aimed)
+  loupe.addEventListener("pointermove", e => { if (!lDrag) return; const [x, y] = at(e);
+    if (lDrag.raw) lDrag.d.move(x, y); else { const f = fromLoupe(lDrag.M, x, y); lDrag.d.move(f[0], f[1]); } drawSoon(); });
   const end = () => { if (!lDrag) return; lDrag = null; draw(); };
   loupe.addEventListener("pointerup", end); loupe.addEventListener("pointercancel", end);
 }

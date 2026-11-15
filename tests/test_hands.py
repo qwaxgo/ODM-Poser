@@ -74,3 +74,40 @@ def test_loupe_desktop(ed):
     check(pg.E("!!(S.fingers && S.fingers.r)"), "and bends it")
     pg.E("sel = IX.chest; draw(); 0")
     check(pg.E("document.getElementById('handLoupe').hidden"), "hidden without a hand")
+
+
+def _drag_ring(pg, pts, canvas):
+    """Press a ring's point that the canvas itself shows (not under the loupe or a panel) and drag along it."""
+    p = pg.E(f"""((pts) => {{ const c = document.getElementById('{canvas}'), r = c.getBoundingClientRect(), k = r.width / c.width;
+      for (let m = 4; m < pts.length - 4; m += 2){{ const x = r.left + pts[m][0] * k, y = r.top + pts[m][1] * k;
+        if (document.elementFromPoint(x, y) === c) return [x, y, (pts[m + 2][0] - pts[m - 2][0]) * k, (pts[m + 2][1] - pts[m - 2][1]) * k]; }}
+      return null; }})""", pts)
+    check(p, f"a point of the ring shows on {canvas}")
+    x, y, dx, dy = p
+    pg.mouse.move(x, y); pg.mouse.down(); pg.mouse.move(x + dx * 2, y + dy * 2, steps=6); pg.mouse.up()
+
+
+def test_finger_handles_grabbed(ed):
+    pg = ed.page()
+    hand(pg)
+    pg.E("fingerSel = {side: 'r', n: 1, j: 1}; draw(); 0")
+    pg.E("document.querySelector('#ovGizmo [data-gz=rotate]').click(); 0")
+    g = pg.E("(() => { const g = ODMGizmo.layoutForTest(); return g && g.rings.map(r => ({k: r.k, pts: r.pts.map(q => [q.x, q.y])})); })()")
+    check(g and len(g) == 1, f"the middle joint has its bend ring: {g and len(g)}")
+    b0 = pg.E("handAngles('r')[1][2]")
+    _drag_ring(pg, g[0]["pts"], "front")
+    check(pg.E("fingerSel && [fingerSel.n, fingerSel.j]") == [1, 1], "the joint stays selected")
+    check(abs(pg.E("handAngles('r')[1][2]") - b0) > 3, "the front view's ring bends it")
+    # the loupe has the same rings
+    rings = pg.E("loupeRingsForTest()")
+    check(len(rings) == 1, f"the loupe shows the ring: {len(rings)}")
+    b1 = pg.E("handAngles('r')[1][2]")
+    _drag_ring(pg, rings[0]["pts"], "handLoupe")
+    check(abs(pg.E("handAngles('r')[1][2]") - b1) > 3, "the loupe's ring bends it")
+    # a root: bend and spread
+    pg.E("fingerSel = {side: 'r', n: 2, j: 0}; draw(); 0")
+    rings = pg.E("loupeRingsForTest()")
+    check([r["k"] for r in rings] == [0, 1], "a root has bend and spread rings in the loupe")
+    s0 = pg.E("handAngles('r')[2][0]")
+    _drag_ring(pg, rings[1]["pts"], "handLoupe")
+    check(abs(pg.E("handAngles('r')[2][0]") - s0) > 1, "the loupe's green ring spreads it")
