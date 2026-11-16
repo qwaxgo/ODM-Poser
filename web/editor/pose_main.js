@@ -872,6 +872,9 @@ function down(cv, e){
     remember(); drag = {nav: e.ctrlKey ? "zoom" : e.shiftKey ? "pan" : "orbit", lx: x, ly: y}; return; }
   if (e.altKey){ const i = pick(cv, x, y); if (i >= 0){ remember(); sel = i; togglePin(i); draw(); } return; }
   // the hand cursor (pose_objects.js): every drag on the front view moves the camera; a click still picks
+  // a touch (a phone, a tablet): a press on a shown 3-axis handle is the handle's, before the camera
+  if (cv === front && e.pointerType === "touch" && window.ODMGizmo && ODMGizmo.downHook){
+    const d = ODMGizmo.downHook(cv, x, y, e); if (d){ remember(); drag = d; draw(); return; } }
   if (cv === front && handHook){ const d = handHook(cv, x, y, e); if (d){ drag = d; return; } }
   for (const h of DOWN_HOOKS){
     const d = h(cv, x, y, e);

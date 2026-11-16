@@ -47,3 +47,24 @@ def test_phone_handles(ed):
     check(p, "a point of the loupe's ring")
     touch(pg, *p)
     check(abs(pg.E("handAngles('r')[1][2]") - b0) > 3, "a finger on the loupe's ring bends the joint")
+
+
+def test_phone_handles_before_camera(ed):
+    """With the hand cursor (every drag turns the camera), a finger on a shown handle still takes the handle."""
+    pg = ed.page(phone=True)
+    pg.E("document.querySelector('button[data-cur=hand]').click(); 0")
+    pg.E("document.querySelector('#modes [data-mode=pose]').click(); sel = IX.r_elbow; draw(); 0")
+    pg.E("document.querySelector('#ovGizmo [data-gz=rotate]').click(); 0")
+    g = pg.E("ODMGizmo.layoutForTest().rings.map(r => r.pts.map(q => [q.x, q.y]))")
+    p = pg.E("""(pts => { const c = front, r = c.getBoundingClientRect(), k = r.width / c.width;
+      for (let m = 4; m < pts.length - 4; m += 2){ const x = r.left + pts[m][0] * k, y = r.top + pts[m][1] * k;
+        if (document.elementFromPoint(x, y) === c) return [x, y, (pts[m + 2][0] - pts[m - 2][0]) * k * 2, (pts[m + 2][1] - pts[m - 2][1]) * k * 2]; }
+      return null; })""", g[2])
+    check(p, "the elbow's blue ring shows")
+    cam0, w0 = pg.E("JSON.stringify(S.cam)"), pg.E("JSON.stringify(S.P[IX.r_wrist])")
+    touch(pg, *p)
+    check(pg.E("JSON.stringify(S.P[IX.r_wrist])") != w0, "the ring turns the forearm")
+    check(pg.E("JSON.stringify(S.cam)") == cam0, "the camera stays")
+    # off the handles, the hand cursor still turns the camera
+    touch(pg, 200, 700, 60, 0)
+    check(pg.E("JSON.stringify(S.cam)") != cam0, "a drag elsewhere turns the camera")
