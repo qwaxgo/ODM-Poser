@@ -151,6 +151,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - リファクタリングの準備：動きのテスト（tests/、tools/run_tests.py）をリポジトリに置き、構文の確認がすべてのファイルで通るように（`?.` と `for await` を同じ動きの書き方に）。設計書に、持ち物の握り・ルーペ・編集データの形式・テストと、新しく生じた難所を追記
 - ルーペにも 3軸ハンドルの回転の輪（赤：曲げ、緑：付け根の開き）を出し、ルーペの中で掴んで指の関節を回せるように
 - 指の関節の 3軸ハンドルが掴めなかった不具合を修正（輪を押すと、掴む前に関節の選択が外れてハンドルが消えていた）
+- スマホ・タブレットでは、3軸ハンドルが出ているとき、ハンドのカーソル（カメラ）よりハンドルのタップを優先するように
 
 ### English
 
@@ -293,6 +294,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Getting ready to refactor: behaviour tests (tests/, tools/run_tests.py) in the repository, and the syntax check passes for every file (`?.` and `for await` rewritten with the same behaviour). The design document has held grips, the loupe, the edit data format, the tests and the new hard parts
 - The loupe shows the 3-axis handles' rotate rings too (red: bend, green: the root's spread); grab them there to turn a finger joint
 - Fixed a finger joint's 3-axis handles not being grabbable (pressing a ring let the joint go first, so its handles vanished)
+- On phones and tablets, a tap on a shown 3-axis handle now comes before the hand cursor (the camera)
 
 ## v0.1.0
 

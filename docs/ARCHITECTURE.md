@@ -364,6 +364,7 @@ sequenceDiagram
   participant R as drawSoon → draw
   U->>D: pointerdown
   D->>D: middle button / Alt → camera
+  D->>D: touch → the 3-axis handles first (ODMGizmo.downHook)
   D->>D: hand cursor (handHook)
   D->>H: h(cv, x, y, e) from the first
   H-->>D: a drag {move, end} or null
@@ -744,7 +745,7 @@ The repository has three checks now:
   - untranslated English (the hand panel, the new controls)
   - edit data both ways (.json, .odmposer, with the export settings), the pose file, older files (19 joints, 18 joints, no finger data), a share link both ways
   - finger joints (panel, 3-axis handles), own hand shapes, a held thing's grip (fingers and place, held again), hand sizes (alike and apart), the loupe (computer)
-  - a phone (tap the hand → loupe → bend with one touch; turn the elbow's ring and the loupe's ring by touch)
+  - a phone (tap the hand → loupe → bend with one touch; turn the elbow's ring and the loupe's ring by touch; handles before the hand cursor)
   - a finger joint's handles grabbed with a mouse, on the front view and in the loupe
 - Not yet: Pose, Body and Place operations, objects and grounding, exaggerated perspective, the side view, loading mods, the exported pictures' content (10.3). The throwaway tests written during development will be moved in step by step.
 
@@ -785,7 +786,7 @@ Bundling into one classic script at build time keeps the `file://` promise; ship
 | A hand's shape in two layers (from the hands change) | `S.hands` and `S.fingers` | The shape lives in two places, a name and adjusted angles, switched by an implicit rule (the angles count only while `from` matches) | One value for a hand's state ("shape name + changes", say), with a held thing's shape as a separate, temporary override |
 | A seventh selection (from the hands change) | `fingerSel` | A finger joint's selection means something only together with `sel` (the hand joint) | Include it in the one selection of 10.3 (finger joints by id too) |
 | Load order turned round (from the hands change) | `pose_hand.js` → `pose_main.js` | `pose_hand.js` loads first, but its functions use the later `pose_main.js`'s names (`S`, `add`, `project`, `IX`, ...) at run time; calling them at load would stop | Move shared calculations (vectors, projection) into an earlier file so dependencies go one way |
-| Hook order coupling (from the hands change) | `DOWN_HOOKS` | The finger hook relies on its place right before the 3-axis handles' hook, and `fingerLetGo` right after it (`ODMGizmo.downHook`). In the wrong order, finger joints' handles cannot be grabbed | Press handling registered with priorities |
+| Hook order coupling (from the hands change) | `DOWN_HOOKS` | The finger hook relies on its place right before the 3-axis handles' hook, and `fingerLetGo` right after it (`ODMGizmo.downHook`). In the wrong order, finger joints' handles cannot be grabbed. For touch, `down()` calls `ODMGizmo.downHook` itself before `handHook` (the camera), so the same hook is called from two places | Press handling registered with priorities |
 | Two more wrappers (from the hands change) | `showSelected`, `draw` (`pose_hand_ui.js`) | Panel sync grew in the same wrapping form | Replace them along with the others in step 2 of 10.3 |
 | Grip place by name (from the hands change) | `GRIP_AT` | Adjusting the fingers does not move where a held thing sits; the shape's name decides | Work the grip out from the finger points |
 | Hand size in two places (from the hands change) | the hand bone's length (`S.P`) and `S.fingerLen` | The palm's size is a bone length, the fingers' a share, kept apart | One value for the hand's measurements (keeping format compatibility) |
