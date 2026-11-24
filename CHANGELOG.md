@@ -152,6 +152,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - ルーペにも 3軸ハンドルの回転の輪（赤：曲げ、緑：付け根の開き）を出し、ルーペの中で掴んで指の関節を回せるように
 - 指の関節の 3軸ハンドルが掴めなかった不具合を修正（輪を押すと、掴む前に関節の選択が外れてハンドルが消えていた）
 - スマホ・タブレットでは、3軸ハンドルが出ているとき、ハンドのカーソル（カメラ）よりハンドルのタップを優先するように
+- 設計書に、今ある機能をすべて並べた「実装状況の一覧」（11 章：機能ごとの実装の場所・保存先・テストの有無・注意）と、リファクタリング案（10.4：構造の整理、TypeScript 化、ライブラリの候補、進める順。まだ行いません）を追加
+- メニューの「読込」「書き出し」の説明に、編集データも入るように
 
 ### English
 
@@ -295,6 +297,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The loupe shows the 3-axis handles' rotate rings too (red: bend, green: the root's spread); grab them there to turn a finger joint
 - Fixed a finger joint's 3-axis handles not being grabbable (pressing a ring let the joint go first, so its handles vanished)
 - On phones and tablets, a tap on a shown 3-axis handle now comes before the hand cursor (the camera)
+- The design document lists every feature there is (chapter 11: where each is implemented, what keeps it, whether it is tested, notes) and has a refactoring plan (10.4: structure, TypeScript, candidate libraries, the order; not started)
+- The menu's descriptions of Import and Export mention the edit data
 
 ## v0.1.0
 

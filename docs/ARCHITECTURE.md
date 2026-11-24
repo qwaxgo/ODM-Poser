@@ -4,9 +4,9 @@
 
 ## 0. About this document
 
-- **Purpose**: before refactoring, set down the features as they are and how they are built, so a person can read and understand them. No feature changes. This document says how things are now; the last chapter (10) lists what a refactoring must keep and where the hard parts are.
+- **Purpose**: before refactoring, set down the features as they are and how they are built, so a person can read and understand them. No feature changes. This document says how things are now; chapter 10 lists what a refactoring must keep, where the hard parts are, and a refactoring plan; chapter 11 lists every feature there is.
 - **Reader**: a developer who knows JavaScript but is new to this code.
-- **As of**: v0.2.0 in development (2026-11-11; the hands and fingers rework of the same day included). Code is pointed at by function and variable names, not line numbers (those move quickly).
+- **As of**: v0.2.0 in development (2026-11-11; the inventory of features (chapter 11) and the refactoring plan (10.4) added on 2026-11-24). Code is pointed at by function and variable names, not line numbers (those move quickly).
 - **What other documents cover**:
   - [HANDOFF.md](HANDOFF.md): the hand-over notes (the owner's rules, open items).
   - [MODDING.md](MODDING.md): the MOD API, for mod authors.
@@ -110,7 +110,7 @@ The editor's scripts are loaded with `<script is:inline>` in `index.astro`'s ord
 | 2 | `pose_props.js` | 457 | The things' shapes (hand-made primitives) | `PROP_CATS`, `PROPS` |
 | 3 | `pose_props_more.js` | 271 | More things (effects, worn things, simple solids) | (adds to `PROPS`) |
 | 3a | `pose_hand.js` | 224 | The hand's model: shapes, finger joints, the 21 points, drawing (5.12). **Loaded before `pose_main.js`, but its functions use `pose_main.js`'s names at run time** | `HANDS`, `FINGERS`, `handShape3D`, `drawHand`, `fingerSel`, ... |
-| 4 | `pose_main.js` | 2306 | The core: the body, the state `S`, the camera and projection, drawing, input, the edit pipeline, the basic panel, files | about 280 globals |
+| 4 | `pose_main.js` | 2309 | The core: the body, the state `S`, the camera and projection, drawing, input, the edit pipeline, the basic panel, files | about 280 globals |
 | 5 | `pose_scene.js` | 1291 | The floor and grounding; holding, wearing, putting down; riding, grabbing, the wire; standing on faces | `drawScene`, `sceneAfterEdit`, `partSets`, ... |
 | 6 | `pose_cast.js` | 185 | More than one figure (swapped in to be drawn) | `everyFigure`, `withFigure`, `onlyFigure` |
 | 7 | `pose_sets.js` | 135 | Saved poses and bodies (in the browser) | — |
@@ -119,14 +119,14 @@ The editor's scripts are loaded with `<script is:inline>` in `index.astro`'s ord
 | 10 | `pose_style.js` | 441 | Line colours and auras | drawing through `partColor`, `AURA_KINDS` |
 | 11 | `pose_preview.js` | 201 | The preview before putting | — |
 | 12 | `pose_ruler.js` | 444 | The perspective ruler and guide shapes, snapping | `drawRuler`, `vanish`, `snapSolid`, ... |
-| 13 | `pose_gizmo.js` | 455 | The 3-axis handles | `ODMGizmo`, `ODMGizmoTargets` |
+| 13 | `pose_gizmo.js` | 458 | The 3-axis handles | `ODMGizmo`, `ODMGizmoTargets` |
 | 14 | `pose_place.js` | 538 | The Objects tab (the list to put, place / turn / size of what is out, putting on a face) | `ODMGhost`, `ODMPlaceGuide` |
 | 15 | `pose_objects.js` | 448 | Solids and things as one selection (several, cut / paste, cursors, pivots) | `ODMObj` |
 | 16 | `pose_persp.js` | 302 | Exaggerated perspective (the pivot, the camera moved for a while) | `ODMPxMark` |
 | 17 | `pose_sideview.js` | 157 | The side view's camera | — |
 | 17a | `pose_hand_ui.js` | 469 | The fingers by hand: picking and dragging the circles, the loupe, the 3-axis handles, the panel, own hand shapes, a held thing's place in the hand, hand and finger sizes | `ODMHand`, `loupeMapForTest` |
 | 17b | `pose_project.js` | 88 | Saving the edit data (.json, .odmposer) and opening files (pose files too) | `openEditFile`, `ODMProject` |
-| 18 | `i18n.js` | 689 | Japanese → English | `ODMPoserI18n` |
+| 18 | `i18n.js` | 704 | Japanese → English | `ODMPoserI18n` |
 | 19 | `ui-icons.js` | 62 | The menu's icons (SVG) | `ODMICONS` |
 | 20 | `ui-menu.js` | 201 | The panel's menu (three levels) and tabs | `ODMUI.showMenu`, ... |
 | 21 | `ui-figure.js` | 159 | The body map (what is being edited) | — |
@@ -134,7 +134,7 @@ The editor's scripts are loaded with `<script is:inline>` in `index.astro`'s ord
 | 23 | `ui-help.js` | 171 | The controls' hints | — |
 | 24 | `ui-log.js` | 107 | The work log | — |
 | 25 | `../mods.js` | — | The list of mods (outside the page; the host serves it) | `ODM_POSER_MODS` |
-| 26 | `pose_api.js` | 584 | The MOD API and the mod loader | `ODMPoser` (old name `SymbolicPose`) |
+| 26 | `pose_api.js` | 587 | The MOD API and the mod loader | `ODMPoser` (old name `SymbolicPose`) |
 | 27 | `pose_share.js` | 313 | Posting to social media and `#pose=` links | — |
 | 28 | `ui-layout.js` | 130 | The panel's arrangement (labels paired with their fields) | — |
 | 29 | `ui-pane.js` | 135 | The edge between the views and the panel, the modes' columns | — |
@@ -739,7 +739,7 @@ The repository has three checks now:
 - It builds the site once (`--no-build` skips that), serves it, and opens the editor in a new browser context (its own localStorage) for each test; a page error fails the test.
 - A test is a function `test_<name>(ed)` in `tests/test_*.py`; `ed.page(query, phone=, clipboard=)` opens the editor and `pg.E` calls `page.evaluate`. Words given as arguments pick the files whose names hold them.
 - `behaviour` in `docker-compose.test.yml` runs them too.
-- The tests now (14):
+- The tests now (17):
   - start-up, undo and redo
   - the camera staying when the ratio changes, the exported picture's size
   - untranslated English (the hand panel, the new controls)
@@ -747,7 +747,7 @@ The repository has three checks now:
   - finger joints (panel, 3-axis handles), own hand shapes, a held thing's grip (fingers and place, held again), hand sizes (alike and apart), the loupe (computer)
   - a phone (tap the hand → loupe → bend with one touch; turn the elbow's ring and the loupe's ring by touch; handles before the hand cursor)
   - a finger joint's handles grabbed with a mouse, on the front view and in the loupe
-- Not yet: Pose, Body and Place operations, objects and grounding, exaggerated perspective, the side view, loading mods, the exported pictures' content (10.3). The throwaway tests written during development will be moved in step by step.
+- Not yet: Pose, Body and Place operations, objects and grounding, exaggerated perspective, the side view, loading mods, the exported pictures' content (10.3, step 0 of 10.4.5, the "—" rows of chapter 11). The throwaway tests written during development will be moved in step by step.
 
 ## 10. Notes for the refactoring
 
@@ -773,7 +773,7 @@ Bundling into one classic script at build time keeps the `file://` promise; ship
 | Problem | Where | What happens | Possible direction |
 |---------|-------|--------------|--------------------|
 | One global namespace | pose_main.js and others | A name clash once stopped the whole editor (`norm`) | Gather names into namespace objects; bundle into modules |
-| Wrapping chains | `drawAtari` (11 layers), `draw` (17), `syncUI` (8) | Drawing and sync order follow load order; hard to see what happens where | Layer registration (`layers.add({z, draw})`), events (`on("draw")`, `on("sync")`) |
+| Wrapping chains | `drawAtari` (11 layers), `draw` (19), `syncUI` (8) | Drawing and sync order follow load order; hard to see what happens where | Layer registration (`layers.add({z, draw})`), events (`on("draw")`, `on("sync")`) |
 | `draw()` is drawing, panel sync and autosave | 2.4 | Every draw syncs all panels and schedules a save | Split drawing, UI updates and saving |
 | Selection state split | `sel`, `scSel`, `soSel`, `ODMObj`, the Objects tab's `sel`, `pxSel` | Pointing by index drifts easily on delete or reorder | One selection mechanism with stable ids |
 | `S` swapped during drawing | `withFigure`, `withPX`, `occFrozen` | Reading `S` mid-draw gives another figure's values or a moved camera; restored in `finally` on errors | Pass the figure as an argument, the camera as a value |
@@ -795,7 +795,7 @@ Bundling into one classic script at build time keeps the `file://` promise; ship
 | Three places a grip is written (from the held grip) | `it.handPose`, `def.handPose`, `S.fingers` | Where an adjusted finger goes depends on what that hand holds now | Fix together with "one value for a hand's state" (5.12) |
 | Openings for the tests (from the tidying) | `window.loupeMapForTest`, `toLoupeForTest`, `loupeRingsForTest`, `ODMGizmo.layoutForTest` | Global, so the tests can find places in the loupe | Gather test exits when it becomes modules |
 | One more place replacing `S` | `apply` in `pose_project.js` | 3.1's "replaced as a whole" grew by one | One state container |
-| Behaviour tests only in part | `tests/` | 14 tests; Pose, Body, Place, objects, perspective, side view and mods have throwaway tests only | 10.3 |
+| Behaviour tests only in part | `tests/` | 17 tests; Pose, Body, Place, objects, perspective, side view and mods have throwaway tests only | 10.3 |
 
 ### 10.3 A suggested order
 
@@ -818,6 +818,281 @@ To go ahead without changing features:
 5. **Namespaces and the build**: last, move the global names into a namespace or modules, bundled into one classic script so `file://` keeps working.
 
 At every step, pass the tests of the promises in 10.1 before going on.
+
+### 10.4 Refactoring plan (under consideration, not done yet)
+
+A plan from the owner's direction (2026-11-24). **It is not carried out yet.** It keeps the promises of 10.1 and changes neither the features nor the looks.
+
+The direction has three parts:
+
+- make the structure of functions and classes clear, easier for people to maintain
+- move to TypeScript
+- consider JS libraries where they do not cost performance
+
+#### 10.4.1 The structure aimed at
+
+Today's "one global namespace built by load order and wrapping" becomes "modules by role, with explicit registration".
+
+| Layer | What | Where it is now | Touches the DOM |
+|-------|------|-----------------|-----------------|
+| `core/math` | vectors, rotations, the projection's formulas | the top of pose_main.js, small helpers in many files | no |
+| `core/state` | the `State` type, `fresh()`, migrating old files (v1→v2→v3), diffs | pose_main.js, pose_project.js, pose_share.js | no |
+| `core/body` | the joint tables, IK, limits, twist, body sizes | pose_main.js, pose_size.js | no |
+| `core/hand` | hand shapes, finger angles, the 21 points, grips | pose_hand.js | no |
+| `core/scene` | things' and objects' meshes, grounding, standing on faces, the wire | pose_scene.js, pose_solids.js | no |
+| `core/camera` | the camera, exaggerated perspective, the side view's camera, the ruler's vanishing points | pose_main.js, pose_persp.js, pose_sideview.js, pose_ruler.js | no |
+| `render` | drawing layers (figures, things, objects, ruler, handles, marks), registered with a z number | the `drawAtari` / `draw` wrappers | the canvas only |
+| `input` | press handling registered by priority (handles > fingers > joints > things > camera) | `DOWN_HOOKS`, `handHook` | the canvas only |
+| `editor` | the selection (one mechanism, by id), undo, modes, autosave | `sel`, `scSel`, `soSel`, `ODMObj`, `fingerSel` … | no |
+| `ui/panels` | each tab's controls, refreshed only for the changes that concern that tab | the `syncUI` / `showSelected` wrappers, `innerHTML` | yes |
+| `io` | files, edit data, share links, exports | pose_project.js, pose_share.js, pose_main.js | exports only |
+| `api` | MOD API 1.x (still `window.ODMPoser`, same names) | pose_api.js | — |
+
+Concretely:
+
+- **One editor object**: `const editor = {state, selection, camera, history, events}`; functions take it as an argument or `this`. The global `S` stays as a read-only window for mods and old code.
+- **Events**: a change calls `events.emit("change", {what})`, drawing is `requestRender()`, and panels refresh only for what concerns them. This undoes `draw()` doing drawing, panel sync and saving at once (10.2).
+- **Registration**: `layers.add({z, draw})`, `input.add({priority, down})`, `panels.add({menu, sync})`. The wrapping chains of 2.4 become data whose order can be seen. The MOD API's hooks move onto these.
+- **Where classes fit**: only things with a lifetime and inner state (`History`, `Selection`, `Camera`, `Gizmo`, `Loupe`, `Panel`). Calculations stay plain functions.
+- **File size**: about 400 lines at most. pose_main.js (about 2300 lines) and pose_scene.js (about 1300) are split first.
+- **Names and comments**: TSDoc on exported functions; abbreviated names (`sc`, `so`, `px` …) get full names where they are seen from outside (short local variables can stay).
+
+#### 10.4.2 Moving to TypeScript
+
+**The constraint**: the HTML release opens from `file://`, so ES modules cannot be shipped as they are (10.1). The build bundles everything into one classic script (IIFE). Astro's `<script>` (not `is:inline`) emits `type="module"`, so it is not used; esbuild (inside Vite) writes into `web/editor/` or `dist/`.
+
+Steps:
+
+1. **Type checking first** (the build stays as it is): `allowJs` and `checkJs` in `tsconfig.json`, and the types `State`, `Item`, `Solid`, `Prop` … in `types.d.ts`. Types are added in the JS itself with `// @ts-check` and JSDoc. CI runs `tsc --noEmit`.
+2. **Bundling**: an entry (`editor/main.ts`) imports today's files in load order, and esbuild makes `editor.js` (IIFE). index.astro loads that one file (keeping `?v=`). The globals that mods and tests use (`S`, `draw`, `IX` …) are put on `window` explicitly in the entry, so nothing changes in behaviour.
+3. **One file at a time to .ts**: the calculation layers (`core/*`) first, each with tests. `strict` is turned on layer by layer.
+4. **Types for mods**: the MOD API's types (`odm-poser.d.ts`) are given to mod authors (on the docs' download page).
+
+Other effects:
+
+- `?.` and `??` become usable in the source when the build's `target` covers older browsers; the esprima check then runs on the built `editor.js`.
+- Translation keys stay the Japanese sentences (mods add translations by them).
+- The ComfyUI bridge and the HTML release rely on the `editor/` layout: `editor/index.html` and `../mods.js` stay where they are.
+- Source maps let the browser's tools show the .ts (the released zip does not need them).
+
+#### 10.4.3 Candidate libraries
+
+The tests: **does it run on every draw (`draw`, dragging)**, and if so is it faster; and **the size of what is shipped**.
+
+| Candidate | For | Runs when | Size (gzip, about) | Verdict |
+|-----------|-----|-----------|--------------------|---------|
+| esbuild | TypeScript build and bundling | build only | 0 (not shipped) | adopt (10.4.2) |
+| Vitest | unit tests of `core/*` | development only | 0 | adopt, alongside the Playwright tests |
+| Zod or Valibot | checking files, edit data, share links and mod input, with types from the schema | on loading only | Zod ~13 KB, Valibot a few KB | candidate; the small Valibot fits better |
+| fflate | compression where `CompressionStream` is missing (edit data, share links; today they are written unpacked there) | saving and sharing only | ~8 KB | candidate; shorter share links on older Safari and the like |
+| Mutative or Immer (patches) | undo as diffs (today: 80 JSON copies of all of `S`) | on every edit | 5–15 KB | measure first; an own diff would do too |
+| Preact + signals, or lit | panels built from the state, refreshing only what changed | when the state changes | 4–6 KB | idea; ends syncing every panel on every `draw`. Check it fits melta UI's lint and AGENTS.md |
+| gl-matrix | vector maths writing into `out` (no new arrays) | drawing, dragging | ~10 KB (only what is used) | not now; only where measuring shows hidden lines or meshes are slow |
+| three.js | 3D rendering | drawing | 150 KB+ | no: the line rough, the own hidden lines and the OpenPose export would look different |
+| React | UI | — | 40 KB+ | no: large, and a poor fit for a canvas-centred app |
+
+Each is compared before and after with the yardstick of 10.4.4.
+
+#### 10.4.4 Other ideas
+
+- **Picture comparison tests** (the strongest safety net): for a few scenes (one figure, several, things, objects, the ruler, exaggerated perspective, the side view), make `render("atari")`, OpenPose and composition pictures and compare them pixel by pixel with saved ones. Rebuilding the drawing can then be checked to look the same, automatically.
+- **A speed yardstick**: a script that times one `draw`, a frame while dragging, `remember` and an export, in scenes such as 5 figures and 30 objects. "Not costing performance" is then judged by numbers.
+- **Old file samples**: v1 (18 joints), v2, 19 joints, things sized in %, old walls and ceilings, old share links in `tests/fixtures/`, checked every run.
+- **Migration in one place**: the fixes for old forms scattered over `migrate`, `upgradeState`, `migrateEnv`, `stretchOf` … become one list of migrations by version (v1→v2→v3, thing sizes, walls and ceilings).
+- **CI**: on pull requests, the build, `python tools/lint_ui.py`, the syntax check, `tools/run_tests.py` and (with TypeScript) `tsc`.
+- **Draw less**: dirty flags to redraw only what changed; keep objects' meshes and hidden-line results until they change. Large exports drawn in an OffscreenCanvas in a Worker so the screen does not stop.
+- **Data apart from code**: the things' shapes (`PROPS`), `GRIP_AT`, `FINGER_LIM`, `SEX_BODY` and the built-in poses as JSON (or TS data). `file://` cannot fetch JSON, so the build puts them in the bundle.
+- **Panels built in JS into markup**: `#fgBox`, `#gripBox`, the hand size controls … as Astro components, so melta UI's lint sees them.
+- **Ids**: lasting ids for things, objects and figures; the selection, pivots, presets and mod data point by id, not by index (only added fields, so the format stays compatible).
+- **Test openings in one place**: `loupeMapForTest` and the like gathered into one `window.ODMTest`, left out of the production build.
+
+#### 10.4.5 Order (proposed)
+
+| Step | What | Feature change | Done when |
+|------|------|----------------|-----------|
+| 0 | Safety net: tests for the "—" features of chapter 11, picture comparison, old file samples, the speed yardstick, CI | none | the main features have tests |
+| 1 | `// @ts-check` and type definitions (still JS) | none | `tsc --noEmit` passes |
+| 2 | Registration (layers, input, panels) and events, replacing the wrappers | none | the wrappers of 2.4 are gone |
+| 3 | One selection mechanism, by id | none (ids added to the format) | `scSel`, `soSel` … are views only |
+| 4 | Calculations apart from UI, unit tests for `core/*` | none | `core/*` does not touch the DOM |
+| 5 | Bundle into one IIFE with esbuild; globals put on `window` explicitly in the entry | none | works in the HTML release, the app and the ComfyUI bridge |
+| 6 | One file at a time to .ts; types for mods | none | passes with `strict` |
+| 7 | Libraries (10.4.3), one at a time, after the yardstick | none (speed and size only) | the yardstick is no worse |
+
+At the end of each step: `tools/run_tests.py`, the picture comparison, the yardstick, `npm run build`, `python tools/lint_ui.py`. Steps 2 and 3 settle many rows of 10.2 at once (the wrapping chains, the selection, the hook order, `draw` doing several jobs).
+
+## 11. What is implemented (an inventory of the features)
+
+Every feature of the editor as of 2026-11-24, in the order of the panel's menu. Use it as a checklist that these features are still there before and after each refactoring step.
+
+### 11.1 How to read the tables
+
+- **State**:
+  - done = implemented
+  - partly = only in part, or with limits (see "Notes")
+  - unchecked = implemented but not tried on real devices
+- **Kept in**: `S.…` is the edit data (files, share links, undo); `LS` is this browser's localStorage (chapter 8); `DOM` is the controls' values only (those in the edit data's `picture` are noted).
+- **Tests**: ○ = a behaviour test in `tests/`. — = none (only throwaway checks during development).
+
+### 11.2 On the view (any mode)
+
+| Feature | State | Implemented in | Kept in | Tests | Notes |
+|---------|-------|----------------|---------|-------|-------|
+| Modes (Pose, Body, Camera, Place) | done | pose_main.js (`mode`, `modeTo`), ui-menu.js (modes ↔ tabs) | — | — | Camera's inner name is `persp` |
+| Switching modes by click (on at first) | done | pose_objects.js (`tapClick`, `handClick`, `autoMode`) | LS | — | empty → Camera, a thing → Place, a joint → Pose |
+| Cursors Drag / Hand (V, H) | done | pose_objects.js (`cursor`, `handHook`) | LS | ○ (handles first on a phone) | on touch the 3-axis handles come before Hand (4.2) |
+| Dragging joints (bone lengths kept, two-bone IK for hands and feet, Shift: one bone) | done | pose_main.js (`dragPose`, `solveIK`) | `S.P` | — | touch: tap to pick first |
+| Flipping a bone toward / away (double click, double tap) | done | pose_main.js (`flipAt`) | `S.P` | — | |
+| Pinning joints (Alt+click, the pen's eraser) | done | pose_main.js (`togglePin`) | `S.pins` | — | |
+| 3-axis handles (move, rotate, scale, G R S, pivot) | done | pose_gizmo.js (`target`, `layout`, `gizmoDown`) | LS (shown, tool) | ○ (finger joints, phone) | the tools differ by mode (5.9) |
+| Undo / redo (80 steps) | done | pose_main.js (`remember`, `undo`, `redo`) | — | ○ | JSON of all of `S` (10.2) |
+| Box selection, Ctrl+click, moving and turning several together | done | pose_objects.js (`ODMObj`) | — | — | figures too |
+| Delete, cut, copy, paste (Delete, Ctrl+X C V, buttons on the view's left) | done | pose_objects.js | LS (the copy) | — | objects and things only; figures stay |
+| Camera (middle button, Shift, Ctrl; wheel zooms; Ctrl+Alt+wheel lens; numeric keypad) | done | pose_main.js (`camOrbit`, `camPan`, `camZoom`) | `S.cam` | — | |
+| Touch (one finger: camera; two: zoom and move; the Shift / Lock keys) | done | pose_main.js (`touches`, `pinch`, `VMOD`) | — | ○ (part) | checked by automation only |
+| Camera pad (sticks and zoom) | done | pose_main.js, Stage.astro | LS | — | |
+| Pens (tip drags, button = Shift, eraser pins) | unchecked | pose_main.js (`evMods`) | — | — | not tried on real pens |
+| Hidden lines dashed | done | pose_main.js, pose_scene.js, pose_solids.js … (`S.hiddenDashed`) | `S.hiddenDashed` | — | in exports too |
+| Joint limits (on at first) | done | pose_main.js (`clampTwist`, the limit tables) | DOM, LS | — | |
+| Hints | done | ui-help.js | LS | — | |
+| Hand loupe (on at first; its rings can be grabbed) | done | pose_hand_ui.js (`drawLoupe`, `loupeRings`) | LS | ○ | the held thing is not drawn |
+
+### 11.3 Make › Figure
+
+| Feature | State | Implemented in | Kept in | Tests | Notes |
+|---------|-------|----------------|---------|-------|-------|
+| Pose: the joint panel (three angles, twist; the head's nod, tilt, turn) | done | pose_main.js (`showSelected`, `AXIS_NAMES`), PanelJoint.astro | `S.P`, `S.twist` | — | turning the neck or head turns the face cross |
+| Pose: symmetry and mirroring | done | pose_main.js (`symmetrize`, the `#mirror` handler) | `S` | — | carries the finger data |
+| Pose: hand shapes (fist, open, grip, pinch …) | done | pose_hand.js (`HANDS`), pose_hand_ui.js | `S.hands` | ○ | the names are a promise (10.1) |
+| Pose: finger joints (15 a hand; drag, 3-axis handles, panel) | done | pose_hand.js, pose_hand_ui.js | `S.fingers` | ○ | circles show only while the wrist or hand is selected |
+| Pose: own hand shapes | done | pose_hand_ui.js | LS (`KEY-handsets`) | ○ | not in the edit data |
+| Presets: built-in poses (11 hand-written, plus Tarzan) | done | pose_main.js | — | — | the body stays |
+| Presets: user presets (JSON files, groups, search) | done | pose_main.js | LS | — | mods can add them |
+| Presets: saved poses / things / places, body presets | done | pose_sets.js | LS | — | carry fingers and hand sizes |
+| Body: sex (female, male), height and heads (what to keep) | done | pose_main.js (`applySex`), pose_size.js | `S.P`, `S.sex` | — | grows from the feet (`fromBottom`) |
+| Body: thickness (the thigh root's diameter, cm) | done | pose_main.js, PanelBody.astro | `S.R` | — | the "all %" and "head %" controls are gone (`S.scale` is read only) |
+| Body: lengths and widths (shoulders' width, height and depth, hips, neck, arms, legs …, cm) | done | pose_size.js (`bone`, `setBone`), pose_main.js (`movePair`) | `S.P` | — | "Neck length" is chest → neck root (11.9) |
+| Body: parts held fixed (head and neck, torso, arms, legs) | done | pose_size.js | DOM | — | |
+| Body: head size and head shape (width, height, depth; ball or joined cylinder) | done | pose_size.js (`headShapeSet`), pose_main.js (`headShapeTo`), pose_gizmo.js | `S.headShape`, `S.R` | — | grows from the neck's end |
+| Body: arm and leg thickness linked by part | done | pose_main.js (`thickJoints`) | DOM | — | |
+| Body: hand sizes (alike or apart) and finger lengths | done | pose_hand_ui.js | `S.P`, `S.handApart`, `S.fingerLen` | ○ | finger lengths shared by both hands |
+| Body: solid torso (per figure) | done | pose_main.js | `S.torso3d` | — | |
+| Body: the 3-axis handles' scale (bone length and thickness; shoulders' and hips' width, height, depth; head shape) | done | pose_gizmo.js | `S.P`, `S.R`, `S.headShape` | — | |
+| Colours: line colours (parts, floor, walls, ceiling, wire, things, auras; #rrggbb) | done | pose_style.js (`partColor` in pose_main.js) | `S.colors` | — | object colours are in the Objects tab |
+| Colours: saved colours, back to the defaults | done | pose_style.js | LS | — | |
+| Reset: this figure (all, sex defaults, pose, body, place and facing), attachments, everything, camera | done | PanelReset.astro, pose_main.js, ui-figure.js | `S` | — | |
+| Figures box (under the body picture): switch, add, duplicate, delete, the things held, resetting attachments | done | ui-figure.js, pose_cast.js | `S.others` | — | |
+| Several figures (others drawn lighter; press their circles to switch) | done | pose_cast.js (`withFigure`, `everyFigure`) | `S.others`, `S.figId` | — | swaps `S` while drawing (10.2) |
+
+### 11.4 Make › Things and places
+
+| Feature | State | Implemented in | Kept in | Tests | Notes |
+|---------|-------|----------------|---------|-------|-------|
+| Equip: hold, wear, carry on the back (about 250 things; Neutral) | done | pose_props.js, pose_props_more.js, pose_scene.js, pose_preview.js | `S.items` | ○ (the katana only) | shapes are estimates; the owner reports the ones that look off |
+| Equip: preview before giving (left / right, part lengths) | done | pose_preview.js | — | — | |
+| Equip: how it is held (grip, couch), where on the shaft, main hand, two-handed | done | pose_scene.js | `S.items[].…` | — | |
+| Equip: the grip's hand shape and place in the hand | done | pose_hand.js (`heldOf`, `gripFrame`), pose_hand_ui.js | `it.handPose`, `it.gripOff` | ○ | held things only (not handlebars and the like) |
+| Equip: thing sizes (longest side, X, Y, Z, part lengths, cm) | done | pose_scene.js (`itemCm`, `setItemCm`), pose_size.js | `scale`, `stretch`, `segs` | — | kept as factors; the controls show cm |
+| Equip: auras (ki flames, glow, plasma, parabola) | done | pose_style.js (`AURA_KINDS`) | `S.auras` | — | |
+| Objects: the list of things to put (shapes, floor slabs, walls, ceilings, things) and the preview | done | pose_place.js (`preRows`, `ODMGhost`), pose_preview.js | `S.solids`, `S.items` | — | |
+| Objects: place, turn (XYZ), size (cm), sides, top of what was put | done | pose_place.js (`setValue`) | `S.solids` | — | |
+| Objects: pivot (relative, absolute, to the middle, to the bottom's middle) | done | pose_objects.js, pose_place.js | `pivot` | — | |
+| Objects: Put on the ground (click a face: the most parallel face lies on it) | done | pose_place.js (`groundHook`, `onFace`), pose_solids.js | `S.solids` | — | |
+| Objects: put as a guide (always tied to the ruler) | done | pose_place.js, pose_ruler.js | `S.solids[].guide` | — | |
+| Objects: object colours, object presets | done | pose_style.js, pose_place.js | `S.solids` / LS | — | presets are not in the edit data |
+| Place: floor height, grounding (free, no sinking — the default —, always on the floor) | done | pose_scene.js | `S.env` | — | walls and ceilings are objects (old forms fixed on loading) |
+| Place: standing a figure on faces (walls, ceilings, slopes; the nearest part touches) | done | pose_scene.js (`S.stand`) | `S.stand` | — | |
+| Place: putting a hand or foot on a face, grabbing the nearest thing, hanging | done | pose_scene.js | `S.pins`, `S.items` | — | |
+| Place: riding and sitting (chairs, rides: hands and feet on handles and pedals) | done | pose_scene.js | `S.items` | — | |
+| Place: the wire (hang by the chest, hips, a hand or an ankle; hanging pose; rope with both hands) | done | pose_scene.js | `S.wire` | — | |
+| Place: a figure's place and facing (numbers, sliders, clicking the hips' middle) | done | PanelScene.astro, pose_cast.js (`castX`), pose_objects.js | `S.P`, `S.body` | — | |
+
+### 11.5 Look
+
+| Feature | State | Implemented in | Kept in | Tests | Notes |
+|---------|-------|----------------|---------|-------|-------|
+| Manage: the scene list (figures, things, auras, guides) | done | pose_tree.js | — | — | |
+| Work log (the steps done; back to any of them) | done | ui-log.js | — | — | |
+| Camera: direction, place, lens (sliders and numbers) | done | pose_main.js, PanelCamera.astro | `S.cam`, `S.center` | ○ (stays when the export size changes) | the lens is taken against the picture's height |
+| Camera: lock and saved cameras (any number) | done | pose_main.js | `S.camLock`, `S.cams` | — | |
+| Ruler: 1-, 2-, 3-point, eye level, line count, the ruler's tilt | done | pose_ruler.js | `S.ruler` | — | vanishing points come from the camera |
+| Ruler: snapping (floor grid, turning sticks within ±5°) | done | pose_ruler.js (`snapGuideGrid`, `magnetYaw`) | `S.ruler` | — | |
+| Ruler: the ruler picture (transparent PNG) | done | pose_ruler.js | — | — | |
+| Exaggerated perspective (camera locked; one pivot, moved with the 3-axis handles) | done | pose_persp.js (`ODMPxMark`, `pxNow`), pose_main.js (`withPX`) | `S.persp` | — | |
+| Side view (from the right or left, centre, turn, look-down, zoom, phone gestures) | done | pose_sideview.js | `S.sideView` | — | |
+
+### 11.6 Out
+
+| Feature | State | Implemented in | Kept in | Tests | Notes |
+|---------|-------|----------------|---------|-------|-------|
+| Import: Open a file (poses, edit data, older forms) | done | pose_project.js (`openEditFile`, `apply`), pose_main.js (`migrate`) | `S` | ○ | |
+| Export: ratio, long side, width, height | done | pose_main.js (`exportSize`) | DOM, LS, the edit data's `picture` | ○ | big pictures kept within the device's limit (iOS about 16.7 megapixels) |
+| Export: rough picture (composition / figures and things only), OpenPose, composition picture | done | pose_main.js (`render`, `renderComposition`), pose_cast.js (figure to export) | DOM, LS | ○ (size) | no comparison of the pictures' content |
+| Export: preview before saving | done | pose_main.js, PanelFile.astro (`#savePreview`) | — | — | |
+| Export: pose (.json) | done | pose_main.js (the `#saveJson` handler) | — | ○ | |
+| Export: edit data (.odmposer, .json) | done | pose_project.js | — | ○ | saved presets are not included |
+| Share: posting to social media (X, Bluesky, Misskey, Mastodon and many more), attaching the composition | partly | pose_share.js | DOM | — | a computer copies the picture to paste; the link card is the site's |
+| Share: `#pose=` links (only official mods travel) | done | pose_share.js | `S` (the difference) | ○ | the format is a promise |
+| MOD: list, from a file, by URL, from a folder, `?nomods` | partly | pose_api.js | LS | — | the folder's re-permission needs a real click; not checked by automation |
+| MOD API 1.3 (things, shapes, auras, hand shapes, poses, translations, panels, hooks) | done | pose_api.js | `S.mods` | — | no test loads the sample mods yet |
+
+### 11.7 Screens, devices, language
+
+| Feature | State | Implemented in | Kept in | Tests | Notes |
+|---------|-------|----------------|---------|-------|-------|
+| Layouts: side by side (computer), upright tablets and monitors, phones (bottom bar and sheets), sideways | done | ui-pane.js, ui-sheet.js, ui-layout.js, ui.src.css | LS (upright and sideways apart) | ○ (part, phone) | |
+| Dragging the edge between view and panel, split screen, hiding the panel | done | ui-pane.js | LS | — | |
+| The menu (three levels: Make, Look, Out) | done | ui-menu.js | LS | — | |
+| Buttons on the view's corners (second column, "…", ▲▼ when they overflow) | done | ui-pane.js, pose_gizmo.js, pose_objects.js | — | — | |
+| Light / dark theme | done | pose_main.js, ui.src.css | LS | — | |
+| Japanese / English (follows the browser, `?lang=`) | done | i18n.js, each file's table | LS | ○ (hand panel, new controls) | the keys are the Japanese sentences |
+| Autosave (shortly after a change, when hidden, on closing) | done | pose_main.js | LS | — | |
+| No stale scripts (`?v=`, the service worker) | done | index.astro, web/sw.js | — | — | |
+| Device frames for development (/dev/phone/, /dev/tablet/) | done | src/pages/dev/[device].astro | — | — | `npm run dev` only |
+
+### 11.8 Releases, site, outside
+
+| What | State | Where | Notes |
+|------|-------|-------|-------|
+| The public site (editor and docs, ja / en) | done | src/pages, docs/*.md, .github/workflows/static.yml | apps.qwaxgo.com/ODM-Poser/ |
+| HTML release (open the zip; `mods/` folder) | done | tools/make_release_html.py | must work from `file://` |
+| App (Tauri: Linux AppImage, Windows zip) | partly | src-tauri, docker-compose.tauri.yml, tools/build_app.sh | starts (checked). Not checked: the share buttons' `window.open`, dragging files, `mods/` next to the app |
+| PWA (add to the home screen) | done | web/sw.js, web/manifest.webmanifest | |
+| ComfyUI bridge | done (own repository) | qwaxgo/ODM-Poser-ComfyUIBridge | relies on the HTML release's layout, the MOD API, the state format |
+| The copy in the owner's other project | stopped | — | keep the state format readable by both |
+
+### 11.9 Things that mislead, known limits
+
+- **The "Neck length" number**: the length from the chest joint to the neck's root joint (15 cm at first), not the neck as seen (from the shoulders' top to the head's bottom, about 5 cm). Adding to it lengthens the visible neck by as much, so it works, but the real length cannot be set directly.
+- **Not in the edit data**: saved poses, bodies, hand shapes, object presets, colours, and the copied things. They stay in the browser.
+- **Finger lengths**: shared by both hands even when the hand sizes are apart.
+- **The loupe**: draws the hand only, not the held thing.
+- **Adjusting grips**: held things only, not things used with the body (handlebars and the like).
+- **Where a thing is held**: set by the hand shape's name (`GRIP_AT`); adjusted fingers do not carry the thing with them (10.2).
+- **Thing shapes**: estimates; the owner reports the ones that look off.
+- **Real devices**: mouse, touch and pen have been checked by automation only.
+- **The link card**: without a server, the social card's picture is the site's (the post itself can carry the composition).
+
+### 11.10 Not there yet, planned
+
+| What | State | From |
+|------|-------|------|
+| Android app (APK) | a future idea only | the owner's plan (2026-11-02) |
+| A ComfyUI form | idea | the owner's plan |
+| Checking the app's unchecked items | to do | HANDOFF's "Open items" |
+| The remaining behaviour tests (the "—" rows of 11.2–11.7) | to do | step 1 of 10.3 |
+| The refactoring (the plan of 10.4) | plan (not started) | this document |
+
+### 11.11 What the tests cover
+
+What the 17 tests in `tests/` check (`python tools/run_tests.py`):
+
+- test_core: start-up, undo / redo, the camera staying when the export size changes, English (hand panel, new controls)
+- test_file: edit data both ways (.json, .odmposer, export settings), pose files and older files, share links
+- test_hands: finger panel and handles, own hand shapes, held grips, hand sizes, the loupe, grabbing a finger joint's handles
+- test_mobile: bending fingers on a phone, grabbing handles, handles before the hand cursor
+
+The features marked "—" above (Body, Place, objects, ruler, perspective, side view, colours, mods, posting …) have no behaviour test yet. They come first in the refactoring (step 0 of 10.4.5).
 
 ## Appendix: modes and tabs
 
