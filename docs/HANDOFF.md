@@ -55,11 +55,19 @@ src/pages/editor/index.astro     the editor's page; its markup in src/components
 web/editor/pose_main.js          the editor core (plain JS, Canvas 2D), loaded by the page as a classic script
 web/editor/ui.js, ui.src.css     the look after melta UI (design/melta-ui); ui.css is generated (npm run css); see AGENTS.md
 web/editor/pose_props*.js        window.PROP_CATS / window.PROPS: the props as primitives
+web/editor/pose_hand.js          the hand's model, loaded before pose_main.js (its functions use pose_main.js's names at run time): HANDS (curls or {a}), FINGERS, S.fingers {from, a, name} used only while S.hands is still `from`, S.fingerLen, handShape3D (OpenPose's 21 points + the palm's heels), drawHand, fingerSel
+web/editor/pose_hand_ui.js       the fingers by hand: the 15 circles of the selected hand (Pose), dragFinger, a 3-axis rotate target (ODMGizmoTargets; its DOWN_HOOK spliced right after ODMGizmo.downHook), #fgBox in the joint panel (wraps showSelected), own shapes KEY-handsets (ODMHand.selHTML), 体格's hand length / finger lengths (S.handApart: right and left apart), the loupe #handLoupe (on at first, KEY-loupe; its circles drag at once), a held thing's grip: heldOf / it.handPose {main, other} / it.gripOff {main, other} (pose_hand.js), 装備's #gripBox
+web/editor/pose_project.js       the edit data: {format: "odm-poser-project", version: 1, state: {version: 3, ...S}, picture} as .json or .odmposer ("ODMPOSER", version, packing 0/1 deflate-raw, length, text); openEditFile opens those and pose files
 web/editor/pose_scene.js         floor / walls / ceiling, holding, wearing, carrying, mounting, grabbing, wire
 web/editor/pose_solids.js        solids; pose_style.js line colours and auras; pose_ruler.js the ruler
 web/editor/pose_cast.js          more than one figure; pose_sets.js the saved poses (pose + things + place) and bodies
 web/editor/pose_gizmo.js         the 3-axis handles (tools per mode); ui-figure.js the body map and 人物の管理 under it; its 付随物 block is in the リセット tab (PanelReset.astro holds the other resets)
+web/editor/pose_place.js         設置: one list to put shapes / slabs / things and one list of what is out, with place, turn (XYZ: a solid's pitch / yaw / roll, a thing's rot[0] / yaw / rot[2]) and size; the older 物体 / 小物を単体で置く sections stay hidden (data-menu "old-place")
+web/editor/pose_objects.js       the objects as one selection (ODMObj): picks of "sN"/"iN" (box from an empty place with the drag cursor, Ctrl+click), Delete, Ctrl+X/C/V (KEY-clip), the drag / hand cursor (handHook / emptyDrag / emptyClick in pose_main.js), pivots (o.piv: relative, in the object's turned axes; keepPivot turns about it)
+web/editor/pose_persp.js         パースの誇張 while the camera is locked: one camera for everything moved toward one pivot point (S.persp.pivot: a free point or on a part / object) with the lens widened and shifted (PX, pxNow, withPX in pose_main.js); one strength S.persp.k; the pivot's mark (on the front and side views unless S.persp.mark is false; dragged on either, ODMPxMark.sideDown for the side view; pressed, it takes the 3-axis handles' move arrows through window.ODMGizmoTargets in pose_gizmo.js); S.camPeek: the camera moved for a while with the lock kept
+web/editor/pose_sideview.js      側面図's own camera (S.sideView: from r / l, centre key + joint, yaw, pitch, zoom, pan; the projection sideView / sideBasis / sideProject / sideUnproject in pose_main.js); 見る › 視点 › 側面図; drags where there is no joint, the middle button, the wheel and two fingers (its own touch listeners) on the side view; 90° and ↺ (#svBack90View, #svResetView in .sv-tools, Stage.astro)
 web/editor/ui-pane.js            the grip between the views and the panel (--aside-w, --split-k, --split-aside-user), the modes' two columns, the switches' ▲ ▼
+web/editor/ui-sheet.js           the phone (bottom bar and sheets) and the tall layout (body.sheet-tall: the views 50-85 % (--tall-k, the edge in ui-pane.js: tb / tt); from the screen edge: the bar, the categories' row, the tabs' row (#asideHead, fixed), the controls side by side (aside); body.bar-top puts them at the top); the phone: full-screen views, the category bar, the translucent sheets (aside.sheet-panel), the simplified view (#sheetMini), the About sheet (#aboutSheet). Upright and narrow only (`(max-width: 900px) and (orientation: portrait)`); sideways and computers keep the panel as before
 web/editor/i18n.js               Japanese / English (exists only in this repo; see below)
 web/editor/pose_api.js           the MOD API and the mod loader (docs/MODDING.md)
 web/editor/pose_share.js         posting (X, Bluesky, Misskey, Mastodon, share menu) and #pose= links;
@@ -86,6 +94,7 @@ src/pages/docs/, src/lib/docs.ts the docs: docs/{DOWNLOAD,APP,EXPORT,POSES,PROPS
 tools/make_icons.py              draws the app icons (web/editor/icon-*.png, apple-touch-icon, favicon, icon.svg)
 web/editor/manifest.webmanifest, sw.js   the app (PWA): network first, the kept copy offline (docs/APP.md)
 docs/HANDOFF.md                  this file; docs/MODDING.md (-JA) the MOD API
+docs/ARCHITECTURE.md (-JA)       the design document for refactoring: load order, wrapping chains, state, flows, promises, debt
 ```
 
 ## Hosts
@@ -125,6 +134,8 @@ state format `version: 3`, `window.ODMPoser` (old alias `window.SymbolicPose`).
   `def.grip`. `aimOtherHand` puts the other hand's grip point on `grip2` the same way.
 - Item sizes: `it.stretch [x, y, z]` along its own axes (`stretchOf` also reads the older
   `len` / `thick`; `foldStretch` converts on edit); round parts' radii follow (`radK`).
+- Checking the phone view from VS Code's browser (which does not emulate devices): `npm run dev`, then open
+  http://localhost:4321/ODM-Poser/dev/phone/ (or /dev/tablet/); src/pages/dev/[device].astro, dev only (no pages in the build).
 - Views' corners: #ovModes / #ovOpts are children of .views (over the front and the side view together); the touch keys
   (#vShift, #vAlt) sit in #ovTouch under the handles' tools, #vPad among the switches; the old #touchBar is gone. On a
   phone the side view takes sidePos like a computer (hidden until asked for); a side view under 420px folds its picker.
@@ -162,6 +173,8 @@ and patches `CanvasRenderingContext2D.fillText` for canvas labels. Prop names co
 add its English to `T` (or a rule) -- the check below lists what is left untranslated.
 
 ## Checking changes
+
+- Behaviour: `python tools/run_tests.py` (tests/test_*.py; `--no-build`, or words to pick files). Add a test there with each change; it is the refactoring's safety net (docs/ARCHITECTURE.md 9, 10.3).
 
 - JS syntax: `python -c "import esprima, glob; [esprima.parseScript(open(f, encoding='utf-8').read()) for f in sorted(glob.glob('web/editor/*.js'))]"`
   (esprima knows no `?.` or `??`: keep those out of the editor files).

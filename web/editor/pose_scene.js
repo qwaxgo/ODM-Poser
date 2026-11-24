@@ -96,6 +96,13 @@ function segOfShape(it, sh){
   return g ? g.id : null;
 }
 function foldStretch(it){ it.stretch = stretchOf(it) || [1, 1, 1]; delete it.len; delete it.thick; return it.stretch; }
+// a thing's size in cm (the panels show cm, the file keeps scale and stretch): itemBase is its own
+// X, Y, Z length before its size and stretch (dims and sections in), itemCm as it is now
+function itemBase(it){ const {lo, hi} = localExtent(partsOf(it)); return [0, 1, 2].map(i => Math.max(0.1, hi[i] - lo[i])); }
+function itemCm(it){ const b = itemBase(it), st = stretchOf(it) || [1, 1, 1], k = it.scale || 1; return b.map((v, i) => v * k * st[i]); }
+function setItemCm(it, a, v){ if (!(v > 0)) return; const b = itemBase(it); foldStretch(it)[a] = Math.max(0.2, v / (b[a] * (it.scale || 1))); }
+const itemLongCm = it => Math.max(...itemCm(it));
+function setItemLongCm(it, v){ if (!(v > 0)) return; it.scale = Math.max(0.2, (it.scale || 1) * v / itemLongCm(it)); }
 // a round part's radius under a stretch: the mean of the axes across its own axis d (a cylinder's,
 // a disc's normal); a ball (no d) the mean of all three
 function radK(it, d){
@@ -109,7 +116,7 @@ function radK(it, d){
 // toward the palm; for things pinched the bit nearest its origin (across a thin part: its middle)
 const heldInHand = it => !it.where && (PROPS_[it.key] || {}).place === "hand";
 const gripMemo = new Map();
-function gripPoint(it){
+function gripBase(it){
   const def = PROPS_[it.key] || {};
   if (def.grip) return segPoint(it, def.grip);
   if (def.pose !== "cup" && def.pose !== "pinch") return [0, 0, 0];
@@ -122,6 +129,36 @@ function gripPoint(it){
     gripMemo.set(key, g);
   }
   return g;
+}
+// the point the hand holds: the item's own grip, moved along its long axis by 持つ位置 (it.gripAt, cm)
+function gripPoint(it){
+  const base = gripBase(it).slice();
+  if (!it.gripAt) return base;
+  base[longAxis(it)] += +it.gripAt;
+  return base;
+}
+// 持ち方 of a held thing: "grip" or "couch" (it.hold; else the item's own default, def.couch)
+function holdOf(it){ const d = PROPS_[it.key] || {}; return it.hold || (d.couch ? "couch" : "grip"); }
+// the holding arm to the default place for a grip: out in front of the chest, at shoulder height
+function gripHold(side){
+  const s = side === "l" ? "l" : "r", wi = IX[s + "_wrist"], cf = chestFrame(), sx = s === "l" ? 1 : -1;
+  reachWith(wi, add(add(cf.o, mul(bodyFront(), 28)), add(mul(cf.x, sx * 14), [0, -8, 0])), false);
+}
+// change the 持ち方 of a held thing; the arm moves only when the way of holding changes
+function setHold(it, mode){
+  const was = holdOf(it);
+  freeHands(it); it.hold = mode;
+  if (mode === "couch") it.both = false; else delete it.both;
+  holdHands(it);
+  if (holdOf(it) !== was) (mode === "couch" ? couchHold : gripHold)(it.hand);
+}
+// back to the item's own defaults: the grip, the place on it, the way of holding
+function resetGrip(it){
+  const was = holdOf(it);
+  freeHands(it); delete it.gripAt; delete it.hold; delete it.both;
+  if (holdOf(it) === "couch") it.both = false;
+  holdHands(it);
+  if (holdOf(it) !== was) (holdOf(it) === "couch" ? couchHold : gripHold)(it.hand);
 }
 function itemLocal(it, p, k = 1){             // the item's own size and turn, before its frame
   if (heldInHand(it)) p = sub(p, gripPoint(it));
@@ -172,11 +209,19 @@ function partsOf(it){                         // the shapes, with a simple solid
   return [...parts, {t: [x, y, z - 3, 0, 0, 1, 1.6, 0.4]}, {b: [x, y - 1.2, z + 12, 0.5, 2.6, 24]},
           {k: [x, y - 1.2, z + 24, x, y - 1.2, z + 31, 1.3]}];
 }
-// every place an item is drawn: [{f: frame, parts}] (a pair of skates is two)
+// every place an item is drawn: [{f: frame, parts}] (a pair of skates is two). The other side (左右):
+// a pair on one foot or hand only (it.side "r" / "l"); a thing worn on one side mirrored to the other
+// (it.mirror: its frame's x turned round, so it is drawn, touched and grounded mirrored)
 function partSets(it){
-  const def = PROPS_[it.key] || {};
+  const out = partSets0(it);
+  return it.mirror ? out.map(e => ({f: Object.assign({}, e.f, {x: mul(e.f.x, -1)}), parts: e.parts})) : out;
+}
+const pairOf = def => !!def && (def.at === "feet" || def.at === "hands" || (def.sets || []).some(([at]) => at === "feet" || at === "hands"));
+function partSets0(it){
+  const def = PROPS_[it.key] || {}, one = it.side === "r" || it.side === "l" ? it.side : "";
   const sets = (def.sets ? def.sets.map(([at, parts]) => [at, segParts(it, parts)]) : [[def.at, partsOf(it)]]).flatMap(([at, parts]) =>
-    at === "feet" ? [["r_foot", parts], ["l_foot", parts]] : at === "hands" ? [["r_hand", parts], ["l_hand", parts]] : [[at, parts]]);
+    at === "feet" ? [["r_foot", parts], ["l_foot", parts]].filter(([w]) => !one || w[0] === one)
+      : at === "hands" ? [["r_hand", parts], ["l_hand", parts]].filter(([w]) => !one || w[0] === one) : [[at, parts]]);
   if (it.where === "world"){
     const k = def.at === "head" ? S.R[IX.head] : 1;
     return sets.map(([, parts], i) => ({f: worldFrame(it, k, (i - (sets.length - 1) / 2) * 30), parts}));
@@ -220,7 +265,8 @@ function backFrame(it){
   const d = slant(cf.y), x = out;
   let y, z;
   if (ext[1] >= ext[2]){ y = d; z = cross(x, y); } else { z = d; y = cross(z, x); }
-  const centre = add(cf.o, add(mul(out, 13 + lift + ext[0] * sc / 2), mul(cf.y, -4)));
+  // on the back, just off the spine (the chest's half depth), its middle level with the chest
+  const centre = add(cf.o, add(mul(out, 9 + lift + ext[0] * sc / 2), mul(cf.y, 0)));
   return {o: sub(centre, add(add(mul(x, mid[0]), mul(y, mid[1])), mul(z, mid[2]))), x, y, z};
 }
 const dirToWorld = (f, it, v) => { const a = itemToWorld(it, [0, 0, 0], f), b = itemToWorld(it, v, f); return sub(b, a); };
@@ -303,17 +349,21 @@ function worldSamples(it){
   }
   return out;
 }
-function envLines(){                          // floor / wall / ceiling as 3D line segments [a, b, which]
+// floor / wall / ceiling as 3D line segments [a, b, which]. The floor's and the ceiling's grids reach far
+// (to 8 m round the figure) and turn with the perspective ruler while it shows (gridAxes, pose_ruler.js)
+function envLines(){
   const E = S.env || {}, c = S.P[IX.pelvis], out = [];
-  const grid = (y, which, n = 4, step = 40) => {
-    const x0 = Math.round(c[0] / step) * step, z0 = Math.round(c[2] / step) * step;
+  const [u, w] = typeof gridAxes === "function" ? gridAxes() : [[1, 0, 0], [0, 0, 1]];
+  const grid = (y, which, n = 20, step = 40) => {
+    const cu = Math.round(dot(c, u) / step) * step, cw = Math.round(dot(c, w) / step) * step;
+    const at = (a, b) => add(add(mul(u, a), mul(w, b)), [0, y, 0]);
     for (let i = -n; i <= n; i++){
-      out.push([[x0 + i*step, y, z0 - n*step], [x0 + i*step, y, z0 + n*step], which]);
-      out.push([[x0 - n*step, y, z0 + i*step], [x0 + n*step, y, z0 + i*step], which]);
+      out.push([at(cu + i*step, cw - n*step), at(cu + i*step, cw + n*step), which]);
+      out.push([at(cu - n*step, cw + i*step), at(cu + n*step, cw + i*step), which]);
     }
   };
   if (E.floor) grid(+E.floorY || 0, "floor");
-  if (E.ceiling) grid(+E.ceilingY || 230, "ceiling", 3);
+  if (E.ceiling) grid(+E.ceilingY || 230, "ceiling", 12);
   if (E.wall){
     const a = deg(+E.wallYaw || 0), o = [+E.wallX || 0, 0, +E.wallZ || -40], y0 = +E.floorY || 0;
     const at = (u, h) => add(o, add(rotY([u, 0, 0], a), [0, y0 + h, 0]));
@@ -332,7 +382,12 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
     const C = S.colors || {}, base = opts.export ? "#b0b0b0" : far;
     ctx.lineWidth = Math.max(1, lw * 0.6);
     ctx.globalAlpha = opts.export ? 1 : 0.55;
-    for (const [a, b, which] of envLines()){ const p = P(a), q = P(b); ctx.strokeStyle = C[which] || C.env || base;
+    // the camera's view: a line reaching behind the camera is cut just before it (it would cross the picture)
+    const D = proj === project ? camDist(W, H) : 0, NEAR = 5, depth = v => D - toCam(v)[2];
+    for (let [a, b, which] of envLines()){
+      if (D){ const da = depth(a), db = depth(b); if (da < NEAR && db < NEAR) continue;
+        if (da < NEAR) a = add(a, mul(sub(b, a), (NEAR - da) / (db - da))); else if (db < NEAR) b = add(b, mul(sub(a, b), (NEAR - db) / (da - db))); }
+      const p = P(a), q = P(b); ctx.strokeStyle = C[which] || C.env || base;
       ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); }
     ctx.globalAlpha = 1;
   }
@@ -351,10 +406,11 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
     ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(a.x, a.y, lw * 3, 0, 2 * Math.PI); ctx.stroke();
   }
   // the things: their own colour (or an effect's), glowing effects drawn twice
-  if (!opts.noItems) (S.items || []).forEach((it, n) => {
+  if (!opts.noItems) (S.items || []).forEach((it, n) => withPX(opts.side ? null : pxOfItem(it), () => {   // パースの誇張: each its own
     const def = PROPS_[it.key]; if (!def) return;
     const col = it.color || def.color, sets = partSets(it);
-    const stroke = opts.export ? col || ink : n === scSel ? cssVar("--sel") : col || cssVar("--accent");
+    const picked = n === scSel || (mode === "place" && typeof objPicked === "function" && objPicked("i" + n));
+    const stroke = opts.export ? col || ink : picked ? cssVar("--sel") : col || cssVar("--accent");
     for (const glow of def.glow ? [true, false] : [false]){
       ctx.strokeStyle = stroke; ctx.globalAlpha = glow ? 0.22 : 1;
       ctx.lineWidth = lw * (opts.side ? 0.9 : 1.1) * (glow ? 5 : 1);
@@ -365,7 +421,7 @@ function drawScene(ctx, W, H, opts, proj, ink, far, lw){
       }
     }
     ctx.globalAlpha = 1;
-  });
+  }));
   ctx.restore();
 }
 
@@ -421,6 +477,31 @@ function aimOtherHand(side, it, g){
     solveIK(wi, w); rotateSubtree(hi, add(S.P[wi], d));
   }
 }
+// a two-handed thing keeps the way it points while its holding hand moves (no swinging about that
+// hand): when only the hand moved, the thing's own turn is set back so the line from its grip to the
+// other hand's grip keeps the direction it had; the other hand then follows along it. A turn made by
+// the user (it.rot changed) sets the way anew instead.
+const STAB = new WeakMap();
+function stabilize(it){
+  const def = PROPS_[it.key], main = it.hand === "l" ? "l" : "r", wr = S.P[IX[main + "_wrist"]];
+  const dirNow = () => norm(sub(itemToWorld(it, segPoint(it, def.grip2)), itemToWorld(it, gripPoint(it))));
+  const st = STAB.get(it), rotKey = JSON.stringify(it.rot || [0, 0, 0]);
+  if (st && st.rot === rotKey && st.side === main && len(sub(wr, st.wrist)) > 0.05){
+    const cost = () => 1 - dot(dirNow(), st.dir);
+    let c = cost();
+    for (let iter = 0; iter < 10 && c > 1e-4; iter++){
+      let better = false;
+      for (const ax of [0, 1, 2]) for (const dd of [6, -6, 1.5, -1.5]){
+        it.rot = it.rot || [0, 0, 0];
+        const old = it.rot[ax]; it.rot[ax] = old + dd;
+        const c2 = cost();
+        if (c2 < c - 1e-9){ c = c2; better = true; } else it.rot[ax] = old;
+      }
+      if (!better) break;
+    }
+  }
+  STAB.set(it, {dir: dirNow(), rot: JSON.stringify(it.rot || [0, 0, 0]), side: main, wrist: wr.slice()});
+}
 function followItems(moved){
   for (const it of S.items || []){
     const def = PROPS_[it.key]; if (!def || it.where) continue;
@@ -437,6 +518,7 @@ function followItems(moved){
         const want = add(S.P[sh], mul(norm(d), arm * 0.85));
         solveIK(mw, add(S.P[mw], sub(want, g)));
       }
+      stabilize(it);
       aimOtherHand(other, it, itemToWorld(it, segPoint(it, def.grip2)));
     }
     if (def.place === "body" && def.mount){
@@ -459,7 +541,10 @@ function sceneAfterEdit(moved){
     if (w.joint === "rope") ropeHands();
   }
   const E = S.env;
-  if (E.ground && E.ground !== "off" && !(w && w.on)){
+  // 配置: the hips moved near a face (a wall, a ceiling, a slope, a solid's side): the figure stands on it
+  if (moved === IX.pelvis && mode === "place" && E.attach !== false && !(w && w.on)) attachNear();
+  if (S.stand && !(w && w.on)) onPlane(S.stand.p, S.stand.n);       // stays on the face it stands on
+  else if (E.ground && E.ground !== "off" && !(w && w.on)){
     const lift = groundLift(E.ground === "stick");
     if (lift) moveAll([0, lift, 0]);
   }
@@ -480,13 +565,141 @@ function groundLift(stick){                   // how far to move the figure up (
   return stick ? -gap : Math.max(0, -gap);
 }
 
+// ---- standing on any face: the floor, a wall, the ceiling, a solid's face (a slope too) ----------------
+// The whole figure turns about its hips so its up is the face's outward normal (on a wall it stands
+// sideways, on a ceiling upside down), its lowest point toward the face on it: a sole, or as posed a knee,
+// a hand, the head. S.stand = {p, n}: the plane of the face (any but the scene's floor, whose grounding
+// is the 接地 setting's), which the figure then keeps to instead of the grounding: its lowest point stays
+// on it however it is posed.
+const ATTACH_CM = 15;
+const figUp = () => norm(bodyRot([0, 1, 0]));
+function soleAlong(n){ let m = Infinity; J.forEach((nm, i) => { m = Math.min(m, dot(S.P[i], n) - (CONTACT[nm] || 3)); }); return m; }
+function turnFigureUp(n){                      // its facing kept as far as can be; false: it already was
+  const up = figUp(), ax = cross(up, n), s = len(ax), c = dot(up, n);
+  if (s < 1e-6 && c > 0) return false;
+  const axis = s < 1e-6 ? bodyRot([0, 0, 1]) : ax, ang = Math.atan2(s, c), pv = S.P[IX.pelvis].slice();
+  S.P = S.P.map(q => add(pv, rotAxis(sub(q, pv), axis, ang)));
+  turnBody(axis, ang); S.pins = {};
+  return true;
+}
+// the body's lowest point toward a face (n: the face's normal): whatever the pose puts there (a sole, a
+// knee, a hand, the head ...), at its circle's edge
+function lowPoint(n){
+  let best = null, m = Infinity;
+  J.forEach((nm, i) => { const v = dot(S.P[i], n) - (CONTACT[nm] || 3); if (v < m){ m = v; best = sub(S.P[i], mul(n, CONTACT[nm] || 3)); } });
+  return best;
+}
+// kept on the plane: the lowest point along n touches it
+function onPlane(p, n){ const g = soleAlong(n) - dot(p, n); if (Math.abs(g) > 1e-6) moveAll(mul(n, -g)); }
+// the scene's floor (not a solid's top): the grounding (接地) setting looks after it
+const isFloor = (p, n) => { const E = S.env || {}; return !!E.floor && n[1] > 0.9999 && Math.abs(p[1] - (+E.floorY || 0)) < 0.5; };
+// slide: moved along the face too, so its lowest point comes to p. On any face but the scene's floor the
+// figure keeps to it (S.stand): however it is posed, its lowest point stays on the face
+function standOnFace(p, n, slide){
+  turnFigureUp(n);
+  if (slide){ const d = sub(p, lowPoint(n)); moveAll(sub(d, mul(n, dot(d, n))), true); }
+  onPlane(p, n);
+  if (isFloor(p, n)) delete S.stand; else S.stand = {p: p.map(v => Math.round(v * 100) / 100), n: n.map(v => Math.round(v * 1e5) / 1e5)};
+}
+// the face nearest to the body (any joint's circle, as posed): {c: the face's point, gap}, or null.
+// ok(c): which faces may be taken
+function nearestContact(ok){
+  let best = null;
+  J.forEach((nm, i) => { const r = CONTACT[nm] || 3;
+    for (const c of standFaces(S.P[i])){
+      if (ok && !ok(c)) continue;
+      if (dot(sub(S.P[i], c.p), c.n) < -r - 3) continue;          // behind the face (inside the solid, past the wall)
+      const gap = c.d - r; if (!best || gap < best.gap) best = {c, gap};
+    } });
+  return best;
+}
+// the nearest point of every face to q: [{p, n, d}] (the floor, the ceiling, the wall, the solids' faces)
+function standFaces(q){
+  const E = S.env || {}, out = [];
+  const plane = (p0, n) => { const p = sub(q, mul(n, dot(sub(q, p0), n))); out.push({p, n, d: len(sub(p, q))}); };
+  if (E.floor) plane([0, +E.floorY || 0, 0], [0, 1, 0]);
+  if (E.ceiling) plane([0, +E.ceilingY || 230, 0], [0, -1, 0]);
+  if (E.wall) plane([+E.wallX || 0, 0, +E.wallZ || -40], rotY([0, 0, 1], deg(+E.wallYaw || 0)));
+  if (typeof solidMesh === "function") for (const o of S.solids || []) if (!o.guide){ const c = closestOnSolid(solidMesh(o), q); if (c && !buried(c)) out.push(c); }
+  return out;
+}
+// a solid's face down on the floor (its bottom): not one to stand on
+const buried = c => { const E = S.env || {}; return !!E.floor && c.n[1] < -0.97 && Math.abs(c.p[1] - (+E.floorY || 0)) < 1; };
+// 近い面に立つ: the solid's face nearest to the body (any joint's circle, as posed) that it is in front of
+function nearFace(o){
+  const m = solidMesh(o);
+  let best = null, bg = Infinity;
+  for (const f of m.faces) J.forEach((nm, i) => {
+    const q = S.P[i], c = closestOnSolid({V: m.V, faces: [f]}, q);
+    if (!c || buried(c) || dot(sub(q, c.p), c.n) < 0) return;
+    const g = c.d - (CONTACT[nm] || 3); if (g < bg){ bg = g; best = c; }
+  });
+  return best || closestOnSolid(m, S.P[IX.pelvis]);
+}
+// the hips moved: the figure stands on the face nearest to the body (its nearest point, as posed). It
+// does not go through to a face's other side: pushed behind the face it stands on, it stays on it (and
+// comes back to its side); a face with the hips well behind it is not taken; nor (unless 逆さ・裏向きの面にも
+// is on) one that would turn the body over, more than a quarter turn from its up (a ceiling, a solid's
+// underside). 面をクリックして立つ and 近い面に立つ take any face (asked for)
+function attachNear(){
+  const E = S.env || {};
+  if (S.stand && soleAlong(S.stand.n) - dot(S.stand.p, S.stand.n) < -0.5) return;     // pushed in: back onto it (onPlane)
+  const hips = S.P[IX.pelvis], up = figUp();
+  // the hips a little in (sunk into a wall): that face, back out to its side; past it: not
+  const ok = c => dot(sub(hips, c.p), c.n) > -ATTACH_CM && (E.under || dot(c.n, up) > -0.1);
+  const b = nearestContact(ok), f = b && b.gap < ATTACH_CM ? b.c : null;
+  if (!f){                                      // pulled away from the face: it lets go (stays turned)
+    if (S.stand && soleAlong(S.stand.n) - dot(S.stand.p, S.stand.n) > ATTACH_CM) delete S.stand;
+    return;
+  }
+  if (isFloor(f.p, f.n) && figUp()[1] > 0.97){ delete S.stand; return; }   // upright over the floor: the grounding's
+  standOnFace(f.p, f.n, false);
+}
+// the face under a pixel of the front view: {p, n}, or null
+function faceAt(x, y, W, H){
+  const r = pixelRay(x, y, W, H), E = S.env || {};
+  let best = null;
+  const take = (t, n) => { if (t > 0 && (!best || t < best.t)) best = {t, p: add(r.o, mul(r.dir, t)), n}; };
+  const plane = (p0, n) => { const dn = dot(r.dir, n); if (dn < -1e-6) take(dot(sub(p0, r.o), n) / dn, n); };
+  if (E.floor) plane([0, +E.floorY || 0, 0], [0, 1, 0]);
+  if (E.ceiling) plane([0, +E.ceilingY || 230, 0], [0, -1, 0]);
+  if (E.wall) plane([+E.wallX || 0, 0, +E.wallZ || -40], rotY([0, 0, 1], deg(+E.wallYaw || 0)));
+  for (const o of S.solids || []){ if (o.guide) continue;
+    const m = solidMesh(o), t = rayHit(m, r); if (t === null || !(t > 0)) continue;
+    const c = closestOnSolid(m, add(r.o, mul(r.dir, t))); if (c) take(t, c.n); }
+  return best;
+}
+// 面をクリックして立つ: armed by the button, the next press on the front view picks the face
+let facePick = false;
+const faceHook = (cv, x, y) => {
+  if (!facePick || cv !== front) return null;
+  facePick = false; front.style.cursor = ""; unhook();
+  const f = faceAt(x, y, cv.width, cv.height);
+  if (!f){ say("そこには面がありません。床・壁・天井か、置いた物体の面をクリックしてください。", true); return {move(){}}; }
+  remember(); standOnFace(f.p, f.n, true); afterEdit(); draw();
+  say(f.n[1] > 0.97 ? "クリックした面に立たせました。" : "クリックした面に、面に合わせて立たせました（関節の固定は外しました）。");
+  return {move(){}};
+};
+// first of the press hooks while armed (before selecting, the ruler, the handles)
+const unhook = () => { const k = DOWN_HOOKS.indexOf(faceHook); if (k >= 0) DOWN_HOOKS.splice(k, 1); };
+function armFacePick(){ unhook(); DOWN_HOOKS.unshift(faceHook); facePick = true; front.style.cursor = "crosshair";
+  say("立たせる面（床・壁・天井・物体の面）をクリックしてください。Esc でやめます。"); }
+addEventListener("keydown", e => { if (facePick && e.key === "Escape"){ facePick = false; unhook(); front.style.cursor = ""; say("面のクリックをやめました。"); } });
+// 体をまっすぐに戻す: upright again (on the floor or what is under it, by the grounding)
+function standUpright(){
+  remember(); turnFigureUp([0, 1, 0]); delete S.stand; afterEdit(); draw(); say("体をまっすぐに戻しました。");
+}
+
 // ---- surfaces: put the selected hand / foot on the floor, a wall or the ceiling ------------------
 function surfaces(){
   const E = S.env || {}, out = [];
   if (E.floor) out.push({name: "床", p: [0, +E.floorY || 0, 0], n: [0, 1, 0]});
-  if (E.ceiling) out.push({name: "天井", p: [0, +E.ceilingY || 230, 0], n: [0, -1, 0]});
-  if (E.wall){ const a = deg(+E.wallYaw || 0);
-    out.push({name: "壁", p: [+E.wallX || 0, 0, +E.wallZ || -40], n: rotY([0, 0, 1], a)}); }
+  // the faces of the solids (walls and ceilings are solids, turned any way): an upright face is a 壁,
+  // one facing down a 天井, one facing up a 床
+  if (typeof solidMesh === "function") for (const o of S.solids || []) if (!o.guide) for (const f of solidMesh(o).faces){
+    const ny = f.n[1], name = ny > 0.7 ? "床" : ny < -0.7 ? "天井" : Math.abs(ny) < 0.35 ? "壁" : null;
+    if (name) out.push({name, p: mul(f.n, f.d), n: f.n});
+  }
   return out;
 }
 function flatFoot(side, fy){                  // the toe on the floor too
@@ -689,35 +902,30 @@ function holdAgain(it){
     S.items = S.items.filter(o => o === it || !(PROPS_[o.key] && PROPS_[o.key].place === "hand" && !o.where && o.hand === it.hand));
   holdHands(it);
 }
-// 配置 mode: drag what lies in the scene (Shift: up and down), the wheel turns it
+// 配置 mode: drag what lies in the scene (Shift: up and down)
 function itemUnder(x, y){
   const W = front.width, H = front.height, reach = 14 * pointerScale() * (devicePixelRatio || 1);
   let best = null, bd = reach;
   (S.items || []).forEach((it, n) => { if (!movable(it)) return;
-    for (const q of worldSamples(it)){ const s = project(q, W, H), d = Math.hypot(s.x - x, s.y - y);
-      if (d < bd){ bd = d; best = {n, p: q}; } } });
+    withPX(pxOfItem(it), () => { for (const q of worldSamples(it)){ const s = project(q, W, H), d = Math.hypot(s.x - x, s.y - y);
+      if (d < bd){ bd = d; best = {n, p: q}; } } }); });
   return best;
 }
 DOWN_HOOKS.push((cv, x, y) => {
   if (mode !== "place" || cv !== front || pick(cv, x, y) >= 0) return null;
   const u = itemUnder(x, y); if (!u) return null;
-  scSel = u.n; sel = -1; fillItemList();
+  scSel = u.n; sel = -1; if (typeof soSel === "number") soSel = -1;     // one object selected: this one
+  fillItemList();
   if (gizmoHolds()) return {move(){}};       // the 3-axis handles move it
   const it = S.items[u.n];
   return dragFrom(u.p, cv.width, cv.height, d => {
     it.base = add(it.base, d);
     if (typeof snapItem === "function") snapItem(it);
     if (d[1]) it.grounded = false; else if (it.grounded) groundItem(it);
-    afterEdit(); showItem(); });
+    afterEdit(); showItem(); }, pxOfItem(it));
 });
-WHEEL_HOOKS.push((x, y, step, e) => {
-  if (mode !== "place") return false;
-  const u = itemUnder(x, y); if (!u) return false;
-  remember(); scSel = u.n; const it = S.items[u.n];
-  it.yaw = typeof snapTurn === "function" ? snapTurn(it.yaw, step, e) : ((it.yaw || 0) + step * (e.shiftKey ? 15 : 5) + 540) % 360 - 180;
-  if (it.grounded) groundItem(it);
-  afterEdit(); fillItemList(); return true;
-});
+// the wheel over it zooms the camera, as everywhere (turning is the 3-axis handles' and the panel's)
+
 
 // ---- adding things -----------------------------------------------------------------------------
 function facingYaw(){ const f = bodyFront(); return Math.atan2(f[0], f[2]) * 180 / Math.PI; }
@@ -734,7 +942,15 @@ function placeAlone(key){
   S.items = S.items || []; S.items.push(it); scSel = S.items.length - 1;
   groundItem(it);
   afterEdit(); fillItemList(); draw();
-  say("単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。");
+  say("単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。");
+}
+// カウチ (def.couch: lances): the holding arm comes back to the hip, its hand low by the side, so the
+// shaft lies along the forearm, forward and under the arm
+function couchHold(side){
+  const s = side === "l" ? "l" : "r", wi = IX[s + "_wrist"], cf = chestFrame(), P = S.P;
+  const sx = s === "l" ? 1 : -1;
+  const t = add(add(P[IX.pelvis], mul(bodyFront(), 30)), add(mul(cf.x, sx * 12), [0, 12, 0]));
+  reachWith(wi, t, false);
 }
 function addItem(key, hand){
   const def = PROPS_[key]; if (!def) return;
@@ -744,7 +960,9 @@ function addItem(key, hand){
     it.hand = hand === "l" ? "l" : "r";
     // one thing per hand: a new one replaces what that hand held (things on the back or put down stay)
     S.items = (S.items || []).filter(o => !(PROPS_[o.key] && PROPS_[o.key].place === "hand" && !o.where && o.hand === it.hand));
+    if (holdOf(it) === "couch") it.both = false;
     holdHands(it);
+    if (holdOf(it) === "couch") couchHold(it.hand);
   } else if (def.place === "body"){
     S.items = (S.items || []).filter(o => !(PROPS_[o.key] && PROPS_[o.key].place === "body" && !o.where));
     holdHands(it);
@@ -790,7 +1008,7 @@ function mountOn(it, quiet){                  // seat the pelvis, put the hands 
 
 // ---- the panel ---------------------------------------------------------------------------------
 let scSel = -1;
-const ITEM_CTL = [["scSize", "大きさ", 30, 300, 1, "%"], ["scRx", "回転（前後に倒す）", -180, 180, 1, "°"],
+const ITEM_CTL = [["scSize", "大きさ（いちばん長い辺）", 1, 300, 0.5, "cm"], ["scRx", "回転（前後に倒す）", -180, 180, 1, "°"],
   ["scRy", "回転（ひねる）", -180, 180, 1, "°"], ["scRz", "回転（横に倒す）", -180, 180, 1, "°"],
   ["scOx", "ずらす（左右）", -150, 150, 1, "cm"], ["scOy", "ずらす（上下）", -150, 150, 1, "cm"], ["scOz", "ずらす（前後）", -150, 150, 1, "cm"]];
 function buildScenePanel(){
@@ -809,15 +1027,22 @@ function buildScenePanel(){
     <div id="scItemMore">
       <div class="btns" style="margin-top:6px"><button id="scBack">背負う</button><button id="scWorld">床・物体に置く</button>
         <button id="scHold">手に持つ・身に着ける</button><button id="scGround2">接地させる</button></div>
+      <div id="scHoldRow" class="grid2" style="margin-top:6px">
+        <div><label id="scHoldLbl">持ち方</label><select id="scHoldSel"><option value="grip">握る</option><option value="couch">カウチ（脇に挟む）</option></select></div>
+        <div><label>利き手（両手持ちの主に持つ手）</label><select id="scHandSel"><option value="r">右手</option><option value="l">左手</option></select></div>
+        <div><label>持つ位置（長い方向）</label><div class="row"><input type="range" id="scGripAt" min="-80" max="80" step="1"><input type="number" class="num" id="scGripAtN" step="1"><span class="unit">cm</span></div></div>
+      </div>
+      <div class="btns"><button id="scGripReset" title="持ち方と持つ位置を、この小物の初期値に戻す">↺ 持ち方と持つ位置を戻す</button></div>
       <label id="scBayRow"><input type="checkbox" id="scBay"> 銃剣を付ける</label>
       <div id="scDims" class="grid2"></div>
       <div class="row" style="margin-top:6px"><label style="margin:0;flex:1"><input type="checkbox" id="scColorOn"> 線の色を変える</label>
         <input type="color" id="scColor" value="#e0605a" ></div>
-      <div class="hint">置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。</div>
+      <div class="hint">置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。</div>
     </div>
     <div id="scItemCtl">${ITEM_CTL.map(rng).join("")}
       <div class="btns" style="margin-top:6px"><button id="scReset" title="位置・向き・大きさを戻す">↺ 戻す</button></div></div>
-    <h2 style="margin-top:14px">床・壁・天井</h2>
+    <h2 style="margin-top:14px">地面と接地</h2>
+    <div class="hint">壁と天井は、設置タブで物体（板）として置きます（いくつでも置け、3軸で回転できます）。</div>
     <div class="grid2">
       <label><input type="checkbox" id="scFloor"> 床</label><div class="row"><input type="number" class="num" id="scFloorY" step="1"><span class="unit">cm</span></div>
       <label><input type="checkbox" id="scCeil"> 天井</label><div class="row"><input type="number" class="num" id="scCeilY" step="1"><span class="unit">cm</span></div>
@@ -833,6 +1058,11 @@ function buildScenePanel(){
     <div class="btns" style="margin-top:6px"><button id="scGrab">近くの物につかまる</button><button id="scHang">ぶら下がる</button>
       <button id="scView">人物を画面の中心に</button></div>
     <label title="届かないときは体ごと寄せる"><input type="checkbox" id="scPull" checked> 体ごと寄せる</label>
+    <h3>面に立つ・貼り付く</h3>
+    <label title="配置モードで腰を動かして面に近づけると、その面に立つ（壁・天井・斜面では体ごと面に合わせる）"><input type="checkbox" id="scAttach" checked> 腰を動かすと近くの面に立つ</label>
+    <label title="腰を動かして近づけたとき、天井や物体の下側のように、体が逆さ・裏向きになる面にも立つ（オフでは、面をクリックしたときだけ）"><input type="checkbox" id="scUnder"> 逆さ・裏向きになる面にも立つ</label>
+    <div class="btns"><button id="scPickFace" title="次にクリックした面（床・壁・天井・物体の面）に立たせる">面をクリックして立つ</button><button id="scUpright" title="面に合わせて傾いた体を、まっすぐに戻す">体をまっすぐに戻す</button></div>
+    <div class="hint">床・壁・天井と、置いた物体の面（斜面も）に立たせます。壁では横向きに、天井では逆さに、斜面では面に垂直に、体ごと面に合わせます。面に着くのは、体のいちばん近い所・低い所です（ポーズによって足の裏・膝・手・頭など）。物体・壁・天井の面では、ポーズを変えてもいちばん低い所が面に着いたままです（床では上の「接地」の設定のとおり）。配置モードで体を面に近づける（15cm 以内）か、ボタンを押して面をクリックします。立っている面に沿って腰をドラッグでき、面から離すと貼り付きが外れます。</div>
     <div class="hint">関節（手首・足首・膝・肘・腰）を選んでから押します。着けた所・つかんだ所は固定（ピン）になり、ほかを動かしても離れません。</div>
     <h2 style="margin-top:14px">ワイヤーアクション</h2>
     <label><input type="checkbox" id="scWire"> ワイヤーで吊る</label>
@@ -845,14 +1075,20 @@ function buildScenePanel(){
     <div class="hint">オンにした時の位置の真上に支点ができます。手・足首・ロープで吊ると、その腕を上げる・逆さになるなど、ぶら下がれるポーズになります（体の重さが支点の真下に来る向き）。配置モードで腰をドラッグすると、ワイヤーの長さを保ったまま振れます。</div>`;
   const cam = document.getElementById("camReset").closest("section");
   cam.parentNode.insertBefore(sec, cam);
-  const fillKeys = () => {
-    const cat = $("scCat").value;
-    $("scKey").innerHTML = Object.entries(PROPS_).filter(([, d]) => d.cat === cat)
+  // ニュートラル ("") first: nothing to hold or put (no preview); the tab starts so and goes back to it
+  // after 持つ・置く. A category chosen by hand picks its first kind
+  const fillKeys = e => {
+    const cat = $("scCat").value, k0 = $("scKey").value;
+    $("scKey").innerHTML = `<option value="">ニュートラル（何も選ばない）</option>` + Object.entries(PROPS_).filter(([, d]) => d.cat === cat)
       .map(([k, d]) => `<option value="${k}">${d.ja} / ${d.en}</option>`).join("");
+    const opts = [...$("scKey").options];
+    $("scKey").value = e && e.detail !== "keep" && opts[1] ? opts[1].value : opts.some(o => o.value === k0) ? k0 : "";
     showNote();
   };
   const showNote = () => {
-    const d = PROPS_[$("scKey").value]; if (!d) { $("scNote").textContent = ""; return; }
+    const d = PROPS_[$("scKey").value];
+    $("scAddR").disabled = !d;
+    if (!d) { $("scNote").textContent = ""; $("scAddL").style.display = "none"; $("scAddR").textContent = "持つ・置く"; return; }
     const how = d.place === "hand" ? (d.grip2 ? "両手で持つ" : "片手で持つ") + "（手の形：" + (HAND_JA[d.pose] || d.pose) + "）"
       : d.place === "body" ? "体の前に構える（両手は自動で合わせる）" : d.place === "grab" ? "置いてから、手足でつかまる"
       : d.place === "wear" ? "身に着ける（" + ({head: "頭", chest: "胸・肩", back: "背中", waist: "腰", feet: "両足"}[d.at] || "両足と両手") + "）"
@@ -863,8 +1099,11 @@ function buildScenePanel(){
   };
   $("scCat").addEventListener("change", fillKeys);
   $("scKey").addEventListener("change", showNote);
-  $("scAddR").addEventListener("click", () => addItem($("scKey").value, "r"));
-  $("scAddL").addEventListener("click", () => addItem($("scKey").value, "l"));
+  // after holding / putting: back to ニュートラル (the preview no longer in the way)
+  const put = hand => { const k = $("scKey").value; if (!PROPS_[k]) return; addItem(k, hand);
+    $("scKey").value = ""; $("scKey").dispatchEvent(new Event("change")); draw(); };
+  $("scAddR").addEventListener("click", () => put("r"));
+  $("scAddL").addEventListener("click", () => put("l"));
   $("scList").addEventListener("change", () => { scSel = +$("scList").value; showItem(); draw(); });
   $("scDel").addEventListener("click", () => removeItem(scSel));
   $("scMount").addEventListener("click", () => { const it = S.items[scSel]; if (it) mountOn(it); });
@@ -878,12 +1117,23 @@ function buildScenePanel(){
   onItem("scWorld", putDown, "床・物体の上に置きました。配置モードでドラッグして動かせます。");
   onItem("scHold", holdAgain, "持たせました（手の形も合わせました）。");
   onItem("scGround2", it => { it.grounded = true; groundItem(it); }, "接地させました。");
+  $("scHoldSel").addEventListener("change", e => { const it = S.items[scSel]; if (!it) return; remember();
+    setHold(it, e.target.value); afterEdit(); fillItemList(); draw(); });
+  const setAt = v => { const it = S.items[scSel]; if (!it || !isFinite(v)) return; if (v === 0) delete it.gripAt; else it.gripAt = v; afterEdit(); draw(); };
+  $("scGripAt").addEventListener("pointerdown", remember);
+  $("scGripAt").addEventListener("input", e => { $("scGripAtN").value = e.target.value; setAt(+e.target.value); });
+  $("scGripAtN").addEventListener("change", e => { remember(); $("scGripAt").value = e.target.value; setAt(+e.target.value); });
+  // 利き手: a two-handed thing's main hand (the other hand takes the rest); the thing is held again
+  $("scHandSel").addEventListener("change", e => { const it = S.items[scSel]; if (!it || it.where) return; remember();
+    freeHands(it); it.hand = e.target.value === "l" ? "l" : "r"; holdHands(it); afterEdit(); fillItemList(); draw(); });
+  $("scGripReset").addEventListener("click", () => { const it = S.items[scSel]; if (!it) return; remember();
+    resetGrip(it); afterEdit(); fillItemList(); draw(); say("持ち方と持つ位置を戻しました。"); });
   $("scBay").addEventListener("change", e => { const it = S.items[scSel]; if (!it) return; remember(); it.bayonet = e.target.checked; draw(); });
   const setColor = () => { const it = S.items[scSel]; if (!it) return; remember();
     it.color = $("scColorOn").checked ? $("scColor").value : undefined; draw(); };
   $("scColorOn").addEventListener("change", setColor);
   $("scColor").addEventListener("input", () => { $("scColorOn").checked = true; setColor(); });
-  const setters = {scSize: (it, v) => it.scale = v / 100, scRx: (it, v) => it.rot[0] = v, scRy: (it, v) => it.rot[1] = v,
+  const setters = {scSize: (it, v) => setItemLongCm(it, v), scRx: (it, v) => it.rot[0] = v, scRy: (it, v) => it.rot[1] = v,
     scRz: (it, v) => it.rot[2] = v, scOx: (it, v) => it.off[0] = v, scOy: (it, v) => it.off[1] = v, scOz: (it, v) => it.off[2] = v};
   for (const [id] of ITEM_CTL){
     const r = $(id), n = $(id + "N");
@@ -906,6 +1156,10 @@ function buildScenePanel(){
       if (key === "ground" && E.ground !== "off" && !(S.solids || []).length) E.floor = true;
       afterEdit(); syncScene(); draw(); });
   }
+  $("scAttach").addEventListener("change", e => { remember(); env().attach = e.target.checked; draw(); });
+  $("scUnder").addEventListener("change", e => { remember(); env().under = e.target.checked; draw(); });
+  $("scPickFace").addEventListener("click", armFacePick);
+  $("scUpright").addEventListener("click", standUpright);
   $("scToFloor").addEventListener("click", () => toSurface("床"));
   $("scToWall").addEventListener("click", () => toSurface("壁"));
   $("scToCeil").addEventListener("click", () => toSurface("天井"));
@@ -940,13 +1194,21 @@ function buildAlonePanel(){
     <label style="margin-top:10px">単体で置いた物</label>
     <select id="alList" size="4"></select>
     <div class="btns" style="margin-top:6px"><button id="alDel">外す</button><button id="alHold">いまの人物に持たせる</button></div>
-    <div class="hint">武器・道具・帽子なども、誰にも持たせずに床（物体の上）に置けます。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。人物に持たせた物は「装備」で扱います。</div>`;
+    <div class="hint">武器・道具・帽子なども、誰にも持たせずに床（物体の上）に置けます。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。人物に持たせた物は「装備」で扱います。</div>`;
   const cam = document.getElementById("camReset").closest("section");
   cam.parentNode.insertBefore(sec, cam);
   const fill = () => { $("alKey").innerHTML = Object.entries(PROPS_).filter(([, d]) => d.cat === $("alCat").value && ALONE_OK(d))
     .map(([k, d]) => `<option value="${k}">${d.ja} / ${d.en}</option>`).join(""); };
   $("alCat").addEventListener("change", fill);
   $("alPut").addEventListener("click", () => placeAlone($("alKey").value));
+  // 接地 for the things already out (held ones are put down on the floor): the same as in 装備
+  { const g = document.createElement("button"); g.id = "alGround"; g.type = "button"; g.textContent = "選んだ物を接地させる";
+    g.title = "出ている物の一覧で選んだ小物を、床・物体の上に接地（持っている物は床に置く）";
+    $("alPut").after(g);
+    g.addEventListener("click", () => { const it = S.items[scSel];
+      if (!it){ say("接地させる物を、下の「出ている物」の一覧から選んでください。", true); return; }
+      remember(); if (it.where) { it.grounded = true; groundItem(it); } else putDown(it);
+      afterEdit(); fillItemList(); draw(); say("接地させました。"); }); }
   $("alList").addEventListener("change", () => { scSel = +$("alList").value; fillItemList(); draw(); });
   $("alDel").addEventListener("click", () => removeItem(+$("alList").value));
   $("alHold").addEventListener("click", () => { const it = S.items[+$("alList").value]; if (!it) return;
@@ -997,16 +1259,26 @@ function showItem(){
   $("scBoth").parentNode.style.display = d && d.grip2 ? "inline" : "none";
   if (!it) return;
   $("scBoth").checked = it.both !== false;
-  const vals = {scSize: Math.round((it.scale || 1) * 100), scRx: it.rot[0], scRy: it.rot[1], scRz: it.rot[2],
+  const hand = d && d.place === "hand", ways = d && (d.couchable || d.couch);
+  $("scHoldRow").style.display = hand ? "" : "none"; $("scGripReset").style.display = hand ? "" : "none";
+  $("scHoldSel").parentNode.style.display = ways ? "" : "none";
+  $("scHandSel").parentNode.style.display = d && d.grip2 ? "" : "none";
+  $("scHandSel").value = it.hand === "l" ? "l" : "r";
+  $("scHoldSel").value = holdOf(it);
+  $("scGripAt").value = it.gripAt || 0; $("scGripAtN").value = it.gripAt || 0;
+  // the size in cm: the slider from 0.3 to 3 times its first longest side (as 30–300 % were)
+  { const L0 = Math.max(...itemBase(it)) * Math.max(...(stretchOf(it) || [1, 1, 1])), r = $("scSize");
+    r.min = Math.round(L0 * 3) / 10; r.max = Math.round(L0 * 30) / 10; }
+  const vals = {scSize: Math.round(itemLongCm(it) * 10) / 10, scRx: it.rot[0], scRy: it.rot[1], scRz: it.rot[2],
     scOx: it.off[0], scOy: it.off[1], scOz: it.off[2]};
-  for (const [id, v] of Object.entries(vals)){ $(id).value = v; $(id + "N").value = Math.round(v); }
+  for (const [id, v] of Object.entries(vals)){ if (rangeHeld !== $(id)) $(id).value = v; if (document.activeElement !== $(id + "N")) $(id + "N").value = id === "scSize" ? v : Math.round(v); }
 }
 function syncScene(){
   const E = S.env = Object.assign(fresh().env, S.env || {});
   if (E.ground === true) E.ground = "stick"; else if (E.ground === false) E.ground = "off";
   $("scFloor").checked = !!E.floor; $("scCeil").checked = !!E.ceiling; $("scWall").checked = !!E.wall; $("scShow").checked = !!E.show;
   $("scFloorY").value = E.floorY; $("scCeilY").value = E.ceilingY; $("scWallZ").value = E.wallZ; $("scWallYaw").value = E.wallYaw;
-  $("scGround").value = E.ground || "off";
+  $("scGround").value = E.ground || "off"; $("scAttach").checked = E.attach !== false; $("scUnder").checked = !!E.under;
   const w = S.wire || {}; $("scWire").checked = !!w.on; $("scWireJ").value = w.joint || "chest"; $("scWireH").value = w.height || 300;
   fillItemList();
 }

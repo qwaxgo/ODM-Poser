@@ -9,6 +9,7 @@ export const ROOT = import.meta.env.BASE_URL.replace(/\/?$/, "/");
 
 // the pages in the order of the menu; the title is the page's own first heading
 export const PAGES: { slug: string; about: Record<Lang, string> }[] = [
+	{ slug: "manual", about: { ja: "画面の使い方：モード、カーソル、3軸ハンドル、自動切り替え、画面ごとの並び、キー・タッチ操作。", en: "Using the screen: modes, cursors, 3-axis handles, automatic switching, the layout on each device, keys and touch." } },
 	{ slug: "download", about: { ja: "サーバーなしで使う：HTML 版、Windows・Linux のアプリ版。署名のないアプリの警告。", en: "Use it without a server: the HTML build, the Windows and Linux apps, the unsigned-app warning." } },
 	{ slug: "app", about: { ja: "ブラウザから「アプリ」として追加する。オフラインで開く、スマホ・タブレットに入れる。", en: "Install it from the browser as an app: offline, on phones and tablets." } },
 	{ slug: "export", about: { ja: "アタリ画像・OpenPose 画像・構図の画像・ポーズのファイルを書き出す。大きさと書き出す人物。", en: "Export the rough, OpenPose and composition pictures and the pose file: sizes, which figures." } },

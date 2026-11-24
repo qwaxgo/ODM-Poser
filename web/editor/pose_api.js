@@ -55,9 +55,9 @@ function refreshPanels(){
   const keep = (id, html) => { const el = $(id); if (!el) return; const v = el.value; el.innerHTML = html;
     if ([...el.options].some(o => o.value === v)) el.value = v; };
   keep("preset", Object.keys(PRESETS).map(n => `<option>${n}</option>`).join(""));
-  keep("handSel", Object.keys(HANDS).map(k => `<option value="${k}">${HAND_JA[k] || k}（${k}）</option>`).join(""));
+  keep("handSel", window.ODMHand ? ODMHand.selHTML() : Object.keys(HANDS).map(k => `<option value="${k}">${HAND_JA[k] || k}（${k}）</option>`).join(""));
   keep("scCat", PROP_CATS.map(([k, ja, en]) => `<option value="${k}">${ja} / ${en}</option>`).join(""));
-  if ($("scCat")) $("scCat").dispatchEvent(new Event("change"));
+  if ($("scCat")) $("scCat").dispatchEvent(new CustomEvent("change", {detail: "keep"}));   // the kind chosen (or ニュートラル) stays
   keep("soKind", Object.entries(SOLID_KINDS).map(([k, d]) => `<option value="${k}">${d.ja}</option>`).join(""));
   keep("auKind", Object.entries(AURA_KINDS).map(([k, [ja]]) => `<option value="${k}">${ja}</option>`).join(""));
   keep("auPart", Object.entries(AURA_PARTS).map(([k, [ja]]) => `<option value="${k}">${ja}</option>`).join(""));
@@ -156,7 +156,7 @@ function makeApi(mod){
     // scale(s0, factor, n)}; asked before the editor's own targets
     gizmo: {
       addTarget(fn){ if (typeof fn !== "function") throw new Error("gizmo.addTarget(fn)");
-        if (window.ODMGizmo) window.ODMGizmo.addTarget(guarded(mod, "gizmo", fn)); },
+        if (window.ODMGizmoTargets) window.ODMGizmoTargets.push(guarded(mod, "gizmo", fn)); },
     },
     props: {
       addCategory(key, ja, en){
@@ -211,15 +211,19 @@ function makeApi(mod){
       },
     },
     hands: {
-      // curl per finger (thumb, index, middle, ring, pinky): 0 straight .. 1 closed
+      // curl per finger (thumb, index, middle, ring, pinky): 0 straight .. 1 closed; or angles: per
+      // finger [spread, bend0, bend1, bend2] degrees (pose_hand.js), kept within a hand's range
       add(key, def){
         if (!/^[a-z_][a-z0-9_]*$/.test(key)) throw new Error(`hand shape key "${key}": lower case, digits and _`);
-        if (!(Array.isArray(def.curl) && def.curl.length === 5 && def.curl.every(isNum))) throw new Error(`hand ${key}: curl is five numbers`);
-        HANDS[key] = def.curl.slice(); HAND_JA[key] = def.ja || key; ORIGIN.hands[key] = mod.id;
+        const angles = Array.isArray(def.angles) && def.angles.length === 5 && def.angles.every(f => Array.isArray(f) && f.length === 4 && f.every(isNum));
+        if (!angles && !(Array.isArray(def.curl) && def.curl.length === 5 && def.curl.every(isNum))) throw new Error(`hand ${key}: curl is five numbers, or angles five [spread, bend0, bend1, bend2]`);
+        HANDS[key] = angles ? {a: def.angles.map((f, n) => clampFinger(n, f))} : def.curl.slice(); HAND_JA[key] = def.ja || key; ORIGIN.hands[key] = mod.id;
         tr(`${def.ja || key}（${key}）`, def.en);
       },
       set(side, key){ if (!HANDS[key]) throw new Error(`no hand shape "${key}"`); S.hands[side === "l" ? "l" : "r"] = key; },
       shapes: () => Object.keys(HANDS),
+      // the joints a hand has now (its own, or its shape's): five [spread, bend0, bend1, bend2] degrees
+      angles: side => handAngles(side === "l" ? "l" : "r"),
     },
     poses: {
       // turns: [[joint, "x" | "y" | "z", degrees], ...] from the standing pose (as PRESETS in pose_main.js)
@@ -440,7 +444,10 @@ async function loadStored(){
 const MOD_PATH = /^([A-Za-z0-9-][\w.-]*\/)?[A-Za-z0-9-][\w.-]*\.js$/;   // names starting with _ or . stay out, as in mods/
 async function folderFiles(dir, path = ""){   // a folder -> [[path, File]]
   const out = [];
-  for await (const [name, h] of dir.entries()){
+  // (an async iterator walked by hand: the syntax check, esprima, cannot read for await)
+  const entries = dir.entries();
+  for (let step = await entries.next(); !step.done; step = await entries.next()){
+    const [name, h] = step.value;
     if (h.kind === "file" && MOD_PATH.test(path + name)) out.push([path + name, await h.getFile()]);
     else if (h.kind === "directory" && !path && MOD_PATH.test(name + "/x.js")) out.push(...await folderFiles(h, name + "/"));
   }

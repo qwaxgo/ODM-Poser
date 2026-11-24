@@ -4,16 +4,20 @@
 // put on their faces and pinned there. In the 配置 mode they are dragged on the floor (Shift: up
 // and down) and turned with the wheel; the camera stays where it is.
 //
-// S.solids: {kind, pos: [x, y, z] (the middle of the base), size: [w, h, d] cm, yaw (degrees),
-//            sides (prisms and pyramids)}
+// S.solids: {kind, pos: [x, y, z] (the middle of the base), size: [w, h, d] cm, yaw (degrees, about up),
+//            pitch / roll (degrees, about the solid's own x / z: tilted), sides (prisms and pyramids),
+//            top (a prism's / pyramid's top as a share of its base)}
+// The walls and the ceiling are solids too (the old S.env.wall / ceiling are moved here: migrateEnv);
+// the ground (S.env.floor) stays as the level everything stands on.
 const SOLID_KINDS = {
   box:      {ja: "直方体（箱・台）", en: "Box", shape: "box", size: [100, 60, 60], at: [90, 0, 0]},
   floor:    {ja: "床（板）", en: "Floor slab", shape: "box", size: [300, 10, 300], at: [0, -10, 0]},
   wall:     {ja: "壁（板）", en: "Wall slab", shape: "box", size: [300, 250, 12], at: [0, 0, -80]},
+  ceiling:  {ja: "天井（板）", en: "Ceiling slab", shape: "box", size: [300, 10, 300], at: [0, 230, 0]},
   building: {ja: "建物", en: "Building", shape: "box", size: [400, 900, 400], at: [0, 0, -600]},
   step:     {ja: "段差", en: "Step", shape: "box", size: [120, 20, 40], at: [0, 0, 50]},
   prism:    {ja: "角柱", en: "Prism", shape: "prism", size: [60, 120, 60], sides: 6, at: [90, 0, 0]},
-  cylinder: {ja: "円柱", en: "Cylinder", shape: "cyl", size: [60, 120, 60], at: [90, 0, 0]},
+  cylinder: {ja: "円柱（太い・柱や建物）", en: "Cylinder (thick: columns, buildings)", shape: "cyl", size: [60, 120, 60], at: [90, 0, 0]},
   pyramid:  {ja: "角錐", en: "Pyramid", shape: "pyr", size: [80, 100, 80], sides: 4, at: [100, 0, 0]},
   cone:     {ja: "円錐", en: "Cone", shape: "cone", size: [60, 100, 60], at: [90, 0, 0]},
   pole:     {ja: "支柱", en: "Pole", shape: "cyl", size: [10, 250, 10], at: [50, 0, 0]},
@@ -24,16 +28,21 @@ let soSel = -1;
 // ---- shape: corners, faces with outward planes (n . p <= d inside) ----------------------------------
 function solidMesh(o){
   const k = solidKind(o), [w, h, d] = o.size.map(v => Math.max(1, +v || 1));
-  const smooth = k.shape === "cyl" || k.shape === "cone", apex = k.shape === "pyr" || k.shape === "cone";
+  // 天面 (o.top, a share of the base): a prism's top is scaled; a pyramid with no top is a point
+  const top = o.top == null ? 1 : Math.max(0, +o.top);
+  const smooth = k.shape === "cyl" || k.shape === "cone", apex = (k.shape === "pyr" || k.shape === "cone") && (k.shape === "cone" || top <= 0.02);
   const n = k.shape === "box" ? 4 : smooth ? 32 : Math.max(3, Math.min(24, Math.round(o.sides || k.sides || 6)));
   const ring = [];
   for (let i = 0; i < n; i++){
     if (n === 4 && !smooth) ring.push([[-1, 1, 1, -1][i] * w/2, [-1, -1, 1, 1][i] * d/2]);
     else { const a = 2 * Math.PI * i / n + Math.PI / 2; ring.push([Math.cos(a) * w/2, Math.sin(a) * d/2]); }
   }
-  const a = deg(o.yaw || 0), at = (x, y, z) => add(o.pos, rotY([x, y, z], a));
+  // turned: first its roll (about z), then its pitch (about x), then its yaw (about up), about the base's middle
+  const a = deg(o.yaw || 0), rp = deg(o.pitch || 0), rr = deg(o.roll || 0);
+  const at = (x, y, z) => add(o.pos, rotY(rotAxis(rotAxis([x, y, z], [0, 0, 1], rr), [1, 0, 0], rp), a));
   const V = ring.map(([x, z]) => at(x, 0, z));
-  if (apex) V.push(at(0, h, 0)); else ring.forEach(([x, z]) => V.push(at(x, h, z)));
+  const tk = k.shape === "prism" || k.shape === "pyr" ? top : 1;      // only prisms and pyramids have a top size
+  if (apex) V.push(at(0, h, 0)); else ring.forEach(([x, z]) => V.push(at(x * tk, h, z * tk)));
   const faces = [{v: ring.map((_, i) => i)}];
   if (!apex) faces.push({v: ring.map((_, i) => n + i)});
   const s0 = faces.length;
@@ -55,10 +64,15 @@ function solidMesh(o){
   }
   return {V, faces, edges};
 }
+// the perspective ruler's guide shapes (o.guide, pose_ruler.js) are solids drawn as the ruler: shown
+// and picked only while the ruler shows, and nothing stands on them, touches them or hides behind them
+const isGuide = o => !!(o && o.guide);
+const solidLive = o => !isGuide(o) || !!(S.ruler && S.ruler.on);
 // heights of the tops (or slopes) of the solids straight above / below p
 function solidTopsAt(p){
   const out = [];
   for (const o of S.solids || []){
+    if (isGuide(o)) continue;
     let hi = Infinity, lo = -Infinity, inside = true;
     for (const f of solidMesh(o).faces){
       const ny = f.n[1], rest = f.d - f.n[0] * p[0] - f.n[2] * p[2];
@@ -99,7 +113,7 @@ function closestOnSolid(m, q){
 // ---- the camera's ray through a pixel of the front view ----------------------------------------
 function pixelRay(x, y, W, H){
   const f = lensF(W, H), D = camDist(W, H);
-  return {o: add(camRotInv([0, 0, D]), S.center), dir: camRotInv(norm([(x - W/2) / f, -(y - H/2) / f, -1]))};
+  return {o: add(camRotInv([0, 0, D]), S.center), dir: camRotInv(pixDir(x, y, W, H))};
 }
 function rayHit(m, r){                        // distance to where the ray enters the solid, or null
   let t0 = 0, t1 = Infinity;
@@ -113,10 +127,11 @@ function rayHit(m, r){                        // distance to where the ray enter
   return t0;
 }
 // dragging a thing by the point that was grabbed: over the floor, or up and down with Shift
-function dragFrom(hit, W, H, apply){
+// px: the thing's パースの誇張 (its ray is its own camera's)
+function dragFrom(hit, W, H, apply, px){
   let last = hit.slice();
   return {move(x, y, e){
-    const r = pixelRay(x, y, W, H);
+    const r = withPX(px || null, () => pixelRay(x, y, W, H));
     if (e.shiftKey){
       const nrm = norm([r.dir[0], 0, r.dir[2]]), dn = dot(nrm, r.dir);
       if (Math.abs(dn) < 1e-6) return;
@@ -138,10 +153,12 @@ function drawSolids(ctx, W, H, opts, proj, lw, toViewer){
   const list = S.solids || [];
   if (!list.length) return;
   ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
-  list.forEach((o, k) => {
-    const m = solidMesh(o), P = m.V.map(p => proj(p, W, H));
-    const seen = m.faces.map(f => dot(f.n, toViewer(m.V[f.v[0]])) > 0);
-    const color = !opts.export && k === soSel && mode === "place" ? cssVar("--sel") : o.color || (opts.export ? "#8a8a8a" : cssVar("--accent"));
+  list.forEach((o, k) => withPX(opts.side ? null : pxOfKey("s" + k), () => {   // パースの誇張: each its own camera
+    if (isGuide(o)) return;                 // drawn with the ruler
+    const m = solidMesh(o), P = m.V.map(p => proj(p, W, H)), eye = PX ? eyePoint(W, H) : null;
+    const seen = m.faces.map(f => dot(f.n, eye ? sub(eye, m.V[f.v[0]]) : toViewer(m.V[f.v[0]])) > 0);
+    const chosen = k === soSel || (typeof objPicked === "function" && objPicked("s" + k));
+    const color = !opts.export && chosen && mode === "place" ? cssVar("--sel") : o.color || (opts.export ? "#8a8a8a" : cssVar("--accent"));
     const dashed = S.hiddenDashed && !opts.side && typeof strokeSeen === "function";
     for (const hidden of [true, false]){
       if (hidden && opts.export && !dashed) continue;
@@ -152,7 +169,8 @@ function drawSolids(ctx, W, H, opts, proj, lw, toViewer){
         for (const e of m.edges){
           const v0 = seen[e.f[0]], v1 = seen[e.f[1]];
           if ((e.outline && v0 === v1) || !(v0 || v1)) continue;
-          strokeSeen(ctx, m.V[e.a], m.V[e.b], W, H, x => x.solid === k);
+          const c = PX ? clipNear(m.V[e.a], m.V[e.b], W, H) : [m.V[e.a], m.V[e.b]]; if (!c) continue;
+          strokeSeen(ctx, c[0], c[1], W, H, x => x.solid === k);
         }
         continue;
       }
@@ -161,11 +179,13 @@ function drawSolids(ctx, W, H, opts, proj, lw, toViewer){
         const v0 = seen[e.f[0]], v1 = seen[e.f[1]];
         if (e.outline && v0 === v1) continue;
         if ((v0 || v1) === hidden) continue;
+        if (PX){ const c = clipNear(m.V[e.a], m.V[e.b], W, H); if (!c) continue;
+          const pa = proj(c[0], W, H), pb = proj(c[1], W, H); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); continue; }
         ctx.moveTo(P[e.a].x, P[e.a].y); ctx.lineTo(P[e.b].x, P[e.b].y);
       }
       ctx.stroke();
     }
-  });
+  }));
   ctx.restore();
 }
 function eyePoint(W, H){ return add(camRotInv([0, 0, camDist(W, H)]), S.center); }
@@ -180,42 +200,60 @@ function eyePoint(W, H){ return add(camRotInv([0, 0, camDist(W, H)]), S.center);
 }
 { const scene0 = drawScene;
   drawScene = function(ctx, W, H, opts, proj, ink, far, lw){
-    if (opts.side){ const right = camRotInv([1, 0, 0]); drawSolids(ctx, W, H, opts, proj, lw, () => right); }
+    if (opts.side){ const tv = sideBasis(W, H).ez; drawSolids(ctx, W, H, opts, proj, lw, () => tv); }   // toward the side view's viewer
     scene0(ctx, W, H, opts, proj, ink, far, lw);
   };
 }
 
-// ---- 配置 mode: grab a solid (the joints' circles come first), the wheel turns it ----------------
+// ---- 配置 mode: grab a solid (the joints' circles come first) ---------------------------------------
 function solidUnder(x, y){
-  const r = pixelRay(x, y, front.width, front.height);
-  let best = -1, bt = Infinity;
-  (S.solids || []).forEach((o, k) => { const t = rayHit(solidMesh(o), r); if (t !== null && t < bt){ bt = t; best = k; } });
-  return best < 0 ? null : {k: best, hit: add(r.o, mul(r.dir, bt))};
+  // each solid by its own camera's ray (パースの誇張); the nearest hit by the real camera
+  const W = front.width, H = front.height, eye = eyePoint(W, H);
+  let best = -1, bt = Infinity, hit = null;
+  (S.solids || []).forEach((o, k) => { if (!solidLive(o)) return;
+    const r = withPX(pxOfKey("s" + k), () => pixelRay(x, y, W, H)), t = rayHit(solidMesh(o), r); if (t === null) return;
+    const p = add(r.o, mul(r.dir, t)), d = len(sub(p, eye)); if (d < bt){ bt = d; best = k; hit = p; } });
+  return best < 0 ? null : {k: best, hit};
 }
 DOWN_HOOKS.push((cv, x, y) => {
   if (mode !== "place" || cv !== front || pick(cv, x, y) >= 0) return null;
   const u = solidUnder(x, y); if (!u) return null;
-  soSel = u.k; sel = -1; syncSolids();
+  soSel = u.k; sel = -1;
+  if (S.items && S.items[scSel] && movable(S.items[scSel])) scSel = -1;    // one object selected: this one
+  syncSolids();
   if (gizmoHolds()) return {move(){}};       // the 3-axis handles move it
   return dragFrom(u.hit, cv.width, cv.height, dlt => {
     // snapping (pose_ruler.js) moves the solid itself, so the drag keeps its own, unsnapped place
     const o = S.solids[u.k]; soFree = add(soFree || o.pos, dlt); o.pos = soFree.slice();
     if (typeof snapSolid === "function") snapSolid(o);
-    afterEdit(); syncSolids(); });
+    afterEdit(); syncSolids(); }, pxOfKey("s" + u.k));
 });
 let soFree = null;
 DOWN_HOOKS.unshift(() => { soFree = null; return null; });
-WHEEL_HOOKS.push((x, y, step, e) => {
-  if (mode !== "place") return false;
-  const u = solidUnder(x, y); if (!u) return false;
-  remember(); soSel = u.k;
-  const o = S.solids[u.k];
-  o.yaw = typeof snapTurn === "function" ? snapTurn(o.yaw, step, e) : (((o.yaw || 0) + step * (e.shiftKey ? 15 : 5)) + 540) % 360 - 180;
-  if (typeof snapSolid === "function") snapSolid(o);
-  afterEdit(); syncSolids(); return true;
-});
+// the wheel over it zooms the camera, as everywhere (turning is the 3-axis handles' and the panel's)
+
 
 // ---- adding, contact, standing on top -----------------------------------------------------------
+// 接地: the solid's lowest point onto the ground or the top of another solid under it
+function groundSolid(o){
+  const V = solidMesh(o).V, low = Math.min(...V.map(p => p[1]));
+  const c = V.reduce((s, p) => add(s, p), [0, 0, 0]).map(v => v / V.length);
+  const others = S.solids, mine = others.indexOf(o);
+  S.solids = others.filter((_, k) => k !== mine);                // its own top is not under it
+  let support;
+  try { support = supportUnder([c[0], low, c[2]], low); } finally { S.solids = others; }
+  if (isFinite(support)) o.pos = add(o.pos, [0, support - low, 0]);
+}
+// the old wall and ceiling (S.env.wall / ceiling, one of each) become solids, once
+function migrateEnv(){
+  const E = S.env; if (!E) return;
+  S.solids = S.solids || [];
+  if (E.wall){ const k = SOLID_KINDS.wall;
+    S.solids.push({kind: "wall", pos: [+E.wallX || 0, +E.floorY || 0, +E.wallZ || -40], size: k.size.slice(), yaw: +E.wallYaw || 0}); }
+  if (E.ceiling){ const k = SOLID_KINDS.ceiling;
+    S.solids.push({kind: "ceiling", pos: [0, +E.ceilingY || 230, 0], size: k.size.slice(), yaw: 0}); }
+  E.wall = false; E.ceiling = false;
+}
 function solidName(o){ return solidKind(o).ja.replace(/（.*$/, ""); }
 function addSolid(kind){
   const k = SOLID_KINDS[kind]; if (!k) return;
@@ -230,9 +268,9 @@ function addSolid(kind){
 }
 function targetSolid(q){                      // the selected solid, else the one nearest to q
   const list = S.solids || [];
-  if (soSel >= 0 && list[soSel]) return {k: soSel, c: closestOnSolid(solidMesh(list[soSel]), q)};
+  if (soSel >= 0 && list[soSel] && !isGuide(list[soSel])) return {k: soSel, c: closestOnSolid(solidMesh(list[soSel]), q)};
   let best = null;
-  list.forEach((o, k) => { const c = closestOnSolid(solidMesh(o), q); if (c && (!best || c.d < best.c.d)) best = {k, c}; });
+  list.forEach((o, k) => { if (isGuide(o)) return; const c = closestOnSolid(solidMesh(o), q); if (c && (!best || c.d < best.c.d)) best = {k, c}; });
   return best;
 }
 function touchSolid(){
@@ -253,23 +291,30 @@ function touchSolid(){
 }
 function standOnSolid(){
   const list = S.solids || [];
-  const o = list[soSel]; if (!o) { say("物体を一覧かドラッグで選んでください。", true); return; }
+  const o = list[soSel]; if (!o || isGuide(o)) { say("物体を一覧かドラッグで選んでください。", true); return; }
   const tops = solidTopsAt(o.pos); if (!tops.length) return;
   remember();
   S.pins = {};
-  const c = S.P[IX.pelvis];
-  moveAll([o.pos[0] - c[0], 0, o.pos[2] - c[2]], true);
-  moveAll([0, Math.max(...tops) - lowest(), 0], true);
+  // its top over the middle: the figure's lowest point on it, and kept on it (pose_scene.js: standOnFace)
+  const top = typeof standOnFace === "function" ? closestOnSolid(solidMesh(o), [o.pos[0], Math.max(...tops) + 100, o.pos[2]]) : null;
+  if (top && top.n[1] > 0.5) standOnFace(top.p, top.n, true);
+  else { const c = S.P[IX.pelvis];
+    moveAll([o.pos[0] - c[0], 0, o.pos[2] - c[2]], true);
+    moveAll([0, Math.max(...tops) - lowest(), 0], true); }
   afterEdit(); draw();
   say(`${solidName(o)}の上に立たせました（関節の固定は外しました）。`);
 }
 
 // ---- the panel ------------------------------------------------------------------------------------
-const SOLID_CTL = [["soW", "幅", 0], ["soH", "高さ", 1], ["soD", "奥行き", 2], ["soSides", "角の数"],
+const SOLID_CTL = [["soW", "幅", 0], ["soH", "高さ", 1], ["soD", "奥行き", 2], ["soSides", "角の数"], ["soTop", "天面の大きさ（底面に対して）"],
   ["soX", "位置（左右）", 0], ["soY", "位置（上下）", 1], ["soZ", "位置（前後）", 2], ["soYaw", "向き"]];
+// each number has a slider too: [min, max, step] (cm, or the count / degrees)
+const SOLID_RANGE = {soW: [5, 400, 1], soH: [5, 400, 1], soD: [5, 400, 1], soSides: [3, 24, 1], soTop: [0, 200, 1],
+  soX: [-600, 600, 5], soY: [-100, 400, 5], soZ: [-600, 600, 5], soYaw: [-180, 180, 1]};
+let soSlide = false;                          // a slider being dragged: one undo step for the drag
 function buildSolidPanel(){
   const sec = document.createElement("section");
-  const unit = id => id === "soSides" ? "" : id === "soYaw" ? "°" : "cm";
+  const unit = id => id === "soSides" ? "" : id === "soYaw" ? "°" : id === "soTop" ? "%" : "cm";
   sec.innerHTML = `<h2>物体（床・壁・建物・柱など）</h2>
     <select id="soKind">${Object.entries(SOLID_KINDS).map(([k, d]) => `<option value="${k}">${d.ja}</option>`).join("")}</select>
     <div class="btns" style="margin-top:6px"><button id="soAdd">置く</button></div>
@@ -277,12 +322,12 @@ function buildSolidPanel(){
     <select id="soList" size="4"></select>
     <div class="btns" style="margin-top:6px"><button id="soDel">外す</button><button id="soDup">複製</button></div>
     <div id="soCtl" class="grid2" style="margin-top:6px">${SOLID_CTL.map(([id, label]) =>
-      `<div id="${id}Box"><label>${label}</label><div class="row"><input type="number" id="${id}" step="${id === "soSides" ? 1 : 5}"><span class="unit">${unit(id)}</span></div></div>`).join("")}</div>
+      `<div id="${id}Box"><label>${label}</label><div class="row"><input type="range" id="${id}R" min="${SOLID_RANGE[id][0]}" max="${SOLID_RANGE[id][1]}" step="${SOLID_RANGE[id][2]}"><input type="number" id="${id}" step="${id === "soSides" ? 1 : 5}"><span class="unit">${unit(id)}</span></div></div>`).join("")}</div>
     <div class="row" id="soColorRow" style="margin-top:6px"><label style="margin:0;flex:1"><input type="checkbox" id="soColorOn"> 線の色を変える</label>
       <input type="color" id="soColor" value="#e0605a" ></div>
     <div class="btns" id="soResetRow" style="margin-top:6px"><button id="soReset" title="大きさ・向きを戻す">↺ 戻す</button></div>
     <div class="btns" style="margin-top:8px"><button id="soTouch">選んだ関節を着ける</button><button id="soStand">この上に立つ</button></div>
-    <div class="hint">配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、ホイールで向き）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。</div>`;
+    <div class="hint">配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。</div>`;
   const scene = $("scCat").closest("section");
   scene.parentNode.insertBefore(sec, scene.nextSibling);
   $("soAdd").addEventListener("click", () => addSolid($("soKind").value));
@@ -293,11 +338,15 @@ function buildSolidPanel(){
     const c = JSON.parse(JSON.stringify(o)); c.pos = add(c.pos, [o.size[0] + 20, 0, 0]);
     S.solids.push(c); soSel = S.solids.length - 1; afterEdit(); syncSolids(); draw(); });
   for (const [id, , k] of SOLID_CTL){
+    const r = $(id + "R");
+    r.addEventListener("pointerdown", () => remember());
+    r.addEventListener("input", () => { $(id).value = r.value; soSlide = true; $(id).dispatchEvent(new Event("change")); soSlide = false; });
     $(id).addEventListener("change", e => {
       const o = S.solids && S.solids[soSel], v = +e.target.value; if (!o || !isFinite(v)) return;
-      remember();
+      if (!soSlide) remember();
       if (id === "soW" || id === "soH" || id === "soD") o.size[k] = Math.max(1, v);
       else if (id === "soSides") o.sides = Math.max(3, Math.min(24, Math.round(v)));
+      else if (id === "soTop") o.top = Math.max(0, Math.min(2, v / 100));
       else if (id === "soYaw") o.yaw = v;
       else { o.pos = o.pos.slice(); o.pos[k] = v; }
       afterEdit(); syncSolids(); draw();
@@ -314,6 +363,7 @@ function buildSolidPanel(){
   $("soStand").addEventListener("click", standOnSolid);
 }
 function syncSolids(){
+  migrateEnv();
   const list = S.solids = S.solids || [];
   if (soSel >= list.length) soSel = list.length - 1;
   $("soList").innerHTML = list.map((o, k) => `<option value="${k}">${k + 1}. ${solidKind(o).ja}</option>`).join("");
@@ -324,9 +374,11 @@ function syncSolids(){
   $("soColorOn").checked = !!o.color; $("soColor").value = o.color || $("soColor").defaultValue;
   const sh = solidKind(o).shape;
   $("soSidesBox").style.display = sh === "prism" || sh === "pyr" ? "" : "none";
-  const vals = {soW: o.size[0], soH: o.size[1], soD: o.size[2], soSides: o.sides || solidKind(o).sides || 4,
+  $("soTopBox").style.display = sh === "prism" || sh === "pyr" ? "" : "none";
+  const vals = {soW: o.size[0], soH: o.size[1], soD: o.size[2], soSides: o.sides || solidKind(o).sides || 4, soTop: Math.round((o.top == null ? 1 : o.top) * 100),
     soX: o.pos[0], soY: o.pos[1], soZ: o.pos[2], soYaw: o.yaw || 0};
   for (const [id, v] of Object.entries(vals)) if (document.activeElement !== $(id)) $(id).value = Math.round(v);
+  for (const [id] of SOLID_CTL){ const r = $(id + "R"); if (r && document.activeElement !== r) r.value = $(id).value; }
 }
 buildSolidPanel();
 syncSolids();

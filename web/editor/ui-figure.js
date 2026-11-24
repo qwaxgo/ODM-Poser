@@ -25,9 +25,9 @@ const PART_JA = {head: "頭", torso: "胴体", r_arm: "右腕", l_arm: "左腕",
 const go = id => () => { if (window.ODMUI && ODMUI.showMenu) ODMUI.showMenu(id); };
 // the things one does to a part: [label, what, icon]
 function actions(i){
-  if (i < 0) return [["体格", go("body"), "Body"], ["サイズ", go("size"), "FrameSize"], ["色", go("colors"), "Palette"]];
+  if (i < 0) return [["体格・サイズ", go("body"), "Body"], ["色", go("colors"), "Palette"]];
   const g = GROUP_OF(i), side = J[i][0], out = [["ポーズ", go("pose"), "Pose"]];
-  const sz = () => { const s = document.getElementById("szSide"); if (s && (side === "r" || side === "l")){ s.value = side; s.dispatchEvent(new Event("change")); } go("size")(); };
+  const sz = () => { const s = document.getElementById("szSide"); if (s && (side === "r" || side === "l")){ s.value = side; s.dispatchEvent(new Event("change")); } go("body")(); };
   out.push(["サイズ", sz, "FrameSize"]);
   if (PINNABLE.has(J[i])) out.push([S.pins && S.pins[i] ? "固定を外す" : "固定", () => { remember(); togglePin(i); afterEdit(); draw(); }, "Pin"]);
   if (/arm|hand/.test(g)) out.push(["持たせる", go("equip"), "Fashion"]);

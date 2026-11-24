@@ -2,6 +2,7 @@
 #   docker compose -f docker-compose.test.yml run --rm lint-ui     melta-lint on the editor as drawn (tools/lint_ui.py)
 #   docker compose -f docker-compose.test.yml run --rm syntax      the editor's scripts parse (docs/HANDOFF.md)
 #   docker compose -f docker-compose.test.yml run --rm build       the site builds (dist/)
+#   docker compose -f docker-compose.test.yml run --rm behaviour   the editor's behaviour tests (tests/, tools/run_tests.py)
 
 services:
   lint-ui:
@@ -42,6 +43,19 @@ services:
       - CI=true
     working_dir: /workspace
     command: npm run build
+
+  behaviour:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    image: odm-poser-dev
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+    environment:
+      - CI=true
+    working_dir: /workspace
+    command: sh -c "git submodule update --init 2>/dev/null; python tools/run_tests.py"
 
 volumes:
   node_modules:

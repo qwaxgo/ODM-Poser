@@ -13,22 +13,93 @@ const linkRange = id => { $(id).addEventListener("input", () => { $(id + "N").va
 const scBox = document.createElement("div");
 scBox.className = "pv-box";
 scBox.innerHTML = `<label title="持つ・置く前にプレビュー"><input type="checkbox" id="scPrevOn" checked> プレビュー</label>` +
-  ctl("scPreSize", "大きさ", 30, 300, 1, "%", 100) +
-  ctl("scPreX", "X 方向（赤）", 20, 400, 1, "%", 100) + ctl("scPreY", "Y 方向（緑）", 20, 400, 1, "%", 100) + ctl("scPreZ", "Z 方向（青）", 20, 400, 1, "%", 100);
+  ctl("scPreSize", "大きさ（いちばん長い辺）", 1, 300, 0.5, "cm", 20) +
+  ctl("scPreX", "X 方向（赤）", 1, 300, 0.5, "cm", 20) + ctl("scPreY", "Y 方向（緑）", 1, 300, 0.5, "cm", 20) + ctl("scPreZ", "Z 方向（青）", 1, 300, 0.5, "cm", 20) +
+  `<div id="scPreSegs"></div>` +
+  `<div id="scPreSideBox"><label title="左右で違う物を、プレビューのうちに反対側にする（持つ・着けるとその向きになる）">左右</label><select id="scPreSide"></select></div>`;
 $("scAddR").closest(".btns").before(scBox);
-for (const id of ["scPreSize", "scPreX", "scPreY", "scPreZ"]) linkRange(id);
 $("scPrevOn").addEventListener("change", draw);
-$("scKey").addEventListener("change", draw);
-const pre = id => (+$(id).value || 100) / 100;
-function sized(it){                            // the sizes set before, on a new thing
-  it.scale = pre("scPreSize");
-  const st = ["scPreX", "scPreY", "scPreZ"].map(pre);
-  if (st.some(v => v !== 1)) it.stretch = st;
+// the sizes in cm (the file keeps the size and the stretch: pose_scene.js itemCm). The rows are what the
+// thing will measure: the longest side scales all of them; an axis, or a section (柄・刀身 ...) along
+// the sections' axis, moves the others that go with it
+const XYZ = ["scPreX", "scPreY", "scPreZ"], cm1 = v => Math.round(v * 10) / 10;
+const num = id => +$(id + "N").value;
+const setRow = (id, v) => { v = cm1(v); $(id).value = v; $(id + "N").value = v; };
+const segIds = () => [...$("scPreSegs").querySelectorAll("input[type=range]")].map(r => r.id);
+const segAxis = () => { const sg = typeof segsOf === "function" ? segsOf(PROPS_[$("scKey").value]) : null; return sg ? sg.axis : -1; };
+function rowChanged(id){
+  if (id === "scPreSize"){ const L0 = Math.max(...XYZ.map(num)), k = L0 > 0 ? num(id) / L0 : 1;
+    for (const r of [...XYZ, ...segIds()]) setRow(r, num(r) * k); }
+  else if (XYZ.includes(id)){
+    if (XYZ.indexOf(id) === segAxis() && +$(id).dataset.was > 0){ const k = num(id) / +$(id).dataset.was; for (const r of segIds()) setRow(r, num(r) * k); }
+    setRow("scPreSize", Math.max(...XYZ.map(num))); }
+  else if (+$(id).dataset.was > 0){ const a = XYZ[segAxis()]; if (a) setRow(a, num(a) + num(id) - +$(id).dataset.was); setRow("scPreSize", Math.max(...XYZ.map(num))); }
+  for (const r of [...XYZ, ...segIds()]) $(r).dataset.was = num(r);
+  draw();
+}
+const linkRow = id => { $(id).addEventListener("input", () => { $(id + "N").value = $(id).value; rowChanged(id); });
+  $(id + "N").addEventListener("change", () => { $(id).value = $(id + "N").value; rowChanged(id); }); };
+for (const id of ["scPreSize", ...XYZ]) linkRow(id);
+// a kind chosen: its own sizes, the sliders from 0.2 to 4 times them
+let segKey = "";
+function segRows(){
+  const key = $("scKey").value; if (key === segKey) return; segKey = key;
+  const def = PROPS_[key], sg = def && typeof segsOf === "function" ? segsOf(def) : null;
+  $("scPreSegs").innerHTML = sg ? sg.list.map(g => ctl("scPreSeg_" + g.id, `部位の長さ：${g.ja}`, 1, 300, 0.5, "cm", cm1(g.hi - g.lo))).join("") : "";
+  if (sg) for (const g of sg.list) linkRow("scPreSeg_" + g.id);
+  if (!def) return;
+  const b = itemBase({key, scale: 1, off: [0, 0, 0], rot: [0, 0, 0]});
+  const ends = (id, v) => { $(id).min = cm1(v * 0.2); $(id).max = cm1(v * 4); setRow(id, v); $(id).dataset.was = cm1(v); };
+  ends("scPreSize", Math.max(...b)); XYZ.forEach((id, a) => ends(id, b[a]));
+  if (sg) for (const g of sg.list) ends("scPreSeg_" + g.id, g.hi - g.lo);
+}
+// 左右: a thing held: the right or the left hand; a pair (skates, gloves): both, or one foot / hand only;
+// anything else worn or put: as it is, or mirrored to the other side (a holster, a shoulder bag, an eye's scouter)
+const sideKind = def => !def ? "" : def.place === "hand" ? "hand" : pairOf(def) ? "pair" : "mirror";
+const SIDE_OPTS = {hand: [["r", "右手"], ["l", "左手"]], pair: [["", "両方"], ["r", "右だけ"], ["l", "左だけ"]], mirror: [["", "そのまま"], ["m", "反対側（左右反転）"]]};
+let sideFor = "";
+function sideRows(){
+  const def = PROPS_[$("scKey").value], k = sideKind(def);
+  $("scPreSideBox").style.display = k ? "" : "none";
+  if (k === sideFor) return; sideFor = k;
+  $("scPreSide").innerHTML = (SIDE_OPTS[k] || []).map(([v, ja]) => `<option value="${v}">${ja}</option>`).join("");
+}
+const preSide = () => $("scPreSide").value;
+// what the 左右 chosen gives a thing (held: its hand is the button's)
+function sided(it){
+  const v = preSide(), k = sideKind(PROPS_[it.key]);
+  if (k === "pair"){ if (v === "r" || v === "l") it.side = v; else delete it.side; }
+  else if (k === "mirror"){ if (v === "m") it.mirror = true; else delete it.mirror; }
   return it;
 }
+$("scPreSide").addEventListener("change", draw);
+// ニュートラル: no kind, no sizes to set
+const scShow = () => { scBox.style.display = $("scKey").value ? "" : "none"; sideRows(); };
+$("scKey").addEventListener("change", () => { scShow(); segRows(); draw(); });
+$("scCat").addEventListener("change", scShow); scShow();
+function sized(it){                            // the sizes set before, on a new thing (in cm)
+  const sg = typeof segsOf === "function" ? segsOf(PROPS_[it.key]) : null, want = XYZ.map(num);
+  it.scale = 1; delete it.stretch; delete it.segs;
+  // the sections' lengths and the size hang on each other: a few rounds settle them
+  for (let n = 0; n < 4; n++){
+    if (sg){ const st = stretchOf(it) || [1, 1, 1], segs = {};
+      for (const g of sg.list){ const v = num("scPreSeg_" + g.id), base = g.hi - g.lo, f = v / (base * (it.scale || 1) * st[sg.axis]);
+        if (v > 0 && Math.abs(f - 1) > 1e-3) segs[g.id] = Math.max(0.05, f); }
+      if (Object.keys(segs).length) it.segs = segs; else delete it.segs; }
+    const b = itemBase(it);
+    if (!want.every(v => v > 0)) break;
+    it.scale = Math.max(0.2, Math.max(...want) / Math.max(...b));
+    const st = want.map((v, a) => Math.max(0.2, v / (b[a] * it.scale)));
+    if (st.some(v => Math.abs(v - 1) > 1e-3)) it.stretch = st; else delete it.stretch;
+    if (!sg) break;
+  }
+  return it;
+}
+segRows();
 function ghostItem(hand){
+  segRows();                                   // the list was refilled (another category)
   const key = $("scKey").value, def = PROPS_[key]; if (!def) return null;
-  const it = sized({key, off: [0, 0, 0], rot: [0, 0, 0], scale: 1});
+  const it = sided(sized({key, off: [0, 0, 0], rot: [0, 0, 0], scale: 1}));
   if (def.place === "hand") it.hand = hand;
   else if (!["body", "wear"].includes(def.place)){
     const c = S.P[IX.pelvis]; it.yaw = facingYaw(); it.base = [c[0], +(S.env && S.env.floorY) || 0, c[2]];
@@ -38,10 +109,29 @@ function ghostItem(hand){
 }
 { const sizeNew = (fn) => function(key, hand){ const n = (S.items || []).length; fn(key, hand);
     const it = S.items && S.items[scSel];
-    if (it && it.key === key && S.items.length >= n){ sized(it); if (it.grounded && typeof groundItem === "function") groundItem(it);
+    // the sizes set before belong to the thing chosen in the list (another key, from code or a mod: its own size)
+    if (it && it.key === key && key === $("scKey").value && S.items.length >= n){ sized(it); sided(it); if (it.grounded && typeof groundItem === "function") groundItem(it);
       afterEdit(); fillItemList(); draw(); } };
   addItem = sizeNew(addItem);
 }
+
+// 出ている物 › 反対側にする: a thing held to the other hand (what that hand held goes), a pair on one foot
+// to the other, anything else worn or put mirrored (or back)
+{ const btn = document.createElement("button"); btn.type = "button"; btn.id = "scSideFlip"; btn.textContent = "反対側にする";
+  btn.title = "選んだ物を左右の反対側にする（持つ手を替える・片足の物を反対の足に・身に着ける物を左右反転）";
+  const row = $("scDel") && $("scDel").closest(".btns"); if (row) row.appendChild(btn);
+  btn.addEventListener("click", () => {
+    const it = (S.items || [])[scSel], def = it && PROPS_[it.key]; if (!def) return;
+    const k = sideKind(def); remember();
+    if (k === "hand" && !it.where){
+      freeHands(it); it.hand = it.hand === "l" ? "r" : "l";
+      S.items = S.items.filter(o => o === it || !(PROPS_[o.key] && PROPS_[o.key].place === "hand" && !o.where && o.hand === it.hand));
+      scSel = S.items.indexOf(it); holdHands(it);
+    } else if (k === "pair"){ if (it.side === "r" || it.side === "l") it.side = it.side === "r" ? "l" : "r"; else { say("両方に付けている物です（片方だけにするときは、プレビューの「左右」で）。", true); return; } }
+    else { if (it.mirror) delete it.mirror; else it.mirror = true; }
+    if (it.grounded && typeof groundItem === "function") groundItem(it);
+    afterEdit(); fillItemList(); draw(); say("反対側にしました。");
+  }); }
 
 // ---- objects (設置) ---------------------------------------------------------------------------------
 const soBox = document.createElement("div");
@@ -79,7 +169,7 @@ const showing = el => { const s = el.closest("section"); return !!(s && s.classL
     const lw = Math.max(1.5, W / 540), P = q => project(q, W, H);
     ctx.save(); ctx.strokeStyle = cssVar("--sel"); ctx.globalAlpha = 0.6; ctx.lineCap = "round"; ctx.lineJoin = "round";
     if (showing($("scKey")) && $("scPrevOn").checked){
-      const it = ghostItem("r");
+      const it = ghostItem(sideKind(PROPS_[$("scKey").value]) === "hand" && preSide() === "l" ? "l" : "r");
       if (it){ const hd = S.hiddenDashed; S.hiddenDashed = false;
         try { ctx.setLineDash([lw * 3, lw * 2]); ctx.lineWidth = lw;
           for (const {f, parts} of partSets(it)) for (const sh of parts) drawShape(ctx, sh, it, f, P, lw); }
@@ -102,6 +192,10 @@ const showing = el => { const s = el.closest("section"); return !!(s && s.classL
 
 // i18n.js loads after this file: the table waits for it (ODMPoserI18nEarly)
 (window.ODMPoserI18n || {add: t => (window.ODMPoserI18nEarly = window.ODMPoserI18nEarly || []).push(t)}).add({"持つ・置く前にプレビュー": "Preview before holding / putting", "置く前にプレビュー": "Preview before putting",
-  "大きさ": "Size", "X 方向（赤）": "X (red)", "Y 方向（緑）": "Y (green)", "Z 方向（青）": "Z (blue)", "幅": "Width", "高さ": "Height", "奥行き": "Depth"});
+  "大きさ": "Size", "大きさ（いちばん長い辺）": "Size (longest side)", "左右": "Side", "反対側にする": "To the other side", "反対側にしました。": "Moved to the other side.",
+  "選んだ物を左右の反対側にする（持つ手を替える・片足の物を反対の足に・身に着ける物を左右反転）": "Put the chosen thing on the other side (the other hand, the other foot, a worn thing mirrored)",
+  "両方に付けている物です（片方だけにするときは、プレビューの「左右」で）。": "It is on both (for one side only, use Side in the preview).", "右手": "Right hand", "左手": "Left hand",
+  "両方": "Both", "右だけ": "Right only", "左だけ": "Left only", "そのまま": "As it is", "反対側（左右反転）": "The other side (mirrored)",
+  "左右で違う物を、プレビューのうちに反対側にする（持つ・着けるとその向きになる）": "Put a thing that differs left and right on the other side while previewing (it is held or worn so)", "X 方向（赤）": "X (red)", "Y 方向（緑）": "Y (green)", "Z 方向（青）": "Z (blue)", "幅": "Width", "高さ": "Height", "奥行き": "Depth"});
 draw();
 })();

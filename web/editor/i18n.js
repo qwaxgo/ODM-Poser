@@ -4,6 +4,68 @@
 (() => {
   const KEY = "odm-poser-lang";
   const T = {
+    // added later (the tall layout, head shape, colours, auras, the ruler's guide shapes ...)
+    "⇅ 上下": "⇅ Top / bottom", "分類バーとメニューを画面の上へ・下へ": "The category bar and the menu to the top / bottom of the screen",
+    "下へドラッグ・タップで閉じる": "Drag down or tap to close", "操作欄を閉じる（下へドラッグでも閉じられます）": "Close the panel (dragging it down closes it too)",
+    "頭の形": "Head shape", "幅（左右）": "Width (left-right)", "高さ（上下）": "Height (up-down)", "奥行き（前後）": "Depth (front-back)",
+    "伸ばした形": "When stretched", "球のまま伸ばす": "Stretch the ball", "円柱でつなぐ": "Join with a cylinder", "↺ 頭の形を戻す": "↺ Default head shape",
+    "頭の大きさ（頭身）は変わりません。見た目の形だけを変えます。": "The head's size (heads tall) stays; only its shape changes.",
+    "↺ カメラを初期状態に": "↺ Reset the camera", "カメラを初期状態に戻しました。": "The camera is back to the start.", "頭の形を戻しました。": "Head shape reset.",
+    "カメラの向き（左右・上下・傾き）・レンズ・位置を、最初のカメラに戻します（記憶したカメラと固定は残ります）。":
+      "Puts the camera's direction (left-right, up-down, roll), lens and position back to the first camera (remembered cameras and the lock stay).",
+    "「カメラの向き」はその場でカメラの角度を変え、「カメラの位置」は角度を変えずにカメラを動かします。位置は床の中心が 0、前後は人物の正面側が＋です。":
+      "Camera direction turns the camera where it stands; Camera position moves it without turning it. Positions: 0 is the middle of the floor, front-back is + toward the figure's front.",
+    "利き手（両手持ちの主に持つ手）": "Main hand (the one that holds a two-handed thing)",
+    "対象": "Target", "人物（体の部位）": "Figure (body parts)",
+    "対象（人物・床・物・オーラなど）を選び、色を変えるものにチェックを入れて色を選ぶか、#rrggbb のコードを入力します。チェックしていないものは既定の色のままです（書き出すアタリ画像にも反映）。":
+      "Pick a target (figure, floor, things, auras ...), tick what to recolour and choose a colour or type a #rrggbb code. What is not ticked keeps its default colour (the exported rough picture too).",
+    "頭の色": "Head colour", "頭の色コード": "Head colour code", "胴体の色": "Torso colour", "胴体の色コード": "Torso colour code",
+    "右腕の色": "Right arm colour", "右腕の色コード": "Right arm colour code", "左腕の色": "Left arm colour", "左腕の色コード": "Left arm colour code",
+    "右手の色": "Right hand colour", "右手の色コード": "Right hand colour code", "左手の色": "Left hand colour", "左手の色コード": "Left hand colour code",
+    "右脚の色": "Right leg colour", "右脚の色コード": "Right leg colour code", "左脚の色": "Left leg colour", "左脚の色コード": "Left leg colour code",
+    "放物線（炎の先が根元の中心から放射状に）": "Parabola (the flame's tips fan out from the root's middle)",
+    "放物線の原点の高さ（根元の底辺から）": "Parabola origin height (from the root's base)",
+    "炎の先が、根元の底辺中心を原点として放射状に出て、長さが左右の端へ向けて放物線状に短くなる":
+      "The flame's tips fan out from the middle of the root's base and get shorter toward the sides along a parabola",
+    "ガイド図形": "Guide shapes", "ガイドの辺を消失点まで延ばす": "Carry the guides' edges on to the vanishing points", "ガイドを置く": "Put a guide",
+    "設置のタブを「ガイドとして置く」で開く": "Open the Objects tab with “Put as a guide”",
+    "直方体・円柱・角柱・角錐など、設置のタブの図形を、定規の向きにそろえたガイドとしていくつでも置けます。ガイドは定規を出しているときだけ見え、アタリ画像には入らず、定規の画像に入ります。3軸ハンドルの「変形」では、引いた側の辺だけが延びます。ガイドを「回転」で回すと、パース定規とほかのガイドも一緒に回ります（前後・横に倒すと、消失点がアイレベルから外れます）。置く前のガイドを回したときと、設置のタブの「回転（向き・Y）」では、そのガイドだけが好きな角度に回ります（定規とずれた角度では、辺は消失点に向かいません）。":
+      "Put the Objects tab's shapes (boxes, cylinders, prisms, pyramids ...) as guides turned to the ruler, as many as you like. Guides show only while the ruler does; they are not in the rough picture but are in the ruler picture. The 3-axis handles' Scale lengthens only the side pulled. Turning a guide with Rotate turns the perspective ruler and the other guides with it (tipped forward or sideways, the vanishing points leave the eye level). A guide about to be put, turned, and \"Turn (facing, Y)\" in the Objects tab turn that guide alone, to any angle (at an angle off the ruler its edges do not go to the vanishing points).",
+    "面に立つ・貼り付く": "Stand on a face", "腰を動かすと近くの面に立つ": "Stand on a near face when the hips move",
+    "配置モードで腰を動かして面に近づけると、その面に立つ（壁・天井・斜面では体ごと面に合わせる）": "In Place mode, hips brought near a face stand the figure on it (on a wall, a ceiling or a slope the whole body turns to it)",
+    "面をクリックして立つ": "Click a face to stand on", "体をまっすぐに戻す": "Stand upright again",
+    "次にクリックした面（床・壁・天井・物体の面）に立たせる": "Stand the figure on the face clicked next (floor, wall, ceiling or an object's face)",
+    "面に合わせて傾いた体を、まっすぐに戻す": "Turn a body tilted to a face upright again",
+    "床・壁・天井と、置いた物体の面（斜面も）に立たせます。壁では横向きに、天井では逆さに、斜面では面に垂直に、体ごと面に合わせます。面に着くのは、体のいちばん近い所・低い所です（ポーズによって足の裏・膝・手・頭など）。物体・壁・天井の面では、ポーズを変えてもいちばん低い所が面に着いたままです（床では上の「接地」の設定のとおり）。配置モードで体を面に近づける（15cm 以内）か、ボタンを押して面をクリックします。立っている面に沿って腰をドラッグでき、面から離すと貼り付きが外れます。":
+      "Stand the figure on the floor, a wall, the ceiling or a face of an object put (slopes too). The whole body turns to the face: sideways on a wall, upside down on a ceiling, square to a slope. What touches the face is the body's nearest, lowest point (by the pose: the soles, a knee, a hand, the head ...). On an object's face, a wall or the ceiling, the lowest point stays on the face however the pose changes (on the floor, as the Grounding setting above says). Bring the body near a face in Place mode (within 15 cm), or press the button and click a face. Dragging the hips moves the figure along the face it stands on; pulled away from it, the figure lets go.",
+    "逆さ・裏向きになる面にも立つ": "Also stand on faces that turn the body over",
+    "腰を動かして近づけたとき、天井や物体の下側のように、体が逆さ・裏向きになる面にも立つ（オフでは、面をクリックしたときだけ）": "When the hips bring the body near, also stand on faces that turn it upside down or over, like a ceiling or an object's underside (off: only by clicking the face)",
+    "近い面に立つ": "Stand on the near face", "この物体の、人物の体にいちばん近い面に、いちばん近い所を着けて立たせる（壁のような面では体ごと面に合わせる）": "Stand the figure on this object's face nearest to its body, its nearest point on it (on a wall-like face the whole body turns to it)",
+    "立たせる面（床・壁・天井・物体の面）をクリックしてください。Esc でやめます。": "Click the face to stand on (floor, wall, ceiling or an object's face). Esc stops.",
+    "面のクリックをやめました。": "Stopped picking a face.", "クリックした面に立たせました。": "Stood the figure on the face clicked.",
+    "クリックした面に、面に合わせて立たせました（関節の固定は外しました）。": "Stood the figure on the face clicked, turned to it (pins removed).",
+    "そこには面がありません。床・壁・天井か、置いた物体の面をクリックしてください。": "No face there. Click the floor, a wall, the ceiling or a face of an object put.",
+    "体をまっすぐに戻しました。": "The body is upright again.",
+    "ニュートラル（何も選ばない）": "Neutral (nothing chosen)", "持つ・置く": "Hold / put",
+    "定規の倒れ": "Ruler lean", "定規を床に立てる": "Stand the ruler on the floor",
+    "倒れをなくして、定規を床に立てる（向きはそのまま）": "Take away the lean and stand the ruler on the floor (its direction stays)",
+    "定規が倒れているので、縦の線も実際には集まります（3点透視で見えます）。": "The ruler leans, so its verticals really meet too (3-point shows them).",
+    "定規を床のグリッドにスナップ": "Snap the ruler to the floor grid",
+    "床のグリッドは定規の向きに合わせて回ります（定規を出しているとき）。オンにすると、ガイドを動かしたとき、角がグリッドの交点（40cm おき）に、底が床に吸い付きます。":
+      "The floor grid turns with the ruler (while the ruler shows). On: a guide moved sticks by its corner to the grid's points (every 40 cm) and by its bottom to the floor.",
+    "地面と接地": "The ground and grounding", "壁と天井は、設置タブで物体（板）として置きます（いくつでも置け、3軸で回転できます）。": "Walls and ceilings are put in the Objects tab as slabs (as many as you like, turned on all three axes).",
+    "選んだ物を接地させる": "Put the chosen thing on the ground", "接地させる物を、下の「出ている物」の一覧から選んでください。": "Choose the thing to put on the ground from the list of things out.", "接地させました。": "Put on the ground.",
+    "色は #rrggbb の形で入れてください（例：#e0605a）。": "Type the colour as #rrggbb (e.g. #e0605a).",
+    "持ち方": "Way of holding", "握る": "Grip", "カウチ（脇に挟む）": "Couched (under the arm)", "持つ位置（長い方向）": "Where it is held (along its length)",
+    "↺ 持ち方と持つ位置を戻す": "↺ Way of holding and place to the start", "持ち方と持つ位置を戻しました。": "The way of holding and the place are back to the start.",
+    "持ち方と持つ位置を、この小物の初期値に戻す": "Back to this thing's own start", "棒（ただの棒）": "Plain stick", "何の変哲もない棒。握るか、カウチで持つ": "A plain stick. Grip it, or hold it couched.",
+    "↺ 色を初期状態に": "↺ Colours to the start", "線・床・壁・ワイヤー・小物・物体・オーラの色を、最初の色に戻す": "Back to the first colours: lines, floor, walls, wire, things, solids and auras",
+    "線・床・壁・天井・ワイヤー・小物・物体・オーラの色を、最初の色に戻します（「元に戻す」で取り消せます）。": "Puts the colours of the lines, floor, walls, ceiling, wire, things, solids and auras back to the first ones (Undo takes it back).",
+    "色の記憶": "Saved colours", "名前（例：夜の色）": "Name (e.g. night colours)",
+    "いまの線の色（人物・床・壁・天井・ワイヤー）を名前をつけて記憶し、呼び出せます。小物・物体・オーラの色は含みません。このブラウザに残ります。": "Saves the current line colours (figures, floor, walls, ceiling, wire) under a name, to load again. Things, solids and auras keep their own colours out of it. Kept in this browser.",
+    "ODM-Poserについて": "About ODM-Poser", "ODM-Poser について": "About ODM-Poser", "分類": "Categories",
+    "人物の簡略表示": "The figure, simplified", "操作欄を閉じる・広げる（下へドラッグで閉じる）": "Close or widen the panel (drag down to close)",
+    "下へドラッグで閉じる・タップで広げる": "Drag down to close, tap to widen", "閉じる": "Close",
     "リセット": "Reset", "人体のリセットを一箇所に（全部・ポーズ・体格・性別・位置・付随物）": "All resets for the figure in one place (all, pose, body, sex, place, attached things)",
     "この人物を戻す": "Put this figure back", "↺ 全部を初期状態に": "↺ All to the start",
     "ポーズ・体格・位置・向き・手の形を、新しい人物と同じにします（持ち物・オーラはそのまま）。": "Pose, body, place, turn and hands go to a new figure's (things and auras stay).",
@@ -51,10 +113,17 @@
       "A post gets #ODMPoser #立体人形装置 and the link, shown as a card with the ODM Poser picture. A link carries only the official mods (qwaxgo's on GitHub); props and solids of other mods become plain shapes and rods.",
     "投稿画面を開きました。": "Opened the post window.",
     "この端末には共有メニューがないため、投稿の文をコピーしました。": "This device has no share menu: the post's text is copied.",
+    "この端末には共有メニューがないため、構図の画像と投稿の文をコピーしました。": "This device has no share menu: the composition picture and the post's text are copied.",
+    "構図の画像を付ける": "Attach the composition picture", "書き出しの「構図の画像」と同じ画像（白い背景）": "The same picture as Export's composition picture (on white)",
+    "投稿には #ODMPoser #立体人形装置 とリンクが付き、リンクは「立体人形装置」の画像付きカードで表示されます。構図の画像は、スマホでは共有メニューに文と一緒に渡し、パソコンではコピーするので、投稿欄に貼り付けてください（Ctrl＋V・⌘V）。リンクに入る MOD は公式（GitHub の qwaxgo）のものだけで、ほかの MOD の小物・物体は単純な図形や棒になります。":
+      "A post gets #ODMPoser #立体人形装置 and the link, shown as a card with the ODM Poser picture. The composition picture goes to the share menu with the words on a phone; on a computer it is copied: paste it into the post box (Ctrl+V / ⌘V). A link carries only the official mods (qwaxgo's on GitHub); props and solids of other mods become plain shapes and rods.",
     "リンクの編集データを読めませんでした（壊れているか、このブラウザが対応していません）。": "Could not read the link's editing data (it is broken, or this browser cannot).",
     "リンクを開く前の編集に戻しました（元に戻すで、リンクの編集データに戻れます）。": "Back to the editing before the link (Undo goes back to the link's).",
     "胴体を立体に": "Solid torso", "胴体を立体（厚みのある台形）で描きます。": "The torso is drawn as solid blocks.",
     "胴体を平らな台形で描きます。": "The torso is drawn as flat trapezoids.",
+    "編集中の人物の胴体を立体（厚みのある台形）で描きます。": "This figure's torso is drawn as solid blocks.",
+    "編集中の人物の胴体を平らな台形で描きます。": "This figure's torso is drawn as flat trapezoids.",
+    "編集中の人物の胴体を厚みのある台形で描く（人物ごとに切り替え）": "Draw this figure's torso as thick trapezoids (each figure its own)",
     "右手": "Right hand", "左手": "Left hand",
     "手首の曲げ（＋前へ）": "Bend the wrist (+ forward)", "手首の左右（＋外へ）": "Wrist sideways (+ outward)",
     "手のひらの向き（前腕のひねり）": "Palm direction (the forearm's twist)",
@@ -145,8 +214,8 @@
     "両手でロープにつかまりました（ターザン）。配置モードで腰をドラッグすると振れます。": "Holding the rope with both hands (Tarzan). Drag the hips in Place mode to swing.",
     "ロープにつかまる（ターザン）": "Holding a rope (Tarzan)",
     "小物を単体で置く": "Things on their own", "単体で置いた物": "Things put on their own", "いまの人物に持たせる": "Give to this figure",
-    "武器・道具・帽子なども、誰にも持たせずに床（物体の上）に置けます。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。人物に持たせた物は「装備」で扱います。":
-      "Weapons, tools, hats and the like can lie on the floor (or an object) held by no one. Drag them in Place mode (Shift + drag: up / down, wheel: turn). What a figure holds is in Equip.",
+    "武器・道具・帽子なども、誰にも持たせずに床（物体の上）に置けます。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。人物に持たせた物は「装備」で扱います。":
+      "Weapons, tools, hats and the like can lie on the floor (or an object) held by no one. Drag them in Place mode (Shift + drag: up / down, the 3-axis handles turn it). What a figure holds is in Equip.",
     "いまの人物に持たせました（手の形も合わせました）。": "Given to this figure (its hand shape set too).",
     "腕・脚の太さを部位ごとに連動": "Arm and leg thickness as a whole limb",
     "肩・肘・手首、股・膝・足首の丸をまとめて太く・細くする（外すと関節ごと）": "Shoulder, elbow, wrist (thigh root, knee, ankle) grow thicker or thinner together (off: joint by joint)",
@@ -169,14 +238,14 @@
     // things worn, carried, put down; effects and auras (pose_scene.js, pose_style.js)
     "背負う": "Carry on the back", "床・物体に置く": "Put down (floor / object)", "手に持つ・身に着ける": "Hold / wear again",
     "接地させる": "Ground it", "銃剣を付ける": "Fix a bayonet", "線の色を変える": "Own line colour", "身に着ける": "Wear",
-    "置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。":
-      "Things put down can be dragged in the Place mode (Shift+drag: up and down, wheel: turn).",
+    "置いた物は配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。":
+      "Things put down can be dragged in the Place mode (Shift+drag: up and down, the 3-axis handles turn it).",
     "背負いました。": "Carried on the back.", "床・物体の上に置きました。配置モードでドラッグして動かせます。":
       "Put down on the floor / an object. Drag it in the Place mode.", "持たせました（手の形も合わせました）。": "Held again (the hand shape follows).",
     "接地させました。": "Grounded.", "直径": "Diameter", "長さ": "Length", "底の直径": "Base diameter", "底の一辺": "Base side",
     "外径": "Outer diameter", "太さ": "Thickness",
-    "前腕の向きに突き出す（大盾と組み合わせる）": "thrust along the forearm (pair it with a great shield)",
-    "前腕の向きに突き出す、銃身のある槍": "a lance with a gun barrel, thrust along the forearm",
+    "カウチ（脇に挟んで前へ突き出す）で持つ。柄は細く、先に槍身": "Held couched (under the arm, thrust forward). Thin shaft, the lance head at the end",
+    "銃剣を付けた銃の形。カウチ（脇に挟んで前へ突き出す）で持つ": "A rifle with a bayonet fixed. Held couched (under the arm, thrust forward)",
     "身の丈ほどの、幅広く厚い刃": "a wide, thick blade as tall as a person",
     "腰だめに両手で持ち、左手は上の取っ手": "held at the hip with both hands, the left on the top handle",
     "前腕にはめる筒形の砲（手は中で握る）": "a cannon worn over the forearm (the hand grips inside)",
@@ -230,8 +299,8 @@
       "Pose, body, props and auras apply to the selected figure only (the others are drawn lighter). Clicking another figure's circle switches too. Floor, walls, objects, the ruler, the camera and things put down are shared. Position and direction move the whole figure being edited.",
     "書き出す人物": "Figures in the picture", "全員": "Everyone",
     "単体で置く": "Place on its own", "誰にも持たせず、人物の前の床に置く": "Held by no one: put on the floor in front of the figure",
-    "単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、ホイールで向き）。":
-      "Placed on its own. Drag it in Place mode (Shift + drag: up / down, wheel: turn).",
+    "単体で置きました。配置モードでドラッグして動かせます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。":
+      "Placed on its own. Drag it in Place mode (Shift + drag: up / down, the 3-axis handles turn it).",
     // touch, pens, phones (index.html)
     "固定": "Pin", "タッチ用のキー": "Touch keys", "その骨だけ・上下に動かす（もう一度押すまで）": "Only that bone / up and down (till pressed again)", "丸をタップして関節を固定する（もう一度押すまで）": "Tap a circle to pin its joint (till pressed again)", "カメラを回す・動かすスティックと拡大のスライダー": "Sticks to orbit and pan the camera, a slider to zoom", "側面図": "Side view",
     "タッチ・ペン：1本指（ペン）でドラッグ、2本指でつまんで拡大縮小（カメラモードはレンズ）、ダブルタップで骨の手前と奥を入れ替え。Shift・固定は上のボタンで（ペンのサイドボタンは Shift、消しゴム側は固定）。":
@@ -274,11 +343,11 @@
       "Dragging does not move the camera (the middle button, the keypad and the camera pad do). Drag a vanishing point: turn the ruler. Drag the box guide or an object: move it over the floor (Shift+drag: up and down). Wheel over it: turn it. Click a circle: select the joint (for \"put the joint on it\").",
     "物体（床・壁・建物・柱など）": "Objects (floors, walls, buildings, poles ...)",
     "直方体（箱・台）": "Box (crate, stand)", "床（板）": "Floor slab", "壁（板）": "Wall slab", "建物": "Building", "段差": "Step",
-    "角柱": "Prism", "円柱": "Cylinder", "角錐": "Pyramid", "円錐": "Cone", "支柱": "Pole", "直方体": "Box",
+    "角柱": "Prism", "円柱": "Cylinder", "円柱（太い・柱や建物）": "Cylinder (thick: columns, buildings)", "棒（細い円柱）": "Rod (thin cylinder)", "角錐": "Pyramid", "円錐": "Cone", "支柱": "Pole", "直方体": "Box",
     "置いた物体": "Objects in the scene", "複製": "Duplicate", "角の数": "Sides", "向き": "Turn",
     "選んだ関節を着ける": "Put the selected joint on it", "この上に立つ": "Stand on it",
-    "配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、ホイールで向き）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。":
-      "In the Place mode, drag an object to move it over the floor (Shift+drag: up and down, wheel: turn). With grounding on, the figure stands on objects too (it steps up to 40 cm). \"Put the selected joint on it\" puts the joint on a face of the selected object (or the nearest one) and pins it. Objects are in the exported rough when \"Draw floor and walls in the exported rough\" is on.",
+    "配置モードで物体をドラッグすると床の上で動きます（Shift＋ドラッグで上下、回すのは3軸ハンドル）。「接地」をオンにすると物体の上にも立ちます（40cm までの段は乗り上げます）。「選んだ関節を着ける」は、選んだ物体（選んでいなければ一番近い物体）の面に関節を着けて固定します。書き出すアタリに描くかは「書き出すアタリにも床・壁を描く」に従います。":
+      "In the Place mode, drag an object to move it over the floor (Shift+drag: up and down, the 3-axis handles turn it). With grounding on, the figure stands on objects too (it steps up to 40 cm). \"Put the selected joint on it\" puts the joint on a face of the selected object (or the nearest one) and pins it. Objects are in the exported rough when \"Draw floor and walls in the exported rough\" is on.",
     "物体を先に置いてください。": "Place an object first.", "物体を一覧かドラッグで選んでください。": "Select an object in the list or by dragging it.",
     "床・物体の上にめり込まない": "No sinking into the floor or objects", "いつも床・物体の上に着ける（一番低い所）": "Always on the floor or an object (lowest point)",
     "書き出し": "Export", "幅": "Width", "高さ": "Height", "アタリ画像": "Rough picture", "OpenPose 画像": "OpenPose picture",
@@ -307,7 +376,7 @@
     "大きさ・向きを戻す": "Default size and turn",
     // messages
     "固定できるのは腰・肘・手首・膝・足首です。": "Only the hips, elbows, wrists, knees and ankles can be pinned.",
-    "女性の体格にしました。": "Female build applied.", "男性の体格にしました。": "Male build applied.",
+    "女性の体格にしました。": "Female build applied.", "男性の体格にしました。": "Male build applied.", "女性の体格にしました（調整はそのままです）。": "Female build applied (your adjustments stay).", "男性の体格にしました（調整はそのままです）。": "Male build applied (your adjustments stay).", "体格・サイズ": "Body & sizes",
     "アタリ画像を保存しました。": "Rough picture saved.", "OpenPose 画像を保存しました。": "OpenPose picture saved.",
     "ポーズを保存しました。": "Pose saved.", "ポーズを読み込みました。": "Pose loaded.", "形式が違います": "wrong format",
     "先に手首・足首・膝・肘・腰のどれかを選んでください。": "Select a wrist, ankle, knee, elbow or the hips first.",
@@ -334,11 +403,12 @@
     "関節を固定している間は「左右同時に動かす」を使えません（固定をすべて外すと使えます）。": "“Move both sides together” is off while joints are pinned (unpin them all to use it).",
     "「左右同時に動かす」がオンの間は固定できません。": "Cannot pin while “Move both sides together” is on.",
     "反対側をこの形に": "Make the other side like this", "ここから先": "This and beyond", "ドラッグ結果がここに反映されます": "What you drag shows here",
-    "女性": "Female", "男性": "Male", "身長": "Height", "全体サイズ": "Overall size", "太さ": "Thickness",
+    "女性": "Female", "男性": "Male", "身長": "Height", "全体サイズ": "Overall size", "全身の太さ（太ももの付け根の直径）": "Whole-body thickness (thigh root diameter)", "全身の丸（頭・胴の幅・腕・脚）を同じ割合で太く・細くする。数字は太ももの付け根の丸の直径": "Makes every circle (head, torso width, arms, legs) thicker or thinner alike. The number is the thigh root circle's diameter", "大きさ（いちばん長い辺）": "Size (longest side)", "天面の幅": "Top width", "太さ": "Thickness",
     "↺ 体格を初期値に": "↺ Default build", "骨の長さ・丸の太さ・大きさを初期値にします。ポーズ（骨の向き）はそのままです。": "Bone lengths, circle sizes and scale go back to the defaults; the pose (the bones' directions) stays.",
     "カメラの位置（左右・上下・前後）": "Camera position (left-right, up-down, front-back)", "見る点（左右・上下・前後）": "Looks at (left-right, up-down, front-back)",
-    "床の中心が 0。前後は人物の正面側が＋。位置を変えると、見る点を向いたまま向き・高さ・拡大が決まります（傾きはそのまま）。":
-      "0 is the middle of the floor; front-back is + toward the figure's front. A new position keeps looking at the point and sets the direction, height and zoom (the tilt stays).",
+    "床の中心が 0。前後は人物の正面側が＋。位置を変えると、見る点を向いたまま向き（左右・上下）と拡大が決まります（傾きはそのまま）。":
+      "0 is the middle of the floor; front-back is + toward the figure's front. A new position keeps looking at the point and sets the direction (left-right, up-down) and zoom (the tilt stays).",
+    "カメラの向き": "Camera direction", "カメラの位置": "Camera position", "見る点": "Looks at",
     "↺ リセット": "↺ Reset", "固定と記憶": "Lock and memory", "カメラを固定": "Lock the camera", "パッドを表示": "Show the pad",
     "記憶したカメラ（": "Remembered cameras (", "記憶": "Remember", "呼出": "Recall", "削除": "Delete",
     "カメラを固定しました（スライダー・座標も動きません。「呼出」は使えます）。": "Camera locked (sliders and coordinates too; Recall still works).",
@@ -351,6 +421,10 @@
     "長辺": "Long side", "アタリ画像": "Rough picture", "ポーズ（.json）": "Pose (.json)", "画像は保存する前に全体を確認できます。": "You see a picture whole before it is saved.",
     "書き出したファイルは、商用・AI の学習も含めて自由に使えます。クレジットは任意です。": "Exported files are free to use, commercially and with AI too. Credit is optional.",
     "利用条件（CC0 1.0）": "Terms (CC0 1.0)",
+    "アタリ画像の内容": "What the rough picture shows", "構図（人物・小物・物体・環境）": "Composition (figures, things, objects, surroundings)",
+    "人物と小物だけ": "Figures and things only",
+    "構図では、下の「構図の画像に含める」のチェック（定規を除く）のとおりに、物体や環境も白い背景に描きます。":
+      "Composition also draws objects and the surroundings on white, as the “In the composition picture” checks below say (without the ruler).",
     "構図の画像に含める": "In the composition picture", "環境": "Surroundings", "白": "White", "透明": "Transparent", "テーマ": "Theme", "構図の画像": "Composition picture",
     "保存する画像": "The picture to save", "やめる": "Cancel", "保存する": "Save", "保存をやめました。": "Not saved.",
     "人物の位置と向き": "The figure's place and direction", "左右（＋人物の左）": "Left-right (+ the figure's left)", "前後（＋前）": "Front-back (+ front)",
@@ -388,8 +462,9 @@
     "位置：前後": "Place: front-back", "立方体にする（幅にそろえる）": "Make it a cube (the width)", "スナップ": "Snapping",
     "物体を定規にスナップ": "Snap objects to the ruler", "壁を定規の向きにそろえる": "Turn the wall like the ruler",
     "壁を定規の向きにそろえました。": "The wall now turns like the ruler.",
-    "配置モードで物体・小物を動かすと、向きが定規の向きにそろいます（ホイールで 90°ずつ回ります）。物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。":
-      "Objects and things moved in the place mode turn to the ruler's directions (the wheel turns them 90° at a time). Objects stick to the floor, the ceiling and walls turned like the ruler (floor and wall slabs too) when they come near.",
+    "物体は床・天井と、定規の向きにそろえた壁（床板・壁板の物体も）に近づくと、面に吸い付きます。「回転も定規の向きに吸い付く」をオンにすると、物体・小物を回して定規の向き（90° ごと）から ±5° 以内に来たとき、その向きに吸い付きます。":
+      "Objects stick to the floor, the ceiling and walls turned like the ruler (floor and wall slabs too) when they come near. With \"Turns stick to the ruler too\" on, objects and things turned to within ±5° of a ruler direction (every 90°) stick to it.",
+    "回転も定規の向きに吸い付く（90° ごと）": "Turns stick to the ruler too (every 90°)",
     "シーンの一覧": "In the scene", "開く": "Open", "↺ 初期状態に": "↺ Reset",
     "行を選んでから押します（ダブルクリックで開く）。持ち物・オーラは人物の下に、置いた物・物体・床と壁・定規の立方体は外側に並びます。":
       "Pick a row, then press (double-click opens it). Things held and auras sit under their figure; things put down, objects, floor and walls and the ruler's box stand outside.",
@@ -421,12 +496,30 @@
   const RULES = [
     [/^([A-Za-z][\w .]*)（([\w.-]+)）$/, m => `${m[1]} (${m[2]})`],                     // "Pawoo（pawoo.net）"
     [/^カメラ(\d+)$/, m => `Camera ${m[1]}`],
+    [/^ガイド：(.+)$/, m => `Guide: ${T[m[1]] || m[1]}`],
+    [/^部位の長さ：(.+)$/, m => `Section length: ${T[m[1]] || m[1]}`],
+    // the fingers (pose_hand_ui.js); a mod's shape keeps its own name
+    [/^自分の形「(.+)」（もと：(.+)）$/, m => `Own shape "${m[1]}" (from: ${HAND_JA[m[2]] || m[2]})`],
+    [/^指を調整しています（もと：(.+)）$/, m => `Fingers adjusted (from: ${HAND_JA[m[1]] || m[1]})`],
+    [/^手の形：(.+)$/, m => `Hand shape: ${HAND_JA[m[1]] || m[1]}`],
+    [/^(親指|人差し指|中指|薬指|小指)をまっすぐにしました。$/, m => `Straightened the ${(T[m[1]] || m[1]).toLowerCase()}.`],
+    [/^(.+)の形に戻しました。$/, m => HAND_JA[m[1]] || m[1] ? `Back to the ${HAND_JA[m[1]] || m[1]} shape.` : null],
+    [/^(右手|左手)も同じ形にしました。$/, m => `The ${JOINT[m[1]] || m[1]} has the same shape now.`],
+    [/^自分の手の形「(.+)」を記憶しました（どちらの手でも「この腕の手の形」から呼び出せます）。$/, m => `Saved the hand shape "${m[1]}" (call it on either hand from the hand shape list).`],
+    [/^自分の手の形「(.+)」を削除しました（今の手の形はそのままです）。$/, m => `Deleted the hand shape "${m[1]}" (the hand keeps its shape).`],
+    [/^自分の手の形「(.+)」にしました。$/, m => `Hand shape: "${m[1]}".`],
+    [/^持ち物「(.+)」の握り（(調整あり|持ち物の手の形)）$/, m => `${name(m[1])}'s grip (${m[2] === "調整あり" ? "adjusted" : "the thing's own hand"})`],
+    [/^持ち物「(.+)」の手の形に戻しました。$/, m => `Back to ${name(m[1])}'s own hand shape.`],
+    [/^持ち物「(.+)」の握りを「(.+)」の形にしました。$/, m => `${name(m[1])}'s grip: ${HAND_JA[m[2]] || m[2]}.`],
+    [/^(右手|左手)を選びました。指の関節の丸（ルーペの中でも）を動かすと、持ち物の握りが変わります。$/, m => `Selected the ${JOINT[m[1]] || m[1]}. Moving its finger joint circles (in the loupe too) changes the thing's grip.`],
+    [/^(右手|左手)を「(.+)」にしました。$/, m => `The ${JOINT[m[1]] || m[1]}: ${HAND_JA[m[2]] || m[2]}.`],
+
     [/^(.+)に体を合わせて、合わせた関節を固定しました。$/, m => `Fitted the body to the ${name(m[1]).toLowerCase()} and pinned the fitted joints.`],
     [/^(.+)を(.+)に着けて固定しました。$/, m => SURFACE[m[2]] ? null : `Put the ${joint(m[1])} on the ${name(m[2]).toLowerCase()} and pinned it.`],
     [/^(.+)を固定しました（身長・頭身を変えても、長さと太さはそのまま）。$/,
       m => `Locked: ${name(m[1]).toLowerCase()} (changing the height or heads leaves their lengths and thickness).`],
     [/^(.+)を固定から外しました。$/, m => `Unlocked: ${name(m[1]).toLowerCase()}.`],
-    [/^(選んだ小物|小物|物体|オーラ)：(.+)$/, m => ({"選んだ小物": "Selected prop", "小物": "Prop", "物体": "Object", "オーラ": "Aura"})[m[1]]
+    [/^(選んだ小物|小物|物体|図形|オーラ)：(.+)$/, m => ({"選んだ小物": "Selected prop", "小物": "Prop", "物体": "Object", "図形": "Shape", "オーラ": "Aura"})[m[1]]
       + ": " + m[2].split(/・(?![^（]*）)/).map(name).join(", ")],                       // "全身・気（炎…）": split outside the brackets
     [/^(.*?)\s*「(.+)」の時点に戻しました。$/, m => `Back to "${tr(m[2]) || m[2]}"${m[1] ? " (" + m[1] + ")" : ""}.`],
     [/^このアドレスの MOD を、エディタを開くたびに読み込んで実行します。信頼できるものだけを追加してください。\n\n([\s\S]+)$/,
@@ -439,6 +532,11 @@
     [/^投稿の文をコピーしました。(.+)に貼り付けてください。$/, m => `Copied the post's text: paste it into ${m[1].replace("カカオトーク", "KakaoTalk")}.`],
     [/^(.+)には、この文を貼り付けてください：([\s\S]+)$/, m => `Paste this into ${m[1].replace("カカオトーク", "KakaoTalk")}: ${m[2]}`],
     [/^(.+)は文字数の上限があるため、編集データの入らないサイトのリンクにしました。$/, m => `${m[1]} allows only so many characters: the post has the site's link without the editing data.`],
+    [/^クリックした面に、いちばん平行な面を合わせて接地させました（(\d+)° 回しました）。$/, m => `Put its most nearly parallel face flat on the clicked face (turned ${m[1]}°).`],
+    [/^構図の画像と投稿の文を共有メニューに渡しました。(.+)を選んでください。$/, m => `Handed the composition picture and the post's text to the share menu: pick ${m[1].replace("カカオトーク", "KakaoTalk").replace("オープンチャット", "LINE OpenChat")}.`],
+    [/^(投稿画面を開き、)?構図の画像(と投稿の文)?をコピーしました。(.+)の投稿欄に貼り付けてください（Ctrl＋V・⌘V）。(文字数の上限があるため、リンクは編集データの入らないサイトのリンクです。)?$/,
+      m => `${m[1] ? "Opened the post page and copied" : "Copied"} the composition picture${m[2] ? " and the post's text" : ""}: paste it into ${m[3].replace("カカオトーク", "KakaoTalk").replace("オープンチャット", "LINE OpenChat")}'s post box (Ctrl+V / ⌘V).${m[4] ? " The link is the site's own, without the editing data (the network's length limit)." : ""}`],
+    [/^この端末では画像をコピーできないため、構図の画像を保存してから(.+)に添付してください。$/, m => `This device cannot copy pictures: save the composition picture, then attach it on ${m[1].replace("カカオトーク", "KakaoTalk").replace("オープンチャット", "LINE OpenChat")}.`],
     [/^(.+)の投稿画面を開き、ひとことをコピーしました（貼り付けて使えます）。$/, m => `Opened ${m[1]}'s post page and copied your words (paste them there).`],
     [/^リンクの編集データを開きました。(.*)$/, m => "Opened the link's editing data." + (m[1] ? " The editing before it: \"Previous editing\"." : "")],
     [/^リンクをコピーしました（(\d+) 文字）。$/, m => `Copied the link (${m[1]} characters).`],
@@ -451,7 +549,9 @@
     [/^カメラ(\d+)として記憶しました。$/, m => `Remembered as Camera ${m[1]}.`],
     [/^(.+)を呼び出しました。$/, m => `Recalled ${figEn(m[1])}.`],
     // figures: "2人目" is "Figure 2" (pose_cast.js)
+    [/^(.+)の近い面に立たせました。$/, m => `Stood the figure on the near face of the ${(T[m[1]] || m[1]).toLowerCase()}.`],
     [/^(\d+)人目$/, m => `Figure ${m[1]}`],
+    [/^前後 (-?\d+)°・横 (-?\d+)°$/, m => `Forward ${m[1]}° · sideways ${m[2]}°`],
     [/^(.+)（編集中）$/, m => `${figEn(m[1])} (editing)`],
     [/^(.+)を(複製して)?追加しました。いま編集しているのは(.+)です。$/,
       m => `Added ${figEn(m[1])}${m[2] ? " (a copy)" : ""}; now editing ${figEn(m[3])}.`],
@@ -459,6 +559,9 @@
     [/^(.+)を編集しています。$/, m => `Editing ${figEn(m[1])}.`],
     [/^構図を (\d+)×(\d+) で保存しました。$/, m => `Composition saved at ${m[1]} × ${m[2]}.`],
     // objects (pose_solids.js); before the general rules below
+    [/^(\d+)個を選んでいます（人物と物）。$/, m => `${m[1]} selected (figures and objects).`],
+    [/^(\d+)個を選びました（人物(\d+)人）。$/, m => `Selected ${m[1]} (${m[2]} figure${m[2] === "1" ? "" : "s"}).`],
+    [/^(\d+)個の物を(外しました|切り取りました|コピーしました|貼り付けました|選びました)。$/, m => `${{外しました: "Took away", 切り取りました: "Cut", コピーしました: "Copied", 貼り付けました: "Pasted", 選びました: "Selected"}[m[2]]} ${m[1]} objects.`],
     [/^(.+)を置きました。配置モードでドラッグして動かせます。$/, m => `Placed: ${T[m[1]] || m[1]}. Drag it in the Place mode.`],
     [/^(.+)の大きさ・向きを戻しました。$/, m => `${T[m[1]] || m[1]}: size and turn reset.`],
     [/^(床|壁|天井)を初期値に戻しました。$/, m => `${T[m[1]]} back to the defaults.`],

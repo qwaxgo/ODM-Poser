@@ -1,0 +1,50 @@
+---
+// A dev-only page: the editor inside a phone or a tablet frame, to look at the phone layout in an
+// editor's own browser (VS Code's, which does not emulate devices). Only `astro dev` makes it;
+// the site build has no such page.
+export function getStaticPaths(){
+  return import.meta.env.DEV ? [{params: {device: "phone"}}, {params: {device: "tablet"}}] : [];
+}
+const { device } = Astro.params;
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+const SIZES = {phone: [390, 844], tablet: [768, 1024]};
+const [w, h] = SIZES[device as "phone" | "tablet"] || SIZES.phone;
+---
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>端末の表示（開発用）</title>
+  <style>
+    html, body { margin: 0; height: 100%; font: 14px/1.5 system-ui, sans-serif; background: #1e1f22; color: #e6e6e6; }
+    .bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 6px 8px; }
+    .bar a, .bar button { color: #e6e6e6; background: #34363b; border: 1px solid #4a4d55; border-radius: 6px; padding: 3px 9px; font: inherit; text-decoration: none; cursor: pointer; }
+    .bar a[aria-current] { background: #3e63dd; border-color: #3e63dd; }
+    .stage { display: flex; justify-content: center; padding: 8px; }
+    iframe { border: 1px solid #555; border-radius: 22px; background: #fff; box-shadow: 0 6px 24px rgb(0 0 0 / .4); }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <a href={`${base}dev/phone/`} aria-current={device === "phone" ? "page" : undefined}>スマホ</a>
+    <a href={`${base}dev/tablet/`} aria-current={device === "tablet" ? "page" : undefined}>タブレット</a>
+    <button type="button" id="turn">縦・横</button>
+    <span id="size"></span>
+  </div>
+  <div class="stage"><iframe id="frame" title="編集画面" src={`${base}editor/`} width={w} height={h}></iframe></div>
+  <script is:inline define:vars={{ w, h }}>
+    // the frame takes the size of the device; 縦・横 turns it (the editor reads the frame's own shape)
+    const f = document.getElementById("frame"), s = document.getElementById("size");
+    let turned = false;
+    const fit = () => {
+      const W = turned ? h : w, H = turned ? w : h, room = innerWidth - 16, roomH = innerHeight - 60;
+      const k = Math.min(1, room / W, roomH / H);
+      f.width = W; f.height = H; f.style.transform = k < 1 ? `scale(${k})` : ""; f.style.transformOrigin = "top center";
+      s.textContent = `${W} × ${H}${turned ? "（横）" : "（縦）"}`;
+    };
+    document.getElementById("turn").addEventListener("click", () => { turned = !turned; fit(); });
+    addEventListener("resize", fit); fit();
+  </script>
+</body>
+</html>

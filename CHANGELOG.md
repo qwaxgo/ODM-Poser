@@ -34,6 +34,59 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - カメラが時々動かなくなる不具合を修正：タッチの指が離れたことが伝わらないと、それ以後のタッチがすべて2本指の操作になっていました。マウスでも、何もない所をドラッグするとカメラが回るように（Shift＋ドラッグで動かす）
 - 図の右上の「操作欄」ボタンが分割表示で効かなかったのを修正し、左上の「操作欄を隠す」ボタンを削除
 - 「人物」のメニューの全身図の下に「人物の管理」：人物の切り替え・追加・複製・削除と、持ち物・身に着けた物の一覧（装備のタブを開く・外す）
+- 頭の形：サイズのタブの「頭の形」で、幅・高さ・奥行きを伸び縮み（頭身は変わらず）。伸ばした形は「球のまま伸ばす」か「円柱でつなぐ」を選べます
+- 角柱・角錐の天面の大きさ（底面に対する %）。角錐を 0% にすると頂点になります
+- オーラの「放物線」：炎の先が、根元の底辺中心を原点として放射状に出て、長さが両端へ向けて放物線状に短くなります。原点の高さはスライダーで調整（既定は底辺の中心）
+- カメラを初期状態に戻すボタンを、リセットタブにも追加（記憶したカメラと固定は残ります）
+- 線の色の欄を作り直し：対象（人物の部位・床・壁・天井・ワイヤー・小物・物体・オーラ）を一覧から選び、色を変えるものにチェックを入れて、色を選ぶか #rrggbb のコードを入力します。固定の色の一覧はなくなりました
+- 「クリックで自動的にモードを切り替える」（ポーズの欄）：物を押すと配置モード、人体の関節を押すとポーズモード（配置・カメラから。体格は残す）。このブラウザに残ります
+- 物（設置物）の幅・高さ・奥行き・角の数・位置・向き、床と天井の高さ、壁の位置と向き、ワイヤーの支点、人物の位置（castX/Z）、オーラの大きさにもスライダーを付けました（数値欄と連動、ドラッグは取り消し1回分）
+- カメラの位置と見る点を、XYZ それぞれスライダーと数値欄で調整できるように（スライダーを動かしても取り消し履歴は1回分）
+- 3軸ハンドル：掴んだ矢印・輪は太く、ほかは薄く表示します。ハンドルの大きさは画面に合わせて、スマホで約1.35倍、タブレットで1.5倍、大きい画面で1.75倍に（掴める範囲も同じだけ広く）
+- 物体・小物を範囲選択（何もない所からドラッグ、Shift＋で足す）と Ctrl＋クリックでいくつも選べるように。まとめて3軸ハンドルで動かす・回すことができます
+- 選んだ物を Delete（Backspace）で外し、Ctrl＋X／C／V で切り取り・コピー・貼り付けできるように（コピーはこのブラウザに残ります）
+- 図の左に「ドラッグ」「ハンド」のカーソルを追加（V・H キー）。ハンドではどこをドラッグしてもカメラが回ります
+- クリックでのモードの自動切り替えを最初からオンに。何もない所をクリックすると、ポーズ・体格からカメラモードへ。配置モードでは物の選択を外します
+- 物の回転の支点（中心）を動かせるように：3軸ハンドルの「支点」、設置のタブの数値（本体からの相対座標・絶対座標）、「中心に戻す」「底の中心に」
+- 図の右上の「3軸ハンドル」のスイッチを外しました（左のメニューで出す・隠す）
+- 「胴体を立体」を人物ごとの設定に
+- 図の左のメニューのすき間をクリックしても、図が操作できるように
+- 選んだ物の「削除」「切り取り」「コピー」「貼り付け」ボタンを図の左に（物を選んだときと、貼り付ける物があるときだけ。タッチでも使えます）
+- 図の左のメニューが2列でも収まらないとき（スマホの横向きなど）は、2列目を「…」で3軸ハンドルとカーソル・編集に切り替え、Shift・固定はモードの下へ
+- ドキュメントに「操作マニュアル」を追加（モード、カーソル、3軸ハンドル、自動切り替え、端末ごとの並び、カメラ操作）。README の「胴体を立体」を人物ごとの説明に
+- 3軸ハンドルの矢印・輪・四角を、物の向きによらず場面の X・Y・Z に揃えました（回転もその軸のまわり、変形は軸にいちばん近い辺を伸ばす）
+- 配置モードで Ctrl＋人体をクリックすると、腰を選んで人物全体を動かせるように
+- いくつか選んだ物を、1つの物（最後に足した物、Ctrl＋Shift＋クリックで変更）の支点を中心に、X・Y・Z でまとめて回せるように
+- カメラのタブを「カメラの向き」（左右・上下・傾き：その場でカメラを回す）と「カメラの位置」（左右・上下・前後：向きを変えずに動かす）の2つに。「見る点」の欄はなくしました
+- パース定規のガイドを図形に：設置のタブで「ガイドとして置く」にすると、どの図形でも、いくつでも、定規の向きにそろえて置けます（辺は消失点まで延び、アタリには入らない）。前の「ガイド立方体」はガイドの直方体に移ります
+- ガイド図形を3軸ハンドルで動かせるように（辺の向きに沿って）。「変形」は引いた側の辺だけを延ばし、透視していない辺（高さ・幅）も変えられます
+- 置く前に大きさを決められるように：設置のタブでプレビューを見ながら、図形の幅・高さ・奥行き・角の数・天面、小物の大きさ・X・Y・Z・部位ごとの長さ。装備のタブにも部位ごとの長さを追加
+- 英語表示で日本語のまま残っていた所を英訳（縦長画面のバー、頭の形、色の対象、オーラの放物線、小物の分類、部位の名前、ガイド図形、カメラのリセットなど）
+- マウスホイールで定規のガイドの向きが変わってしまうのを修正。ホイールは物体・小物の上でも、いつも拡大・縮小に（回すのは3軸ハンドルと設置の回転の欄）
+- 置く前のプレビューに3軸ハンドル（移動・回転・変形・支点）を使えるように（配置モードで何も選んでいないとき）。「置く」でそのとおりに置きます
+- いくつか選んでまとめて回すとき、ガイド図形は回さずに定規の向きのままに
+- カメラモードはいつもハンド：ドラッグでカメラ、クリックで関節ならポーズモード・物なら配置モードへ。Shift＋関節のクリックで体格モード（ポーズ・体格の間は Shift＋クリックで切り替え）
+- 操作のヒントに、これまでに変わった操作（ホイールで拡大・Ctrl＋Alt＋ホイールでレンズ、3軸ハンドルの出し方、モードの自動切り替え、境目・⇅ 上下・メニューの位置、スマホのメニューの閉じ方など）を追加
+- 設置のタブを1つにまとめました：図形・床・壁・天井と小物を同じ「置く物」の一覧から置き、「置いた物」の一覧で、位置（XYZ）・回転（XYZ）・大きさ（図形は幅・高さ・奥行き、小物は手に持つときと同じ大きさと3軸）を変えます。「接地させる」は回転していても、いちばん低い所で地面や下の物に着けます
+- すべての物体を3軸で回転できるように（3軸ハンドルも3つの輪）。傾いた面には人物も足元の高さを合わせて立ちます
+- 壁と天井は物体（板）に。いくつでも置け、回転できます。前の版の配置タブの壁・天井は、開くと物体に移ります（地面は配置タブに残ります）
+- スライダーが動かせなかった（幅がなかった）不具合を修正：物体の大きさ・位置・向き・角の数・天面、持つ位置、オーラの大きさ、床・天井・壁・ワイヤー、人物の位置。2列の欄の中のスライダーは2列分の幅を使います
+- 公開サイトを更新したとき、ブラウザに残った古いスクリプト・CSS が使われないように：読み込みにビルドごとの印を付け、アプリ（PWA）のサービスワーカーは毎回サーバーで新しさを確かめます（オフラインでは今までどおり開けます）
+- 操作欄の位置・メニューの側・操作欄をしまう設定を、縦画面と横画面で別々に覚えるように。画面の向きを変えると、その向きの設定（初めては初期値）に切り替わります
+- 縦のタブレットと PC の縦モニター：キャンバスを画面の 50〜85%（既定 60%、境目のドラッグで調整）に取り、残りに、画面の端から順に分類バー（作る・見る・出す・ODM-Poser について）、カテゴリーの行、タブの行、選んだタブの欄（横に並べてスクロール、スライダーは縦型）を置きます。分類バーとメニューは、バーの「⇅ 上下」で画面の下か上かを切り替えられます（このブラウザに残ります）
+- 両手持ちの武器：利き手（右手・左手）を装備の欄で切り替えられます。持つ手を動かしても武器が手を支点に回らず、もう片方の手が向きを保って付いてくるように
+- 3軸ハンドル：左側のメニューの「3軸ハンドル」を押すと出て、「解除」で隠します（右側の欄のコピーは削除）。掴んだ軸は太く強調され、ドラッグはその軸だけに動きます
+- 身長と頭身の欄を体格タブにも出しました（頭身は直接入力可）
+- 線の色は、色見本の横に #rrggbb の色コードを入力できるように
+- 出ている小物を設置タブの「選んだ物を接地させる」で接地（持っている物は床に置く）
+- 武器を背負ったときの位置を直しました：背中の中心線の近くに、肩から腰にかけて収まるように（以前は腰の下へ垂れ、背中から離れていました）
+- マウスホイールは既定でカメラの拡大縮小に（人体の部位の上での体格モードは従来どおり太さ）。パース（レンズ）の変更は Ctrl＋Alt＋ホイール
+- SNS 投稿欄：Misskey.io と Misskey.dev のボタンを追加（Misskey.io を既定に）。Facebook・Instagram・LINE・Discord・Reddit を主要ボタンに
+- 長柄（槍・薙刀・ハルバード・棍）と棒は、装備の「持ち方」で握るかカウチ（脇に挟む）を選べます。手で持つ小物はすべて、「持つ位置」で握る場所を柄に沿ってずらせて、「↺ 持ち方と持つ位置を戻す」で初期値に戻せます。「棒（ただの棒）」を追加
+- 大型ランスとガンランスを直しました：柄を細く（太さ 10cm → 4.4cm）、持たせると脇に挟んで前へ突き出す構え（カウチ）に。ガンランスは銃剣を付けた銃の形に（銃床・銃身・銃剣、片手で持つ）
+- 色を初期状態に戻すボタン（「色」のタブの上）と、色の記憶（名前をつけて保存・呼び出し・削除。このブラウザに残ります）を追加。記憶するのは線・床・壁・天井・ワイヤーの色で、小物・物体・オーラの色は含みません
+- スマホ・縦のタブレットの画面を作り直し：キャンバスを画面いっぱいに出し、下の分類バー（作る・見る・出す・ODM-Poser について）から、タブを選ぶと操作の欄が画面いっぱいのシートで立ち上がり、その上に人物の簡略表示が固定されて出ます（操作の欄だけがスクロールします）。つまみを下へドラッグするかタップすると閉じます。タイトル・版・リンクは「ODM-Poser について」へ。横画面とPCは今のまま
+- 開発用の端末表示（`npm run dev` の /ODM-Poser/dev/phone/ と /dev/tablet/）：VS Code のブラウザの中で、スマホ・タブレットの枠に編集画面を入れて確かめられます（本番サイトには出ません）
 - 人体のリセットを「作る › 人物 › リセット」に一箇所にまとめました：この人物を全部・性別の初期値・ポーズだけ・体格だけ・位置と向きだけ、付随物、すべて。ポーズ・体格・位置・性別の各タブの同じボタンは外しました
 - 「人物の管理」に「付随物のリセット」：持ち物・身に着けた物、オーラ、ワイヤー、関節の固定のうちチェックしたものを、まとめて外すか、付けたまま大きさ・色・向き・位置・ワイヤーの高さを初期値に戻せます
 - 「ComfyUI で使う」のページを新しいブリッジに合わせて更新：エディタ本体（HTML 版）がブリッジに同梱されるので、入れるときと更新するときにサブモジュールの手順は要りません
@@ -46,6 +99,59 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 図と操作欄の境目のつまみをドラッグして、広さを変えられるように（PC の横並び、スマホの分割表示の縦・横。ダブルクリックで戻す。このブラウザに残ります）
 - スマホでも側面図を上・下・左・右に置けるように（幅が狭いときは置き場所のボタンを1つにまとめ、押すとほかが開く）
 - 「操作欄」「分割表示」のアイコンを、いまの画面で操作欄が出る場所（縦のスマホなら下）・分ける向きの絵に
+- ガイドをパース定規と常につなげました：3軸ハンドルや設置の回転の欄でガイドを回すと、パース定規とほかのガイドも一緒に立体的に回ります（前後・横に倒すと消失点がアイレベルから外れます）。定規のタブに「定規の倒れ」と「定規を床に立てる」を追加
+- スナップがオンでも、ガイドでない物体・小物を回せるように修正（定規の向きに戻されていました）。定規の向きから ±5° 以内に来たときだけ吸い付きます
+- 「定規を床のグリッドにスナップ」を追加：定規の向きを床のグリッドの線にそろえて90°ずつ回し、ガイドの角をグリッドの交点（40cm おき）に、底を床に吸い付けます
+- 設置・装備のタブの種類に「ニュートラル（何も選ばない）」を追加：開いたときと、置いた（持たせた）あとはニュートラルになり、置く前のプレビューと3軸ハンドルが出ないので、置いた物を動かしやすく。分類を選び直すとその最初の種類になります
+- 人物を、床・壁・天井と置いた物体の面（斜面も）に立たせる機能：体ごと面に合わせ（壁では横向き、天井では逆さ、斜面では垂直）、足の裏を面に着けます。配置モードで腰を面に近づける（15cm 以内）、「面をクリックして立つ」、設置のタブの「近い面に立つ」で。立っている面に沿って腰をドラッグでき、面から離すと外れます。「体をまっすぐに戻す」を追加
+- 腰の真ん中をクリックすると配置モードの人物の移動に（3軸ハンドルは移動）、Shift＋クリックでポーズモードの体ごとの回転に（3軸ハンドルは回転）。配置モードで腰を押しても、ポーズモードに切り替わらないように（そのままドラッグで人物を動かせます）
+- 「女性」「男性」で性別を変えても、体格の調整（部位の長さ・左右の違い・太さ・頭の大きさ）をリセットしないように。性別の差の割合だけ変わります
+- 体格のタブとサイズのタブを「体格」にまとめました。小物の大きさ（3軸）と部位ごとの長さは、装備と設置のタブへ移しました
+- 範囲選択で人物が選ばれない問題を修正：囲んだ人物（ほかの人物も）を、物体と一緒に選べます
+- Ctrl＋クリックで人物も選ぶ物に足す・外すように。人物と物体をいくつか選ぶと、3軸ハンドルでまとめて動かす・回すことができます（中心は最後に足した物の支点、人物なら腰）。選んだ人物は点線の枠で囲まれ、削除・切り取り・コピーは物だけにかかります
+- 面に立つとき、体のいちばん近い所・低い所を面に着けるように：ポーズによって膝・手・頭なども着きます。面を探すのも体のいちばん近い所から。物体の面（上面も）・壁・天井に立っているあいだは、ポーズを変えてもいちばん低い所が面に着いたまま（「この上に立つ」も）
+- 体格の欄と「身長と頭身」の欄で身長が重なっていたので、「体格」の欄に1つにまとめました（身長・頭身のスライダーと「保つもの」）
+- 3軸ハンドルの輪で首・頭を回しても、顔の十字（顔の向き）が回らない不具合を修正：回したぶんだけ顔の向きも回ります（首の縦の軸まわりの回転は、首・頭のねじりになります）
+- 首・頭の緑（Y）の輪で、頭がその場で左右を向くように（骨を軸にしたねじり。傾いた頭が首のまわりを回らない）。頭の輪は頭のまわりに出ます
+- 頭に限らず、ポーズモードの関節の緑（Y）の輪を、骨の軸のまわりに出して、その骨を軸にねじるように（関節パネルの「ねじり」と同じ。肘なら上腕を軸に前腕が回る）。輪が重なる所では押した所にいちばん近い輪を掴みます（同じくらいなら緑）
+- 3軸ハンドルの回転（輪）と変形（四角）を、選んだものの向きに沿うように：関節では関節の軸（Y が骨の向き）、物体・小物では物体の向き（回した向き）。移動（矢印）は今までどおり場面の X・Y・Z に沿います
+- ポーズモードで肩・股を3軸ハンドルの矢印で動かせるように：骨の長さを保ち、関節の限界の中で動くので、体格は変わらずに胴体・腰の台形が歪みます
+- 体格モードで頭の四角（長さ・幅・奥行き）を動かすと、頭の球そのものが伸び縮みするように（頭の形。太さは幅と奥行きの両方）。伸ばした頭は頭の向きのとおりに楕円の球として描かれ、顔の十字も沿います
+- 頭の形（3軸ハンドル・体格のタブのスライダー）で頭を伸ばすとき、首とつながった所（頭の下端）を起点に伸び縮みするように
+- 90° 刻みを初期値でやめました：物体・小物の回転の定規への吸い付きは「回転も定規の向きに吸い付く」（初期値オフ）に分け、「定規を床のグリッドにスナップ」でも定規が 90° ずつにならないように。ガイドは定規からずれた好きな角度でも置けます（置く前のガイドを回すか、置いたガイドの「回転（向き・Y）」で。そのずれは定規を回しても保たれます）
+- 床のグリッドが定規の向きに合わせて回り、遠く（人物のまわり 8m）まで描かれるように（カメラの後ろに回り込む線は手前で切ります）
+- 接地の初期値を「床・物体の上にめり込まない」に。面に立つとき、体が面の反対側へ抜けたり、逆さに反転したりしないように：立っている面の裏へ押し込んでも戻り、腰を近づけたときは、腰が裏にある面や体が逆さになる面（天井・物体の下側）には立ちません。「逆さ・裏向きになる面にも立つ」で許可できます（面をクリックしたときは今までどおり）
+- 小物の「円柱・棒」を「棒（細い円柱）」に、図形の「円柱」を「円柱（太い・柱や建物）」に名前を変え、手に持つ細い棒と、障害物・建物にする太い円柱を分けました
+- 大きさを % ではなく cm で決めるように：小物の大きさ（いちばん長い辺・X・Y・Z）と部位ごとの長さ（設置・装備のタブ、置く前のプレビュー、小物の大きさ（3軸））、角柱・角錐の天面の幅、頭の形の幅・高さ・奥行き、体格の「全身の太さ」（太ももの付け根の直径）。体格の「全体サイズ」「頭」（%）は、同じタブの「身長」「頭の大きさ（直径）」にまとめました。前のファイルもそのまま開けます
+- 色のタブで、カラーパレット（色を選ぶ画面）の色をクリックした途端に閉じる不具合を修正：色を変えても一覧を作り直さず、その場で色だけを書き換えます
+- パースの誇張（物体ごと）を追加：カメラを固定しているとき、レンズとは別に、人物・物体ごとにパースを強められます（カメラのタブで支点を人物の部位や物体の座標で選び、強さは物ごとに設置のタブで）。支点の奥行きの大きさはそのまま、奥ほど急に縮み、手前は大きくなります。パース定規とガイド図形は1つの強さを共有し、消失点も誇張に合わせて動きます。図・クリック・3軸ハンドル・書き出す画像にも入ります
+- 設置のタブに「物体のプリセット」を追加：置いた物の種類・大きさ・向き・色・パースの誇張を名前をつけて記憶し、何度でも置けます（名前の変更・削除も。このブラウザに保存）
+- 物体（図形・床の板・壁・置いた小物）の色を、色のタブから設置のタブの「物体の色」へ移しました。手に持つ物・身に着ける物・オーラの色は色のタブのままです
+- パースの誇張の設定を「見る › 視点 › パース」のタブにまとめました（支点、人物・定規の強さ、物体ごとの強さの一覧）
+- リロードで構図が変わり、カメラの固定が外れたように見える不具合を修正：書き出しの比率・幅・高さ（カメラの枠の形）と構図画像の設定を、このブラウザに残します（リンクの ?w= &h= が優先）
+- 編集の内容を、ページを閉じるときだけでなく、隠れたときと変更の少し後にも保存するように（スマホの Safari やアプリでリロード・終了しても、直前の編集が残ります）。リロードの前のモードと開いていたタブにも戻ります
+- 装備のタブのプレビューに「左右」を追加：手に持つ物は右手・左手、両足・両手の物は両方・右だけ・左だけ、ほかの左右で違う物は反対側（左右反転）に、持つ・着ける前にできます。出ている物の「反対側にする」で後からも入れ替えられます
+- パースの誇張を作り直し：物ごとの強さをやめ、1つの支点（画面に印が出るだけで、書き出す画像には出ない点）から、すべてに同じ強さで掛かるように。支点より奥は支点に向かって急に縮み、手前は支点から飛び出すように大きくなります（鯉のぼりから人物が飛び出す構図や、ヒーローが画面へ迫る構図）。支点は自由な点か、部位・物体に付けるかを選べ、印を画面でドラッグして動かせます。「カメラを一時的に動かす」で、固定したカメラを記憶したまま横から支点の奥行きを合わせられます。強さは上げるほど均等に効くように
+- パースの誇張の支点を3軸ハンドルで動かせるように：支点の印を押すか「3軸ハンドルで動かす」で、移動の矢印が出て、場面の X・Y・Z の方向に動かせます（元に戻すも効きます）
+- 側面図にカメラを追加（見る › 視点 › 側面図）：右から・左からを選べ、中心（支点）をカメラの注視点・人物の部位・置いた物から選べます（動いても付いていく）。回転・見下ろす角度・拡大もでき、側面図の上でホイール・中ボタン（Alt＋ドラッグ）・Shift で操作できます。回転しなければ、今まで通りカメラから90°横の水平な図です
+- 側面図のカメラをスマホ・タブレットで操作できるように（何もない所を1本指で回転、2本指でつまんで拡大・動かして移動。マウスでも何もない所のドラッグで回転）。最初の90°に戻すボタン（タブと側面図の隅の「90°」）を追加。「カメラ側」の表示は、回しても消さず、カメラのある向き（左右・手前・奥）を示すように
+- 側面図の隅に「↺ 角度と拡大」（角度・拡大・移動をまとめて戻す）を追加し、「90°」と並べて側面図の名前の下に置きました。パースの誇張の支点の印を、正面と側面図にいつも出すように（誇張が効いていない間は薄く。書き出す画像には出ません）。どのタブからでもつまんでドラッグ・3軸ハンドルで動かせ、側面図では前後の位置を合わせられます（「支点の印をいつも出す」を外すと、パースのタブの間だけ）
+- 書き出しの比率・幅・高さを変えるとカメラの位置がずれ、手前の物がカメラの後ろに回って何も見えなくなる不具合を修正：レンズを画像の高さに対して取り、カメラの距離が画像の形で変わらないように（高さに写る範囲はそのままで、左右が広がる・切れる。横長の画像は前よりパースが少し強くなります）
+- 書き出しに「アタリ画像の内容」を追加：構図（初期値。人物・小物に加えて物体と環境も、「構図の画像に含める」のチェックのとおりに白い背景に描く）か、人物と小物だけ（今まで通り）を選べます
+- SNS に投稿するとき、いまの構図の画像を投稿に付けるように（「構図の画像を付ける」、初期値でオン）：スマホは共有メニューに画像と文を一緒に渡し、パソコンは投稿画面を開いて画像をコピーするので、投稿欄に貼り付けます。リンクのカードの画像は、サーバーがないためサイト共通のままです
+- 設置のタブの「接地させる」で、押してから着ける面（床・壁・天井・物体の面、斜面も）をクリックすると、物のいちばん平行な面がその面にぴったり重なるように回して、面に着けるように（何もない所をクリックすると、今までどおりいちばん低い所で真下に接地。Esc でやめる）
+- 開発者向けの設計書（docs/ARCHITECTURE-JA.md、ARCHITECTURE.md）を追加：スクリプトの読み込み順と依存、関数の上書きの連鎖、状態のデータ、処理の流れ、主な仕組みの式、外との約束、リファクタリングの難所（機能の変更はありません）
+- 人形の手を作り直し：手のひらの輪郭と、人の手に近い指の付き方・曲がり方（閉じると指が寄り、薬指・小指の付け根が沈む）で描くように。手を選ぶと指の関節（片手 15 か所）が丸で出て、ドラッグ・3軸ハンドルの回転（赤：曲げ、緑：付け根の開き）・関節のパネルの数値で 1 つずつ曲げられます（人の手の範囲で）。手の形（グー・パーなど）は関節の角度で扱い、今までの手の形・ファイル・MOD の手の形もそのまま使えます。指を調整した手の形を名前を付けて記憶し、どちらの手にも呼び出せます。ポーズの記憶にも指の関節が入ります。体格のタブで、手の長さ（cm）と指 1 本ずつの長さ（85〜115%）を変えられます。MOD API 1.3：手の形を関節の角度で足す `angles` と `api.hands.angles`
+- 設計書に、手と指の仕組みと、この変更で生じたリファクタリングの難所を追記
+- 手を選んでいる間、図の上に手を拡大した「ルーペ」を出すように（初期値でオン）。ルーペの中の指の関節を押してドラッグすると曲がります。スマホで指が調整できなかった不具合（3軸ハンドルの輪が指の丸より先にタップを取っていた）を修正し、手首を選んだときも指の欄が出るように
+- 手に持つ物が、自分の握り（手の形）を持つように：持っている手の指を調整するとその持ち物に残り、持ち直しても同じ握りになります。装備のタブの「手の中の位置」で、持つ手・もう片方の手（両手持ち）ごとに手の中での位置をずらせます
+- 編集データの保存を追加（書き出し）：人物と人物以外のすべて（小物・物体・床と壁・定規・カメラなど）と書き出しの設定を、.odmposer（圧縮した 1 つのファイル）か .json で保存し、「ファイルを開く」で続きから編集できます
+- 体格のタブで、左右の手の大きさを同じにするか、別々に決めるかを選べるように
+- 装備の一覧で選んでいない物を（MOD などから）持たせると止まる不具合を修正
+- リファクタリングの準備：動きのテスト（tests/、tools/run_tests.py）をリポジトリに置き、構文の確認がすべてのファイルで通るように（`?.` と `for await` を同じ動きの書き方に）。設計書に、持ち物の握り・ルーペ・編集データの形式・テストと、新しく生じた難所を追記
+- ルーペにも 3軸ハンドルの回転の輪（赤：曲げ、緑：付け根の開き）を出し、ルーペの中で掴んで指の関節を回せるように
+- 指の関節の 3軸ハンドルが掴めなかった不具合を修正（輪を押すと、掴む前に関節の選択が外れてハンドルが消えていた）
+- スマホ・タブレットでは、3軸ハンドルが出ているとき、ハンドのカーソル（カメラ）よりハンドルのタップを優先するように
 
 ### English
 
@@ -71,6 +177,59 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The camera sometimes stopped responding: a finger whose lifting was never told made every later touch a two-finger gesture. A mouse drag on empty space now turns the camera too (Shift: pans)
 - The "Panel" button at the view's top right works in split screen; the "Hide the panel" key at the top left is gone
 - "Figures" under the body map in the Figure menu: switch, add, copy and delete figures, and what the figure holds and wears (open it in Equip, take it off)
+- The head's shape: width, height and depth stretch (the head count stays); the stretched shape is a ball or a cylinder joining the ends
+- A prism's or pyramid's top size (a share of the base); a pyramid at 0% is a point
+- The aura's parabola: the flame tips point away from the bottom centre of the base, and their length falls off in a parabola toward the ends; the origin height is a slider (default: the base's centre)
+- A "Camera to the start" button in the Reset tab too (saved cameras and the lock stay)
+- The line colours: pick the object from a list (the figure's parts, floor, walls, ceiling, wire, things, solids, auras), check what to change, then pick a colour or type #rrggbb. The fixed list is gone
+- Click to switch mode (in the Pose tab): a press on a thing goes to Place, a press on the body to Pose (from Place or Camera; Body stays). Kept in this browser
+- Sliders beside the numbers of objects (size, sides, position, turn), the floor and ceiling heights, the wall, the wire's height, the figure's place and the aura size (linked with the number; a drag is one undo step)
+- The camera's position and look point: X, Y and Z each with a slider and a number (a slider drag is one undo step)
+- The 3-axis handles: the arrow or ring held is drawn heavier, the others fade. Their size fits the screen: about 1.35 times on a phone, 1.5 on a tablet, 1.75 on a large screen (the reach grows the same)
+- Objects and things are box-selected (a drag from an empty place, Shift adds) and Ctrl+clicked to select several; the 3-axis handles move and turn them together
+- Delete (Backspace) takes the selected away; Ctrl+X / C / V cut, copy and paste them (the copy stays in this browser)
+- The Drag and Hand cursors on the view's left (V, H keys); with Hand, a drag anywhere turns the camera
+- Switching modes by what is clicked is on at first; a click on an empty place goes from Pose or Body to Camera, and in Place mode lets the objects go
+- A thing's pivot (what it turns about) can be moved: the handles' Pivot button, numbers in the Objects tab (from the object or in the world), To the middle, To the bottom's middle
+- The 3-axis handles' switch on the view's top right is gone (the menu on the left shows and hides them)
+- Solid torso is each figure's own
+- A click in the gaps of the menu on the view's left reaches the view
+- Delete, Cut, Copy and Paste buttons for the selected on the view's left (shown with something selected or to paste; for touch too)
+- When the menu on the view's left does not fit in two columns (a phone sideways), … switches its second column between the 3-axis handles and the cursor and edit buttons; Shift and Pin go under the modes
+- A Manual page in the docs (modes, cursors, 3-axis handles, automatic switching, the layout on each device, the camera); the README's Solid torso is each figure's own
+- The 3-axis handles' arrows, rings and squares follow the scene's X, Y, Z however the thing is turned (it turns about those axes; a square stretches the side nearest its axis)
+- In Place mode, Ctrl + clicking the body takes the figure by its hips to move it
+- Several selected things turn together on X, Y, Z about one thing's pivot (the last one added; Ctrl + Shift + click changes it)
+- The Camera tab is Camera direction (left-right, up-down, roll: turns the camera where it stands) and Camera position (left-right, up-down, front-back: moves it without turning it); the Looks at fields are gone
+- The perspective ruler's guides are shapes: with “Put as a guide” in the Objects tab, any shape, as many as you like, turned to the ruler (edges carried on to the vanishing points; not in the rough picture). The box guide of before becomes a guide box
+- Guide shapes move with the 3-axis handles (along their edges); Scale lengthens only the side pulled, and the edges without a vanishing point (height, width) change too
+- Sizes before putting: in the Objects tab, with the preview, a shape's width, height, depth, sides and top, a thing's size, X, Y, Z and section lengths; section lengths in the Equip tab too
+- English for what was still in Japanese (the tall layout's bar, head shape, colour targets, the aura's parabola, prop categories, section names, guide shapes, the camera reset ...)
+- Fixed the mouse wheel turning a ruler guide. The wheel always zooms, over objects and things too (the 3-axis handles and the Objects tab's turn fields turn them)
+- The 3-axis handles (move, rotate, scale, pivot) work on the preview before putting (Place mode, nothing selected); Put puts it just so
+- Guide shapes in a group turned together stay turned to the ruler
+- Camera mode is always the hand: a drag turns the camera; a click goes to Pose mode on a joint, to Place mode on a thing. Shift + a click on a joint goes to Body mode (Shift + click switches Pose and Body)
+- The hints show the operations changed before too (the wheel zooms, Ctrl+Alt+wheel the lens, showing the 3-axis handles, switching modes, the edge, ⇅, the menu's place, closing a phone's menu ...)
+- The Objects tab is one place: shapes, floors, walls, ceilings and things are put from one "What to put" list, and from "Out in the scene" each one's place (XYZ), turn (XYZ) and size (a shape's width, height, depth; a thing's size and 3 axes as when held) are changed. "Put on the ground" sets it down by its lowest point, turned or not
+- Every object turns on all three axes (the 3-axis handles have three rings); figures stand on a tilted face at its height
+- Walls and ceilings are objects (slabs), as many as you like, turned any way; the old Place tab's wall and ceiling become slabs when a file opens (the ground stays in the Place tab)
+- Sliders that could not move (no width) fixed: the objects' size, place, turn, sides and top, where a thing is held, the aura size, the floor, ceiling, wall and wire, the figure's place. A slider in a two-column grid takes both columns
+- After the site is updated, browsers no longer run older kept scripts and styles: each load carries the build's mark, and the app's (PWA) service worker asks the server each time (offline it still opens)
+- The panel's place, the menu's side and the panel put away are kept apart for an upright and a sideways screen: turning the screen brings that way's own (the defaults the first time)
+- Upright tablets and tall monitors: the views take 50-85 % of the height (60 % by default, set by dragging the edge); the rest, from the screen's edge inward, holds the category bar (Make, View, Output, About ODM-Poser), the categories' row, the tabs' row and the tab's controls side by side (scrolling sideways, sliders upright). The bar and the menu go at the bottom or the top (the bar's ⇅ button; kept in this browser)
+- Two-handed weapons: the main hand (right or left) is chosen in the Equip tab. Moving the holding hand no longer swings the weapon about it: the other hand follows and the weapon keeps its direction
+- The 3-axis handles: the 3軸ハンドル button on the left turns them on and 解除 off (the copies in the panel are gone). The axis taken is drawn heavier, and a drag moves along that axis only
+- The height and heads are in the Body tab too (heads can be typed)
+- The line colours take a #rrggbb code beside each colour
+- The things out: 選んだ物を接地させる in the Objects tab puts the chosen one on the ground (a held one is put on the floor)
+- A weapon carried on the back sits just off the spine, from the shoulders to the hips (it used to hang below the hips, away from the back)
+- The mouse wheel zooms the camera by default (in body mode over a part it still changes that part's thickness); the lens (perspective) is Ctrl + Alt + wheel
+- Share panel: Misskey.io and Misskey.dev buttons (Misskey.io by default); Facebook, Instagram, LINE, Discord and Reddit are main buttons
+- Long weapons (spears, polearms, staffs) and sticks: a choice of Grip or Couched in the Equip tab (Way of holding). Every thing held: its grip can slide along it (Where it is held), and ↺ Way of holding and place to the start puts both back. A plain stick is added
+- Huge lance and gun lance: the shaft is thinner (10 cm to 4.4 cm across) and held couched by default (under the arm, thrust forward). The gun lance is now a rifle with a bayonet fixed (stock, barrel, blade; held one-handed)
+- A "Colours to the start" button at the top of the Colours tab, and saved colours (save under a name, load, delete; kept in this browser). They keep the lines, floor, walls, ceiling and wire; things, solids and auras keep their own colours out of them
+- Phones and upright tablets get a new layout: the views fill the screen, a bar at the bottom (Make, View, Output, About ODM-Poser) opens a tab's controls as a full-screen sheet with a simplified view of the figure fixed at its top (only the controls scroll). Drag the grip down or tap it to close. The title, version and links are under About ODM-Poser. Sideways and on computers, the layout is as before
+- A development device frame (`npm run dev`, /ODM-Poser/dev/phone/ and /dev/tablet/): the editor in a phone or tablet frame, to look at the phone layout in VS Code's browser (not in the site)
 - All the figure's resets are in one tab, Reset (Figure menu): the whole figure, its sex's default, its pose only, its body only, its place and turn only, the attached things, and everything. The same buttons in the Pose, Body and Place tabs are gone
 - "Reset what the figure has" in Figures: for the kinds ticked (held and worn things, auras, the wire, pinned joints), take them all off, or keep them and put their size, colour, turn, place and the wire's height back
 - The "Using it in ComfyUI" page follows the reworked bridge: the editor (its HTML build) comes inside the bridge, so installing and updating need no submodule steps
@@ -83,6 +242,59 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - Drag the grip on the edge between the views and the panel to give either more room (side by side on a computer, a phone's split screen upright or sideways; a double click puts it back; kept in this browser)
 - The side view can go above, below, left or right on a phone too (narrow, its place buttons fold into one that opens the others)
 - The "Panel" and "Split screen" icons picture where the panel comes out on this screen (below on an upright phone) and the way the screen splits
+- Guides are always linked to the perspective ruler: turning a guide (the 3-axis handles or the Objects tab's turn fields) turns the ruler and the other guides with it in 3D (tipped forward or sideways, the vanishing points leave the eye level). The Ruler tab gets "Ruler lean" and "Stand the ruler on the floor"
+- Objects and things that are not guides turn again while snapping is on (they were turned back to the ruler); they stick to a ruler direction only within ±5° of it
+- "Snap the ruler to the floor grid": the ruler turns to the floor grid's lines a quarter turn at a time, and guides stick by a corner to the grid's points (every 40 cm) and by the bottom to the floor
+- The Objects and Equip tabs' kinds get “Neutral (nothing chosen)”: the tabs start there and go back to it after putting (or holding) a thing, so no preview or 3-axis handles get in the way of moving what was put. Choosing a category picks its first kind
+- Figures stand on the floor, walls, the ceiling and the faces of objects put (slopes too): the whole body turns to the face (sideways on a wall, upside down on a ceiling, square to a slope) with the soles on it. Bring the hips near a face in Place mode (within 15 cm), use "Click a face to stand on", or "Stand on the near face" in the Objects tab. Dragging the hips moves the figure along the face; pulled away, it lets go. Adds "Stand upright again"
+- Clicking the hips' middle goes to Place mode to move the figure (the 3-axis handles: move); Shift + click goes to Pose mode to turn the whole body (rotate). Pressing the hips in Place mode no longer switches to Pose mode (drag on to move the figure)
+- Switching Female / Male no longer resets the body's adjustments (part lengths, left-right differences, thickness, head size); it changes only by the difference between the sexes
+- The Body and Sizes tabs are one tab, Body. A thing's size (3 axes) and its sections' lengths moved to the Equip and Objects tabs
+- Fixed figures not being picked by a box selection: figures in the box (the other figures too) are selected along with the objects
+- Ctrl + click adds a figure to the selection or takes it out too. Several figures and objects move and turn together with the 3-axis handles (about the pivot of the last one added; a figure's is its hips). A selected figure gets a dashed frame; delete, cut and copy take only the objects
+- Standing on a face puts the body's nearest, lowest point on it: by the pose a knee, a hand, the head and so on. The face is found from the body's nearest point too. While on an object's face (its top too), a wall or the ceiling, the lowest point stays on it however the pose changes (Stand on it too)
+- The height was in both the Body section and "Height and heads"; they are one now, in the Body section (the height and heads sliders and what to keep)
+- Fixed the face's cross (where the face looks) not turning when the neck or head was turned with the 3-axis handles' rings: the face now turns as much (a turn about the neck's own axis becomes the neck's or head's twist)
+- The neck's and head's green (Y) ring turns the head left and right where it is (a twist about its bone; a tilted head no longer swings round the neck). The head's rings show round the head
+- Not only the head: every joint's green (Y) ring in Pose mode goes round its bone and twists along it (as Twist in the joint panel: on the elbow the forearm turns about the upper arm). Where rings lie on each other, the one nearest to the press is taken (about as near: the green one)
+- The 3-axis handles' rotate (rings) and scale (squares) keep to the selected thing's own axes: a joint's (Y along its bone), an object's or thing's (as it is turned). Move (arrows) keeps to the scene's X, Y, Z as before
+- In Pose mode the shoulders and thigh roots move with the 3-axis handles' arrows: their bone keeps its length and moves within the joint limits, so the body's sizes stay and the torso's and pelvis' trapezoids lean
+- In Body mode the head's squares (length, width, depth) stretch the head's ball itself (head shape; thickness both across and front to back). A stretched head is drawn as an ellipsoid turned with the head, and the face's cross follows it
+- Stretching the head (3-axis handles, the head shape sliders) grows it from where the neck meets it (its bottom stays)
+- No more 90° steps by default: the turn's magnet to the ruler is its own switch, "Turns stick to the ruler too" (off at first), and "Snap the ruler to the floor grid" no longer keeps the ruler to quarter turns. A guide can sit at any angle off the ruler (turn the guide about to be put, or a guide's "Turn (facing, Y)"; it keeps that angle when the ruler turns)
+- The floor grid turns with the ruler and is drawn far (8 m round the figure; lines reaching behind the camera are cut before it)
+- Grounding starts as "No sinking into the floor or objects". Standing on faces, the body no longer goes through to the other side or turns over: pushed behind the face it stands on, it comes back; bringing the hips near takes no face the hips are behind and none that would turn the body upside down (a ceiling, an object's underside). "Also stand on faces that turn the body over" allows it (clicking a face works as before)
+- The things' "Cylinder / rod" is now "Rod (thin cylinder)" and the shapes' "Cylinder" is "Cylinder (thick: columns, buildings)", so a thin rod to hold and a thick cylinder for obstacles and buildings are apart
+- Sizes in cm, not %: a thing's size (longest side, X, Y, Z) and its sections' lengths (Objects and Equip tabs, the preview before putting, a thing's size on 3 axes), a prism's or pyramid's top width, the head shape's width, height and depth, and the Body section's "Whole-body thickness" (the thigh root's diameter). The Body section's "Overall size" and "Head" (%) are now that tab's "Height" and "Head size (diameter)". Older files open as before
+- Fixed the colour picker closing as soon as a colour in it was clicked (Colors tab): changing a colour no longer rebuilds the list, it only updates the colours in place
+- Exaggerated perspective (each thing): while the camera is locked, each figure and object can have stronger perspective apart from the lens (the pivot, a figure's part or a point in an object's own coordinates, in the Camera tab; each object's strength in the Objects tab). What lies at the pivot's depth keeps its size; farther shrinks faster, nearer grows. The perspective ruler and the guides share one strength, and their vanishing points move with it. The view, clicks, the 3-axis handles and the exported pictures follow it
+- "Object presets" in the Objects tab: keep a thing put (its kind, size, turn, colour and exaggerated perspective) under a name and put it again as often as wanted (rename and delete too; kept in this browser)
+- Object colours (shapes, slabs, walls, things put) moved from the Colors tab to "Object colours" in the Objects tab; things held or worn and auras stay in the Colors tab
+- The exaggerated perspective's settings are together in the View › Viewpoint › Perspective tab (the pivot, the figure's and the ruler's strengths, each object's strength in a list)
+- Fixed a reload changing the composition (as if the camera lock had gone): the export's ratio, width and height (the camera's frame) and the composition picture's settings are kept in this browser (a link's ?w= &h= comes first)
+- The editing is saved not only when the page closes but also when it is hidden and a moment after each change (a reload or close on iOS Safari or in an app keeps the last edit). A reload comes back to the mode and the tab it was on
+- "Side" in the Equip tab's preview: a thing held in the right or left hand, a pair on both or one foot / hand only, anything else that differs left and right mirrored to the other side, before it is held or worn. "To the other side" among the things out swaps it later too
+- Exaggerated perspective reworked: no more strengths for each thing; one pivot point (a mark on the view, never in the pictures) and one strength for everything. What lies behind the pivot shrinks fast toward it; what is in front bursts out of it (a figure bursting out of a carp streamer, a hero rushing at the camera). The pivot is a free point or on a part or an object, and its mark can be dragged on the view. **Move the camera for a while** keeps the locked camera while you set the pivot's depth from the side. The strength now feels even along the slider
+- The exaggerated perspective's pivot moves with the 3-axis handles: press its mark or **Move with the 3-axis handles**, and the move arrows take it along the scene's X, Y, Z (undo works)
+- A camera for the side view (View › Viewpoint › Side view): seen from the right or the left, round a centre (the camera's look-at point, a figure's part or an object put, followed as it moves), turned, tilted and zoomed; on the side view the wheel, the middle button (Alt + drag) and Shift work it. Unturned it is the level view 90° from the camera, as before
+- The side view's camera works by touch (one finger where there is nothing turns it; two fingers pinch to zoom and move it; a mouse drag where there is nothing turns it too). A button back to the first 90° (in the tab, and **90°** on the side view's corner). **camera side** no longer hides when turned: it tells where the camera is (left, right, near or far)
+- **↺ Angle & zoom** (the angle, zoom and moves back at once) on the side view, beside **90°**, under the view's name. The exaggerated perspective's pivot mark is always on the front and side views (faint while the exaggeration is off; never in the pictures): drag it or use the 3-axis handles from any tab, and set how far forward it is on the side view (with **Always show the pivot's mark** off, only while the Perspective tab is open)
+- Fixed the camera moving when the export's ratio, width or height changed (near things went behind it and nothing showed): the lens is taken on the picture's height, so the camera's distance no longer depends on the picture's shape (the height shows the same; the sides widen or are cut; a wide picture's perspective is a little stronger than before)
+- **What the rough picture shows** in Export: Composition (the default: the objects and surroundings too, besides figures and things, on white, as the **In the composition picture** checks say) or Figures and things only (as before)
+- Posting to social media attaches the composition as it is now (**Attach the composition picture**, on by default): a phone hands the picture and the words to the share menu; a computer opens the post page and copies the picture to paste into the post box. The link's card keeps the site's picture (there is no server for each one)
+- **Put on the ground** (Objects tab): press it, then click the face to put the thing on (the floor, a wall, a ceiling, an object's face, slopes too): it turns so that its most nearly parallel face lies flat against that face, and touches it (click where there is nothing: onto the ground by its lowest point, as before; Esc cancels)
+- A design document for developers (docs/ARCHITECTURE.md, ARCHITECTURE-JA.md): script load order and dependencies, wrapping chains, the state's data, the main flows, the main mechanisms' formulas, promises to the outside, the refactoring's hard parts (no feature changes)
+- The figure's hands reworked: drawn with the palm's outline and fingers set on and bending as a human hand's do (closing, they come together and the ring and little fingers' knuckles sink). Select a hand and its finger joints (15 to a hand) show as circles: bend each by dragging, with the 3-axis handles' rotate rings (red: bend, green: the root's spread) or in numbers in the joint panel (within a human hand's range). Hand shapes (fist, open ...) are kept as joint angles; the old hand shapes, files and mods' hand shapes work as before. A hand with adjusted fingers can be saved as an own shape by name and called on either hand; saved poses carry the finger joints. The Body tab sets the hand's length (cm) and each finger's length (85–115 %). MOD API 1.3: `angles` to add a hand shape by joint angles, and `api.hands.angles`
+- The design document has the hands and fingers, and the refactoring hard parts this change brought
+- While a hand is selected, a "loupe" shows it enlarged over the view (on at first); press and drag a finger joint in it to bend it. Fixed finger editing not working on phones (the 3-axis handles' rings took the tap before the finger circles), and the finger panel shows for the wrist too
+- A thing held in the hand has its own grip (hand shape): adjusting the holding hand's fingers keeps them in the thing, and holding it again gives the same grip. **Place in the hand** (Equip tab) moves it in the holding hand and in the other hand (two-handed)
+- Saving the edit data (Export): the figures and everything else (things, objects, floor and walls, ruler, camera ...) with the export settings, as .odmposer (one packed file) or .json; **Open a file** goes on from it
+- The Body tab sets whether both hands have the same size or are set apart
+- Fixed a stop when a thing not chosen in the Equip list was given to a hand (by a mod, say)
+- Getting ready to refactor: behaviour tests (tests/, tools/run_tests.py) in the repository, and the syntax check passes for every file (`?.` and `for await` rewritten with the same behaviour). The design document has held grips, the loupe, the edit data format, the tests and the new hard parts
+- The loupe shows the 3-axis handles' rotate rings too (red: bend, green: the root's spread); grab them there to turn a finger joint
+- Fixed a finger joint's 3-axis handles not being grabbable (pressing a ring let the joint go first, so its handles vanished)
+- On phones and tablets, a tap on a shown 3-axis handle now comes before the hand cursor (the camera)
 
 ## v0.1.0
 

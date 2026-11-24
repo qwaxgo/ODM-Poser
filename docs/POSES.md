@@ -15,12 +15,14 @@ thickness) and where the figure stands stay as they are.
 Poses and bodies are saved and loaded apart: loading one never changes the other. Both are kept in this
 browser.
 
-- **Pose, things and place: saved** keeps the figure's pose (its bones' directions, its turn, its hands),
+- **Pose, things and place: saved** keeps the figure's pose (its bones' directions, its turn, its hand shapes and finger joints),
   what it holds and wears, and where it stands, under a name. Loaded on a figure with another body, that
   figure keeps its own body.
-- **Body presets** keep the bone lengths, thickness, the shoulders' and thigh roots' places and the sex,
+- **Body presets** keep the bone lengths, thickness, the shoulders' and thigh roots' places, the finger lengths and the sex,
   besides the built-in Standard, Female and Male. Loaded, the pose, things and place stay, and so do the
   feet (the lowest point).
+
+- **Own hand shapes** keep a hand's shape alone, as its finger joints' angles, under a name (the joint panel; "Hands and fingers" in [MANUAL.md](MANUAL.md)).
 
 ## User presets (your own pose sets)
 

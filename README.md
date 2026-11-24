@@ -38,10 +38,11 @@ open `index.html`; mods go in its `mods` folder), and an app (an AppImage for Li
 - **Perspective mode**: camera direction, height, roll (Shift+drag tilts the camera off level),
   and lens (wide angle = strong perspective). Grabbing a vanishing point or the eye level of the
   ruler moves the camera to match.
-- **Place mode**: the camera stays; drag a vanishing point to turn the ruler, drag the box guide
-  and objects over the floor (Shift+drag: up and down, wheel: turn).
-- **Perspective ruler**: 1-, 2- or 3-point guide lines, the eye level and a box guide (width,
-  height, depth and position in cm). The vanishing points come from the camera, so the ruler has
+- **Place mode**: the camera stays; drag a vanishing point to turn the ruler, drag the guide shapes
+  and objects over the floor (Shift+drag: up and down, the 3-axis handles turn it).
+- **Perspective ruler**: 1-, 2- or 3-point guide lines, the eye level and guide shapes (any of the
+  Objects tab's shapes, as many as you like, turned to the ruler; their edges carried on to the vanishing
+  points; "Put as a guide" in the Objects tab). The vanishing points come from the camera, so the ruler has
   the figure's perspective. Editor only; "Ruler picture" saves it as a transparent PNG.
 - **Human joint limits** (on by default) keep knees, elbows, neck and so on in a human range.
 - **Several figures**: "Add a figure" / "Duplicate" in the Figures box. The one selected is edited
@@ -53,8 +54,8 @@ open `index.html`; mods go in its `mods` folder), and an app (an AppImage for Li
 - **Composition picture**: "Save composition" saves what the front view shows at that size, with
   the parts you tick (figures, props, objects, floor and walls, the ruler, auras) on white, clear or
   the screen's background.
-- **Solid torso** (a switch above the views, on by default): the chest and pelvis are drawn as
-  blocks with depth; off, as flat trapezoids.
+- **Solid torso** (a switch on the view's top right, on by default; each figure has its own): the chest and
+  pelvis are drawn as blocks with depth; off, as flat trapezoids.
 - **Hidden lines dashed** (a switch above the views): what lies behind a body or an object is drawn
   dashed, in the view and in every export. With a clear background the composition picture is lines
   only (auras as outlines).
@@ -85,7 +86,7 @@ headphones ...), the torso, the waist, the back (backpack, cases) and the feet (
 - Held things follow the wrist; two-handed things bring the other hand to the grip. Holding,
   wearing or mounting a thing sets the hand shapes it needs; letting go gives them back.
 - Any held thing can be carried on the back, and any thing put down on the floor or an object
-  (grounded); in the Place mode it is dragged (Shift: up and down) and turned with the wheel.
+  (grounded); in the Place mode it is dragged (Shift: up and down) and turned with the 3-axis handles.
 - Line colours per body part (head, torso, each arm, hand and leg), per thing and per object,
   for the floor / walls and the wire; they are kept in the exported rough too.
 - Auras on the whole body or some parts: rising ki flames, a smooth glow, or crackling plasma.
@@ -224,17 +225,17 @@ ODM は **Omni-Directional Mannequin**（どの方向からでも見て動かせ
   回せます。関節の固定（ピン、Alt＋クリック）、手の関節（指の付け根の小さな丸）で手首の曲げ・手のひらの向き・手の形（指は手のひら側へ曲がって描かれ、どの向きからも手の向きが分かります）、体格モード、パースモード、人間の関節の限界。
 - **小物・環境**：約250種の小物を簡単な形で（武器・銃・弓・盾・杖・楽器・文房具・食器・食べ物・花・日用品・
   コントローラー・スポーツ用具・椅子・机・乗り物・蔓や枝や鉄棒、エフェクト、大きさ自由の立体図形、手提げ・バッグ・かご、
-  頭・胴体・腰・背中・脚に身に着ける物など）。床・壁・天井と接地、面に手足を着ける、つかまる、ぶら下がる、ワイヤーで吊る。
+  頭・胴体・腰・背中・脚に身に着ける物など）。床・壁・天井と接地、壁・天井・斜面・物体の面に体ごと合わせて立つ、面に手足を着ける、つかまる、ぶら下がる、ワイヤーで吊る。
 - **持つ・背負う・置く**：持たせると手の形が自動で握りに変わり、外すと戻ります。手に持つ物は背負え、どの小物も床や物体の上に置けます（接地）。置いた物は配置モードでドラッグ。ライフル類には銃剣を付けられます。
-- **線の色**：頭・胴体・腕・手・脚ごと、小物・物体ごと、床と壁、ワイヤーの色を変えられます（書き出すアタリにも反映）。
+- **線の色**：頭・胴体・腕・手・脚ごと、小物・物体ごと、床と壁、ワイヤーの色を変えられます（書き出すアタリにも反映）。「色」のタブの「↺ 色を初期状態に」で最初の色に戻せ、「色の記憶」で名前をつけて保存・呼び出しできます（このブラウザに残ります）。
 - **オーラ**：全身や部位に、立ちのぼる気（炎）・なめらかな光・プラズマ（電撃）をまとえます。
-- **パース定規**：1点・2点・3点透視の線、アイレベル、直方体のガイド（幅・高さ・奥行きと位置を cm で）。消失点はカメラから決まるので人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードではカメラはそのままで消失点をつかむと定規が回ります。エディタ上だけの表示で、「定規の画像」で透明な PNG を保存できます。
+- **パース定規**：1点・2点・3点透視の線、アイレベル、ガイド図形（設置のタブの図形を「ガイドとして置く」で、いくつでも、定規の向きにそろえて。辺は消失点まで延び、ガイドを回すと定規ごと立体的に回ります）。床のグリッドは定規と一緒に回り、ガイドを床のグリッドにスナップもできます。ガイドは定規からずれた角度でも置けます。消失点はカメラから決まるので人物と同じパースになります。パースモードで消失点やアイレベルをつかむとカメラが動き、配置モードではカメラはそのままで消失点をつかむと定規が回ります。エディタ上だけの表示で、「定規の画像」で透明な PNG を保存できます。
 - **カメラの傾き**：パースモードで Shift＋ドラッグ（または「傾き」）で水平でなくできます（±90°）。
-- **物体**：直方体（箱・床・壁・建物・段差）、角柱、円柱、角錐、円錐、支柱を cm の大きさで置けます。配置モードでドラッグして動かし（Shift で上下、ホイールで向き）、接地をオンにすると上に立ちます（40cm までの段は乗り上げ）。選んだ関節を面に着けて固定する、上に立たせる、もできます。
+- **物体**：直方体（箱・床・壁・建物・段差）、角柱、円柱、角錐、円錐、支柱を cm の大きさで置けます。配置モードでドラッグして動かし（Shift で上下、回すのは3軸ハンドル）、接地をオンにすると上に立ちます（40cm までの段は乗り上げ）。選んだ関節を面に着けて固定する、上に立たせる、もできます。
 - **複数の人物**：「人物」の欄の「人物を追加」「複製」。編集するのは選んだ人物だけ（ポーズ・体格・小物・オーラ・ワイヤー）で、ほかの人物は薄く表示され、その丸をクリックすると切り替わります。床・壁・物体・定規・カメラは共通。アタリ・OpenPose（1人ずつ）・構図の画像には全員が入ります。
 - **書き出しの比率と解像度**：比率（1:1・3:4・16:9・A判・2.35:1・自分で指定）と長い辺（最大 8192 px）から幅と高さを決めます。画面の図もその比率になります。
 - **構図の画像**：「構図を保存」で、正面の図をその大きさで保存。入れるもの（人物・小物・物体・床と壁・パース定規・オーラ）と背景（白・透明・画面と同じ色）を選べます。
-- **胴体を立体に**（図の上のスイッチ、最初はオン）：胸と骨盤を厚みのある台形の箱で描きます。オフにすると平らな台形。
+- **胴体を立体に**（図の右上のスイッチ、最初はオン。人物ごとの設定）：胸と骨盤を厚みのある台形の箱で描きます。オフにすると平らな台形。
 - **隠れた線を破線に**（図の上のスイッチ）：体や物体の陰に隠れた線を破線で描きます（画面と書き出しの両方）。構図の画像を背景「透明」で保存すると、線だけの透過画像になります（オーラも輪郭だけ）。
 - **ライト／ダーク**：右上のボタンで切り替え（自動はシステムの設定に合わせる）。
 - **SNS に投稿**：X・Bluesky・Threads・Misskey（misskey.io・misskey.dev・みすてむず、ほかは自分で登録）・Mastodon（Pawoo・mstdn.jp・Fedibird、ほかは自分で登録）・Facebook・Reddit（英文のタイトル）・LINE とオープンチャット・Teams・Pinterest に投稿画面を開いて、Instagram・TikTok・カカオトーク・Discord・Slack・Yay! にはスマホの共有メニューから（パソコンでは文をコピーしてサービスを開きます）、そのほかのアプリには共有メニューで、#ODMPoser #立体人形装置 とリンクを付けて投稿（Threads は文字数に収まらないときサイトのリンクに）。リンクは画像付きのカードで表示されます。リンクには編集データを入れられ（`#pose=` 以降）、開くと同じ人物・小物・物体・カメラになります（そのブラウザの前の編集は保存され、戻せます）。リンクに入る MOD は公式（GitHub の qwaxgo）のものだけで、開いた人がボタンを押したときだけ追加されます。ほかの MOD の小物・物体は単純な図形や棒になります。

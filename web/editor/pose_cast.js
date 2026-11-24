@@ -7,14 +7,16 @@
 // 配置 mode moves them whoever is edited. Each figure can be moved and turned as a whole, and the
 // pictures can show everyone or one figure (書き出す人物).
 //
-// S.others: [{P, R, hands, head, body, twist, pins, items, auras, wire, scale, shape, sex, hide, figId, figName}]
+// S.others: [{P, R, hands, fingers, fingerLen, head, body, twist, pins, items, auras, wire, scale, shape, sex, hide, figId, figName, torso3d}]
+// 胴体を立体 (torso3d) is each figure's own; a figure from before it was takes the one edited then
 // (hide: the names of joints the figure does not show, as a centaur's human legs: pose_main.js hidJ)
-const FIG_KEYS = ["P", "R", "hands", "head", "body", "twist", "pins", "items", "auras", "wire", "scale", "shape", "sex", "hide", "figId", "figName"];
+const FIG_KEYS = ["P", "R", "hands", "fingers", "fingerLen", "handApart", "head", "body", "twist", "pins", "items", "auras", "wire", "scale", "shape", "sex", "hide", "figId", "figName", "torso3d", "stand"];
 // what mods keep per figure (pose_api.js: on("figureCopy") / on("figureRemove")): told after a copy
 // (the copied figure's id, the new one's) and a removal (the id gone), in the same undo step
 const FIG_HOOKS = window.ODMFigureHooks = window.ODMFigureHooks || {copy: [], remove: []};
 function takeFigure(){ const f = {}; for (const k of FIG_KEYS) f[k] = S[k]; return f; }
-function putFigure(f){ const d = fresh(); for (const k of FIG_KEYS) S[k] = f[k] !== undefined ? f[k] : d[k]; }
+function putFigure(f){ const d = fresh(), keep = S.torso3d;
+  for (const k of FIG_KEYS) S[k] = f[k] !== undefined ? f[k] : k === "torso3d" && keep !== undefined ? keep : d[k]; }
 function withFigure(f, fn){ const keep = takeFigure(); putFigure(f); try { return fn(); } finally { putFigure(keep); } }
 // every figure, the farthest first: fn(active, first)
 function everyFigure(fn){

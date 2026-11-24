@@ -65,7 +65,7 @@ const ADD = {
     dims: [["幅", 20], ["高さ", 20], ["奥行き", 20]], make: ([w, h, d]) => [B(0, 0, d / 2, w, h, d)]},
   prim_sphere: {ja: "球", en: "Sphere", cat: "shape", place: "hand", pose: "cup",
     dims: [["直径", 20]], make: ([d]) => [SP(0, 0, d / 2, d / 2)]},
-  prim_cylinder: {ja: "円柱・棒", en: "Cylinder / rod", cat: "shape", place: "hand", pose: "grip",
+  prim_cylinder: {ja: "棒（細い円柱）", en: "Rod (thin cylinder)", cat: "shape", place: "hand", pose: "grip",
     dims: [["直径", 4], ["長さ", 60]], make: ([d, l]) => [C(0, -l / 2, 0, 0, l / 2, 0, d / 2)]},
   prim_cone: {ja: "円錐", en: "Cone", cat: "shape", place: "hand", pose: "cup",
     dims: [["底の直径", 20], ["高さ", 25]], make: ([d, h]) => [K(0, -h / 3, d / 2, 0, h * 2 / 3, d / 2, d / 2)]},

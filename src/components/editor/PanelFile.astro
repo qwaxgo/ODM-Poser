@@ -4,8 +4,8 @@
 
   <section data-menu="import">
     <h2>読込</h2>
-    <div class="btns"><button id="loadJson">ポーズのファイルを開く</button><input type="file" id="file" accept=".json,application/json" hidden></div>
-    <div class="hint">「書き出し」で保存したポーズ（.json）を開きます。人物・小物・物体・カメラも戻ります。</div>
+    <div class="btns"><button id="loadJson">ファイルを開く</button><input type="file" id="file" accept=".json,.odmposer,application/json,application/octet-stream" hidden></div>
+    <div class="hint">「書き出し」で保存したポーズ（.json）か編集データ（.json・.odmposer）を開きます。人物・小物・物体・床と壁・定規・カメラが戻り、編集データなら書き出しの設定も戻ります。</div>
   </section>
 
   <section data-menu="export">
@@ -27,12 +27,24 @@
       <div><label>幅</label><input type="number" id="W" value="1080" min="256" max="8192"></div>
       <div><label>高さ</label><input type="number" id="H" value="1920" min="256" max="8192"></div>
     </div>
+    <label for="atariMode">アタリ画像の内容</label>
+    <select id="atariMode">
+      <option value="comp">構図（人物・小物・物体・環境）</option>
+      <option value="figure">人物と小物だけ</option>
+    </select>
+    <div class="hint" id="atariModeHint">構図では、下の「構図の画像に含める」のチェック（定規を除く）のとおりに、物体や環境も白い背景に描きます。</div>
     <div class="btns">
       <button id="saveAtari">アタリ画像</button>
       <button id="saveOpenpose">OpenPose 画像</button>
       <button id="saveJson">ポーズ（.json）</button>
     </div>
     <div class="hint">画像は保存する前に全体を確認できます。</div>
+    <label for="projFormat" style="margin-top:12px">編集データ（人物・小物・物体・床と壁・定規・カメラ・書き出しの設定）</label>
+    <div class="grid2">
+      <div><select id="projFormat"><option value="odmposer">.odmposer（圧縮した 1 つのファイル）</option><option value="json">.json（テキスト）</option></select></div>
+      <div><button id="saveProject" style="width:100%">編集データを保存</button></div>
+    </div>
+    <div class="hint">「ファイルを開く」で、続きから編集できます。.odmposer は小さく、.json は中身を読めます。</div>
     <div class="hint">書き出したファイルは、商用・AI の学習も含めて自由に使えます。クレジットは任意です。 <a href="https://apps.qwaxgo.com/ODM-Poser/docs/ja/license/" target="_blank" rel="noopener">利用条件（CC0 1.0）</a></div>
     <label style="margin-top:15px">構図の画像に含める</label>
     <div class="grid2">
