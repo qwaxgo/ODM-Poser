@@ -10,7 +10,7 @@ A mod is a JavaScript file that the editor loads at start. Through the **MOD API
 - English words for its Japanese labels (and the other way round)
 - panels in the side bar, and hooks into drawing, editing, undo / load, the mode and the mouse
 
-API version: **1.3.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
+API version: **1.4.0**. 日本語の説明: [MODDING-JA.md](MODDING-JA.md).
 
 > **Safety.** A mod is a program that runs inside the editor page with the same rights as the
 > editor itself. Install only mods you trust. Add `?nomods` to the editor's address to start
@@ -286,13 +286,13 @@ The editor gives your section's controls melta UI's look by what they are (`sect
 | `mode` | the new mode | the mode buttons |
 | `pointerDown` | `canvas, x, y, event` | return `{move(x, y, event)}` to take the drag, or nothing; x, y in canvas pixels; the editor remembers for undo first |
 | `wheel` | `x, y, step, event` | return `true` when you used it (step: +1 / −1) |
-| `takePose` | `record` | a pose being kept in ポーズ・小物・位置 (API 1.3): add your part to the record (a field of your own name) |
-| `putPose` | `record` | that record, after the figure took the pose (API 1.3): read your part back |
-| `figureCopy` | `from, to` | 人物の管理's Copy made figure `to` (now `S.figId`) from `from` (API 1.3): copy what you keep per figure |
-| `figureRemove` | `id` | the figure `id` was deleted (API 1.3): drop what you kept for it |
-| `floorPoints` | — | return `[[x, y, z], ...]`: points of the edited figure that stand on the floor too, when the editor stands it there (pose presets, リセット); hidden joints do not (API 1.3) |
+| `takePose` | `record` | a pose being kept in ポーズ・小物・位置 (API 1.4): add your part to the record (a field of your own name) |
+| `putPose` | `record` | that record, after the figure took the pose (API 1.4): read your part back |
+| `figureCopy` | `from, to` | 人物の管理's Copy made figure `to` (now `S.figId`) from `from` (API 1.4): copy what you keep per figure |
+| `figureRemove` | `id` | the figure `id` was deleted (API 1.4): drop what you kept for it |
+| `floorPoints` | — | return `[[x, y, z], ...]`: points of the edited figure that stand on the floor too, when the editor stands it there (pose presets, リセット); hidden joints do not (API 1.4) |
 
-**More per figure (API 1.3).** `api.ui.addFigureExtra({id, label, labelEn, has(tune), strip(), tune()})`
+**More per figure (API 1.4).** `api.ui.addFigureExtra({id, label, labelEn, has(tune), strip(), tune()})`
 adds a box of your own to 人物の管理 › 付随物のリセット: `has` says whether there is anything to take
 off (`tune` false) or to put back to its defaults (`tune` true), `strip` / `tune` do it for the edited
 figure, in the same undo step as the rest. A figure's `S.hide` (joint names, kept per figure) leaves
@@ -302,7 +302,7 @@ standard human's of that sitting height.
 
 The canvas state (`ctx`) is saved and restored around each drawing hook.
 
-**The 3-axis handles on your own things (API 1.3).** `api.gizmo.addTarget(fn)`: `fn(mode)` returns
+**The 3-axis handles on your own things (API 1.4).** `api.gizmo.addTarget(fn)`: `fn(mode)` returns
 `null`, or what the handles act on: `{c, ax, rings, ringAx, pivot, sc, tools, save, move, turn, scale}`:
 `c` the centre, `ax` the move axes, `rings` ring indices with `ringAx` their axes (the world's by
 default) turning about `pivot`, `sc` `[[axis, n, label], ...]` for scaling, `tools` the tools it has
@@ -323,7 +323,7 @@ Write a hook once and it works with a mouse, a finger, an Apple Pencil, an S Pen
 - Your data in `api.data()` and the props, solids and auras you added are saved in the pose JSON
   (also in what `api.io.poseJSON()` hands on). Opened without your mod, they stay in the file; props and
   aura kinds the editor does not know are skipped when drawing, unknown solid kinds draw as boxes.
-- The API follows semantic versioning: 1.x adds things and keeps what is here working (1.3: hand shapes by joint angles, `angles` and `api.hands.angles`; 1.2: the same events for mouse, touch and pens; 1.1 added
+- The API follows semantic versioning: 1.x adds things and keeps what is here working (1.4: hooks for kept poses, copying and removing figures and floor points, per-figure reset items, `S.hide`, 3-axis handles on a mod's things; 1.3: hand shapes by joint angles, `angles` and `api.hands.angles`; 1.2: the same events for mouse, touch and pens; 1.1 added
   `api.io` and `addSection({at})`). A mod with
   `api: 2` does not load in an editor with API 1.
 - Only what this page describes is the API. The editor's other functions and globals can change

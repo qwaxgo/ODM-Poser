@@ -819,6 +819,44 @@ To go ahead without changing features:
 
 At every step, pass the tests of the promises in 10.1 before going on.
 
+## 11. What the rig branch (non-human skeletons) adds
+
+The `rig` branch adds a few openings to the editor so that a MOD (ODM-Rig, private) can add non-human skeletons. It takes main in as it goes (`git merge origin/main`). This chapter is only on the rig branch. When the refactoring moves one of these openings, ODM-Rig changes with it.
+
+### 11.1 The openings
+
+| Opening | File | What it does |
+|---------|------|--------------|
+| `api.gizmo.addTarget(fn)` | pose_api.js → pose_gizmo.js | 3-axis handles on a MOD's things. `fn` goes into main's `window.ODMGizmoTargets`. The target `fn(mode)` returns has main's shape, plus `tools` (the tools it has, read before `lacks`) and `ringAx` (each ring's axis) |
+| `on("takePose")` / `on("putPose")` | pose_sets.js (`window.ODMPoseSetHooks`) | a MOD's part of a pose kept in ポーズ・小物・位置: added, then read back |
+| `on("figureCopy")` / `on("figureRemove")` | pose_cast.js (`window.ODMFigureHooks`) | copying and removing a figure: a MOD copies or drops what it keeps per figure (in the same undo step) |
+| `on("floorPoints")` | pose_main.js (`window.ODMFloorHooks`, `lowestPoint`) | standing a figure on the floor counts a MOD's points too (a centaur's hooves) |
+| `api.ui.addFigureExtra(...)` | ui-figure.js (`window.ODMFigure.addExtra`) | a MOD's box in 人物の管理 › 付随物のリセット |
+| `S.hide` | pose_cast.js `FIG_KEYS`, pose_main.js | per figure, the names of the joints it does not show; `hidJ(i)` leaves them out of drawing, picking, hidden lines and OpenPose |
+
+On rig the API is `1.4.0`: main's 1.3 (hand shapes by joint angles) plus the openings above. MODs are checked by the major number only, so the number is there to explain.
+
+### 11.2 The size of a figure whose human legs are hidden
+
+- `legsHidden()`: both legs' joints are in `S.hide`.
+- `sittingHeight()` (head to crotch) is shown instead of the height; the heads count is that of a human with that sitting height (`humanHeight()`, the standard body's ratio; `headsCount`).
+- `heightMeasure()` and pose_size.js `measureFn()` / `tall()` choose the height or the sitting height. 体格's height row hides when the legs are hidden.
+- The sitting-height control `szSit` sits where main moved the height and heads count, under the sex in 体格 (the November 2026 merge).
+- The status line is `#heightL` (身長 or 座高) and `#heightP`.
+
+### 11.3 What happened in merges, and what to watch
+
+- **Two openings for the 3-axis handles** (November 2026): main made `window.ODMGizmoTargets` (`f()`, `lacks`), which met rig's `window.ODMGizmo.addTarget` (`f(mode)`, `tools`). Main rebuilds `window.ODMGizmo` with other contents, so rig's opening now puts its functions into main's list, and the list's functions are given `mode`.
+- **The API number**: main and rig both called themselves 1.3, so rig became 1.4. When main takes 1.4, rig moves to the next number.
+- **Controls gone in main**: the heads count and height fields (`#headsV`, `#heightN`) no longer exist; rig's code and tests must not read them.
+- `FIG_KEYS`, `takePose`, `tools()`, `target()` and the ring drawing are places main changes often; look at them first when a merge conflicts.
+
+### 11.4 How it is checked
+
+- Rig's behaviour tests are `tests/test_rig.py` (7 tests, `python tools/run_tests.py rig`): the attachments (place, following the chest, dragging, joint limits, undo, rings, mirroring, kept poses, export) and figures with hidden legs (not picked, not in OpenPose, sitting height, English, resets standing on the hooves, copying, taking off and removing figures).
+- ODM-Rig is read from `mods/ODM-Rig` (a link to `C:\AI\ODM-Rig\mod`). After changing `mods/`, rebuild `web/mods.js` with `python tools/make_mods_list.py`, then build. Where `mods/ODM-Rig/odm_rig.js` is missing (a PC without ODM-Rig) the seven tests say "skipped" and pass.
+- On this PC, `tools/run_tests.py` with the new Chromium (headless shell 156) now and then loses a file from the local server (`ERR_CONNECTION_RESET`, on main as well). Reopen the test, or run it in Edge (`channel="msedge"`).
+
 ## Appendix: modes and tabs
 
 | Name on screen | Internal `mode` | Tab it opens | Main files |

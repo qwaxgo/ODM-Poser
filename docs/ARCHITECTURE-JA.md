@@ -819,6 +819,44 @@ localStorage のほかにも、次の物を使います。
 
 どの段階でも、10.1 の約束を確かめるテストを通してから次へ進みます。
 
+## 11. rig ブランチ（人外の骨格）で足したもの
+
+`rig` ブランチは、人外の骨格を MOD（ODM-Rig、非公開）で足すための口を、本体に少しだけ足したものです。main を取り込みながら進めます（`git merge origin/main`）。この章は rig ブランチにだけあります。リファクタリングで下の口を動かすときは、ODM-Rig も一緒に直します。
+
+### 11.1 本体に足した口
+
+| 口 | ファイル | 中身 |
+|----|---------|------|
+| `api.gizmo.addTarget(fn)` | pose_api.js → pose_gizmo.js | MOD の物に 3 軸ハンドルを出す。`fn` を main の `window.ODMGizmoTargets` に足す。`fn(mode)` が返す対象は main の対象と同じ形で、そのほかに `tools`（使える道具の一覧。`lacks` より先に見る）と `ringAx`（輪ごとの軸）を持てる |
+| `on("takePose")` / `on("putPose")` | pose_sets.js（`window.ODMPoseSetHooks`） | ポーズ・小物・位置に記憶するポーズに、MOD の分を足す・読み戻す |
+| `on("figureCopy")` / `on("figureRemove")` | pose_cast.js（`window.ODMFigureHooks`） | 人物の複製・削除で、MOD が人物ごとに持つ物を写す・消す（同じ元に戻すの 1 歩） |
+| `on("floorPoints")` | pose_main.js（`window.ODMFloorHooks`、`lowestPoint`） | 人物を床に立たせるとき、MOD の物の点も床に着く点として数える（ケンタウロスの蹄） |
+| `api.ui.addFigureExtra(...)` | ui-figure.js（`window.ODMFigure.addExtra`） | 人物の管理 › 付随物のリセットに、MOD のチェックを足す |
+| `S.hide` | pose_cast.js の `FIG_KEYS`、pose_main.js | 人物ごとの、見せない関節の名前の一覧。`hidJ(i)` が描画・選択・隠れ線・OpenPose から外す |
+
+API の版は rig では `1.4.0` です。main の 1.3（手の形を関節の角度で）に、上の口を足した版です。MOD の確認はメジャー番号だけなので、版の数字は説明のためのものです。
+
+### 11.2 人の脚を隠した人物の大きさ
+
+- `legsHidden()`：両脚の関節が `S.hide` に入っているか。
+- `sittingHeight()`（頭から股まで）を身長の代わりに見せます。頭身は、その座高の人間の身長（`humanHeight()`、標準の体の比）で数えます（`headsCount`）。
+- `heightMeasure()` と、pose_size.js の `measureFn()`・`tall()` が、身長か座高かを切り替えます。体格の身長の行は、脚を隠すと隠れます。
+- 座高の欄 `szSit` は、main で身長・頭身が体格の性別の下に移ったのに合わせて、同じ場所に置いています（2026-11 の取り込み）。
+- 状態の行は `#heightL`（「身長」か「座高」）と `#heightP` です。
+
+### 11.3 取り込みで起きたことと注意
+
+- **3 軸ハンドルの口が 2 つできた**（2026-11）：main が `window.ODMGizmoTargets`（`f()`、`lacks`）を作り、rig の `window.ODMGizmo.addTarget`（`f(mode)`、`tools`）とぶつかりました。`window.ODMGizmo` は main が別の中身で作り直すので、rig の口は main の配列に載せる形にしました。対象を出す関数には `mode` を渡します。
+- **API の版の番号**：main と rig の両方が 1.3 を名乗ったので、rig を 1.4 にしました。main が 1.4 を使うときは、rig を次の番号にします。
+- **main で消えた欄**：頭身と身長の数値欄（`#headsV`、`#heightN`）は main で無くなりました。rig のコードとテストは、これらを読まないようにします。
+- 上の口のうち、`FIG_KEYS`、`takePose`、`tools()`、`target()`、輪の描画は、main もよく変える所です。取り込みでぶつかりやすい所として、先に見ます。
+
+### 11.4 確かめ方
+
+- rig の動きのテストは `tests/test_rig.py`（7 件、`python tools/run_tests.py rig`）です。付属物の位置・胸への追従・ドラッグ・関節の限界・元に戻す・回転の輪・左右反転・記憶・書き出し、脚を隠した人物（選べない・OpenPose に出ない・座高・英語・リセットで蹄に立つ・人物の複製と外すと削除）を確かめます。
+- ODM-Rig は `mods/ODM-Rig`（`C:\AI\ODM-Rig\mod` へのリンク）から読みます。`mods/` を変えたら `python tools/make_mods_list.py` で `web/mods.js` を作り直してからビルドします。`mods/ODM-Rig/odm_rig.js` が無い所（ODM-Rig の無い PC）では、この 7 件は「skipped」と出して通ります。
+- `tools/run_tests.py` は、この PC の新しい Chromium（headless shell 156）で、ローカルのサーバーからの読み込みがときどき切れます（`ERR_CONNECTION_RESET`、main でも同じ）。そのときは同じテストを開き直すか、Edge（`channel="msedge"`）で動かします。
+
 ## 付録：モードとタブの対応
 
 | 画面の名前 | 内部名 `mode` | 開くタブ | 主なファイル |

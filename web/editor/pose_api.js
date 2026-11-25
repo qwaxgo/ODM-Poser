@@ -11,7 +11,7 @@
 // from disk the editor cannot list one itself). ?nomods in the address starts without mods.
 // A mod's own data lives in S.mods[id]: saved with the pose, undone with Ctrl+Z.
 (() => {
-const API_VERSION = "1.3.0", API_MAJOR = 1;
+const API_VERSION = "1.4.0", API_MAJOR = 1;
 const mods = [];                              // {id, name, version, file, status: "ok" | "error", error}
 const ORIGIN = {props: {}, solids: {}, auras: {}, parts: {}, hands: {}};   // kind key -> the mod id that added it
 const hooks = {drawBehind: [], draw: [], drawSide: [], afterEdit: [], sync: [], mode: []};
