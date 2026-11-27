@@ -15,3 +15,6 @@ release/
 src-tauri/target/
 src-tauri/gen/
 app/
+
+# Claude Code: each person's own permissions
+.claude/settings.local.json
