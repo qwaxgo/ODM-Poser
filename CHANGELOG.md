@@ -155,6 +155,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - 設計書に、今ある機能をすべて並べた「実装状況の一覧」（11 章：機能ごとの実装の場所・保存先・テストの有無・注意）と、リファクタリング案（10.4：構造の整理、TypeScript 化、ライブラリの候補、進める順。まだ行いません）を追加
 - メニューの「読込」「書き出し」の説明に、編集データも入るように
 - アタリの精度の調査（docs/ACCURACY-JA.md）を追加：体の比率、描く順番、関節の可動域、隠れ線、レンズ、手、重心、身長の表示、OpenPose の首について、今のコードと目安の比較と、直し方の案（まだ行いません）。初期の体（標準・女性・男性）の寸法を測って目安と比べる道具 `node tools/measure_body.mjs` も追加
+- 開発コンテナ：SSH の秘密鍵をコンテナへコピーするのをやめ、ホストの ssh-agent を転送する形に（`known_hosts`・`config` だけを読み取り専用で渡す）。git の設定はホストの `~/.config/git` を読み、zsh の履歴と Claude Code の設定（`.claude.json`）は作り直しても残るように。`/workspace` の二重マウントとコンテナ内の `BROWSER` の誤りも修正
 
 ### English
 
@@ -301,6 +302,7 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The design document lists every feature there is (chapter 11: where each is implemented, what keeps it, whether it is tested, notes) and has a refactoring plan (10.4: structure, TypeScript, candidate libraries, the order; not started)
 - The menu's descriptions of Import and Export mention the edit data
 - A survey of the guide figure's accuracy (docs/ACCURACY-JA.md, in Japanese): body proportions, drawing order, joint ranges, hidden lines, the lens, hands, balance, the height shown and OpenPose's neck, with today's code measured against usual ratios and ideas to fix them (not started). `node tools/measure_body.mjs` measures the default bodies (standard, female, male) against those ratios
+- Dev container: SSH private keys are no longer copied in; the host's ssh-agent is forwarded instead (only `known_hosts` and `config` come in, read-only). git reads the host's `~/.config/git`, and the zsh history and Claude Code's settings (`.claude.json`) survive a rebuild. Also fixed: `/workspace` mounted twice, and the wrong `BROWSER` inside the container
 
 ## v0.1.0
 

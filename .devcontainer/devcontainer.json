@@ -3,6 +3,8 @@
   "dockerFile": "Dockerfile",
   "context": "..",
   "workspaceFolder": "/workspace",
+  // only here: without workspaceMount, VS Code also mounts the folder at /workspaces/<name>
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
   "forwardPorts": [4321, 8765],
   "portsAttributes": {
     "4321": {
@@ -15,7 +17,9 @@
     }
   },
   // open the folder from WSL2 (or Linux / macOS): this runs there, so the folders and files mounted below exist
-  "initializeCommand": "mkdir -p $HOME/.ssh $HOME/.claude $HOME/.config/gh && touch $HOME/.zshrc $HOME/.zsh_plugins.txt $HOME/.gitconfig",
+  // SSH keys stay on the host: VS Code forwards the host's ssh-agent (SSH_AUTH_SOCK), so only
+  // known_hosts and config come in. git reads the host's ~/.config/git/config (README.md).
+  "initializeCommand": "mkdir -p $HOME/.ssh $HOME/.claude $HOME/.config/gh $HOME/.config/git && touch $HOME/.zshrc $HOME/.zsh_plugins.txt $HOME/.ssh/known_hosts $HOME/.ssh/config",
   "postCreateCommand": "/tmp/setup_zsh.sh && git submodule update --init && npm install",
   "postStartCommand": "echo 'DevContainer is ready! npm run dev: the site and the editor (http://localhost:4321/ODM-Poser/editor/, docs: /ODM-Poser/docs/); python tools/lint_ui.py: the UI check.'",
   "features": {
@@ -23,6 +27,10 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "remoteUser": "node",
+  "containerEnv": {
+    // Claude Code's .claude.json in the mounted ~/.claude, so it outlives a rebuild
+    "CLAUDE_CONFIG_DIR": "/home/node/.claude"
+  },
   "customizations": {
     "vscode": {
       "settings": {
@@ -34,13 +42,16 @@
     }
   },
   "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
     // the container's own node_modules (Linux builds of Tailwind's native parts), apart from the host's
     "source=odm-poser-node_modules,target=/workspace/node_modules,type=volume",
-    "source=${localEnv:HOME}/.ssh,target=/tmp/mounted_ssh,type=bind,consistency=cached",
-    "source=${localEnv:HOME}/.zshrc,target=/tmp/mounted_zshrc,type=bind,consistency=cached",
-    "source=${localEnv:HOME}/.zsh_plugins.txt,target=/tmp/mounted_zsh_plugins.txt,type=bind,consistency=cached",
-    "source=${localEnv:HOME}/.gitconfig,target=/home/node/.gitconfig,type=bind,consistency=cached",
+    // zsh history (HISTFILE, setup_zsh.sh), kept across rebuilds
+    "source=odm-poser-zsh-history,target=/commandhistory,type=volume",
+    "source=${localEnv:HOME}/.ssh/known_hosts,target=/tmp/host_ssh/known_hosts,type=bind,readonly",
+    "source=${localEnv:HOME}/.ssh/config,target=/tmp/host_ssh/config,type=bind,readonly",
+    "source=${localEnv:HOME}/.zshrc,target=/tmp/mounted_zshrc,type=bind,readonly",
+    "source=${localEnv:HOME}/.zsh_plugins.txt,target=/tmp/mounted_zsh_plugins.txt,type=bind,readonly",
+    // a folder, not ~/.gitconfig: a file mount breaks when git saves it (it renames a new file over it)
+    "source=${localEnv:HOME}/.config/git,target=/home/node/.config/git,type=bind,readonly",
     "source=${localEnv:HOME}/.claude,target=/home/node/.claude,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.config/gh,target=/home/node/.config/gh,type=bind,consistency=cached"
   ]

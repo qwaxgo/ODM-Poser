@@ -12,7 +12,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     git-flow \
     build-essential \
     openssh-client \
-    keychain \
     ripgrep \
     python3 \
     python3-venv \
@@ -46,8 +45,9 @@ RUN playwright install-deps chromium && rm -rf /var/lib/apt/lists/*
 # Claude Code
 RUN npm install -g @anthropic-ai/claude-code
 
-# zsh for the node user
-RUN chsh -s /bin/zsh node
+# zsh for the node user; its history lives in the odm-poser-zsh-history volume (devcontainer.json)
+RUN chsh -s /bin/zsh node && \
+    mkdir -p /commandhistory && chown node:node /commandhistory
 
 WORKDIR /workspace
 RUN chown -R node:node /workspace
@@ -66,12 +66,13 @@ RUN git clone --depth=1 https://github.com/mattmc3/antidote.git /home/node/.anti
 
 RUN mkdir -p /home/node/.ssh && chmod 700 /home/node/.ssh
 
-# ~/.config as node's: otherwise Docker makes it as root's when it mounts ~/.config/gh in it
+# ~/.config as node's: otherwise Docker makes it as root's when it mounts ~/.config/gh and git in it
 RUN mkdir -p /home/node/.config
 
 COPY --chown=node:node .devcontainer/setup_zsh.sh /tmp/setup_zsh.sh
 RUN chmod +x /tmp/setup_zsh.sh
 
+# ~/.gitconfig stays the container's own (the host's settings come in ~/.config/git)
 RUN git config --global --add safe.directory /workspace && \
     git config --global --add safe.directory /workspace/design/melta-ui
 
