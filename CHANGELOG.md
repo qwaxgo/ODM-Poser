@@ -156,6 +156,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - メニューの「読込」「書き出し」の説明に、編集データも入るように
 - アタリの精度の調査（docs/ACCURACY-JA.md）を追加：体の比率、描く順番、関節の可動域、隠れ線、レンズ、手、重心、身長の表示、OpenPose の首について、今のコードと目安の比較と、直し方の案（まだ行いません）。初期の体（標準・女性・男性）の寸法を測って目安と比べる道具 `node tools/measure_body.mjs` も追加
 - 開発コンテナ：SSH の秘密鍵をコンテナへコピーするのをやめ、ホストの ssh-agent を転送する形に（`known_hosts`・`config` だけを読み取り専用で渡す）。git の設定はホストの `~/.config/git` を読み、zsh の履歴と Claude Code の設定（`.claude.json`）は作り直しても残るように。`/workspace` の二重マウントとコンテナ内の `BROWSER` の誤りも修正
+- 開発コンテナ：zsh の設定を [qwaxgo/dotfiles](https://github.com/qwaxgo/dotfiles)（`~/.dotfiles` にクローン）から作るように。git のユーザー名を `~/.config/git` から読めず、ホストの zsh・SSH の設定が入らなかったのを修正。eza の `--icons` が次の引数を取って `ls <フォルダ>` が失敗するのを `--icons=auto` で修正
+- 開発コンテナ：VS Code の Git はコンテナの `/usr/bin/git` を使うように（`git.path`）。GitHub への push はホストの ssh-agent 経由の SSH にし（`pushInsteadOf`、GitHub のホスト鍵を `known_hosts` に追加）、コンテナ内ではパスフレーズを聞かれない
 
 ### English
 
@@ -303,6 +305,8 @@ release, tag `v<version>` (the version of `package.json` and of the heading) and
 - The menu's descriptions of Import and Export mention the edit data
 - A survey of the guide figure's accuracy (docs/ACCURACY-JA.md, in Japanese): body proportions, drawing order, joint ranges, hidden lines, the lens, hands, balance, the height shown and OpenPose's neck, with today's code measured against usual ratios and ideas to fix them (not started). `node tools/measure_body.mjs` measures the default bodies (standard, female, male) against those ratios
 - Dev container: SSH private keys are no longer copied in; the host's ssh-agent is forwarded instead (only `known_hosts` and `config` come in, read-only). git reads the host's `~/.config/git`, and the zsh history and Claude Code's settings (`.claude.json`) survive a rebuild. Also fixed: `/workspace` mounted twice, and the wrong `BROWSER` inside the container
+- Dev container: the zsh settings are made from [qwaxgo/dotfiles](https://github.com/qwaxgo/dotfiles) (cloned into `~/.dotfiles`). Fixed the git user name not being read from `~/.config/git`, which left out the host's zsh and SSH settings, and eza's `--icons` taking the next argument (`ls <folder>` failed), now `--icons=auto`
+- Dev container: VS Code's Git uses the container's `/usr/bin/git` (`git.path`). Pushes to GitHub go over SSH through the host's ssh-agent (`pushInsteadOf`, GitHub's host keys added to `known_hosts`), so there is no passphrase prompt in the container
 
 ## v0.1.0
 
