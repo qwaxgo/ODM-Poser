@@ -35,6 +35,9 @@
     "vscode": {
       "settings": {
         "terminal.integrated.defaultProfile.linux": "zsh",
+        // VS Code's Git uses the container's git, not one of its own
+        "git.path": "/usr/bin/git",
+        "git.enabled": true,
         "search.ripgrep.path": "/usr/bin/rg",
         "todo-tree.ripgrep.ripgrep": "/usr/bin/rg",
         "python.defaultInterpreterPath": "/opt/venv/bin/python"
@@ -48,6 +51,8 @@
     "source=odm-poser-zsh-history,target=/commandhistory,type=volume",
     "source=${localEnv:HOME}/.ssh/known_hosts,target=/tmp/host_ssh/known_hosts,type=bind,readonly",
     "source=${localEnv:HOME}/.ssh/config,target=/tmp/host_ssh/config,type=bind,readonly",
+    // zsh settings come from github.com/qwaxgo/dotfiles (cloned into ~/.dotfiles by setup_zsh.sh);
+    // the host's are used when that clone fails
     "source=${localEnv:HOME}/.zshrc,target=/tmp/mounted_zshrc,type=bind,readonly",
     "source=${localEnv:HOME}/.zsh_plugins.txt,target=/tmp/mounted_zsh_plugins.txt,type=bind,readonly",
     // a folder, not ~/.gitconfig: a file mount breaks when git saves it (it renames a new file over it)
